@@ -43,13 +43,13 @@
             <div class="flex items-center space-x-3 flex-wrap">
                 <div class="flex items-center bg-indigo-800 rounded-lg border border-indigo-700 px-2 py-1">
                     <select id="diagramSelect" onchange="switchDiagram(this.value)" class="bg-transparent text-indigo-100 text-xs focus:outline-none pr-2">
-                        <option value="">-- Load Saved Diagram --</option>
+                        <option value="">-- Saved Diagrams --</option>
                     </select>
                     <button onclick="saveCurrentDiagram()" title="Save current progress" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded transition ml-1">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Save
                     </button>
-                    <button onclick="saveDiagramAs()" title="Save as new diagram" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-2 py-1 rounded transition ml-1">
-                        <i class="fa-solid fa-plus"></i>
+                    <button onclick="deleteCurrentDiagram()" title="Delete active diagram" class="bg-rose-700 hover:bg-rose-600 text-white text-xs px-2 py-1 rounded transition ml-1">
+                        <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
 
@@ -77,7 +77,7 @@
                 <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div class="flex items-center space-x-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                        <h2 id="activeDiagramTitle" class="font-semibold text-slate-800">Logical Flow Canvas</h2>
+                        <h2 id="activeDiagramTitle" class="font-semibold text-slate-800">Logical Flow Canvas: (No Diagram Loaded)</h2>
                     </div>
                     <span class="text-xs text-slate-400">Press <kbd class="px-1 py-0.5 bg-slate-200 rounded font-mono">Enter</kbd> to split • <kbd class="px-1 py-0.5 bg-slate-200 rounded font-mono">Backspace</kbd> to merge</span>
                 </div>
@@ -160,12 +160,12 @@
                 <p class="text-xs text-slate-500">Paste your passage as a continuous paragraph below to start a new analysis workspace.</p>
             </div>
 
-            <!-- Paste & Load Paragraph -->
+            <!-- Paste & Load Paragraph Box -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <label class="block text-xs font-semibold text-slate-700">Paste Paragraph Scripture:</label>
                 <textarea id="rawParagraphInput" rows="4" placeholder="Paste full scripture paragraph here..." class="w-full text-sm bg-white border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                <div class="flex justify-between items-center">
-                    <input type="text" id="newDiagramNameInput" placeholder="Passage Title (e.g., Romans 8:28-39)" class="text-xs bg-white border border-slate-200 rounded px-3 py-1.5 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="flex justify-between items-center flex-wrap gap-3">
+                    <input type="text" id="newDiagramNameInput" placeholder="Passage Title (e.g., Romans 8:28-39)" class="text-xs bg-white border border-slate-200 rounded px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <button onclick="createNewDiagramFromInput()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition shadow-sm">
                         <i class="fa-solid fa-plus mr-1.5"></i> Create New Analysis Diagram
                     </button>
@@ -191,68 +191,71 @@
 
     <!-- Application Script -->
     <script>
-        // Multi-Diagram Workspace State
+        // Start completely empty by default
         window.appState = {
-            activeId: 'diag-1',
-            diagrams: {
-                'diag-1': {
-                    name: 'Ephesians 1:3-10',
-                    propositions: [
-                        { id: 1, text: "Blessed be the God and Father of our Lord Jesus Christ, who has blessed us in Christ with every spiritual blessing in the heavenly places, even as he chose us in him before the foundation of the world, that we should be holy and blameless before him." }
-                    ],
-                    brackets: []
-                }
-            }
+            activeId: null,
+            diagrams: {}
         };
 
+        window.activePropositions = [];
+        window.activeBrackets = [];
+        window.selectedColor = '#334155';
         window.nextPropId = 50;
         window.nextBracketId = 200;
 
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFromStorage();
-            populateDiagramDropdown();
-            loadActiveDiagramToMemory();
-            renderAll();
-            
-            window.addEventListener('resize', () => {
-                drawBracketsSvg();
-            });
-        });
-
         function saveToStorage() {
-            // Save active workspace data back into dictionary
-            const active = window.appState.diagrams[window.appState.activeId];
-            if (active) {
-                active.propositions = window.activePropositions;
-                active.brackets = window.activeBrackets;
+            try {
+                if (window.appState.activeId && window.appState.diagrams[window.appState.activeId]) {
+                    const active = window.appState.diagrams[window.appState.activeId];
+                    active.propositions = window.activePropositions || [];
+                    active.brackets = window.activeBrackets || [];
+                }
+                localStorage.setItem('scripture_multidiagram_state', JSON.stringify(window.appState));
+            } catch(e) {
+                console.warn('LocalStorage restricted.', e);
             }
-            localStorage.setItem('scripture_multidiagram_state', JSON.stringify(window.appState));
         }
 
         function loadFromStorage() {
-            const saved = localStorage.getItem('scripture_multidiagram_state');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('scripture_multidiagram_state');
+                if (saved) {
                     const data = JSON.parse(saved);
-                    if (data.diagrams && data.activeId) {
+                    if (data.diagrams) {
                         window.appState = data;
                     }
-                } catch(e) { console.error(e); }
+                }
+            } catch(e) {
+                console.warn('LocalStorage read error:', e);
             }
         }
 
         function loadActiveDiagramToMemory() {
-            const active = window.appState.diagrams[window.appState.activeId] || Object.values(window.appState.diagrams)[0];
-            if (!active) return;
-            window.activePropositions = JSON.parse(JSON.stringify(active.propositions));
-            window.activeBrackets = JSON.parse(JSON.stringify(active.brackets));
-            document.getElementById('activeDiagramTitle').textContent = `Logical Flow Canvas: ${active.name}`;
+            const titleEl = document.getElementById('activeDiagramTitle');
+            
+            if (!window.appState.activeId || !window.appState.diagrams[window.appState.activeId]) {
+                const firstKey = Object.keys(window.appState.diagrams)[0];
+                if (firstKey) {
+                    window.appState.activeId = firstKey;
+                } else {
+                    window.appState.activeId = null;
+                    window.activePropositions = [];
+                    window.activeBrackets = [];
+                    if (titleEl) titleEl.textContent = `Logical Flow Canvas: (No Diagram Loaded)`;
+                    return;
+                }
+            }
+
+            const active = window.appState.diagrams[window.appState.activeId];
+            window.activePropositions = JSON.parse(JSON.stringify(active.propositions || []));
+            window.activeBrackets = JSON.parse(JSON.stringify(active.brackets || []));
+            if (titleEl) titleEl.textContent = `Logical Flow Canvas: ${active.name}`;
         }
 
         function populateDiagramDropdown() {
             const sel = document.getElementById('diagramSelect');
-            sel.innerHTML = '';
+            if (!sel) return;
+            sel.innerHTML = '<option value="">-- Saved Diagrams --</option>';
             
             Object.keys(window.appState.diagrams).forEach(id => {
                 const diag = window.appState.diagrams[id];
@@ -266,33 +269,37 @@
 
         window.switchDiagram = function(id) {
             if (!id || !window.appState.diagrams[id]) return;
-            saveToStorage(); // Save current before switching
+            saveToStorage();
             window.appState.activeId = id;
             loadActiveDiagramToMemory();
             renderAll();
         };
 
         window.saveCurrentDiagram = function() {
+            if (!window.appState.activeId) {
+                alert('No active diagram to save. Please paste a passage in the Splitter tab.');
+                return;
+            }
             saveToStorage();
             alert('Diagram saved successfully!');
         };
 
-        window.saveDiagramAs = function() {
-            const newName = prompt("Enter a name for this new diagram workspace:", "Romans 8 Analysis");
-            if (!newName) return;
+        window.deleteCurrentDiagram = function() {
+            if (!window.appState.activeId || !window.appState.diagrams[window.appState.activeId]) {
+                alert('No active diagram selected to delete.');
+                return;
+            }
 
-            saveToStorage();
-            const newId = 'diag-' + Date.now();
-            window.appState.diagrams[newId] = {
-                name: newName,
-                propositions: JSON.parse(JSON.stringify(window.activePropositions)),
-                brackets: JSON.parse(JSON.stringify(window.activeBrackets))
-            };
-            window.appState.activeId = newId;
-            populateDiagramDropdown();
-            loadActiveDiagramToMemory();
-            renderAll();
-            alert(`Created and saved new workspace: "${newName}"`);
+            const activeName = window.appState.diagrams[window.appState.activeId].name;
+            if (confirm(`Are you sure you want to delete "${activeName}"?`)) {
+                delete window.appState.diagrams[window.appState.activeId];
+                window.appState.activeId = Object.keys(window.appState.diagrams)[0] || null;
+                
+                saveToStorage();
+                populateDiagramDropdown();
+                loadActiveDiagramToMemory();
+                renderAll();
+            }
         };
 
         window.switchTab = function(tab) {
@@ -319,15 +326,16 @@
         window.selectColor = function(color, btn) {
             window.selectedColor = color;
             const container = document.getElementById('colorPickerContainer');
-            Array.from(container.children).forEach(child => {
-                child.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-700', 'ring-indigo-600');
-                child.classList.add('opacity-70');
-            });
+            if (container) {
+                Array.from(container.children).forEach(child => {
+                    child.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-700', 'ring-indigo-600');
+                    child.classList.add('opacity-70');
+                });
+            }
             btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-700');
             btn.classList.remove('opacity-70');
         };
 
-        // Render All Views
         function renderAll() {
             renderDiagram();
             renderSplitter();
@@ -339,11 +347,13 @@
         // --- DIAGRAM RENDERER ---
         function renderDiagram() {
             const container = document.getElementById('propositionsList');
+            if (!container) return;
             container.innerHTML = '';
 
-            if (window.activePropositions.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No propositions added yet. Go to <a href="#" onclick="switchTab('splitter')" class="text-indigo-600 underline">Splitter</a> to add scripture.</div>`;
-                document.getElementById('bracketSvg').innerHTML = '';
+            if (!window.activePropositions || window.activePropositions.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No passage loaded. Switch to <a href="#" onclick="switchTab('splitter')" class="text-indigo-600 underline font-semibold">Splitter</a> to paste scripture.</div>`;
+                const svg = document.getElementById('bracketSvg');
+                if (svg) svg.innerHTML = '';
                 return;
             }
 
@@ -380,6 +390,7 @@
         }
 
         function autoResizeTextarea(el) {
+            if (!el) return;
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
             drawBracketsSvg();
@@ -431,22 +442,24 @@
 
             prevProp.text = (prevProp.text + " " + currentProp.text).trim();
 
-            window.activeBrackets.forEach(bracket => {
-                if (bracket.startId === currentProp.id) bracket.startId = prevProp.id;
-                if (bracket.endId === currentProp.id) bracket.endId = prevProp.id;
-            });
+            if (window.activeBrackets) {
+                window.activeBrackets.forEach(bracket => {
+                    if (bracket.startId === currentProp.id) bracket.startId = prevProp.id;
+                    if (bracket.endId === currentProp.id) bracket.endId = prevProp.id;
+                });
+            }
 
             window.activePropositions.splice(index, 1);
             renderAll();
         };
 
-        // CONNECTED TREE BRACKET DRAWING ALGORITHM
         function drawBracketsSvg() {
             const svg = document.getElementById('bracketSvg');
             const container = document.getElementById('canvasContainer');
+            if (!svg || !container) return;
             svg.innerHTML = '';
 
-            if (!container || window.activePropositions.length === 0) return;
+            if (!window.activePropositions || window.activePropositions.length === 0 || !window.activeBrackets) return;
 
             const containerRect = container.getBoundingClientRect();
             svg.setAttribute('width', container.scrollWidth);
@@ -541,11 +554,14 @@
             });
         }
 
-        // --- SPLITTER RENDERER ---
         function renderSplitter() {
             const list = document.getElementById('splitterPropositionsList');
+            if (!list) return;
             list.innerHTML = '';
-            document.getElementById('propCountBadge').textContent = window.activePropositions.length;
+            
+            if (!window.activePropositions) window.activePropositions = [];
+            const badge = document.getElementById('propCountBadge');
+            if (badge) badge.textContent = window.activePropositions.length;
 
             window.activePropositions.forEach((prop, idx) => {
                 const item = document.createElement('div');
@@ -564,7 +580,10 @@
         window.createNewDiagramFromInput = function() {
             const raw = document.getElementById('rawParagraphInput').value.trim();
             const name = document.getElementById('newDiagramNameInput').value.trim() || "Untitled Passage";
-            if (!raw) return;
+            if (!raw) {
+                alert('Please paste a scripture passage first.');
+                return;
+            }
 
             const newId = 'diag-' + Date.now();
             window.appState.diagrams[newId] = {
@@ -585,31 +604,38 @@
         function updateDropdowns() {
             const startSel = document.getElementById('startPropSelect');
             const endSel = document.getElementById('endPropSelect');
+            if (!startSel || !endSel) return;
             
             startSel.innerHTML = '';
             endSel.innerHTML = '';
 
-            window.activePropositions.forEach((prop, idx) => {
-                const opt1 = document.createElement('option');
-                opt1.value = prop.id;
-                opt1.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
-                startSel.appendChild(opt1);
+            if (window.activePropositions) {
+                window.activePropositions.forEach((prop, idx) => {
+                    const opt1 = document.createElement('option');
+                    opt1.value = prop.id;
+                    opt1.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
+                    startSel.appendChild(opt1);
 
-                const opt2 = document.createElement('option');
-                opt2.value = prop.id;
-                opt2.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
-                endSel.appendChild(opt2);
-            });
+                    const opt2 = document.createElement('option');
+                    opt2.value = prop.id;
+                    opt2.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
+                    endSel.appendChild(opt2);
+                });
 
-            if (window.activePropositions.length > 1) {
-                endSel.selectedIndex = Math.min(1, window.activePropositions.length - 1);
+                if (window.activePropositions.length > 1) {
+                    endSel.selectedIndex = Math.min(1, window.activePropositions.length - 1);
+                }
             }
         }
 
         function renderActiveBracketsList() {
             const list = document.getElementById('activeBracketsList');
+            if (!list) return;
             list.innerHTML = '';
-            document.getElementById('activeBracketsCount').textContent = window.activeBrackets.length;
+            
+            if (!window.activeBrackets) window.activeBrackets = [];
+            const countBadge = document.getElementById('activeBracketsCount');
+            if (countBadge) countBadge.textContent = window.activeBrackets.length;
 
             if (window.activeBrackets.length === 0) {
                 list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No brackets drawn yet.</div>`;
@@ -640,6 +666,7 @@
 
         // --- ACTIONS ---
         window.updatePropText = function(id, newText) {
+            if (!window.activePropositions) return;
             const prop = window.activePropositions.find(p => p.id === id);
             if (prop) {
                 prop.text = newText;
@@ -650,20 +677,29 @@
         };
 
         window.addNewProposition = function() {
+            if (!window.activePropositions) window.activePropositions = [];
             window.activePropositions.push({ id: window.nextPropId++, text: "New proposition line..." });
             renderAll();
         };
 
         window.deleteProposition = function(id) {
+            if (!window.activePropositions) return;
             window.activePropositions = window.activePropositions.filter(p => p.id !== id);
-            window.activeBrackets = window.activeBrackets.filter(b => b.startId !== id && b.endId !== id);
+            if (window.activeBrackets) {
+                window.activeBrackets = window.activeBrackets.filter(b => b.startId !== id && b.endId !== id);
+            }
             renderAll();
         };
 
         window.addBracket = function() {
-            const startId = parseInt(document.getElementById('startPropSelect').value);
-            const endId = parseInt(document.getElementById('endPropSelect').value);
-            const label = document.getElementById('bracketLabelInput').value.trim();
+            const startPropEl = document.getElementById('startPropSelect');
+            const endPropEl = document.getElementById('endPropSelect');
+            if (!startPropEl || !endPropEl) return;
+
+            const startId = parseInt(startPropEl.value);
+            const endId = parseInt(endPropEl.value);
+            const labelInput = document.getElementById('bracketLabelInput');
+            const label = labelInput ? labelInput.value.trim() : '';
 
             if (isNaN(startId) || isNaN(endId)) {
                 alert('Please select valid start and end propositions.');
@@ -678,6 +714,7 @@
                 return;
             }
 
+            if (!window.activeBrackets) window.activeBrackets = [];
             window.activeBrackets.push({
                 id: window.nextBracketId++,
                 startId,
@@ -686,11 +723,12 @@
                 color: window.selectedColor || '#334155'
             });
 
-            document.getElementById('bracketLabelInput').value = '';
+            if (labelInput) labelInput.value = '';
             renderAll();
         };
 
         window.deleteBracket = function(id) {
+            if (!window.activeBrackets) return;
             window.activeBrackets = window.activeBrackets.filter(b => b.id !== id);
             renderAll();
         };
@@ -709,6 +747,11 @@
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
+
+        // Run initial load
+        loadFromStorage();
+        loadActiveDiagramToMemory();
+        populateDiagramDropdown();
     </script>
 </body>
 </html>
