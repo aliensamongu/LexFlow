@@ -45,6 +45,10 @@
                     <select id="diagramSelect" onchange="switchDiagram(this.value)" class="bg-transparent text-indigo-100 text-xs focus:outline-none pr-2">
                         <option value="">-- Saved Diagrams --</option>
                     </select>
+                    <button onclick="copyAccordanceLink()" title="Copy shareable link for Accordance User Notes" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded transition ml-1 flex items-center space-x-1">
+                        <i class="fa-solid fa-link"></i>
+                        <span>Copy Accordance Link</span>
+                    </button>
                     <button onclick="saveCurrentDiagram()" title="Save current progress" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded transition ml-1">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Save
                     </button>
@@ -119,13 +123,23 @@
                             <input type="text" id="bracketLabelInput" placeholder="e.g., Ground, Purpose, Result, Manner..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Bracket Color:</label>
-                            <div class="flex space-x-2" id="colorPickerContainer">
-                                <button type="button" onclick="selectColor('#334155', this)" class="w-6 h-6 rounded-full bg-slate-700 ring-2 ring-offset-2 ring-slate-700 transition" title="Classic Slate Black"></button>
-                                <button type="button" onclick="selectColor('#4f46e5', this)" class="w-6 h-6 rounded-full bg-indigo-600 opacity-70 hover:opacity-100 transition"></button>
-                                <button type="button" onclick="selectColor('#059669', this)" class="w-6 h-6 rounded-full bg-emerald-600 opacity-70 hover:opacity-100 transition"></button>
-                                <button type="button" onclick="selectColor('#d97706', this)" class="w-6 h-6 rounded-full bg-amber-600 opacity-70 hover:opacity-100 transition"></button>
-                                <button type="button" onclick="selectColor('#7c3aed', this)" class="w-6 h-6 rounded-full bg-purple-600 opacity-70 hover:opacity-100 transition"></button>
+                            <label class="block text-xs font-medium text-slate-600 mb-1.5">Bracket Color:</label>
+                            <div class="flex flex-wrap gap-1.5 items-center" id="colorPickerContainer">
+                                <button type="button" onclick="selectColor('#334155', this)" class="w-5 h-5 rounded-full bg-slate-700 ring-2 ring-offset-2 ring-slate-700 transition" title="Slate Black"></button>
+                                <button type="button" onclick="selectColor('#4f46e5', this)" class="w-5 h-5 rounded-full bg-indigo-600 opacity-70 hover:opacity-100 transition" title="Indigo"></button>
+                                <button type="button" onclick="selectColor('#2563eb', this)" class="w-5 h-5 rounded-full bg-blue-600 opacity-70 hover:opacity-100 transition" title="Blue"></button>
+                                <button type="button" onclick="selectColor('#0d9488', this)" class="w-5 h-5 rounded-full bg-teal-600 opacity-70 hover:opacity-100 transition" title="Teal"></button>
+                                <button type="button" onclick="selectColor('#059669', this)" class="w-5 h-5 rounded-full bg-emerald-600 opacity-70 hover:opacity-100 transition" title="Emerald"></button>
+                                <button type="button" onclick="selectColor('#16a34a', this)" class="w-5 h-5 rounded-full bg-green-600 opacity-70 hover:opacity-100 transition" title="Green"></button>
+                                <button type="button" onclick="selectColor('#d97706', this)" class="w-5 h-5 rounded-full bg-amber-600 opacity-70 hover:opacity-100 transition" title="Amber"></button>
+                                <button type="button" onclick="selectColor('#dc2626', this)" class="w-5 h-5 rounded-full bg-red-600 opacity-70 hover:opacity-100 transition" title="Red"></button>
+                                <button type="button" onclick="selectColor('#7c3aed', this)" class="w-5 h-5 rounded-full bg-purple-600 opacity-70 hover:opacity-100 transition" title="Purple"></button>
+                                <button type="button" onclick="selectColor('#db2777', this)" class="w-5 h-5 rounded-full bg-pink-600 opacity-70 hover:opacity-100 transition" title="Pink"></button>
+                                
+                                <label class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition ml-1" title="Custom Color Picker">
+                                    <input type="color" id="customColorInput" onchange="selectColor(this.value, this)" class="w-0 h-0 opacity-0 cursor-pointer">
+                                    <i class="fa-solid fa-palette text-[10px] text-slate-500"></i>
+                                </label>
                             </div>
                         </div>
                         <button onclick="addBracket()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition shadow-sm text-xs flex items-center justify-center space-x-1.5">
@@ -191,7 +205,6 @@
 
     <!-- Application Script -->
     <script>
-        // Start completely empty by default
         window.appState = {
             activeId: null,
             diagrams: {}
@@ -211,24 +224,53 @@
                     active.brackets = window.activeBrackets || [];
                 }
                 localStorage.setItem('scripture_multidiagram_state', JSON.stringify(window.appState));
-            } catch(e) {
-                console.warn('LocalStorage restricted.', e);
-            }
+            } catch(e) { console.warn('LocalStorage restricted', e); }
+            
+            updateUrlHash();
         }
 
         function loadFromStorage() {
+            if (window.location.hash && window.location.hash.startsWith('#data=')) {
+                try {
+                    const rawData = decodeURIComponent(window.location.hash.replace('#data=', ''));
+                    const parsed = JSON.parse(rawData);
+                    if (parsed && parsed.diagrams) {
+                        window.appState = parsed;
+                        return;
+                    }
+                } catch(e) { console.error('URL Hash parse error:', e); }
+            }
+
             try {
                 const saved = localStorage.getItem('scripture_multidiagram_state');
                 if (saved) {
                     const data = JSON.parse(saved);
-                    if (data.diagrams) {
-                        window.appState = data;
-                    }
+                    if (data.diagrams) window.appState = data;
                 }
-            } catch(e) {
-                console.warn('LocalStorage read error:', e);
-            }
+            } catch(e) { console.warn('LocalStorage read restricted', e); }
         }
+
+        function updateUrlHash() {
+            try {
+                const encoded = encodeURIComponent(JSON.stringify(window.appState));
+                window.history.replaceState(null, '', '#' + 'data=' + encoded);
+            } catch(e) { console.warn('History state restricted', e); }
+        }
+
+        window.copyAccordanceLink = function() {
+            saveToStorage();
+            const fullUrl = window.location.href;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    alert('Accordance Share Link Copied! Paste this link into your Accordance User Notes or Bookmarks to restore this diagram anytime.');
+                }).catch(() => {
+                    prompt('Copy this link to paste into Accordance User Notes:', fullUrl);
+                });
+            } else {
+                prompt('Copy this link to paste into Accordance User Notes:', fullUrl);
+            }
+        };
 
         function loadActiveDiagramToMemory() {
             const titleEl = document.getElementById('activeDiagramTitle');
@@ -281,7 +323,7 @@
                 return;
             }
             saveToStorage();
-            alert('Diagram saved successfully!');
+            alert('Diagram saved! Click "Copy Accordance Link" if you want to paste the permanent link into Accordance User Notes.');
         };
 
         window.deleteCurrentDiagram = function() {
@@ -328,12 +370,16 @@
             const container = document.getElementById('colorPickerContainer');
             if (container) {
                 Array.from(container.children).forEach(child => {
-                    child.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-700', 'ring-indigo-600');
-                    child.classList.add('opacity-70');
+                    if (child.tagName === 'BUTTON') {
+                        child.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-700', 'ring-indigo-600');
+                        child.classList.add('opacity-70');
+                    }
                 });
             }
-            btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-700');
-            btn.classList.remove('opacity-70');
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-700');
+                btn.classList.remove('opacity-70');
+            }
         };
 
         function renderAll() {
