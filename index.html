@@ -1,803 +1,902 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scripture Bracket & Logical Flow Analyzer</title>
+    <title>ScriptureGram - Vector Syntax Diagramming</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        panelBg: '#111827',
+                        cardBg: '#1f2937',
+                        lightBg: '#f8fafc',
+                        lightPanel: '#ffffff',
+                        lightCard: '#f1f5f9'
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .mono-font { font-family: 'JetBrains Mono', monospace; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         
-        .prop-textarea {
-            resize: none;
-            overflow: hidden;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            line-height: 1.5;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow: hidden; 
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Dark Theme Variables */
+        html.dark body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+        html.dark .canvas-grid {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* Light Theme Variables */
+        html:not(.dark) body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        html:not(.dark) .canvas-grid {
+            background-image: radial-gradient(rgba(15, 23, 42, 0.12) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        .node-handle {
+            cursor: pointer;
+            touch-action: none;
+        }
+        .node-handle:hover {
+            fill: #818cf8;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="h-screen flex flex-col select-none">
 
-    <!-- Header -->
-    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-700 p-2 rounded-lg text-indigo-200">
-                    <i class="fa-solid fa-brackets-curly text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold tracking-tight">Scripture Logical Flow & Connected Brackets</h1>
-                    <p class="text-xs text-indigo-300">Hierarchical Tree Brackets & Syntactical Analysis</p>
-                </div>
+    <!-- Top App Header -->
+    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-2.5 flex justify-between items-center z-50 transition-colors">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-pen-nib text-lg"></i>
             </div>
-            
-            <!-- Workspace Controls & Navigation -->
-            <div class="flex items-center space-x-3 flex-wrap">
-                <div class="flex items-center bg-indigo-800 rounded-lg border border-indigo-700 px-2 py-1">
-                    <select id="diagramSelect" onchange="switchDiagram(this.value)" class="bg-transparent text-indigo-100 text-xs focus:outline-none pr-2">
-                        <option value="">-- Saved Diagrams --</option>
-                    </select>
-                    <button onclick="copyAccordanceLink()" title="Copy shareable link for Accordance User Notes" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded transition ml-1 flex items-center space-x-1">
-                        <i class="fa-solid fa-link"></i>
-                        <span>Copy Accordance Link</span>
-                    </button>
-                    <button onclick="saveCurrentDiagram()" title="Save current progress" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded transition ml-1">
-                        <i class="fa-solid fa-floppy-disk mr-1"></i> Save
-                    </button>
-                    <button onclick="deleteCurrentDiagram()" title="Delete active diagram" class="bg-rose-700 hover:bg-rose-600 text-white text-xs px-2 py-1 rounded transition ml-1">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
+            <div>
+                <h1 class="text-base font-bold tracking-tight text-gray-900 dark:text-white">ScriptureGram</h1>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">Reed-Kellogg Pure Vector Diagramming</p>
+            </div>
+        </div>
 
-                <button onclick="switchTab('diagram')" id="tabBtnDiagram" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-700 text-white transition shadow-sm">
-                    <i class="fa-solid fa-diagram-project mr-1.5"></i> Diagram
-                </button>
-                <button onclick="switchTab('splitter')" id="tabBtnSplitter" class="px-3 py-1.5 text-sm font-medium rounded-lg text-indigo-200 hover:bg-indigo-800 transition">
-                    <i class="fa-solid fa-scissors mr-1.5"></i> Splitter
-                </button>
-                <button onclick="exportData()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition shadow-sm">
-                    <i class="fa-solid fa-download mr-1.5"></i> Export
-                </button>
-            </div>
+        <!-- Navigation Tabs -->
+        <div class="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800 space-x-1">
+            <button onclick="switchModule('textflow')" id="tabBtnTextFlow" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow">
+                <i class="fa-solid fa-align-left mr-1.5"></i> Text Flow Workarea
+            </button>
+            <button onclick="switchModule('diagram')" id="tabBtnDiagram" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                <i class="fa-solid fa-project-diagram mr-1.5"></i> Syntax Diagram Module
+            </button>
+        </div>
+
+        <!-- Utility & Theme Actions -->
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
+                <i id="themeIcon" class="fa-solid fa-moon"></i>
+                <span id="themeLabel">Dark</span>
+            </button>
+            <button onclick="detachSelected()" class="bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow">
+                <i class="fa-solid fa-unlink mr-1"></i> Detach / Unbind
+            </button>
+            <button onclick="exportDiagram()" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition">
+                <i class="fa-solid fa-download mr-1"></i> Export
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 gap-6">
-
-        <!-- VIEW 1: DIAGRAM & BRACKETS -->
-        <div id="viewDiagram" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- Left: Canvas / Visualizer (8 Cols) -->
-            <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                        <h2 id="activeDiagramTitle" class="font-semibold text-slate-800">Logical Flow Canvas: (No Diagram Loaded)</h2>
-                    </div>
-                    <span class="text-xs text-slate-400">Press <kbd class="px-1 py-0.5 bg-slate-200 rounded font-mono">Enter</kbd> to split • <kbd class="px-1 py-0.5 bg-slate-200 rounded font-mono">Backspace</kbd> to merge</span>
-                </div>
-
-                <div class="p-6 relative flex-1 min-h-[500px] overflow-x-auto custom-scrollbar" id="canvasContainer">
-                    <!-- SVG Overlay for Connected Brackets -->
-                    <svg id="bracketSvg" class="absolute top-0 left-0 pointer-events-none" style="width: 100%; height: 100%; min-width: 800px; z-index: 10;"></svg>
-
-                    <!-- Propositions List Render Area -->
-                    <div id="propositionsList" class="relative z-0 pl-40 space-y-3 min-w-[700px]">
-                        <!-- Dynamically populated propositions -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Controls & Active Brackets (4 Cols) -->
-            <div class="lg:col-span-4 flex flex-col space-y-6">
-                
-                <!-- Add Bracket Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="bg-indigo-50 text-indigo-600 p-1.5 rounded-md text-sm">
-                            <i class="fa-solid fa-circle-plus"></i>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm">Connect Any Points (Hierarchical Bracket)</h3>
-                    </div>
-
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Start Proposition:</label>
-                            <select id="startPropSelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">End Proposition:</label>
-                            <select id="endPropSelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Relationship / Discourse Label:</label>
-                            <input type="text" id="bracketLabelInput" placeholder="e.g., Ground, Purpose, Result, Manner..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1.5">Bracket Color:</label>
-                            <div class="flex flex-wrap gap-1.5 items-center" id="colorPickerContainer">
-                                <button type="button" onclick="selectColor('#334155', this)" class="w-5 h-5 rounded-full bg-slate-700 ring-2 ring-offset-2 ring-slate-700 transition" title="Slate Black"></button>
-                                <button type="button" onclick="selectColor('#4f46e5', this)" class="w-5 h-5 rounded-full bg-indigo-600 opacity-70 hover:opacity-100 transition" title="Indigo"></button>
-                                <button type="button" onclick="selectColor('#2563eb', this)" class="w-5 h-5 rounded-full bg-blue-600 opacity-70 hover:opacity-100 transition" title="Blue"></button>
-                                <button type="button" onclick="selectColor('#0d9488', this)" class="w-5 h-5 rounded-full bg-teal-600 opacity-70 hover:opacity-100 transition" title="Teal"></button>
-                                <button type="button" onclick="selectColor('#059669', this)" class="w-5 h-5 rounded-full bg-emerald-600 opacity-70 hover:opacity-100 transition" title="Emerald"></button>
-                                <button type="button" onclick="selectColor('#16a34a', this)" class="w-5 h-5 rounded-full bg-green-600 opacity-70 hover:opacity-100 transition" title="Green"></button>
-                                <button type="button" onclick="selectColor('#d97706', this)" class="w-5 h-5 rounded-full bg-amber-600 opacity-70 hover:opacity-100 transition" title="Amber"></button>
-                                <button type="button" onclick="selectColor('#dc2626', this)" class="w-5 h-5 rounded-full bg-red-600 opacity-70 hover:opacity-100 transition" title="Red"></button>
-                                <button type="button" onclick="selectColor('#7c3aed', this)" class="w-5 h-5 rounded-full bg-purple-600 opacity-70 hover:opacity-100 transition" title="Purple"></button>
-                                <button type="button" onclick="selectColor('#db2777', this)" class="w-5 h-5 rounded-full bg-pink-600 opacity-70 hover:opacity-100 transition" title="Pink"></button>
-                                
-                                <label class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition ml-1" title="Custom Color Picker">
-                                    <input type="color" id="customColorInput" onchange="selectColor(this.value, this)" class="w-0 h-0 opacity-0 cursor-pointer">
-                                    <i class="fa-solid fa-palette text-[10px] text-slate-500"></i>
-                                </label>
-                            </div>
-                        </div>
-                        <button onclick="addBracket()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition shadow-sm text-xs flex items-center justify-center space-x-1.5">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>Draw Logical Bracket</span>
+    <!-- MODULE 1: TEXT FLOW WORKAREA -->
+    <main id="moduleTextFlow" class="flex-1 flex overflow-hidden">
+        <div class="max-w-5xl w-full mx-auto p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+            <div class="bg-white dark:bg-panelBg p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 shadow-sm transition-colors">
+                <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200">Passage Paste Area</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Paste your full scripture passage below. Press <kbd class="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded text-gray-700 dark:text-gray-300">Enter</kbd> anywhere inside a proposition box to split it into a new line!</p>
+                <textarea id="rawParagraphInput" rows="3" placeholder="Paste full scripture passage here..." class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500 resize-y transition-colors"></textarea>
+                <div class="flex justify-between items-center">
+                    <input type="text" id="passageTitleInput" placeholder="Passage Title (e.g., John 1:1)" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200 w-64 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="space-x-2">
+                        <button onclick="addTextFlowProposition()" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3.5 py-2 rounded-xl transition">
+                            + Empty Proposition
+                        </button>
+                        <button onclick="loadPassageToTextFlow()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-xl transition shadow">
+                            Load Passage Paragraph
                         </button>
                     </div>
                 </div>
-
-                <!-- Active Brackets List -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col">
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-list-check text-indigo-600 text-sm"></i>
-                            <h3 class="font-semibold text-slate-800 text-sm">Active Brackets</h3>
-                        </div>
-                        <span id="activeBracketsCount" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
-                    </div>
-
-                    <div id="activeBracketsList" class="space-y-2.5 overflow-y-auto max-h-[300px] custom-scrollbar flex-1 pr-1">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
             </div>
+            
+            <!-- Compact document view list -->
+            <div id="textFlowList" class="space-y-1.5 pb-10"></div>
         </div>
-
-        <!-- VIEW 2: PARAGRAPH PASSAGE SPLITTER -->
-        <div id="viewSplitter" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col space-y-6">
-            <div>
-                <h2 class="text-base font-bold text-slate-800">Paragraph Scripture Splitter</h2>
-                <p class="text-xs text-slate-500">Paste your passage as a continuous paragraph below to start a new analysis workspace.</p>
-            </div>
-
-            <!-- Paste & Load Paragraph Box -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                <label class="block text-xs font-semibold text-slate-700">Paste Paragraph Scripture:</label>
-                <textarea id="rawParagraphInput" rows="4" placeholder="Paste full scripture paragraph here..." class="w-full text-sm bg-white border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                <div class="flex justify-between items-center flex-wrap gap-3">
-                    <input type="text" id="newDiagramNameInput" placeholder="Passage Title (e.g., Romans 8:28-39)" class="text-xs bg-white border border-slate-200 rounded px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="createNewDiagramFromInput()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition shadow-sm">
-                        <i class="fa-solid fa-plus mr-1.5"></i> Create New Analysis Diagram
-                    </button>
-                </div>
-            </div>
-
-            <!-- Discrete Proposition List -->
-            <div class="border-t border-slate-100 pt-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-800">Current Propositions (<span id="propCountBadge">0</span>)</h3>
-                    <button onclick="addNewProposition()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition">
-                        <i class="fa-solid fa-plus mr-1"></i> Add Blank Line
-                    </button>
-                </div>
-
-                <div id="splitterPropositionsList" class="space-y-3 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-        </div>
-
     </main>
 
-    <!-- Application Script -->
+    <!-- MODULE 2: SYNTAX DIAGRAM MODULE (PURE SVG) -->
+    <main id="moduleDiagram" class="flex-1 hidden flex overflow-hidden relative">
+        <aside class="w-80 bg-white dark:bg-panelBg border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 transition-colors">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+                <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">Word Bank</h3>
+                <div class="flex space-x-2 mb-2">
+                    <input type="text" id="newWordInput" placeholder="Add custom word..." class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
+                    <button onclick="addWordToBank()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Add</button>
+                </div>
+                <div id="wordBankContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-800/80"></div>
+            </div>
+
+            <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
+                <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-3">Reed-Kellogg Vector Shelves</h3>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="spawnShape('subject-verb')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Subject / Verb</div>
+                        <div class="text-[10px] text-gray-500">Crosses baseline</div>
+                    </button>
+                    <button onclick="spawnShape('direct-object')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Direct Object</div>
+                        <div class="text-[10px] text-gray-500">Sits on baseline</div>
+                    </button>
+                    <button onclick="spawnShape('predicate-nom')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Predicate Nom</div>
+                        <div class="text-[10px] text-gray-500">Slanted backslash</div>
+                    </button>
+                    <button onclick="spawnShape('modifier-slant')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Slanted Modifier</div>
+                        <div class="text-[10px] text-gray-500">Slanted line for words</div>
+                    </button>
+                    <button onclick="spawnShape('adverb-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Adverb Shelf</div>
+                        <div class="text-[10px] text-gray-500">Bent angle shelf</div>
+                    </button>
+                    <button onclick="spawnShape('prepositional-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Prep Phrase</div>
+                        <div class="text-[10px] text-gray-500">Slant + Shelf</div>
+                    </button>
+                    <button onclick="spawnShape('compound-rocket')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Compound Rocket</div>
+                        <div class="text-[10px] text-gray-500">Parallel shelves</div>
+                    </button>
+                    <button onclick="spawnShape('vertical-stilt')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Vertical Stilt</div>
+                        <div class="text-[10px] text-gray-500">Clause pedestal</div>
+                    </button>
+                    <button onclick="spawnShape('participle-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Participle Shelf</div>
+                        <div class="text-[10px] text-gray-500">Step curve modifier</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-200 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
+                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Cmd/Ctrl + Drag Word</kbd> Rotate word</div>
+                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Click & Drag Lines</kbd> Move shape + attached words</div>
+                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Delete Key</kbd> Remove selected item</div>
+            </div>
+        </aside>
+
+        <!-- Pure SVG Infinite Canvas -->
+        <div id="diagramCanvas" class="flex-1 relative canvas-grid overflow-hidden cursor-grab active:cursor-grabbing">
+            <svg id="svgCanvas" class="absolute inset-0 w-full h-full" style="min-width: 6000px; min-height: 6000px;"></svg>
+        </div>
+    </main>
+
+    <!-- Application Controller Script -->
     <script>
-        window.appState = {
-            activeId: null,
-            diagrams: {}
+        window.scriptureGramData = {
+            passageTitle: "",
+            propositions: [],
+            wordsBank: [],
+            elements: []
         };
 
-        window.activePropositions = [];
-        window.activeBrackets = [];
-        window.selectedColor = '#334155';
-        window.nextPropId = 50;
-        window.nextBracketId = 200;
+        const relationshipOptions = [
+            "Independent / Main Clause",
+            "Ground / Cause (because, for)",
+            "Purpose (in order that, so that)",
+            "Result (so that, with the result that)",
+            "Condition (if)",
+            "Concession (although, even if)",
+            "Temporal (when, while, after)",
+            "Means / Manner (by, in that)",
+            "Substantival / Content (that)",
+            "Adjectival / Relative (who, which)",
+            "Apposition / Explanation",
+            "Inference / Continuation (therefore)",
+            "Custom Relationship..."
+        ];
 
-        function saveToStorage() {
-            try {
-                if (window.appState.activeId && window.appState.diagrams[window.appState.activeId]) {
-                    const active = window.appState.diagrams[window.appState.activeId];
-                    active.propositions = window.activePropositions || [];
-                    active.brackets = window.activeBrackets || [];
-                }
-                localStorage.setItem('scripture_multidiagram_state', JSON.stringify(window.appState));
-            } catch(e) { console.warn('LocalStorage restricted', e); }
-            
-            updateUrlHash();
-        }
+        let activeSelectedId = null;
+        let isPanningCanvas = false, panStartX = 0, panStartY = 0, canvasPanX = 0, canvasPanY = 0;
 
-        function loadFromStorage() {
-            if (window.location.hash && window.location.hash.startsWith('#data=')) {
-                try {
-                    const rawData = decodeURIComponent(window.location.hash.replace('#data=', ''));
-                    const parsed = JSON.parse(rawData);
-                    if (parsed && parsed.diagrams) {
-                        window.appState = parsed;
-                        return;
-                    }
-                } catch(e) { console.error('URL Hash parse error:', e); }
-            }
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            const label = document.getElementById('themeLabel');
 
-            try {
-                const saved = localStorage.getItem('scripture_multidiagram_state');
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    if (data.diagrams) window.appState = data;
-                }
-            } catch(e) { console.warn('LocalStorage read restricted', e); }
-        }
-
-        function updateUrlHash() {
-            try {
-                const encoded = encodeURIComponent(JSON.stringify(window.appState));
-                window.history.replaceState(null, '', '#' + 'data=' + encoded);
-            } catch(e) { console.warn('History state restricted', e); }
-        }
-
-        window.copyAccordanceLink = function() {
-            saveToStorage();
-            const fullUrl = window.location.href;
-            
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(fullUrl).then(() => {
-                    alert('Accordance Share Link Copied! Paste this link into your Accordance User Notes or Bookmarks to restore this diagram anytime.');
-                }).catch(() => {
-                    prompt('Copy this link to paste into Accordance User Notes:', fullUrl);
-                });
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-sun text-amber-500';
+                label.textContent = 'Light';
             } else {
-                prompt('Copy this link to paste into Accordance User Notes:', fullUrl);
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-moon text-indigo-400';
+                label.textContent = 'Dark';
             }
-        };
-
-        function loadActiveDiagramToMemory() {
-            const titleEl = document.getElementById('activeDiagramTitle');
-            
-            if (!window.appState.activeId || !window.appState.diagrams[window.appState.activeId]) {
-                const firstKey = Object.keys(window.appState.diagrams)[0];
-                if (firstKey) {
-                    window.appState.activeId = firstKey;
-                } else {
-                    window.appState.activeId = null;
-                    window.activePropositions = [];
-                    window.activeBrackets = [];
-                    if (titleEl) titleEl.textContent = `Logical Flow Canvas: (No Diagram Loaded)`;
-                    return;
-                }
-            }
-
-            const active = window.appState.diagrams[window.appState.activeId];
-            window.activePropositions = JSON.parse(JSON.stringify(active.propositions || []));
-            window.activeBrackets = JSON.parse(JSON.stringify(active.brackets || []));
-            if (titleEl) titleEl.textContent = `Logical Flow Canvas: ${active.name}`;
+            renderCanvas();
         }
 
-        function populateDiagramDropdown() {
-            const sel = document.getElementById('diagramSelect');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">-- Saved Diagrams --</option>';
-            
-            Object.keys(window.appState.diagrams).forEach(id => {
-                const diag = window.appState.diagrams[id];
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = diag.name;
-                if (id === window.appState.activeId) opt.selected = true;
-                sel.appendChild(opt);
-            });
-        }
+        function switchModule(mod) {
+            const tf = document.getElementById('moduleTextFlow');
+            const dg = document.getElementById('moduleDiagram');
+            const btnTf = document.getElementById('tabBtnTextFlow');
+            const btnDg = document.getElementById('tabBtnDiagram');
 
-        window.switchDiagram = function(id) {
-            if (!id || !window.appState.diagrams[id]) return;
-            saveToStorage();
-            window.appState.activeId = id;
-            loadActiveDiagramToMemory();
-            renderAll();
-        };
-
-        window.saveCurrentDiagram = function() {
-            if (!window.appState.activeId) {
-                alert('No active diagram to save. Please paste a passage in the Splitter tab.');
-                return;
-            }
-            saveToStorage();
-            alert('Diagram saved! Click "Copy Accordance Link" if you want to paste the permanent link into Accordance User Notes.');
-        };
-
-        window.deleteCurrentDiagram = function() {
-            if (!window.appState.activeId || !window.appState.diagrams[window.appState.activeId]) {
-                alert('No active diagram selected to delete.');
-                return;
-            }
-
-            const activeName = window.appState.diagrams[window.appState.activeId].name;
-            if (confirm(`Are you sure you want to delete "${activeName}"?`)) {
-                delete window.appState.diagrams[window.appState.activeId];
-                window.appState.activeId = Object.keys(window.appState.diagrams)[0] || null;
-                
-                saveToStorage();
-                populateDiagramDropdown();
-                loadActiveDiagramToMemory();
-                renderAll();
-            }
-        };
-
-        window.switchTab = function(tab) {
-            const viewDiagram = document.getElementById('viewDiagram');
-            const viewSplitter = document.getElementById('viewSplitter');
-            const btnDiag = document.getElementById('tabBtnDiagram');
-            const btnSplit = document.getElementById('tabBtnSplitter');
-
-            if (tab === 'diagram') {
-                viewDiagram.classList.remove('hidden');
-                viewSplitter.classList.add('hidden');
-                btnDiag.className = "px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-700 text-white transition shadow-sm";
-                btnSplit.className = "px-3 py-1.5 text-sm font-medium rounded-lg text-indigo-200 hover:bg-indigo-800 transition";
-                renderDiagram();
+            if (mod === 'textflow') {
+                tf.classList.remove('hidden');
+                dg.classList.add('hidden');
+                btnTf.className = "px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
+                btnDg.className = "px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
+                renderTextFlow();
             } else {
-                viewDiagram.classList.add('hidden');
-                viewSplitter.classList.remove('hidden');
-                btnSplit.className = "px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-700 text-white transition shadow-sm";
-                btnDiag.className = "px-3 py-1.5 text-sm font-medium rounded-lg text-indigo-200 hover:bg-indigo-800 transition";
-                renderSplitter();
+                tf.classList.add('hidden');
+                dg.classList.remove('hidden');
+                btnDg.className = "px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
+                btnTf.className = "px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
+                renderWordBank();
+                renderCanvas();
             }
-        };
-
-        window.selectColor = function(color, btn) {
-            window.selectedColor = color;
-            const container = document.getElementById('colorPickerContainer');
-            if (container) {
-                Array.from(container.children).forEach(child => {
-                    if (child.tagName === 'BUTTON') {
-                        child.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-700', 'ring-indigo-600');
-                        child.classList.add('opacity-70');
-                    }
-                });
-            }
-            if (btn && btn.tagName === 'BUTTON') {
-                btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-700');
-                btn.classList.remove('opacity-70');
-            }
-        };
-
-        function renderAll() {
-            renderDiagram();
-            renderSplitter();
-            updateDropdowns();
-            renderActiveBracketsList();
-            saveToStorage();
         }
 
-        // --- DIAGRAM RENDERER ---
-        function renderDiagram() {
-            const container = document.getElementById('propositionsList');
-            if (!container) return;
+        // --- COMPACT TEXT FLOW WORKAREA ---
+        function renderTextFlow() {
+            const container = document.getElementById('textFlowList');
             container.innerHTML = '';
-
-            if (!window.activePropositions || window.activePropositions.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No passage loaded. Switch to <a href="#" onclick="switchTab('splitter')" class="text-indigo-600 underline font-semibold">Splitter</a> to paste scripture.</div>`;
-                const svg = document.getElementById('bracketSvg');
-                if (svg) svg.innerHTML = '';
+            if (window.scriptureGramData.propositions.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 dark:text-gray-500 text-xs">No propositions loaded yet. Paste a passage above and click "Load Passage Paragraph".</div>`;
                 return;
             }
+            window.scriptureGramData.propositions.forEach((prop, idx) => {
+                const indentPx = (prop.indentLevel || 0) * 32;
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-panelBg/90 border border-gray-200 dark:border-gray-800/90 rounded-xl px-3 py-2 flex flex-col space-y-1.5 shadow-sm transition-all hover:border-gray-300 dark:hover:border-gray-700/80";
+                card.style.marginLeft = `${indentPx}px`;
 
-            window.activePropositions.forEach((prop, idx) => {
-                const div = document.createElement('div');
-                div.className = "flex items-start space-x-3 group relative py-1 px-2 rounded hover:bg-slate-50 transition";
-                div.id = `prop-row-${prop.id}`;
-                
-                div.innerHTML = `
-                    <span class="mono-font text-xs font-semibold text-slate-400 w-6 text-right select-none pt-1.5">${idx + 1}</span>
-                    <textarea id="prop-input-${prop.id}"
-                           rows="1"
-                           onkeydown="handlePropKeyDown(event, ${prop.id})"
-                           oninput="autoResizeTextarea(this); updatePropText(${prop.id}, this.value)"
-                           class="prop-textarea flex-1 text-slate-800 text-sm font-normal bg-transparent border border-transparent focus:border-indigo-200 focus:bg-white focus:ring-1 focus:ring-indigo-300 rounded px-2 py-1 transition outline-none">${escapeHtml(prop.text)}</textarea>
-                    <div class="opacity-0 group-hover:opacity-100 flex items-center space-x-1 pt-1 transition">
-                        ${idx > 0 ? `<button onclick="mergeUp(${prop.id})" title="Merge into line above" class="text-slate-400 hover:text-indigo-600 text-xs px-1.5 py-1 transition">
-                            <i class="fa-solid fa-turn-up"></i>
-                        </button>` : ''}
-                        <button onclick="deleteProposition(${prop.id})" title="Delete proposition" class="text-slate-400 hover:text-rose-600 text-xs px-1.5 py-1 transition">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                let selectOptionsHtml = `<option value="">-- Set Relationship --</option>`;
+                relationshipOptions.forEach(opt => {
+                    const selected = (prop.relationship === opt) ? 'selected' : '';
+                    selectOptionsHtml += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+                });
+
+                const relBadge = prop.relationship ? `<span class="text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded"><i class="fa-solid fa-code-branch text-indigo-500 dark:text-indigo-400 mr-1"></i>${escapeHtml(prop.relationship)}</span>` : '';
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between flex-wrap gap-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="mono-font text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">P${idx + 1}</span>${relBadge}
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <select onchange="updatePropRelationship(${prop.id}, this.value)" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-[11px] rounded px-2 py-0.5 focus:outline-none focus:border-indigo-500">
+                                ${selectOptionsHtml}
+                            </select>
+                            <button onclick="indentProp(${prop.id}, 1)" title="Indent Right" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-[11px] transition border border-gray-200 dark:border-transparent"><i class="fa-solid fa-indent mr-1"></i>Indent</button>
+                            <button onclick="indentProp(${prop.id}, -1)" title="Outdent Left" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-[11px] transition border border-gray-200 dark:border-transparent"><i class="fa-solid fa-outdent mr-1"></i>Outdent</button>
+                            <button onclick="deleteTextFlowProp(${prop.id})" class="text-gray-400 hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400 px-1.5 py-0.5 rounded transition text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </div>
+                    <textarea id="propText-${prop.id}" rows="1" onkeydown="handlePropKeyDown(event, ${prop.id})" oninput="autoResizeTextarea(this); updateTextFlowProp(${prop.id}, this.value)" placeholder="Enter proposition text..." class="w-full bg-gray-50 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800/80 rounded-lg p-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-indigo-500 overflow-hidden resize-none leading-relaxed transition-colors">${escapeHtml(prop.text)}</textarea>
                 `;
-                container.appendChild(div);
+                container.appendChild(card);
 
                 setTimeout(() => {
-                    const el = document.getElementById(`prop-input-${prop.id}`);
-                    if (el) autoResizeTextarea(el);
+                    const ta = document.getElementById(`propText-${prop.id}`);
+                    if (ta) autoResizeTextarea(ta);
                 }, 0);
             });
-
-            setTimeout(drawBracketsSvg, 60);
         }
 
-        function autoResizeTextarea(el) {
-            if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
-            drawBracketsSvg();
+        function autoResizeTextarea(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
         }
 
-        window.handlePropKeyDown = function(event, propId) {
-            const inputEl = document.getElementById(`prop-input-${propId}`);
-            if (!inputEl) return;
+        function updatePropRelationship(id, val) {
+            const p = window.scriptureGramData.propositions.find(x => x.id === id);
+            if (p) {
+                if (val === "Custom Relationship...") {
+                    const customRel = prompt("Enter custom relationship label:");
+                    if (customRel) p.relationship = customRel.trim();
+                    else p.relationship = "";
+                } else {
+                    p.relationship = val;
+                }
+                renderTextFlow();
+            }
+        }
 
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const selStart = inputEl.selectionStart;
-                const fullText = inputEl.value;
-                const firstPart = fullText.substring(0, selStart).trim();
-                const secondPart = fullText.substring(selStart).trim();
+        function handlePropKeyDown(e, propId) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const textarea = e.target;
+                const cursorPos = textarea.selectionStart;
+                const fullText = textarea.value;
 
-                const index = window.activePropositions.findIndex(p => p.id === propId);
-                if (index !== -1) {
-                    window.activePropositions[index].text = firstPart;
-                    const newProp = { id: window.nextPropId++, text: secondPart || "New proposition..." };
-                    window.activePropositions.splice(index + 1, 0, newProp);
-                    renderAll();
+                const textBefore = fullText.substring(0, cursorPos).trim();
+                const textAfter = fullText.substring(cursorPos).trim();
+
+                const propIndex = window.scriptureGramData.propositions.findIndex(x => x.id === propId);
+                if (propIndex !== -1) {
+                    window.scriptureGramData.propositions[propIndex].text = textBefore;
+
+                    const newProp = {
+                        id: Date.now(),
+                        text: textAfter,
+                        indentLevel: 0,
+                        relationship: ""
+                    };
+
+                    window.scriptureGramData.propositions.splice(propIndex + 1, 0, newProp);
+
+                    renderTextFlow();
 
                     setTimeout(() => {
-                        const newEl = document.getElementById(`prop-input-${newProp.id}`);
-                        if (newEl) {
-                            newEl.focus();
-                            newEl.setSelectionRange(0, 0);
+                        const newTextarea = document.getElementById(`propText-${newProp.id}`);
+                        if (newTextarea) {
+                            newTextarea.focus();
+                            newTextarea.setSelectionRange(0, 0);
                         }
                     }, 50);
                 }
-            } else if (event.key === 'Backspace') {
-                if (inputEl.selectionStart === 0 && inputEl.selectionEnd === 0) {
-                    const index = window.activePropositions.findIndex(p => p.id === propId);
-                    if (index > 0) {
-                        event.preventDefault();
-                        mergeUp(propId);
-                    }
+            }
+        }
+
+        function loadPassageToTextFlow() {
+            const raw = document.getElementById('rawParagraphInput').value.trim();
+            const title = document.getElementById('passageTitleInput').value.trim();
+            if (!raw) return alert('Please paste a scripture passage first.');
+
+            if (title) window.scriptureGramData.passageTitle = title;
+            
+            window.scriptureGramData.propositions = [{
+                id: Date.now(),
+                text: raw,
+                indentLevel: 0,
+                relationship: "Independent / Main Clause"
+            }];
+
+            const words = raw.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,"").split(/\s+/);
+            words.forEach(w => {
+                if (w && !window.scriptureGramData.wordsBank.includes(w)) {
+                    window.scriptureGramData.wordsBank.push(w);
                 }
+            });
+
+            document.getElementById('rawParagraphInput').value = '';
+            renderTextFlow();
+        }
+
+        function addTextFlowProposition() {
+            window.scriptureGramData.propositions.push({
+                id: Date.now(),
+                text: "",
+                indentLevel: 0,
+                relationship: ""
+            });
+            renderTextFlow();
+        }
+
+        function indentProp(id, delta) {
+            const p = window.scriptureGramData.propositions.find(x => x.id === id);
+            if (p) {
+                p.indentLevel = Math.max(0, (p.indentLevel || 0) + delta);
+                renderTextFlow();
             }
-        };
+        }
 
-        window.mergeUp = function(propId) {
-            const index = window.activePropositions.findIndex(p => p.id === propId);
-            if (index <= 0) return;
+        function updateTextFlowProp(id, val) {
+            const p = window.scriptureGramData.propositions.find(x => x.id === id);
+            if (p) p.text = val;
+        }
 
-            const prevProp = window.activePropositions[index - 1];
-            const currentProp = window.activePropositions[index];
+        function deleteTextFlowProp(id) {
+            window.scriptureGramData.propositions = window.scriptureGramData.propositions.filter(x => x.id !== id);
+            renderTextFlow();
+        }
 
-            prevProp.text = (prevProp.text + " " + currentProp.text).trim();
+        // --- WORD BANK ---
+        function renderWordBank() {
+            const container = document.getElementById('wordBankContainer');
+            container.innerHTML = '';
+            if (window.scriptureGramData.wordsBank.length === 0) {
+                container.innerHTML = `<div class="text-center py-4 text-gray-400 dark:text-gray-500 text-[11px] w-full">Word bank is empty. Load a passage above.</div>`;
+                return;
+            }
+            window.scriptureGramData.wordsBank.forEach(word => {
+                const pill = document.createElement('div');
+                pill.className = "bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700/80 px-3 py-1 rounded-lg text-xs cursor-pointer transition font-medium";
+                pill.textContent = word;
+                pill.onclick = () => spawnWordOnCanvas(word);
+                container.appendChild(pill);
+            });
+        }
 
-            if (window.activeBrackets) {
-                window.activeBrackets.forEach(bracket => {
-                    if (bracket.startId === currentProp.id) bracket.startId = prevProp.id;
-                    if (bracket.endId === currentProp.id) bracket.endId = prevProp.id;
-                });
+        function addWordToBank() {
+            const input = document.getElementById('newWordInput');
+            const val = input.value.trim();
+            if (val) {
+                window.scriptureGramData.wordsBank.push(val);
+                input.value = '';
+                renderWordBank();
+            }
+        }
+
+        function spawnWordOnCanvas(word) {
+            window.scriptureGramData.elements.push({
+                id: 'el-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                type: 'word',
+                text: word,
+                x: 400 + (Math.random() * 40 - 20),
+                y: 300 + (Math.random() * 40 - 20),
+                rotation: 0,
+                attachedTo: null
+            });
+            renderCanvas();
+        }
+
+        function spawnShape(type) {
+            const count = window.scriptureGramData.elements.length;
+            const offsetX = (count % 5) * 50;
+            const offsetY = Math.floor(count / 5) * 50;
+
+            const baseObj = {
+                id: 'el-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                type: type,
+                x1: 250 + offsetX, y1: 300 + offsetY,
+                x2: 500 + offsetX, y2: 300 + offsetY,
+                splitX: 375 + offsetX,
+                splitHeight: 40
+            };
+
+            if (type === 'adverb-shelf') {
+                baseObj.x1 = 360 + offsetX; baseObj.y1 = 200 + offsetY;
+                baseObj.x2 = 300 + offsetX; baseObj.y2 = 250 + offsetY;
+                baseObj.x3 = 400 + offsetX; baseObj.y3 = 330 + offsetY;
+            } else if (type === 'compound-rocket') {
+                baseObj.x1 = 250 + offsetX; baseObj.y1 = 260 + offsetY;
+                baseObj.x2 = 250 + offsetX; baseObj.y2 = 340 + offsetY;
+                baseObj.splitX = 400 + offsetX;
+            } else if (type === 'modifier-slant') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
+                baseObj.x2 = 380 + offsetX; baseObj.y2 = 280 + offsetY;
+            } else if (type === 'prepositional-shelf') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
+                baseObj.x2 = 370 + offsetX; baseObj.y2 = 270 + offsetY;
+                baseObj.x3 = 490 + offsetX; baseObj.y3 = 270 + offsetY;
+            } else if (type === 'participle-shelf') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
+                baseObj.x2 = 340 + offsetX; baseObj.y2 = 250 + offsetY;
+                baseObj.x3 = 460 + offsetX; baseObj.y3 = 250 + offsetY;
             }
 
-            window.activePropositions.splice(index, 1);
-            renderAll();
-        };
+            window.scriptureGramData.elements.push(baseObj);
+            renderCanvas();
+        }
 
-        function drawBracketsSvg() {
-            const svg = document.getElementById('bracketSvg');
-            const container = document.getElementById('canvasContainer');
-            if (!svg || !container) return;
+        // --- PURE SVG UNIFIED CANVAS RENDERER ---
+        function renderCanvas() {
+            const svg = document.getElementById('svgCanvas');
             svg.innerHTML = '';
+            svg.setAttribute('viewBox', `${-canvasPanX} ${-canvasPanY} ${svg.clientWidth || 2000} ${svg.clientHeight || 2000}`);
 
-            if (!window.activePropositions || window.activePropositions.length === 0 || !window.activeBrackets) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            const stroke = isDark ? "#cbd5e1" : "#334155";
+            const wordColor = isDark ? "#f8fafc" : "#0f172a";
 
-            const containerRect = container.getBoundingClientRect();
-            svg.setAttribute('width', container.scrollWidth);
-            svg.setAttribute('height', container.scrollHeight);
-
-            const propYMap = {};
-            window.activePropositions.forEach(p => {
-                const el = document.getElementById(`prop-row-${p.id}`);
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    propYMap[p.id] = (rect.top + rect.height / 2) - containerRect.top + container.scrollTop;
-                }
-            });
-
-            const sortedBrackets = window.activeBrackets.map(b => {
-                const startIdx = window.activePropositions.findIndex(p => p.id === b.startId);
-                const endIdx = window.activePropositions.findIndex(p => p.id === b.endId);
-                return { ...b, span: Math.abs(endIdx - startIdx), startIdx, endIdx };
-            }).sort((a, b) => a.span - b.span);
-
-            const columns = [];
-            sortedBrackets.forEach(b => {
-                let col = 0;
-                while (columns[col] && columns[col].some(other => !(b.endIdx < other.startIdx || b.startIdx > other.endIdx))) {
-                    col++;
-                }
-                if (!columns[col]) columns[col] = [];
-                columns[col].push(b);
-                b.col = col;
-            });
-
-            const textRightEdge = 145;
-
-            sortedBrackets.forEach((bracket) => {
-                const y1 = propYMap[bracket.startId];
-                const y2 = propYMap[bracket.endId];
-
-                if (y1 === undefined || y2 === undefined) return;
-
-                const col = bracket.col;
-                const xVertical = textRightEdge - 20 - (col * 22);
-
-                let xStartCap = textRightEdge;
-                let xEndCap = textRightEdge;
-
-                sortedBrackets.forEach(inner => {
-                    if (inner.col < bracket.col) {
-                        const innerX = textRightEdge - 20 - (inner.col * 22);
-                        if ((inner.startId === bracket.startId || inner.endId === bracket.startId) && innerX > xVertical) {
-                            if (innerX < xStartCap) xStartCap = innerX;
-                        }
-                        if ((inner.startId === bracket.endId || inner.endId === bracket.endId) && innerX > xVertical) {
-                            if (innerX < xEndCap) xEndCap = innerX;
-                        }
-                    }
-                });
-
-                const midY = (y1 + y2) / 2;
-                const color = bracket.color || '#334155';
-
+            window.scriptureGramData.elements.forEach(el => {
+                const isSelected = (activeSelectedId === el.id);
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                
-                let d = `M ${xStartCap} ${y1} L ${xVertical} ${y1} L ${xVertical} ${y2} L ${xEndCap} ${y2}`;
-                if (Math.abs(y1 - y2) < 5) {
-                    d = `M ${xStartCap} ${y1} L ${xVertical} ${y1}`;
-                }
+                g.setAttribute('data-group-id', el.id);
 
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', d);
-                path.setAttribute('stroke', color);
-                path.setAttribute('stroke-width', '2');
-                path.setAttribute('fill', 'none');
-                path.setAttribute('stroke-linecap', 'square');
-                path.setAttribute('stroke-linejoin', 'miter');
-                g.appendChild(path);
+                if (el.type === 'word') {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('data-word-text', 'true');
+                    text.textContent = el.text;
+                    text.setAttribute('x', el.x);
+                    text.setAttribute('y', el.y);
+                    text.setAttribute('fill', wordColor);
+                    text.setAttribute('font-size', '16');
+                    text.setAttribute('font-family', 'Inter, sans-serif');
+                    text.setAttribute('font-weight', '600');
+                    if (el.rotation) {
+                        text.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
+                    }
 
-                if (bracket.label) {
-                    const foreign = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-                    foreign.setAttribute('x', xVertical - 125);
-                    foreign.setAttribute('y', midY - 14);
-                    foreign.setAttribute('width', '118');
-                    foreign.setAttribute('height', '28');
-                    
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-end h-full";
-                    div.innerHTML = `<span class="text-[10px] font-semibold px-2 py-0.5 rounded shadow-sm text-white truncate max-w-full" style="background-color: ${color};">${escapeHtml(bracket.label)}</span>`;
-                    foreign.appendChild(div);
-                    g.appendChild(foreign);
+                    if (isSelected) {
+                        const bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bbox.setAttribute('data-bbox', 'true');
+                        bbox.setAttribute('x', el.x - 4);
+                        bbox.setAttribute('y', el.y - 18);
+                        bbox.setAttribute('width', el.text.length * 10 + 8);
+                        bbox.setAttribute('height', '26');
+                        bbox.setAttribute('fill', isDark ? 'rgba(99, 102, 241, 0.25)' : 'rgba(79, 70, 229, 0.15)');
+                        bbox.setAttribute('stroke', '#6366f1');
+                        bbox.setAttribute('stroke-width', '1.5');
+                        bbox.setAttribute('rx', '4');
+                        if (el.rotation) bbox.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
+                        g.appendChild(bbox);
+                    }
+
+                    g.appendChild(text);
+
+                    g.onmousedown = (e) => {
+                        e.stopPropagation();
+                        activeSelectedId = el.id;
+                        if (e.metaKey || e.ctrlKey) {
+                            initWordRotate(e, el);
+                        } else {
+                            initWordDrag(e, el);
+                        }
+                    };
+
+                    g.ondblclick = (e) => {
+                        e.stopPropagation();
+                        const newTxt = prompt("Edit word text (or type Word, angle e.g. Holy, 35):", el.text + (el.rotation ? `, ${el.rotation}` : ''));
+                        if (newTxt !== null) {
+                            if (newTxt.includes(',')) {
+                                const parts = newTxt.split(',');
+                                el.text = parts[0].trim();
+                                el.rotation = parseFloat(parts[1]) || 0;
+                            } else {
+                                el.text = newTxt;
+                            }
+                            renderCanvas();
+                        }
+                    };
+
+                } else {
+                    if (el.type === 'subject-verb') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight/2, el.splitX, el.y1 + el.splitHeight/2, stroke, 2.5));
+                    } else if (el.type === 'direct-object') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
+                    } else if (el.type === 'predicate-nom') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.splitX - 15, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
+                    } else if (el.type === 'modifier-slant') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                    } else if (el.type === 'adverb-shelf') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
+                    } else if (el.type === 'prepositional-shelf' || el.type === 'participle-shelf') {
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
+                    } else if (el.type === 'compound-rocket') {
+                        const midY = (el.y1 + el.y2) / 2;
+                        const rightPointX = el.splitX + 100;
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.splitX, el.y1, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.x1, el.y2, el.splitX, el.y2, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.splitX, el.y1, rightPointX, midY, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.splitX, el.y2, rightPointX, midY, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x1, el.y2, stroke, 2, 'dash'));
+                    } else if (el.type === 'vertical-stilt') {
+                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
+                    }
+
+                    const hitLine = createSvgLine(el.x1, el.y1, el.x2, el.y2, 'transparent', 20);
+                    hitLine.onmousedown = (e) => {
+                        e.stopPropagation();
+                        activeSelectedId = el.id;
+                        initShapeDrag(e, el);
+                    };
+                    g.appendChild(hitLine);
+
+                    if (isSelected) {
+                        g.appendChild(createNodeHandle(el.id, 'x1', el.x1, el.y1));
+                        g.appendChild(createNodeHandle(el.id, 'x2', el.x2, el.y2));
+                        if (el.x3 !== undefined) g.appendChild(createNodeHandle(el.id, 'x3', el.x3, el.y3));
+                        if (el.splitX !== undefined) g.appendChild(createNodeHandle(el.id, 'splitX', el.splitX, el.y1));
+                    }
                 }
 
                 svg.appendChild(g);
             });
         }
 
-        function renderSplitter() {
-            const list = document.getElementById('splitterPropositionsList');
-            if (!list) return;
-            list.innerHTML = '';
-            
-            if (!window.activePropositions) window.activePropositions = [];
-            const badge = document.getElementById('propCountBadge');
-            if (badge) badge.textContent = window.activePropositions.length;
-
-            window.activePropositions.forEach((prop, idx) => {
-                const item = document.createElement('div');
-                item.className = "flex items-center space-x-3 bg-slate-50 border border-slate-200 rounded-lg p-2.5";
-                item.innerHTML = `
-                    <span class="mono-font text-xs font-bold text-slate-500 w-6 text-right">${idx + 1}.</span>
-                    <input type="text" value="${escapeHtml(prop.text)}" onchange="updatePropText(${prop.id}, this.value)" class="flex-1 text-xs bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <button onclick="deleteProposition(${prop.id})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded transition" title="Delete Proposition">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                `;
-                list.appendChild(item);
-            });
+        function createSvgLine(x1, y1, x2, y2, stroke, width, style) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+            line.setAttribute('stroke', stroke);
+            line.setAttribute('stroke-width', width);
+            line.setAttribute('stroke-linecap', 'round');
+            if (style === 'dash') line.setAttribute('stroke-dasharray', '4 4');
+            return line;
         }
 
-        window.createNewDiagramFromInput = function() {
-            const raw = document.getElementById('rawParagraphInput').value.trim();
-            const name = document.getElementById('newDiagramNameInput').value.trim() || "Untitled Passage";
-            if (!raw) {
-                alert('Please paste a scripture passage first.');
-                return;
-            }
-
-            const newId = 'diag-' + Date.now();
-            window.appState.diagrams[newId] = {
-                name: name,
-                propositions: [{ id: window.nextPropId++, text: raw }],
-                brackets: []
+        function createNodeHandle(elementId, handleKey, cx, cy) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
+            circle.setAttribute('r', '7');
+            circle.setAttribute('fill', '#6366f1');
+            circle.setAttribute('stroke', '#ffffff');
+            circle.setAttribute('stroke-width', '2');
+            circle.setAttribute('class', 'node-handle');
+            
+            circle.onmousedown = (e) => {
+                e.stopPropagation();
+                initHandleDrag(e, elementId, handleKey);
             };
-            window.appState.activeId = newId;
-            document.getElementById('rawParagraphInput').value = '';
-            document.getElementById('newDiagramNameInput').value = '';
-            
-            populateDiagramDropdown();
-            loadActiveDiagramToMemory();
-            switchTab('diagram');
-            renderAll();
-        };
+            return circle;
+        }
 
-        function updateDropdowns() {
-            const startSel = document.getElementById('startPropSelect');
-            const endSel = document.getElementById('endPropSelect');
-            if (!startSel || !endSel) return;
-            
-            startSel.innerHTML = '';
-            endSel.innerHTML = '';
+        // --- STABLE DRAG & ROTATE ENGINES ---
+        function initHandleDrag(e, elementId, handleKey) {
+            const el = window.scriptureGramData.elements.find(x => x.id === elementId);
+            if (!el) return;
 
-            if (window.activePropositions) {
-                window.activePropositions.forEach((prop, idx) => {
-                    const opt1 = document.createElement('option');
-                    opt1.value = prop.id;
-                    opt1.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
-                    startSel.appendChild(opt1);
+            const startMouseX = e.clientX;
+            const startMouseY = e.clientY;
+            const origVals = { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2, x3: el.x3, y3: el.y3, splitX: el.splitX };
 
-                    const opt2 = document.createElement('option');
-                    opt2.value = prop.id;
-                    opt2.textContent = `#${idx + 1}: ${prop.text.substring(0, 35)}...`;
-                    endSel.appendChild(opt2);
+            const onMouseMove = (me) => {
+                const dx = me.clientX - startMouseX;
+                const dy = me.clientY - startMouseY;
+
+                if (handleKey === 'x1') { if (origVals.x1 !== undefined) el.x1 = origVals.x1 + dx; if (origVals.y1 !== undefined) el.y1 = origVals.y1 + dy; }
+                else if (handleKey === 'x2') { if (origVals.x2 !== undefined) el.x2 = origVals.x2 + dx; if (origVals.y2 !== undefined) el.y2 = origVals.y2 + dy; }
+                else if (handleKey === 'x3') { if (origVals.x3 !== undefined) el.x3 = origVals.x3 + dx; if (origVals.y3 !== undefined) el.y3 = origVals.y3 + dy; }
+                else if (handleKey === 'splitX') { if (origVals.splitX !== undefined) el.splitX = origVals.splitX + dx; }
+
+                updateElementDOM(el);
+            };
+
+            const onMouseUp = () => {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                renderCanvas();
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function initShapeDrag(e, targetEl) {
+            const startMouseX = e.clientX;
+            const startMouseY = e.clientY;
+            const orig = { x1: targetEl.x1, y1: targetEl.y1, x2: targetEl.x2, y2: targetEl.y2, x3: targetEl.x3, y3: targetEl.y3, splitX: targetEl.splitX };
+
+            const attachedWords = window.scriptureGramData.elements.filter(item => item.type === 'word' && item.attachedTo === targetEl.id);
+            const origWordPositions = attachedWords.map(w => ({ word: w, x: w.x, y: w.y }));
+
+            const onMouseMove = (me) => {
+                const dx = me.clientX - startMouseX;
+                const dy = me.clientY - startMouseY;
+
+                if (orig.x1 !== undefined) { targetEl.x1 = orig.x1 + dx; targetEl.y1 = orig.y1 + dy; }
+                if (orig.x2 !== undefined) { targetEl.x2 = orig.x2 + dx; targetEl.y2 = orig.y2 + dy; }
+                if (orig.x3 !== undefined) { targetEl.x3 = orig.x3 + dx; targetEl.y3 = orig.y3 + dy; }
+                if (orig.splitX !== undefined) { targetEl.splitX = orig.splitX + dx; }
+
+                origWordPositions.forEach(item => {
+                    item.word.x = item.x + dx;
+                    item.word.y = item.y + dy;
+                    updateElementDOM(item.word);
                 });
 
-                if (window.activePropositions.length > 1) {
-                    endSel.selectedIndex = Math.min(1, window.activePropositions.length - 1);
+                updateElementDOM(targetEl);
+            };
+
+            const onMouseUp = () => {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                renderCanvas();
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function initWordDrag(e, el) {
+            const startMouseX = e.clientX;
+            const startMouseY = e.clientY;
+            const origX = el.x;
+            const origY = el.y;
+
+            const onMouseMove = (me) => {
+                const dx = me.clientX - startMouseX;
+                const dy = me.clientY - startMouseY;
+                el.x = origX + dx;
+                el.y = origY + dy;
+
+                if (!me.shiftKey) {
+                    window.scriptureGramData.elements.forEach(shape => {
+                        if (shape.type === 'modifier-slant' || shape.type === 'prepositional-shelf' || shape.type === 'adverb-shelf') {
+                            const mx = (shape.x1 + shape.x2) / 2;
+                            const my = (shape.y1 + shape.y2) / 2;
+                            const dist = Math.hypot(mx - el.x, my - el.y);
+                            if (dist < 45) {
+                                el.x = mx + 12;
+                                el.y = my - 12;
+                                el.attachedTo = shape.id;
+                            }
+                        }
+                    });
+                }
+                updateElementDOM(el);
+            };
+
+            const onMouseUp = () => {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                renderCanvas();
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function initWordRotate(e, el) {
+            const svg = document.getElementById('svgCanvas');
+            const rect = svg.getBoundingClientRect();
+            const wordScreenX = rect.left + el.x + canvasPanX;
+            const wordScreenY = rect.top + el.y + canvasPanY;
+
+            const startAngle = Math.atan2(e.clientY - wordScreenY, e.clientX - wordScreenX) * (180 / Math.PI);
+            const origRotation = el.rotation || 0;
+
+            const onMouseMove = (me) => {
+                const currentAngle = Math.atan2(me.clientY - wordScreenY, me.clientX - wordScreenX) * (180 / Math.PI);
+                const deltaAngle = currentAngle - startAngle;
+                el.rotation = Math.round((origRotation + deltaAngle) * 10) / 10;
+                updateElementDOM(el);
+            };
+
+            const onMouseUp = () => {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                renderCanvas();
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function updateElementDOM(el) {
+            const g = document.querySelector(`[data-group-id="${el.id}"]`);
+            if (!g) return;
+
+            if (el.type === 'word') {
+                const text = g.querySelector('text');
+                if (text) {
+                    text.setAttribute('x', el.x);
+                    text.setAttribute('y', el.y);
+                    if (el.rotation) text.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
+                    else text.removeAttribute('transform');
+                }
+                const bbox = g.querySelector('[data-bbox]');
+                if (bbox) {
+                    bbox.setAttribute('x', el.x - 4);
+                    bbox.setAttribute('y', el.y - 18);
+                    if (el.rotation) bbox.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
+                    else bbox.removeAttribute('transform');
+                }
+            } else {
+                const lines = g.querySelectorAll('line');
+                if (el.type === 'subject-verb') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX); lines[1].setAttribute('y1', el.y1 - el.splitHeight/2); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1 + el.splitHeight/2); }
+                } else if (el.type === 'direct-object') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1); }
+                } else if (el.type === 'predicate-nom') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX - 15); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1); }
+                } else if (el.type === 'modifier-slant') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                } else if (el.type === 'prepositional-shelf' || el.type === 'participle-shelf' || el.type === 'adverb-shelf') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.x2); lines[1].setAttribute('y1', el.y2); lines[1].setAttribute('x2', el.x3); lines[1].setAttribute('y2', el.y3); }
+                } else if (el.type === 'compound-rocket') {
+                    const midY = (el.y1 + el.y2) / 2;
+                    const rightPointX = el.splitX + 100;
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.x1); lines[1].setAttribute('y1', el.y2); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y2); }
+                    if (lines[2]) { lines[2].setAttribute('x1', el.splitX); lines[2].setAttribute('y1', el.y1); lines[2].setAttribute('x2', rightPointX); lines[2].setAttribute('y2', midY); }
+                    if (lines[3]) { lines[3].setAttribute('x1', el.splitX); lines[3].setAttribute('y1', el.y2); lines[3].setAttribute('x2', rightPointX); lines[3].setAttribute('y2', midY); }
+                    if (lines[4]) { lines[4].setAttribute('x1', el.x1); lines[4].setAttribute('y1', el.y1); lines[4].setAttribute('x2', el.x1); lines[4].setAttribute('y2', el.y2); }
+                }
+
+                const handles = g.querySelectorAll('circle');
+                if (handles.length > 0) {
+                    handles.forEach(h => {
+                        const key = h.getAttribute('data-handle-key');
+                        if (key === 'x1') { h.setAttribute('cx', el.x1); h.setAttribute('cy', el.y1); }
+                        else if (key === 'x2') { h.setAttribute('cx', el.x2); h.setAttribute('cy', el.y2); }
+                        else if (key === 'x3') { h.setAttribute('cx', el.x3); h.setAttribute('cy', el.y3); }
+                        else if (key === 'splitX') { h.setAttribute('cx', el.splitX); h.setAttribute('cy', el.y1); }
+                    });
                 }
             }
         }
 
-        function renderActiveBracketsList() {
-            const list = document.getElementById('activeBracketsList');
-            if (!list) return;
-            list.innerHTML = '';
-            
-            if (!window.activeBrackets) window.activeBrackets = [];
-            const countBadge = document.getElementById('activeBracketsCount');
-            if (countBadge) countBadge.textContent = window.activeBrackets.length;
-
-            if (window.activeBrackets.length === 0) {
-                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No brackets drawn yet.</div>`;
-                return;
+        const canvas = document.getElementById('diagramCanvas');
+        canvas.onmousedown = (e) => {
+            if (e.target === canvas || e.target.id === 'svgCanvas') {
+                activeSelectedId = null;
+                isPanningCanvas = true;
+                panStartX = e.clientX - canvasPanX;
+                panStartY = e.clientY - canvasPanY;
+                renderCanvas();
             }
+        };
 
-            window.activeBrackets.forEach(bracket => {
-                const startIdx = window.activePropositions.findIndex(p => p.id === bracket.startId);
-                const endIdx = window.activePropositions.findIndex(p => p.id === bracket.endId);
-                
-                const card = document.createElement('div');
-                card.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs";
-                card.innerHTML = `
-                    <div class="flex items-center space-x-2 truncate">
-                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${bracket.color || '#334155'}"></span>
-                        <div class="truncate">
-                            <span class="font-bold text-slate-700">${escapeHtml(bracket.label || 'Relationship')}</span>
-                            <div class="text-[10px] text-slate-500">Props #${startIdx + 1} → #${endIdx + 1}</div>
-                        </div>
-                    </div>
-                    <button onclick="deleteBracket(${bracket.id})" class="text-slate-400 hover:text-rose-600 p-1 transition" title="Delete Bracket">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                `;
-                list.appendChild(card);
-            });
+        window.onmousemove = (e) => {
+            if (isPanningCanvas) {
+                canvasPanX = e.clientX - panStartX;
+                canvasPanY = e.clientY - panStartY;
+                renderCanvas();
+            }
+        };
+
+        window.onmouseup = () => {
+            isPanningCanvas = false;
+        };
+
+        function detachSelected() {
+            if (!activeSelectedId) return;
+            const el = window.scriptureGramData.elements.find(x => x.id === activeSelectedId);
+            if (el && el.type === 'word') {
+                el.attachedTo = null;
+                renderCanvas();
+                alert('Word detached successfully!');
+            }
         }
 
-        // --- ACTIONS ---
-        window.updatePropText = function(id, newText) {
-            if (!window.activePropositions) return;
-            const prop = window.activePropositions.find(p => p.id === id);
-            if (prop) {
-                prop.text = newText;
-                saveToStorage();
-                updateDropdowns();
-                setTimeout(drawBracketsSvg, 50);
+        window.onkeydown = (e) => {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (activeSelectedId && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    window.scriptureGramData.elements = window.scriptureGramData.elements.filter(x => x.id !== activeSelectedId);
+                    activeSelectedId = null;
+                    renderCanvas();
+                }
             }
         };
 
-        window.addNewProposition = function() {
-            if (!window.activePropositions) window.activePropositions = [];
-            window.activePropositions.push({ id: window.nextPropId++, text: "New proposition line..." });
-            renderAll();
-        };
-
-        window.deleteProposition = function(id) {
-            if (!window.activePropositions) return;
-            window.activePropositions = window.activePropositions.filter(p => p.id !== id);
-            if (window.activeBrackets) {
-                window.activeBrackets = window.activeBrackets.filter(b => b.startId !== id && b.endId !== id);
-            }
-            renderAll();
-        };
-
-        window.addBracket = function() {
-            const startPropEl = document.getElementById('startPropSelect');
-            const endPropEl = document.getElementById('endPropSelect');
-            if (!startPropEl || !endPropEl) return;
-
-            const startId = parseInt(startPropEl.value);
-            const endId = parseInt(endPropEl.value);
-            const labelInput = document.getElementById('bracketLabelInput');
-            const label = labelInput ? labelInput.value.trim() : '';
-
-            if (isNaN(startId) || isNaN(endId)) {
-                alert('Please select valid start and end propositions.');
-                return;
-            }
-
-            const startIdx = window.activePropositions.findIndex(p => p.id === startId);
-            const endIdx = window.activePropositions.findIndex(p => p.id === endId);
-
-            if (startIdx > endIdx) {
-                alert('Start proposition should appear before end proposition.');
-                return;
-            }
-
-            if (!window.activeBrackets) window.activeBrackets = [];
-            window.activeBrackets.push({
-                id: window.nextBracketId++,
-                startId,
-                endId,
-                label: label || 'Logical Flow',
-                color: window.selectedColor || '#334155'
-            });
-
-            if (labelInput) labelInput.value = '';
-            renderAll();
-        };
-
-        window.deleteBracket = function(id) {
-            if (!window.activeBrackets) return;
-            window.activeBrackets = window.activeBrackets.filter(b => b.id !== id);
-            renderAll();
-        };
-
-        window.exportData = function() {
-            saveToStorage();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
+        function exportDiagram() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.scriptureGramData, null, 2));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "scripture_all_diagrams.json");
+            dlAnchor.setAttribute("download", "scripturegram_project.json");
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
-        };
+        }
 
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // Run initial load
-        loadFromStorage();
-        loadActiveDiagramToMemory();
-        populateDiagramDropdown();
+        renderTextFlow();
     </script>
 </body>
 </html>
