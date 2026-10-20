@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScriptureGram - Vector Syntax Diagramming</title>
+    <title>ScriptureGram - Text Flow Workspace</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -23,11 +24,6 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -42,1772 +38,968 @@
             background-color: #0b0f19;
             color: #f3f4f6;
         }
-        html.dark .canvas-grid {
-            background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
 
         html:not(.dark) body {
             background-color: #f8fafc;
             color: #0f172a;
         }
-        html:not(.dark) .canvas-grid {
-            background-image: radial-gradient(rgba(15, 23, 42, 0.12) 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
-
-        .mono-font { font-family: 'JetBrains Mono', monospace; }
         
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
         html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        .node-handle {
+        [contenteditable]:focus { outline: none; }
+
+        /* Document Canvas Positioning */
+        #editorWrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Native Paragraph Styles with Reserved Right Padding for Controls */
+        #flowEditor p, #flowEditor div, #flowEditor blockquote {
+            position: relative;
+            margin-top: 0.6rem;
+            margin-bottom: 0.6rem;
+            padding-right: 210px; /* Space reserved for margin metadata controls */
+            word-break: break-word;
+            line-height: 1.8;
+            transition: margin-left 0.15s ease, border-left 0.15s ease;
+        }
+
+        /* Subordination Lines (Applied strictly per paragraph) */
+        #flowEditor .has-indent {
+            border-left: 2px solid #6366f1 !important;
+            padding-left: 1.2rem !important;
+        }
+
+        /* Straight Down Connector Indicator into Clause Below */
+        #flowEditor .attach-down {
+            position: relative;
+            padding-left: 1.8rem !important;
+        }
+        #flowEditor .attach-down::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.2rem;
+            bottom: -0.9rem; /* Extends down to line below */
+            width: 2px;
+            border-left: 2px dashed #6366f1;
+            z-index: 5;
+        }
+        #flowEditor .attach-down::after {
+            content: '↓';
+            position: absolute;
+            left: 0.15rem;
+            bottom: -1.2rem;
+            font-size: 13px;
+            font-weight: 700;
+            color: #6366f1;
+            z-index: 6;
+            background: transparent;
+        }
+
+        /* External Overlay Layer for Controls */
+        #controlsOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .flow-meta-group {
+            position: absolute;
+            right: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: auto;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .flow-badge {
+            display: inline-flex;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.12);
+            color: #4f46e5;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            padding: 3px 8px;
+            border-radius: 6px;
             cursor: pointer;
-            touch-action: none;
+            transition: all 0.15s ease;
         }
-        .node-handle:hover {
-            fill: #818cf8;
+        .flow-badge:hover {
+            background: rgba(99, 102, 241, 0.25);
         }
-
-        .shape-interactive {
-            cursor: grab;
-        }
-        .shape-interactive:active {
-            cursor: grabbing;
-        }
-        body.mod-key-pressed .shape-interactive {
-            cursor: pointer !important;
+        html.dark .flow-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border-color: rgba(129, 140, 248, 0.4);
         }
 
-        /* Print Styles for True Save to PDF */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #moduleDiagram, #svgCanvas, #svgCanvas * {
-                visibility: visible;
-            }
-            header, aside, #shapeContextMenu, #authModal {
-                display: none !important;
-            }
-            #moduleDiagram {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: white !important;
-            }
-            #svgCanvas {
-                width: 100% !important;
-                height: 100% !important;
-            }
+        /* Relationship Dropdown Select Styling */
+        .relation-select {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.1s;
         }
+        .relation-select:hover {
+            transform: scale(1.02);
+        }
+
+        /* Hidden Color Picker Input */
+        .color-picker-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .color-picker-btn {
+            font-size: 12px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.15s;
+            padding: 2px;
+        }
+        .color-picker-btn:hover {
+            color: #6366f1;
+        }
+
+        /* Collapsed State */
+        .collapsed-active {
+            opacity: 0.4;
+            max-height: 1.8em;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        /* Focus Mode Active States */
+        body.focus-mode #flowEditor > *:not(.focused-branch) {
+            display: none !important;
+        }
+        .focused-branch {
+            background: rgba(99, 102, 241, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px dashed rgba(99, 102, 241, 0.4);
+        }
+
+        /* Floating Highlight Toolbar Styles */
+        #highlightToolbar {
+            position: absolute;
+            display: none;
+            z-index: 100;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 9999px;
+            padding: 4px 8px;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.15s ease-in-out;
+        }
+        html.dark #highlightToolbar {
+            background: #1f2937;
+            border-color: #374151;
+        }
+
+        .hl-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            border: 1.5px solid transparent;
+        }
+        .hl-btn:hover {
+            transform: scale(1.15);
+        }
+
+        /* Context Menu Styling */
+        #contextMenu {
+            position: fixed;
+            display: none;
+            z-index: 200;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 210px;
+            user-select: none;
+        }
+        html.dark #contextMenu {
+            background: #1f2937;
+            border-color: #374151;
+        }
+
+        .ctx-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.12s ease;
+        }
+        html.dark .ctx-item {
+            color: #e5e7eb;
+        }
+        .ctx-item:hover {
+            background: #f3f4f6;
+        }
+        html.dark .ctx-item:hover {
+            background: #374151;
+        }
+
+        /* Custom Color Highlighter Mark Rules */
+        mark.hl-yellow { background-color: #fef08a !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-green  { background-color: #bbf7d0 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-blue   { background-color: #bae6fd !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-pink   { background-color: #fbcfe8 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-purple { background-color: #e9d5ff !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+
+        html.dark mark.hl-yellow { background-color: #854d0e !important; color: #fef08a; }
+        html.dark mark.hl-green  { background-color: #14532d !important; color: #bbf7d0; }
+        html.dark mark.hl-blue   { background-color: #075985 !important; color: #bae6fd; }
+        html.dark mark.hl-pink   { background-color: #831843 !important; color: #fbcfe8; }
+        html.dark mark.hl-purple { background-color: #581c87 !important; color: #e9d5ff; }
     </style>
 </head>
 
-<body class="h-screen flex flex-col select-none" onclick="hideContextMenu()">
+<body class="h-screen flex flex-col select-none">
 
     <!-- Top App Header -->
-    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-2.5 flex justify-between items-center z-50 transition-colors">
+    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-2.5 flex justify-between items-center z-50 transition-colors shrink-0">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/20">
                 <i class="fa-solid fa-pen-nib text-lg"></i>
             </div>
             <div>
                 <h1 class="text-base font-bold tracking-tight text-gray-900 dark:text-white">ScriptureGram</h1>
-                <p class="text-[11px] text-gray-500 dark:text-gray-400">Reed-Kellogg Pure Vector Diagramming</p>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">Text Flow Workspace</p>
             </div>
-        </div>
-
-        <!-- Navigation Tabs -->
-        <div class="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800 space-x-1">
-            <button onclick="switchModule('textflow')" id="tabBtnTextFlow" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow">
-                <i class="fa-solid fa-align-left mr-1.5"></i> Text Flow Workarea
-            </button>
-            <button onclick="switchModule('diagram')" id="tabBtnDiagram" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
-                <i class="fa-solid fa-project-diagram mr-1.5"></i> Syntax Diagram Module
-            </button>
         </div>
 
         <!-- Utility & User Actions -->
         <div class="flex items-center space-x-2">
-            <button onclick="handleCloudBtnClick()" id="userAuthBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1.5">
-                <i class="fa-solid fa-cloud"></i>
-                <span id="userAuthLabel">Cloud Account</span>
+            <button onclick="toggleFocusMode()" id="focusModeBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-expand text-indigo-500"></i>
+                <span id="focusModeLabel">Focus Mode: Off</span>
             </button>
-
             <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
                 <i id="themeIcon" class="fa-solid fa-sun text-amber-500"></i>
                 <span id="themeLabel">Light</span>
             </button>
-            <button onclick="saveToPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1">
+            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1">
                 <i class="fa-solid fa-file-pdf mr-1"></i> Save to PDF
-            </button>
-            <button onclick="detachSelected()" class="bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow">
-                <i class="fa-solid fa-unlink mr-1"></i> Detach
-            </button>
-            <button onclick="exportDiagram()" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition">
-                <i class="fa-solid fa-download mr-1"></i> Export
             </button>
         </div>
     </header>
 
-<!-- GLOBAL WORKSPACE PROJECTS BAR (SHARED FOR TEXT + DIAGRAM) -->
-<div id="workspaceProjectBar" class="max-w-4xl mx-auto my-3 px-6 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs transition-colors">
-    <div class="flex items-center space-x-2">
-        <span class="font-semibold text-gray-500 dark:text-gray-400">Active Project:</span>
-        <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2.5 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
-            <option value="scriptureGram_default">Default Scratchpad</option>
-        </select>
-        <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New Project</button>
-    </div>
-    <div class="flex items-center space-x-3">
-        <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
-        <button onclick="deleteCurrentProject()" class="px-2.5 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition font-medium">🗑 Delete Project</button>
-    </div>
-</div>
-
-<script>
-    // ==========================================
-    // COMBINED PROJECT MANAGEMENT (TEXT + DIAGRAM)
-    // ==========================================
-    const projectSelect = document.getElementById('projectSelect');
-    const globalSaveStatus = document.getElementById('globalSaveStatus');
-    let currentProjectKey = localStorage.getItem('scriptureGram_activeProjectKey') || 'scriptureGram_default';
-
-    function getProjectsCatalog() {
-        return JSON.parse(localStorage.getItem('scriptureGram_catalog') || '{}');
-    }
-
-    function populateProjectsMenu() {
-        if (!projectSelect) return;
-        const catalog = getProjectsCatalog();
-        projectSelect.innerHTML = '<option value="scriptureGram_default">Default Scratchpad</option>';
-        
-        Object.keys(catalog).forEach(key => {
-            const opt = document.createElement('option');
-            opt.value = key;
-            opt.textContent = catalog[key];
-            if (key === currentProjectKey) opt.selected = true;
-            projectSelect.appendChild(opt);
-        });
-    }
-
-    function saveActiveProjectData() {
-        const flowEditor = document.getElementById('flowEditor');
-        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
-
-        const projectData = {
-            textFlowHTML: flowEditor ? flowEditor.innerHTML : '',
-            diagramSVG: diagramCanvas ? diagramCanvas.innerHTML : '',
-            updatedAt: Date.now()
-        };
-
-        localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
-        if (globalSaveStatus) {
-            globalSaveStatus.textContent = 'Saving...';
-            setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400);
-        }
-    }
-
-    function loadSelectedProject() {
-        if (!projectSelect) return;
-        currentProjectKey = projectSelect.value;
-        localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
-
-        const rawData = localStorage.getItem(currentProjectKey);
-        const flowEditor = document.getElementById('flowEditor');
-        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
-
-        if (rawData) {
-            try {
-                const projectData = JSON.parse(rawData);
-                
-                if (flowEditor && projectData.textFlowHTML !== undefined) {
-                    flowEditor.innerHTML = projectData.textFlowHTML;
-                    if (typeof updateWordCount === 'function') updateWordCount();
-                }
-                
-                if (diagramCanvas && projectData.diagramSVG !== undefined) {
-                    diagramCanvas.innerHTML = projectData.diagramSVG;
-                }
-            } catch (e) {
-                if (flowEditor) flowEditor.innerHTML = rawData;
-            }
-        } else {
-            if (flowEditor) flowEditor.innerHTML = '';
-            if (diagramCanvas) diagramCanvas.innerHTML = '';
-        }
-    }
-
-    function saveCurrentAsNewProject() {
-        const title = prompt('Enter a name for this project (e.g., "Hebrews 1:1-4 Complete Analysis"):');
-        if (!title || !title.trim()) return;
-
-        const newKey = 'scriptureGram_proj_' + Date.now();
-        const catalog = getProjectsCatalog();
-        catalog[newKey] = title.trim();
-
-        localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
-        currentProjectKey = newKey;
-        localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
-
-        saveActiveProjectData();
-        populateProjectsMenu();
-        if (projectSelect) projectSelect.value = newKey;
-    }
-
-    function deleteCurrentProject() {
-        if (currentProjectKey === 'scriptureGram_default') {
-            if (confirm('Reset default scratchpad (clears text and diagram)?')) {
-                const flowEditor = document.getElementById('flowEditor');
-                const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
-                if (flowEditor) flowEditor.innerHTML = '';
-                if (diagramCanvas) diagramCanvas.innerHTML = '';
-                localStorage.removeItem('scriptureGram_default');
-                if (typeof updateWordCount === 'function') updateWordCount();
-            }
-            return;
-        }
-
-        const catalog = getProjectsCatalog();
-        const name = catalog[currentProjectKey] || 'this project';
-
-        if (confirm(`Delete "${name}" and all associated diagrams/text?`)) {
-            localStorage.removeItem(currentProjectKey);
-            delete catalog[currentProjectKey];
-            localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
-
-            currentProjectKey = 'scriptureGram_default';
-            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
-
-            populateProjectsMenu();
-            loadSelectedProject();
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        populateProjectsMenu();
-        loadSelectedProject();
-
-        const flowEditor = document.getElementById('flowEditor');
-        if (flowEditor) {
-            flowEditor.addEventListener('input', saveActiveProjectData);
-        }
-
-        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
-        if (diagramCanvas) {
-            const observer = new MutationObserver(saveActiveProjectData);
-            observer.observe(diagramCanvas, { childList: true, subtree: true, attributes: true });
-        }
-    });
-</script>
-
-
-<!-- MODULE 1: TEXT FLOW WORKAREA (FORWARD & BACKWARD SUBORDINATION) -->
-<div id="moduleTextFlow" class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-zinc-950">
-    <div id="wordProcessorPane" class="max-w-3xl mx-auto my-4 p-8 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 min-h-[75vh] flex flex-col transition-colors">
-        
-        <!-- Top Toolbar -->
-        <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-sm">
-            <div class="flex items-center space-x-3">
-                <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide">Thought Flow Document</span>
-                <span id="saveStatus" class="text-xs text-emerald-500 font-medium">Auto-saved</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="document.execCommand('indent', false, null)" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">Indent (Tab) →</button>
-                <button onclick="document.execCommand('outdent', false, null)" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">← Outdent (Shift+Tab)</button>
-                <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition text-xs font-medium">↓ Attach to Clause Below</button>
-                <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition text-xs font-medium">Clear</button>
-            </div>
+    <!-- GLOBAL WORKSPACE PROJECTS BAR -->
+    <div id="workspaceProjectBar" class="max-w-4xl mx-auto my-3 px-6 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs transition-colors shrink-0">
+        <div class="flex items-center space-x-2">
+            <span class="font-semibold text-gray-500 dark:text-gray-400">Active Project:</span>
+            <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2.5 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
+                <option value="scriptureGram_default">Default Scratchpad</option>
+            </select>
+            <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New Project</button>
         </div>
-        
-        <!-- Custom Styling for Forward and Backward Subordination Lines -->
-        <style>
-            /* Standard Subordination (Attaches upward to clause above) */
-            #flowEditor blockquote, 
-            #flowEditor div[style*="margin-left"],
-            #flowEditor p[style*="margin-left"] {
-                border-left: 2px solid #6366f1 !important; /* Indigo line */
-                margin-left: 1.5rem !important;
-                padding-left: 1rem !important;
-                margin-top: 0.3rem !important;
-                margin-bottom: 0.3rem !important;
-                position: relative;
-            }
+        <div class="flex items-center space-x-3">
+            <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
+            <button onclick="deleteCurrentProject()" class="px-2.5 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition font-medium">🗑 Delete Project</button>
+        </div>
+    </div>
 
-            /* Forward Subordination (Attaches DOWNWARD to the clause below) */
-            #flowEditor .attach-down {
-                border-left: 2px solid #6366f1 !important;
-                margin-left: 1.5rem !important;
-                padding-left: 1rem !important;
-                position: relative;
-            }
+    <!-- MAIN APP WORKSPACE -->
+    <main class="flex-1 overflow-y-auto px-6 pb-6 bg-gray-50 dark:bg-zinc-950 flex flex-col custom-scrollbar">
+        <div id="wordProcessorPane" class="max-w-4xl w-full mx-auto my-2 p-8 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col transition-colors">
             
-            /* Visual bracket indicator dropping down to the next clause */
-            #flowEditor .attach-down::after {
-                content: '';
-                position: absolute;
-                bottom: -0.6rem;
-                left: -2px;
-                width: 10px;
-                height: 2px;
-                background-color: #6366f1;
-            }
-        </style>
-        
-        <!-- Editable Document Canvas -->
-        <div id="flowEditor" contenteditable="true" 
-             class="flex-1 outline-none font-serif text-lg leading-loose text-gray-800 dark:text-gray-100 space-y-4 focus:ring-0"
-             style="min-height: 55vh;"
-             placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
-        </div>
-
-        <!-- Bottom Status Bar -->
-        <div class="pt-4 mt-6 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center">
-            <span id="wordCountDisplay">0 words</span>
-            <span class="italic">Tip: Place cursor on "but in these last days" and click "↓ Attach to Clause Below" to show forward connection.</span>
-        </div>
-    </div>
-</div>
-
-<script>
-    const editor = document.getElementById('flowEditor');
-    const wordCountDisplay = document.getElementById('wordCountDisplay');
-    const saveStatus = document.getElementById('saveStatus');
-
-    const savedFlow = localStorage.getItem('scriptureGramTextFlow');
-    if (savedFlow && editor) {
-        editor.innerHTML = savedFlow;
-        updateWordCount();
-    }
-
-    if (editor) {
-        editor.addEventListener('input', () => {
-            localStorage.setItem('scriptureGramTextFlow', editor.innerHTML);
-            updateWordCount();
-            if (saveStatus) saveStatus.textContent = 'Saving...';
-            setTimeout(() => { 
-                if (saveStatus) saveStatus.textContent = 'Auto-saved'; 
-            }, 400);
-        });
-
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    document.execCommand('outdent', false, null);
-                } else {
-                    document.execCommand('indent', false, null);
-                }
-            }
-        });
-    }
-
-    // Function to toggle Forward Subordination (Attach to Clause Below)
-    function toggleAttachDown() {
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return;
-
-        let node = selection.anchorNode;
-        while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
-            node = node.parentNode;
-        }
-
-        if (node && node !== editor) {
-            node.classList.toggle('attach-down');
-            localStorage.setItem('scriptureGramTextFlow', editor.innerHTML);
-        }
-    }
-
-    function updateWordCount() {
-        if (!editor || !wordCountDisplay) return;
-        const text = editor.innerText || '';
-        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-        wordCountDisplay.textContent = `${words} words`;
-    }
-
-    function clearTextFlow() {
-        if (confirm('Are you sure you want to clear your thought flow notes?')) {
-            if (editor) editor.innerHTML = '';
-            localStorage.removeItem('scriptureGramTextFlow');
-            updateWordCount();
-        }
-    }
-</script>
-
-
-    <!-- MODULE 2: SYNTAX DIAGRAM MODULE (PURE SVG) -->
-    <main id="moduleDiagram" class="flex-1 hidden flex overflow-hidden relative">
-        <aside class="w-80 bg-white dark:bg-panelBg border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 transition-colors">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">Word Bank</h3>
-                <div class="flex space-x-2 mb-2">
-                    <input type="text" id="newWordInput" placeholder="Add custom word..." class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
-                    <button onclick="addWordToBank()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Add</button>
+            <!-- Top Toolbar -->
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-sm shrink-0">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide">Thought Flow Document</span>
+                    <span id="saveStatus" class="text-xs text-emerald-500 font-medium">Auto-saved</span>
                 </div>
-                <div id="wordBankContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-800/80"></div>
-            </div>
-
-            <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
-                <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-3">Reed-Kellogg Vector Shelves</h3>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <button onclick="spawnShape('subject-verb')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Subject / Verb</div>
-                        <div class="text-[10px] text-gray-500">Crosses baseline</div>
-                    </button>
-                    <button onclick="spawnShape('direct-object')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Direct Object</div>
-                        <div class="text-[10px] text-gray-500">Sits on baseline</div>
-                    </button>
-                    <button onclick="spawnShape('predicate-nom')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Predicate Nom</div>
-                        <div class="text-[10px] text-gray-500">Slanted backslash</div>
-                    </button>
-                    <button onclick="spawnShape('modifier-slant')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Slanted Modifier</div>
-                        <div class="text-[10px] text-gray-500">Slanted line for words</div>
-                    </button>
-                    <button onclick="spawnShape('adverb-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Adverb Shelf</div>
-                        <div class="text-[10px] text-gray-500">Bent angle shelf</div>
-                    </button>
-                    <button onclick="spawnShape('prepositional-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Prep Phrase</div>
-                        <div class="text-[10px] text-gray-500">Slant + Shelf</div>
-                    </button>
-                    <button onclick="spawnShape('participle-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Participle Shelf</div>
-                        <div class="text-[10px] text-gray-500">Curved step shelf</div>
-                    </button>
-                    <button onclick="spawnShape('compound-rocket')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Compound Rocket</div>
-                        <div class="text-[10px] text-gray-500">Double parallel shelf</div>
-                    </button>
-                    <button onclick="spawnShape('vertical-stilt')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Vertical Stilt</div>
-                        <div class="text-[10px] text-gray-500">Clause pedestal</div>
-                    </button>
-                    <button onclick="spawnShape('custom-line')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Custom Line</div>
-                        <div class="text-[10px] text-gray-500">Solid / Dashed / Dotted</div>
-                    </button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="indentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">Indent (Tab) →</button>
+                    <button onclick="outdentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">← Outdent (Shift+Tab)</button>
+                    <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition text-xs font-medium">↓ Attach to Clause Below</button>
+                    <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition text-xs font-medium">Clear</button>
                 </div>
             </div>
 
-            <div class="p-4 border-t border-gray-200 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
-                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Right-Click Shape</kbd> Open Context Menu</div>
-                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Cmd/Ctrl + Drag Shape</kbd> Adjust height & length</div>
-                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Delete Key</kbd> Remove selected item</div>
+            <!-- Focus Mode Exit Banner -->
+            <div id="focusBanner" class="hidden mb-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300">
+                <span><i class="fa-solid fa-bullseye mr-1.5"></i> <strong>Focus Mode Active:</strong> Showing isolated branch.</span>
+                <button onclick="toggleFocusMode()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition">Exit Focus Mode</button>
             </div>
-        </aside>
+            
+            <!-- Editor Canvas & Overlay Container -->
+            <div id="editorWrapper">
+                <div id="flowEditor" contenteditable="true" 
+                     class="outline-none font-serif text-lg leading-loose text-gray-800 dark:text-gray-100 space-y-4 focus:ring-0"
+                     style="min-height: 50vh;"
+                     placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
+                </div>
+                <div id="controlsOverlay"></div>
 
-        <!-- Pure SVG Infinite Canvas -->
-        <div id="diagramCanvas" class="flex-1 relative canvas-grid overflow-hidden cursor-grab active:cursor-grabbing">
-            <svg id="svgCanvas" class="absolute inset-0 w-full h-full" style="min-width: 6000px; min-height: 6000px;"></svg>
+                <!-- Floating Selection Highlighter Toolbar -->
+                <div id="highlightToolbar" class="flex items-center space-x-1.5">
+                    <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Highlight:</span>
+                    <button class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow" onclick="applyHighlight('hl-yellow')"></button>
+                    <button class="hl-btn bg-emerald-300 border-emerald-400" title="Green" onclick="applyHighlight('hl-green')"></button>
+                    <button class="hl-btn bg-sky-300 border-sky-400" title="Blue" onclick="applyHighlight('hl-blue')"></button>
+                    <button class="hl-btn bg-pink-300 border-pink-400" title="Pink" onclick="applyHighlight('hl-pink')"></button>
+                    <button class="hl-btn bg-purple-300 border-purple-400" title="Purple" onclick="applyHighlight('hl-purple')"></button>
+                    <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <button class="text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 px-1 font-semibold" title="Remove Highlight" onclick="removeHighlight()"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+            </div>
+
+            <!-- Bottom Status Bar -->
+            <div class="pt-4 mt-8 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center shrink-0">
+                <span id="wordCountDisplay">0 words</span>
+                <span class="italic">Tip: Right-click any line to access instant actions like "Attach to Clause Below".</span>
+            </div>
         </div>
     </main>
 
-    <!-- Context Menu Popup -->
-    <div id="shapeContextMenu" class="hidden absolute z-50 bg-white dark:bg-cardBg border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl py-1.5 w-40 text-xs"></div>
-
-    <!-- AUTHENTICATION / CLOUD ACCOUNT MODAL -->
-    <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-panelBg border border-gray-200 dark:border-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative space-y-4">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="text-center space-y-1">
-                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center mx-auto text-lg shadow-md">
-                    <i class="fa-solid fa-cloud"></i>
-                </div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">Cloud Account Sync</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Sign in to save your diagrams automatically across all browsers & devices.</p>
-            </div>
-
-            <div id="authForm" class="space-y-3">
-                <button onclick="signInWithGoogle()" class="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-xl py-2 px-3 text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    <span>Continue with Google</span>
-                </button>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
-                    <span class="flex-shrink mx-2 text-[10px] text-gray-400 uppercase tracking-wider">or email</span>
-                    <div class="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
-                </div>
-
-                <div class="space-y-2">
-                    <input type="email" id="authEmail" placeholder="Email Address" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
-                    <input type="password" id="authPassword" placeholder="Password" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
-                </div>
-
-                <div class="flex space-x-2 pt-1">
-                    <button onclick="handleEmailSignIn()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow">Sign In</button>
-                    <button onclick="handleEmailSignUp()" class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold py-2 rounded-xl transition">Register</button>
-                </div>
-            </div>
-
-            <div id="signedInView" class="hidden space-y-3">
-                <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
-                    <p class="text-[11px] text-gray-500">Signed in as:</p>
-                    <p class="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" id="userEmailDisplay"></p>
-                </div>
-                <button onclick="syncToCloudNow()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow flex items-center justify-center space-x-1.5">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Sync Current Work to Cloud</span>
-                </button>
-                <button onclick="handleSignOut()" class="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-semibold py-2 rounded-xl transition">Sign Out</button>
-            </div>
+    <!-- RIGHT-CLICK CONTEXT MENU -->
+    <div id="contextMenu">
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()">
+            <i class="fa-solid fa-arrow-down-long text-xs"></i>
+            <span>Attach to Clause Below</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item" onclick="ctxIndentLine()">
+            <i class="fa-solid fa-indent text-xs text-gray-400"></i>
+            <span>Indent Line (Tab)</span>
+        </div>
+        <div class="ctx-item" onclick="ctxOutdentLine()">
+            <i class="fa-solid fa-outdent text-xs text-gray-400"></i>
+            <span>Outdent Line (Shift+Tab)</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" onclick="ctxDeleteLine()">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+            <span>Delete Line</span>
         </div>
     </div>
 
-    <!-- Application Controller Script -->
+    <!-- SCRIPT ENGINE -->
     <script>
-        let auth, db, currentUser = null;
+        let currentProjectKey = localStorage.getItem('scriptureGram_activeProjectKey') || 'scriptureGram_default';
+        let isFocusModeActive = false;
+        let rightClickedBlock = null;
+        
+        const projectSelect = document.getElementById('projectSelect');
+        const globalSaveStatus = document.getElementById('globalSaveStatus');
+        const editor = document.getElementById('flowEditor');
+        const overlay = document.getElementById('controlsOverlay');
+        const wordCountDisplay = document.getElementById('wordCountDisplay');
+        const saveStatus = document.getElementById('saveStatus');
+        const highlightToolbar = document.getElementById('highlightToolbar');
+        const contextMenu = document.getElementById('contextMenu');
 
-        // Firebase Initialization with Graceful Fallback
-        try {
-            if (typeof firebase !== 'undefined') {
-                const firebaseConfig = {
-  apiKey: "AIzaSyCUXqb92rUbl6G9pfuQCWtUCDoOxfFxWVw",
-  authDomain: "scripturegram.firebaseapp.com",
-  projectId: "scripturegram",
-  storageBucket: "scripturegram.firebasestorage.app",
-  messagingSenderId: "960608823862",
-  appId: "1:960608823862:web:cb7134f418d1185704c697",
-  measurementId: "G-N3RM9JE588"
-};
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                auth = firebase.auth();
-                db = firebase.firestore();
-
-                auth.onAuthStateChanged(user => {
-                    currentUser = user;
-                    updateAuthUI();
-                    if (user) loadFromCloud();
-                });
-            }
-        } catch (e) {
-            console.log("Firebase initialized in local mode.");
-        }
-
-        window.scriptureGramData = {
-            passageTitle: "",
-            propositions: [],
-            wordsBank: [],
-            elements: []
+        const defaultRelations = {
+            'Causal': { bg: '#fef3c7', text: '#92400e' },
+            'Conditional': { bg: '#d1fae5', text: '#065f46' },
+            'Result': { bg: '#e0f2fe', text: '#0369a1' },
+            'Purpose': { bg: '#f3e8ff', text: '#6b21a8' },
+            'Means': { bg: '#ccfbf1', text: '#115e59' },
+            'Temporal': { bg: '#ffe4e6', text: '#9f1239' },
+            'Adversative': { bg: '#fee2e2', text: '#991b1b' },
+            'Explanation': { bg: '#f1f5f9', text: '#334155' }
         };
 
-        function saveToLocalStorage() {
-            try {
-                localStorage.setItem('scriptureGramProject', JSON.stringify(window.scriptureGramData));
-                if (currentUser && db) syncToCloudSilent();
-            } catch (e) {
-                console.error("Storage error", e);
-            }
-        }
-
-        function loadFromLocalStorage() {
-            try {
-                const saved = localStorage.getItem('scriptureGramProject');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && parsed.elements) {
-                        window.scriptureGramData = parsed;
-                    }
-                }
-            } catch (e) {}
-        }
-
-        function handleCloudBtnClick() {
-            document.getElementById('authModal').classList.remove('hidden');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.add('hidden');
-        }
-
-        function updateAuthUI() {
-            const label = document.getElementById('userAuthLabel');
-            const authForm = document.getElementById('authForm');
-            const signedInView = document.getElementById('signedInView');
-            const userEmailDisplay = document.getElementById('userEmailDisplay');
-
-            if (currentUser) {
-                label.textContent = currentUser.displayName || currentUser.email.split('@')[0];
-                authForm.classList.add('hidden');
-                signedInView.classList.remove('hidden');
-                userEmailDisplay.textContent = currentUser.email;
-            } else {
-                label.textContent = 'Cloud Account';
-                authForm.classList.remove('hidden');
-                signedInView.classList.add('hidden');
-            }
-        }
-
-        function signInWithGoogle() {
-            if (!auth) return alert("Firebase auth domain configuration required for OAuth.");
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then(() => closeAuthModal()).catch(err => alert(err.message));
-        }
-
-        function handleEmailSignIn() {
-            if (!auth) return alert("Firebase Auth not connected.");
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            if (!email || !pass) return alert("Please enter email & password.");
-            auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => alert(err.message));
-        }
-
-        function handleEmailSignUp() {
-            if (!auth) return alert("Firebase Auth not connected.");
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            if (!email || !pass) return alert("Please enter email & password.");
-            auth.createUserWithEmailAndPassword(email, pass).then(() => {
-                closeAuthModal();
-                syncToCloudNow();
-            }).catch(err => alert(err.message));
-        }
-
-        function handleSignOut() {
-            if (auth) auth.signOut();
-            closeAuthModal();
-        }
-
-        async function syncToCloudNow() {
-            if (!currentUser || !db) return saveToLocalStorage();
-            try {
-                await db.collection('projects').doc(currentUser.uid).set({
-                    data: window.scriptureGramData,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        document.addEventListener('DOMContentLoaded', () => {
+            populateProjectsMenu();
+            loadSelectedProject();
+            
+            if (editor) {
+                editor.addEventListener('input', () => {
+                    cleanEditorSpans();
+                    syncOverlayControls();
+                    updateWordCount();
+                    saveActiveProjectData();
                 });
-                alert("Project synced across devices!");
-            } catch (err) {
-                saveToLocalStorage();
-            }
-        }
 
-        async function syncToCloudSilent() {
-            if (!currentUser || !db) return;
-            try {
-                await db.collection('projects').doc(currentUser.uid).set({
-                    data: window.scriptureGramData,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (err) {}
-        }
-
-        async function loadFromCloud() {
-            if (!currentUser || !db) return;
-            try {
-                const doc = await db.collection('projects').doc(currentUser.uid).get();
-                if (doc.exists && doc.data().data) {
-                    window.scriptureGramData = doc.data().data;
-                    saveToLocalStorage();
-                    renderTextFlow();
-                    if (!document.getElementById('moduleDiagram').classList.contains('hidden')) {
-                        renderWordBank();
-                        renderCanvas();
+                editor.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            outdentLine();
+                        } else {
+                            indentLine();
+                        }
+                    } else if (e.key === 'Escape') {
+                        hideContextMenu();
                     }
-                }
-            } catch (err) {}
-        }
+                });
 
-        function saveToPDF() {
-            switchModule('diagram');
-            setTimeout(() => { window.print(); }, 200);
-        }
+                // RIGHT-CLICK CONTEXT MENU EVENT
+                editor.addEventListener('contextmenu', (e) => {
+                    let node = e.target;
+                    while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
+                        node = node.parentNode;
+                    }
 
-        const relationshipOptions = [
-            "Independent / Main Clause",
-            "Ground / Cause (because, for)",
-            "Purpose (in order that, so that)",
-            "Result (so that, with the result that)",
-            "Condition (if)",
-            "Concession (although, even if)",
-            "Temporal (when, while, after)",
-            "Means / Manner (by, in that)",
-            "Substantival / Content (that)",
-            "Adjectival / Relative (who, which)",
-            "Apposition / Explanation",
-            "Inference / Continuation (therefore)",
-            "Custom Relationship..."
-        ];
+                    if (node && node !== editor) {
+                        e.preventDefault();
+                        rightClickedBlock = node;
+                        showContextMenu(e.clientX, e.clientY);
+                    }
+                });
 
-        let activeSelectedId = null;
-        let isPanningCanvas = false, panStartX = 0, panStartY = 0, canvasPanX = 0, canvasPanY = 0;
+                document.addEventListener('click', (e) => {
+                    if (contextMenu && !contextMenu.contains(e.target)) {
+                        hideContextMenu();
+                    }
+                });
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Meta' || e.key === 'Control') document.body.classList.add('mod-key-pressed');
+                document.addEventListener('selectionchange', handleTextSelection);
+                window.addEventListener('resize', syncOverlayControls);
+                document.querySelector('main').addEventListener('scroll', () => {
+                    syncOverlayControls();
+                    hideContextMenu();
+                });
+            }
         });
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'Meta' || e.key === 'Control') document.body.classList.remove('mod-key-pressed');
-        });
+
+        // CONTEXT MENU FUNCTIONS
+        function showContextMenu(x, y) {
+            if (!contextMenu) return;
+            contextMenu.style.display = 'block';
+            
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+
+            const posX = (x + menuWidth > winWidth) ? winWidth - menuWidth - 10 : x;
+            const posY = (y + menuHeight > winHeight) ? winHeight - menuHeight - 10 : y;
+
+            contextMenu.style.left = posX + 'px';
+            contextMenu.style.top = posY + 'px';
+        }
 
         function hideContextMenu() {
-            document.getElementById('shapeContextMenu').classList.add('hidden');
+            if (contextMenu) contextMenu.style.display = 'none';
         }
 
-        function showContextMenu(clientX, clientY, el) {
-            const menu = document.getElementById('shapeContextMenu');
-            menu.innerHTML = '';
+        function ctxToggleAttachDown() {
+            if (rightClickedBlock) {
+                rightClickedBlock.classList.toggle('attach-down');
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
 
-            if (el.type === 'compound-rocket' || el.type === 'vertical-stilt') {
-                const flipBtn = document.createElement('div');
-                flipBtn.className = "px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 cursor-pointer flex items-center space-x-2 font-medium";
-                flipBtn.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-indigo-500"></i><span>Flip</span>`;
-                flipBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    el.flipped = !el.flipped;
-                    renderCanvas();
-                    saveToLocalStorage();
-                    hideContextMenu();
-                };
-                menu.appendChild(flipBtn);
-            } else if (el.type === 'custom-line') {
-                ['solid', 'dashed', 'dotted'].forEach(style => {
-                    const styleBtn = document.createElement('div');
-                    styleBtn.className = `px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 cursor-pointer flex items-center space-x-2 font-medium capitalize ${el.lineStyle === style ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-600/20' : ''}`;
-                    styleBtn.innerHTML = `<i class="fa-solid fa-minus w-4 text-center"></i><span>${style}</span>`;
-                    styleBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        el.lineStyle = style;
-                        renderCanvas();
-                        saveToLocalStorage();
-                        hideContextMenu();
+        function ctxIndentLine() {
+            if (rightClickedBlock) {
+                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
+                rightClickedBlock.style.marginLeft = (currentMargin + 1.5) + 'rem';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        function ctxOutdentLine() {
+            if (rightClickedBlock) {
+                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
+                const newMargin = Math.max(0, currentMargin - 1.5);
+                rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        function ctxDeleteLine() {
+            if (rightClickedBlock) {
+                rightClickedBlock.remove();
+                syncOverlayControls();
+                updateWordCount();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        // FLOATING HIGHLIGHTER SELECTION HANDLER
+        function handleTextSelection() {
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed || !editor.contains(selection.anchorNode)) {
+                if (highlightToolbar) highlightToolbar.style.display = 'none';
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
+
+            if (rect.width > 0 && highlightToolbar) {
+                highlightToolbar.style.display = 'flex';
+                highlightToolbar.style.top = (rect.top - wrapperRect.top - 42) + 'px';
+                highlightToolbar.style.left = Math.max(10, (rect.left - wrapperRect.left + (rect.width / 2) - 100)) + 'px';
+            }
+        }
+
+        function applyHighlight(colorClass) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+            const mark = document.createElement('mark');
+            mark.className = colorClass;
+
+            try {
+                range.surroundContents(mark);
+            } catch (e) {
+                document.execCommand('hiliteColor', false, '#fef08a');
+            }
+
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
+        }
+
+        function removeHighlight() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            let node = selection.anchorNode;
+            while (node && node !== editor) {
+                if (node.tagName === 'MARK') {
+                    const parent = node.parentNode;
+                    while (node.firstChild) {
+                        parent.insertBefore(node.firstChild, node);
+                    }
+                    parent.removeChild(node);
+                    break;
+                }
+                node = node.parentNode;
+            }
+
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
+        }
+
+        function cleanEditorSpans() {
+            if (!editor) return;
+            const spans = editor.querySelectorAll('span:not(.flow-meta-group)');
+            spans.forEach(span => {
+                while (span.firstChild) {
+                    span.parentNode.insertBefore(span.firstChild, span);
+                }
+                span.remove();
+            });
+        }
+
+        function indentLine() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let block = selection.anchorNode;
+            while (block && block.parentNode !== editor && block !== editor) {
+                block = block.parentNode;
+            }
+
+            if (block && block !== editor) {
+                const currentMargin = parseFloat(block.style.marginLeft || '0');
+                block.style.marginLeft = (currentMargin + 1.5) + 'rem';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        function outdentLine() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let block = selection.anchorNode;
+            while (block && block.parentNode !== editor && block !== editor) {
+                block = block.parentNode;
+            }
+
+            if (block && block !== editor) {
+                const currentMargin = parseFloat(block.style.marginLeft || '0');
+                const newMargin = Math.max(0, currentMargin - 1.5);
+                block.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        // SYNC OVERLAY CONTROLS TO EXACT PARAGRAPH POSITIONS
+        function syncOverlayControls() {
+            if (!editor || !overlay) return;
+            overlay.innerHTML = '';
+
+            const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
+            const blocks = editor.querySelectorAll('p, div, blockquote');
+
+            blocks.forEach(block => {
+                const hasText = block.textContent.trim().length > 0;
+
+                let level = 0;
+                const styleAttr = block.getAttribute('style') || '';
+                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                
+                if (marginMatch) {
+                    const val = parseFloat(marginMatch[1]);
+                    level = val >= 1 ? Math.round(val / 1.5) : 1;
+                } else if (block.style.marginLeft || block.classList.contains('attach-down')) {
+                    level = 1;
+                }
+
+                // If line is empty, strip indentation border
+                if (!hasText) {
+                    block.classList.remove('has-indent', 'attach-down', 'collapsed-active');
+                    level = 0;
+                } else if (level > 0 || block.style.marginLeft || block.classList.contains('attach-down')) {
+                    if (level === 0) level = 1;
+                    block.classList.add('has-indent');
+
+                    // Position control group in overlay
+                    const rect = block.getBoundingClientRect();
+                    const topOffset = rect.top - wrapperRect.top;
+
+                    let currentRelation = block.dataset.relation || '';
+                    let customBg = block.dataset.relBg || '';
+                    let customText = block.dataset.relText || '';
+
+                    const group = document.createElement('div');
+                    group.className = 'flow-meta-group';
+                    group.style.top = topOffset + 'px';
+
+                    // Level Badge
+                    const badge = document.createElement('span');
+                    badge.className = 'flow-badge';
+                    const isCollapsed = block.classList.contains('collapsed-active');
+                    badge.innerHTML = isCollapsed 
+                        ? `L${level} <i class="fa-solid fa-chevron-right ml-1.5 text-[9px]"></i>` 
+                        : `L${level} <i class="fa-solid fa-chevron-down ml-1.5 text-[9px]"></i>`;
+
+                    badge.title = 'Click to collapse/expand branch';
+                    badge.onclick = () => {
+                        block.classList.toggle('collapsed-active');
+                        syncOverlayControls();
+                        saveActiveProjectData();
                     };
-                    menu.appendChild(styleBtn);
-                });
-            } else return;
 
-            menu.style.left = `${clientX}px`;
-            menu.style.top = `${clientY}px`;
-            menu.classList.remove('hidden');
+                    // Relationship Dropdown
+                    const select = document.createElement('select');
+                    select.className = 'relation-select';
+
+                    function updateSelectStyle(relName, bg, text) {
+                        if (relName && defaultRelations[relName]) {
+                            select.style.backgroundColor = defaultRelations[relName].bg;
+                            select.style.color = defaultRelations[relName].text;
+                        } else if (bg && text) {
+                            select.style.backgroundColor = bg;
+                            select.style.color = text;
+                        } else {
+                            select.style.backgroundColor = '';
+                            select.style.color = '';
+                            select.className = 'relation-select bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700';
+                        }
+                    }
+
+                    updateSelectStyle(currentRelation, customBg, customText);
+
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = '+ Relation';
+                    select.appendChild(defaultOpt);
+
+                    Object.keys(defaultRelations).forEach(relKey => {
+                        const opt = document.createElement('option');
+                        opt.value = relKey;
+                        opt.textContent = relKey;
+                        if (relKey === currentRelation) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+
+                    if (currentRelation && !defaultRelations[currentRelation]) {
+                        const customOpt = document.createElement('option');
+                        customOpt.value = currentRelation;
+                        customOpt.textContent = currentRelation;
+                        customOpt.selected = true;
+                        select.appendChild(customOpt);
+                    }
+
+                    const addCustomOpt = document.createElement('option');
+                    addCustomOpt.value = '__custom__';
+                    addCustomOpt.textContent = '+ Custom Label...';
+                    select.appendChild(addCustomOpt);
+
+                    select.onchange = () => {
+                        const val = select.value;
+                        if (val === '__custom__') {
+                            const customName = prompt('Enter custom relationship name (e.g., "Contrast", "Hortatory"):');
+                            if (customName && customName.trim()) {
+                                block.dataset.relation = customName.trim();
+                                if (!block.dataset.relBg) {
+                                    block.dataset.relBg = '#e0e7ff';
+                                    block.dataset.relText = '#3730a3';
+                                }
+                            }
+                        } else if (!val) {
+                            block.removeAttribute('data-relation');
+                            block.removeAttribute('data-rel-bg');
+                            block.removeAttribute('data-rel-text');
+                        } else {
+                            block.dataset.relation = val;
+                            block.removeAttribute('data-rel-bg');
+                            block.removeAttribute('data-rel-text');
+                        }
+                        syncOverlayControls();
+                        saveActiveProjectData();
+                    };
+
+                    // Color Picker
+                    const colorInput = document.createElement('input');
+                    colorInput.type = 'color';
+                    colorInput.className = 'color-picker-input';
+                    colorInput.value = customBg || '#6366f1';
+                    colorInput.onchange = (e) => {
+                        const bgHex = e.target.value;
+                        const r = parseInt(bgHex.substr(1,2), 16);
+                        const g = parseInt(bgHex.substr(3,2), 16);
+                        const b = parseInt(bgHex.substr(5,2), 16);
+                        const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+                        const textHex = yiq >= 128 ? '#111827' : '#f9fafb';
+
+                        block.dataset.relBg = bgHex;
+                        block.dataset.relText = textHex;
+                        if (!currentRelation) block.dataset.relation = 'Custom';
+                        syncOverlayControls();
+                        saveActiveProjectData();
+                    };
+
+                    const colorBtn = document.createElement('label');
+                    colorBtn.className = 'color-picker-btn';
+                    colorBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
+                    colorBtn.title = 'Choose custom color';
+                    colorBtn.onclick = () => colorInput.click();
+                    colorBtn.appendChild(colorInput);
+
+                    // Focus Button
+                    const focusBtn = document.createElement('button');
+                    focusBtn.className = 'text-gray-400 hover:text-indigo-600 px-1 text-xs transition';
+                    focusBtn.innerHTML = '<i class="fa-solid fa-bullseye"></i>';
+                    focusBtn.title = 'Isolate this branch';
+                    focusBtn.onclick = () => {
+                        document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
+                        block.classList.toggle('focused-branch');
+                        if (!isFocusModeActive) toggleFocusMode();
+                    };
+
+                    group.appendChild(badge);
+                    group.appendChild(select);
+                    group.appendChild(colorBtn);
+                    group.appendChild(focusBtn);
+                    overlay.appendChild(group);
+                } else {
+                    block.classList.remove('has-indent', 'collapsed-active');
+                }
+            });
         }
 
+        function toggleFocusMode() {
+            isFocusModeActive = !isFocusModeActive;
+            document.body.classList.toggle('focus-mode', isFocusModeActive);
+            
+            const label = document.getElementById('focusModeLabel');
+            const btn = document.getElementById('focusModeBtn');
+            const banner = document.getElementById('focusBanner');
+
+            if (isFocusModeActive) {
+                label.textContent = "Focus Mode: On";
+                btn.className = "bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-sm";
+                if (banner) banner.classList.remove('hidden');
+            } else {
+                label.textContent = "Focus Mode: Off";
+                btn.className = "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5";
+                if (banner) banner.classList.add('hidden');
+                document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
+            }
+            syncOverlayControls();
+        }
+
+        function updateWordCount() {
+            if (!editor || !wordCountDisplay) return;
+            const text = editor.innerText || '';
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCountDisplay.textContent = `${words} words`;
+        }
+
+        function toggleAttachDown() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            let node = selection.anchorNode;
+            while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
+                node = node.parentNode;
+            }
+
+            if (node && node !== editor) {
+                node.classList.toggle('attach-down');
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        function clearTextFlow() {
+            if (confirm('Are you sure you want to clear your thought flow notes?')) {
+                if (editor) editor.innerHTML = '';
+                updateWordCount();
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        // PROJECT MANAGEMENT
+        function getProjectsCatalog() {
+            return JSON.parse(localStorage.getItem('scriptureGram_catalog') || '{}');
+        }
+
+        function populateProjectsMenu() {
+            if (!projectSelect) return;
+            const catalog = getProjectsCatalog();
+            projectSelect.innerHTML = '<option value="scriptureGram_default">Default Scratchpad</option>';
+            Object.keys(catalog).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = catalog[key];
+                if (key === currentProjectKey) opt.selected = true;
+                projectSelect.appendChild(opt);
+            });
+        }
+
+        function saveActiveProjectData() {
+            const projectData = {
+                textFlowHTML: editor.innerHTML,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
+            if (globalSaveStatus) {
+                globalSaveStatus.textContent = 'Saving...';
+                setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400);
+            }
+            if (saveStatus) {
+                saveStatus.textContent = 'Saving...';
+                setTimeout(() => { saveStatus.textContent = 'Auto-saved'; }, 400);
+            }
+        }
+
+        function loadSelectedProject() {
+            if (!projectSelect) return;
+            currentProjectKey = projectSelect.value;
+            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+
+            const rawData = localStorage.getItem(currentProjectKey);
+
+            if (rawData) {
+                try {
+                    const projectData = JSON.parse(rawData);
+                    if (editor) editor.innerHTML = projectData.textFlowHTML || '';
+                } catch (e) {
+                    if (editor) editor.innerHTML = rawData;
+                }
+            } else {
+                if (editor) editor.innerHTML = '';
+            }
+            cleanEditorSpans();
+            syncOverlayControls();
+            updateWordCount();
+        }
+
+        function saveCurrentAsNewProject() {
+            const title = prompt('Enter a name for this project (e.g., "Hebrews 1:1-4 Flow"):');
+            if (!title || !title.trim()) return;
+            const newKey = 'scriptureGram_proj_' + Date.now();
+            const catalog = getProjectsCatalog();
+            catalog[newKey] = title.trim();
+            localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
+            currentProjectKey = newKey;
+            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+            saveActiveProjectData();
+            populateProjectsMenu();
+            if (projectSelect) projectSelect.value = newKey;
+        }
+
+        function deleteCurrentProject() {
+            if (currentProjectKey === 'scriptureGram_default') {
+                if (confirm('Reset default scratchpad?')) {
+                    if (editor) editor.innerHTML = '';
+                    localStorage.removeItem('scriptureGram_default');
+                    updateWordCount();
+                    syncOverlayControls();
+                }
+                return;
+            }
+            if (confirm('Delete this project?')) {
+                localStorage.removeItem(currentProjectKey);
+                let catalog = getProjectsCatalog();
+                delete catalog[currentProjectKey];
+                localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
+                currentProjectKey = 'scriptureGram_default';
+                localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+                populateProjectsMenu();
+                loadSelectedProject();
+            }
+        }
+
+        // THEME TOGGLE
         function toggleTheme() {
             const html = document.documentElement;
-            const icon = document.getElementById('themeIcon');
-            const label = document.getElementById('themeLabel');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('scriptureGram_theme', isDark ? 'dark' : 'light');
 
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.className = 'fa-solid fa-sun text-amber-500';
-                label.textContent = 'Light';
+            if (isDark) {
+                themeIcon.className = "fa-solid fa-moon text-indigo-400";
+                themeLabel.textContent = "Dark";
             } else {
-                html.classList.add('dark');
-                icon.className = 'fa-solid fa-moon text-indigo-400';
-                label.textContent = 'Dark';
-            }
-            renderCanvas();
-        }
-
-        function switchModule(mod) {
-            const tf = document.getElementById('moduleTextFlow');
-            const dg = document.getElementById('moduleDiagram');
-            const btnTf = document.getElementById('tabBtnTextFlow');
-            const btnDg = document.getElementById('tabBtnDiagram');
-
-            if (mod === 'textflow') {
-                tf.classList.remove('hidden');
-                dg.classList.add('hidden');
-                btnTf.className = "px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
-                btnDg.className = "px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
-                renderTextFlow();
-            } else {
-                tf.classList.add('hidden');
-                dg.classList.remove('hidden');
-                btnDg.className = "px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
-                btnTf.className = "px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
-                renderWordBank();
-                renderCanvas();
+                themeIcon.className = "fa-solid fa-sun text-amber-500";
+                themeLabel.textContent = "Light";
             }
         }
 
-        // --- COMPACT TEXT FLOW WORKAREA ---
-        function renderTextFlow() {
-            const container = document.getElementById('textFlowList');
-            container.innerHTML = '';
-            if (window.scriptureGramData.propositions.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-400 dark:text-gray-500 text-xs">No propositions loaded yet. Paste a passage above and click "Load Passage Paragraph".</div>`;
-                return;
-            }
-            window.scriptureGramData.propositions.forEach((prop, idx) => {
-                const indentPx = (prop.indentLevel || 0) * 32;
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-panelBg/90 border border-gray-200 dark:border-gray-800/90 rounded-xl px-3 py-2 flex flex-col space-y-1.5 shadow-sm transition-all hover:border-gray-300 dark:hover:border-gray-700/80";
-                card.style.marginLeft = `${indentPx}px`;
-
-                let selectOptionsHtml = `<option value="">-- Set Relationship --</option>`;
-                relationshipOptions.forEach(opt => {
-                    const selected = (prop.relationship === opt) ? 'selected' : '';
-                    selectOptionsHtml += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
-                });
-
-                const relBadge = prop.relationship ? `<span class="text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded"><i class="fa-solid fa-code-branch text-indigo-500 dark:text-indigo-400 mr-1"></i>${escapeHtml(prop.relationship)}</span>` : '';
-
-                card.innerHTML = `
-                    <div class="flex items-center justify-between flex-wrap gap-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="mono-font text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">P${idx + 1}</span>
-                            ${relBadge}
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <select onchange="updatePropRelationship(${prop.id}, this.value)" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-[11px] rounded px-2 py-0.5 focus:outline-none focus:border-indigo-500">
-                                ${selectOptionsHtml}
-                            </select>
-                            <button onclick="indentProp(${prop.id}, 1)" title="Indent Right" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-[11px] transition border border-gray-200 dark:border-transparent"><i class="fa-solid fa-indent mr-1"></i>Indent</button>
-                            <button onclick="indentProp(${prop.id}, -1)" title="Outdent Left" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-[11px] transition border border-gray-200 dark:border-transparent"><i class="fa-solid fa-outdent mr-1"></i>Outdent</button>
-                            <button onclick="deleteTextFlowProp(${prop.id})" class="text-gray-400 hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400 px-1.5 py-0.5 rounded transition text-xs"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                    </div>
-                    <textarea id="propText-${prop.id}" rows="1" onkeydown="handlePropKeyDown(event, ${prop.id})" oninput="autoResizeTextarea(this); updateTextFlowProp(${prop.id}, this.value)" placeholder="Enter proposition text..." class="w-full bg-gray-50 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800/80 rounded-lg p-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-indigo-500 overflow-hidden resize-none leading-relaxed transition-colors">${escapeHtml(prop.text)}</textarea>
-                `;
-                container.appendChild(card);
-
-                setTimeout(() => {
-                    const ta = document.getElementById(`propText-${prop.id}`);
-                    if (ta) autoResizeTextarea(ta);
-                }, 0);
-            });
+        if (localStorage.getItem('scriptureGram_theme') === 'dark' || (!localStorage.getItem('scriptureGram_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            if (themeIcon) themeIcon.className = "fa-solid fa-moon text-indigo-400";
+            if (themeLabel) themeLabel.textContent = "Dark";
         }
-
-        function autoResizeTextarea(ta) {
-            ta.style.height = 'auto';
-            ta.style.height = ta.scrollHeight + 'px';
-        }
-
-        function updatePropRelationship(id, val) {
-            const p = window.scriptureGramData.propositions.find(x => x.id === id);
-            if (p) {
-                if (val === "Custom Relationship...") {
-                    const customRel = prompt("Enter custom relationship label:");
-                    if (customRel) p.relationship = customRel.trim();
-                    else p.relationship = "";
-                } else {
-                    p.relationship = val;
-                }
-                renderTextFlow();
-                saveToLocalStorage();
-            }
-        }
-
-        function handlePropKeyDown(e, propId) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const textarea = e.target;
-                const cursorPos = textarea.selectionStart;
-                const fullText = textarea.value;
-
-                const textBefore = fullText.substring(0, cursorPos).trim();
-                const textAfter = fullText.substring(cursorPos).trim();
-
-                const propIndex = window.scriptureGramData.propositions.findIndex(x => x.id === propId);
-                if (propIndex !== -1) {
-                    window.scriptureGramData.propositions[propIndex].text = textBefore;
-
-                    const newProp = {
-                        id: Date.now(),
-                        text: textAfter,
-                        indentLevel: 0,
-                        relationship: ""
-                    };
-
-                    window.scriptureGramData.propositions.splice(propIndex + 1, 0, newProp);
-
-                    renderTextFlow();
-                    saveToLocalStorage();
-
-                    setTimeout(() => {
-                        const newTextarea = document.getElementById(`propText-${newProp.id}`);
-                        if (newTextarea) {
-                            newTextarea.focus();
-                            newTextarea.setSelectionRange(0, 0);
-                        }
-                    }, 50);
-                }
-            }
-        }
-
-        function loadPassageToTextFlow() {
-            const raw = document.getElementById('rawParagraphInput').value.trim();
-            const title = document.getElementById('passageTitleInput').value.trim();
-            if (!raw) return alert('Please paste a scripture passage first.');
-
-            if (title) window.scriptureGramData.passageTitle = title;
-            
-            window.scriptureGramData.propositions = [{
-                id: Date.now(),
-                text: raw,
-                indentLevel: 0,
-                relationship: "Independent / Main Clause"
-            }];
-
-            const words = raw.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,"").split(/\s+/);
-            words.forEach(w => {
-                if (w && !window.scriptureGramData.wordsBank.includes(w)) {
-                    window.scriptureGramData.wordsBank.push(w);
-                }
-            });
-
-            document.getElementById('rawParagraphInput').value = '';
-            renderTextFlow();
-            saveToLocalStorage();
-        }
-
-        function addTextFlowProposition() {
-            window.scriptureGramData.propositions.push({
-                id: Date.now(),
-                text: "",
-                indentLevel: 0,
-                relationship: ""
-            });
-            renderTextFlow();
-            saveToLocalStorage();
-        }
-
-        function indentProp(id, delta) {
-            const p = window.scriptureGramData.propositions.find(x => x.id === id);
-            if (p) {
-                p.indentLevel = Math.max(0, (p.indentLevel || 0) + delta);
-                renderTextFlow();
-                saveToLocalStorage();
-            }
-        }
-
-        function updateTextFlowProp(id, val) {
-            const p = window.scriptureGramData.propositions.find(x => x.id === id);
-            if (p) {
-                p.text = val;
-                saveToLocalStorage();
-            }
-        }
-
-        function deleteTextFlowProp(id) {
-            window.scriptureGramData.propositions = window.scriptureGramData.propositions.filter(x => x.id !== id);
-            renderTextFlow();
-            saveToLocalStorage();
-        }
-
-        // --- WORD BANK ---
-        function renderWordBank() {
-            const container = document.getElementById('wordBankContainer');
-            container.innerHTML = '';
-            if (window.scriptureGramData.wordsBank.length === 0) {
-                container.innerHTML = `<div class="text-center py-4 text-gray-400 dark:text-gray-500 text-[11px] w-full">Word bank is empty. Load a passage above.</div>`;
-                return;
-            }
-            window.scriptureGramData.wordsBank.forEach(word => {
-                const pill = document.createElement('div');
-                pill.className = "bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700/80 px-3 py-1 rounded-lg text-xs cursor-pointer transition font-medium";
-                pill.textContent = word;
-                pill.onclick = () => spawnWordOnCanvas(word);
-                container.appendChild(pill);
-            });
-        }
-
-        function addWordToBank() {
-            const input = document.getElementById('newWordInput');
-            const val = input.value.trim();
-            if (val) {
-                window.scriptureGramData.wordsBank.push(val);
-                input.value = '';
-                renderWordBank();
-                saveToLocalStorage();
-            }
-        }
-
-        function spawnWordOnCanvas(word) {
-            window.scriptureGramData.elements.push({
-                id: 'el-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-                type: 'word',
-                text: word,
-                x: 400 + (Math.random() * 40 - 20),
-                y: 300 + (Math.random() * 40 - 20),
-                rotation: 0,
-                attachedTo: null
-            });
-            renderCanvas();
-            saveToLocalStorage();
-        }
-
-        function spawnShape(type) {
-            const count = window.scriptureGramData.elements.length;
-            const offsetX = (count % 5) * 50;
-            const offsetY = Math.floor(count / 5) * 50;
-
-            const baseObj = {
-                id: 'el-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-                type: type,
-                x1: 250 + offsetX, y1: 300 + offsetY,
-                x2: 500 + offsetX, y2: 300 + offsetY,
-                splitX: 375 + offsetX,
-                splitHeight: 40,
-                flipped: false,
-                lineStyle: 'solid'
-            };
-
-            if (type === 'adverb-shelf') {
-                baseObj.x1 = 360 + offsetX; baseObj.y1 = 200 + offsetY;
-                baseObj.x2 = 300 + offsetX; baseObj.y2 = 250 + offsetY;
-                baseObj.x3 = 400 + offsetX; baseObj.y3 = 330 + offsetY;
-            } else if (type === 'participle-shelf') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
-                baseObj.x2 = 300 + offsetX; baseObj.y2 = 260 + offsetY;
-                baseObj.x3 = 420 + offsetX; baseObj.y3 = 260 + offsetY;
-            } else if (type === 'compound-rocket') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 250 + offsetY;
-                baseObj.x2 = 300 + offsetX; baseObj.y2 = 350 + offsetY;
-                baseObj.splitX = 450 + offsetX;
-            } else if (type === 'vertical-stilt') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 300 + offsetY;
-                baseObj.x2 = 500 + offsetX; baseObj.y2 = 300 + offsetY;
-                baseObj.splitX = 400 + offsetX;
-                baseObj.splitHeight = 50;
-            } else if (type === 'custom-line') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 250 + offsetY;
-                baseObj.x2 = 500 + offsetX; baseObj.y2 = 250 + offsetY;
-            } else if (type === 'modifier-slant') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
-                baseObj.x2 = 380 + offsetX; baseObj.y2 = 280 + offsetY;
-            } else if (type === 'prepositional-shelf') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
-                baseObj.x2 = 370 + offsetX; baseObj.y2 = 270 + offsetY;
-                baseObj.x3 = 490 + offsetX; baseObj.y3 = 270 + offsetY;
-            }
-
-            window.scriptureGramData.elements.push(baseObj);
-            renderCanvas();
-            saveToLocalStorage();
-        }
-
-        // --- PURE SVG UNIFIED CANVAS RENDERER ---
-        function renderCanvas() {
-            const svg = document.getElementById('svgCanvas');
-            svg.innerHTML = '';
-            svg.setAttribute('viewBox', `${-canvasPanX} ${-canvasPanY} ${svg.clientWidth || 2000} ${svg.clientHeight || 2000}`);
-
-            const isDark = document.documentElement.classList.contains('dark');
-            const stroke = isDark ? "#cbd5e1" : "#334155";
-            const wordColor = isDark ? "#f8fafc" : "#0f172a";
-
-            window.scriptureGramData.elements.forEach(el => {
-                const isSelected = (activeSelectedId === el.id);
-                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                g.setAttribute('data-group-id', el.id);
-                g.setAttribute('class', 'shape-interactive');
-
-                g.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    activeSelectedId = el.id;
-                    showContextMenu(e.clientX, e.clientY, el);
-                };
-
-                if (el.type === 'word') {
-                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('data-word-text', 'true');
-                    text.textContent = el.text;
-                    text.setAttribute('x', el.x);
-                    text.setAttribute('y', el.y);
-                    text.setAttribute('fill', wordColor);
-                    text.setAttribute('font-size', '16');
-                    text.setAttribute('font-family', 'Inter, sans-serif');
-                    text.setAttribute('font-weight', '600');
-                    text.setAttribute('dominant-baseline', 'alphabetic');
-                    if (el.rotation) {
-                        text.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
-                    }
-
-                    if (isSelected) {
-                        const bbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        bbox.setAttribute('data-bbox', 'true');
-                        bbox.setAttribute('x', el.x - 4);
-                        bbox.setAttribute('y', el.y - 18);
-                        bbox.setAttribute('width', el.text.length * 10 + 8);
-                        bbox.setAttribute('height', '26');
-                        bbox.setAttribute('fill', isDark ? 'rgba(99, 102, 241, 0.25)' : 'rgba(79, 70, 229, 0.15)');
-                        bbox.setAttribute('stroke', '#6366f1');
-                        bbox.setAttribute('stroke-width', '1.5');
-                        bbox.setAttribute('rx', '4');
-                        if (el.rotation) bbox.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
-                        g.appendChild(bbox);
-                    }
-
-                    g.appendChild(text);
-
-                    g.onmousedown = (e) => {
-                        e.stopPropagation();
-                        activeSelectedId = el.id;
-                        if (e.metaKey || e.ctrlKey) {
-                            initWordRotate(e, el);
-                        } else {
-                            initWordDrag(e, el);
-                        }
-                    };
-
-                    g.ondblclick = (e) => {
-                        e.stopPropagation();
-                        const newTxt = prompt("Edit word text (or type Word, angle e.g. Holy, 35):", el.text + (el.rotation ? `, ${el.rotation}` : ''));
-                        if (newTxt !== null) {
-                            if (newTxt.includes(',')) {
-                                const parts = newTxt.split(',');
-                                el.text = parts[0].trim();
-                                el.rotation = parseFloat(parts[1]) || 0;
-                            } else {
-                                el.text = newTxt;
-                            }
-                            renderCanvas();
-                            saveToLocalStorage();
-                        }
-                    };
-
-                } else {
-                    if (el.type === 'subject-verb') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight/2, el.splitX, el.y1 + el.splitHeight/2, stroke, 2.5));
-                    } else if (el.type === 'direct-object') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
-                    } else if (el.type === 'predicate-nom') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.splitX - 15, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
-                    } else if (el.type === 'modifier-slant') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                    } else if (el.type === 'adverb-shelf') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
-                    } else if (el.type === 'prepositional-shelf') {
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
-                    } else if (el.type === 'participle-shelf') {
-                        const r = Math.min(16, Math.abs(el.y2 - el.y1) / 2);
-                        const pathStr = `M ${el.x1} ${el.y1} L ${el.x2} ${el.y2 - r} Q ${el.x2} ${el.y2} ${el.x2 + r} ${el.y2} L ${el.x3} ${el.y3}`;
-                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                        path.setAttribute('d', pathStr);
-                        path.setAttribute('stroke', stroke);
-                        path.setAttribute('stroke-width', '2.5');
-                        path.setAttribute('fill', 'none');
-                        path.setAttribute('stroke-linecap', 'round');
-                        g.appendChild(path);
-                    } else if (el.type === 'custom-line') {
-                        let dashArray = null;
-                        if (el.lineStyle === 'dashed') dashArray = '8 6';
-                        else if (el.lineStyle === 'dotted') dashArray = '3 5';
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5, dashArray));
-                    } else if (el.type === 'compound-rocket') {
-                        const topY = Math.min(el.y1, el.y2);
-                        const botY = Math.max(el.y1, el.y2);
-                        const midY = (topY + botY) / 2;
-                        const startX = el.x1;
-                        const endX = el.splitX || (el.x1 + 180);
-
-                        if (!el.flipped) {
-                            g.appendChild(createSvgLine(startX, midY, startX + 35, topY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX, midY, startX + 35, botY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX + 35, topY, startX + 35, botY, stroke, 2, '4 4'));
-                            g.appendChild(createSvgLine(startX + 35, topY, endX, topY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX + 35, botY, endX, botY, stroke, 2.5));
-                        } else {
-                            g.appendChild(createSvgLine(startX, topY, startX, botY, stroke, 2, '4 4'));
-                            g.appendChild(createSvgLine(startX, topY, startX + 35, midY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX, botY, startX + 35, midY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX - 150, topY, startX, topY, stroke, 2.5));
-                            g.appendChild(createSvgLine(startX - 150, botY, startX, botY, stroke, 2.5));
-                        }
-                    } else if (el.type === 'vertical-stilt') {
-                        const stiltH = el.splitHeight || 50;
-                        if (!el.flipped) {
-                            g.appendChild(createSvgLine(el.splitX, el.y1 - stiltH, el.splitX, el.y1, stroke, 2.5));
-                        } else {
-                            g.appendChild(createSvgLine(el.splitX, el.y1, el.splitX, el.y1 + stiltH, stroke, 2.5));
-                        }
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
-                    }
-
-                    const hitLine = createSvgLine(el.x1, el.y1, el.x2, el.y2, 'transparent', 20);
-                    hitLine.onmousedown = (e) => {
-                        e.stopPropagation();
-                        activeSelectedId = el.id;
-                        initShapeInteraction(e, el);
-                    };
-                    g.appendChild(hitLine);
-
-                    if (isSelected) {
-                        g.appendChild(createNodeHandle(el.id, 'x1', el.x1, el.y1));
-                        g.appendChild(createNodeHandle(el.id, 'x2', el.x2, el.y2));
-                        if (el.x3 !== undefined) g.appendChild(createNodeHandle(el.id, 'x3', el.x3, el.y3));
-                        if (el.splitX !== undefined && el.type !== 'vertical-stilt') g.appendChild(createNodeHandle(el.id, 'splitX', el.splitX, (el.y1 + el.y2)/2));
-                        if (el.type === 'vertical-stilt') {
-                            const stiltH = el.splitHeight || 50;
-                            const tipY = !el.flipped ? (el.y1 - stiltH) : (el.y1 + stiltH);
-                            g.appendChild(createNodeHandle(el.id, 'stiltTip', el.splitX, tipY));
-                        }
-                    }
-                }
-
-                svg.appendChild(g);
-            });
-        }
-
-        function createSvgLine(x1, y1, x2, y2, stroke, width, dashArray) {
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-            line.setAttribute('stroke', stroke);
-            line.setAttribute('stroke-width', width);
-            line.setAttribute('stroke-linecap', 'round');
-            if (dashArray) line.setAttribute('stroke-dasharray', dashArray);
-            return line;
-        }
-
-        function createNodeHandle(elementId, handleKey, cx, cy) {
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
-            circle.setAttribute('r', '7');
-            circle.setAttribute('fill', '#6366f1');
-            circle.setAttribute('stroke', '#ffffff');
-            circle.setAttribute('stroke-width', '2');
-            circle.setAttribute('class', 'node-handle');
-            circle.setAttribute('data-handle-key', handleKey);
-            
-            circle.onmousedown = (e) => {
-                e.stopPropagation();
-                initHandleDrag(e, elementId, handleKey);
-            };
-            return circle;
-        }
-
-        function getClosestPointOnSegment(px, py, x1, y1, x2, y2) {
-            const dx = x2 - x1;
-            const dy = y2 - y1;
-            const lenSq = dx * dx + dy * dy;
-            if (lenSq === 0) return { x: x1, y: y1, dist: Math.hypot(px - x1, py - y1) };
-            
-            let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
-            t = Math.max(0, Math.min(1, t));
-            
-            const cx = x1 + t * dx;
-            const cy = y1 + t * dy;
-            const dist = Math.hypot(px - cx, py - cy);
-            return { x: cx, y: cy, dist };
-        }
-
-        function initHandleDrag(e, elementId, handleKey) {
-            const el = window.scriptureGramData.elements.find(x => x.id === elementId);
-            if (!el) return;
-
-            const startMouseX = e.clientX;
-            const startMouseY = e.clientY;
-            const origVals = { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2, x3: el.x3, y3: el.y3, splitX: el.splitX, splitHeight: el.splitHeight };
-
-            const onMouseMove = (me) => {
-                const dx = me.clientX - startMouseX;
-                const dy = me.clientY - startMouseY;
-
-                if (handleKey === 'x1') { 
-                    if (origVals.x1 !== undefined) el.x1 = origVals.x1 + dx; 
-                    if (origVals.y1 !== undefined) el.y1 = origVals.y1 + dy; 
-                }
-                else if (handleKey === 'x2') { 
-                    if (origVals.x2 !== undefined) el.x2 = origVals.x2 + dx; 
-                    if (origVals.y2 !== undefined) el.y2 = origVals.y2 + dy; 
-                    if (el.type === 'participle-shelf') {
-                        el.y3 = el.y2;
-                    }
-                }
-                else if (handleKey === 'x3') { 
-                    if (origVals.x3 !== undefined) el.x3 = origVals.x3 + dx; 
-                    if (origVals.y3 !== undefined) el.y3 = origVals.y3 + dy; 
-                }
-                else if (handleKey === 'splitX') { 
-                    if (origVals.splitX !== undefined) el.splitX = origVals.splitX + dx; 
-                }
-                else if (handleKey === 'stiltTip') {
-                    if (origVals.splitHeight !== undefined) {
-                        if (!el.flipped) {
-                            el.splitHeight = Math.max(15, origVals.splitHeight - dy);
-                        } else {
-                            el.splitHeight = Math.max(15, origVals.splitHeight + dy);
-                        }
-                    }
-                }
-
-                updateElementDOM(el);
-            };
-
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-                renderCanvas();
-                saveToLocalStorage();
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-
-        function initShapeInteraction(e, targetEl) {
-            const isModPressed = e.metaKey || e.ctrlKey;
-            
-            if (isModPressed && (targetEl.type === 'participle-shelf' || targetEl.type === 'prepositional-shelf' || targetEl.type === 'adverb-shelf' || targetEl.type === 'custom-line' || targetEl.type === 'compound-rocket' || targetEl.type === 'vertical-stilt')) {
-                initShapeResize(e, targetEl);
-            } else {
-                initShapeDrag(e, targetEl);
-            }
-        }
-
-        function initShapeResize(e, targetEl) {
-            const startMouseX = e.clientX;
-            const startMouseY = e.clientY;
-            const origVals = { x1: targetEl.x1, y1: targetEl.y1, x2: targetEl.x2, y2: targetEl.y2, x3: targetEl.x3, y3: targetEl.y3, splitX: targetEl.splitX, splitHeight: targetEl.splitHeight };
-
-            const onMouseMove = (me) => {
-                const dx = me.clientX - startMouseX;
-                const dy = me.clientY - startMouseY;
-
-                if (targetEl.type === 'participle-shelf' || targetEl.type === 'prepositional-shelf' || targetEl.type === 'adverb-shelf') {
-                    if (origVals.y2 !== undefined) targetEl.y2 = Math.max(origVals.y1 + 5, origVals.y2 + dy);
-                    if (targetEl.type === 'participle-shelf') targetEl.y3 = targetEl.y2;
-                    else if (origVals.y3 !== undefined) targetEl.y3 = targetEl.y2;
-                    
-                    if (origVals.x3 !== undefined) targetEl.x3 = Math.max(targetEl.x2 + 10, origVals.x3 + dx);
-                } else if (targetEl.type === 'custom-line') {
-                    if (origVals.x2 !== undefined) targetEl.x2 = origVals.x2 + dx;
-                    if (origVals.y2 !== undefined) targetEl.y2 = origVals.y2 + dy;
-                } else if (targetEl.type === 'compound-rocket') {
-                    if (origVals.y2 !== undefined) targetEl.y2 = Math.max(origVals.y1 + 20, origVals.y2 + dy);
-                    if (origVals.splitX !== undefined) targetEl.splitX = Math.max(targetEl.x1 + 60, origVals.splitX + dx);
-                } else if (targetEl.type === 'vertical-stilt') {
-                    if (origVals.splitHeight !== undefined) {
-                        targetEl.splitHeight = Math.max(15, origVals.splitHeight + (targetEl.flipped ? dy : -dy));
-                    }
-                    if (origVals.x2 !== undefined) {
-                        targetEl.x2 = Math.max(targetEl.x1 + 40, origVals.x2 + dx);
-                    }
-                }
-
-                updateElementDOM(targetEl);
-            };
-
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-                renderCanvas();
-                saveToLocalStorage();
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-
-        function initShapeDrag(e, targetEl) {
-            const startMouseX = e.clientX;
-            const startMouseY = e.clientY;
-            const orig = { x1: targetEl.x1, y1: targetEl.y1, x2: targetEl.x2, y2: targetEl.y2, x3: targetEl.x3, y3: targetEl.y3, splitX: targetEl.splitX };
-
-            const attachedWords = window.scriptureGramData.elements.filter(item => item.type === 'word' && item.attachedTo === targetEl.id);
-            const origWordPositions = attachedWords.map(w => ({ word: w, x: w.x, y: w.y }));
-
-            const onMouseMove = (me) => {
-                const dx = me.clientX - startMouseX;
-                const dy = me.clientY - startMouseY;
-
-                if (orig.x1 !== undefined) { targetEl.x1 = orig.x1 + dx; targetEl.y1 = orig.y1 + dy; }
-                if (orig.x2 !== undefined) { targetEl.x2 = orig.x2 + dx; targetEl.y2 = orig.y2 + dy; }
-                if (orig.x3 !== undefined) { targetEl.x3 = orig.x3 + dx; targetEl.y3 = orig.y3 + dy; }
-                if (orig.splitX !== undefined) { targetEl.splitX = orig.splitX + dx; }
-
-                origWordPositions.forEach(item => {
-                    item.word.x = item.x + dx;
-                    item.word.y = item.y + dy;
-                    updateElementDOM(item.word);
-                });
-
-                updateElementDOM(targetEl);
-            };
-
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-                renderCanvas();
-                saveToLocalStorage();
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-
-        function initWordDrag(e, el) {
-            const startMouseX = e.clientX;
-            const startMouseY = e.clientY;
-            const origX = el.x;
-            const origY = el.y;
-
-            const onMouseMove = (me) => {
-                const dx = me.clientX - startMouseX;
-                const dy = me.clientY - startMouseY;
-                el.x = origX + dx;
-                el.y = origY + dy;
-
-                if (!me.shiftKey) {
-                    let bestShape = null;
-                    let bestPoint = null;
-                    let minOverallDist = 50;
-
-                    window.scriptureGramData.elements.forEach(shape => {
-                        let segments = [];
-                        if (shape.type === 'modifier-slant') {
-                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
-                        } else if (shape.type === 'prepositional-shelf' || shape.type === 'adverb-shelf' || shape.type === 'participle-shelf') {
-                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
-                            segments.push({ x1: shape.x2, y1: shape.y2, x2: shape.x3, y2: shape.y3 });
-                        } else if (shape.type === 'subject-verb' || shape.type === 'direct-object') {
-                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
-                        } else if (shape.type === 'vertical-stilt') {
-                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
-                            const stiltH = shape.splitHeight || 50;
-                            if (!shape.flipped) {
-                                segments.push({ x1: shape.splitX, y1: shape.y1 - stiltH, x2: shape.splitX, y2: shape.y1 });
-                            } else {
-                                segments.push({ x1: shape.splitX, y1: shape.y1, x2: shape.splitX, y2: shape.y1 + stiltH });
-                            }
-                        } else if (shape.type === 'compound-rocket') {
-                            const topY = Math.min(shape.y1, shape.y2);
-                            const botY = Math.max(shape.y1, shape.y2);
-                            const midY = (topY + botY) / 2;
-                            const jointX = shape.x1 + 35;
-                            const endX = shape.splitX || (shape.x1 + 180);
-                            segments.push({ x1: shape.x1, y1: midY, x2: jointX, y2: topY });
-                            segments.push({ x1: shape.x1, y1: midY, x2: jointX, y2: botY });
-                            segments.push({ x1: jointX, y1: topY, x2: endX, y2: topY });
-                            segments.push({ x1: jointX, y1: botY, x2: endX, y2: botY });
-                        }
-
-                        segments.forEach(seg => {
-                            const pt = getClosestPointOnSegment(el.x, el.y, seg.x1, seg.y1, seg.x2, seg.y2);
-                            if (pt.dist < minOverallDist) {
-                                minOverallDist = pt.dist;
-                                bestShape = shape;
-                                bestPoint = pt;
-                            }
-                        });
-                    });
-
-                    if (bestShape && bestPoint) {
-                        el.x = bestPoint.x;
-                        el.y = bestPoint.y;
-                        el.attachedTo = bestShape.id;
-                    } else {
-                        el.attachedTo = null;
-                    }
-                }
-                updateElementDOM(el);
-            };
-
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-                saveToLocalStorage();
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-
-        function initWordRotate(e, el) {
-            const svg = document.getElementById('svgCanvas');
-            const rect = svg.getBoundingClientRect();
-            const wordScreenX = rect.left + el.x + canvasPanX;
-            const wordScreenY = rect.top + el.y + canvasPanY;
-
-            const startAngle = Math.atan2(e.clientY - wordScreenY, e.clientX - wordScreenX) * (180 / Math.PI);
-            const origRotation = el.rotation || 0;
-
-            const onMouseMove = (me) => {
-                const currentAngle = Math.atan2(me.clientY - wordScreenY, me.clientX - wordScreenX) * (180 / Math.PI);
-                const deltaAngle = currentAngle - startAngle;
-                el.rotation = Math.round((origRotation + deltaAngle) * 10) / 10;
-                updateElementDOM(el);
-            };
-
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-                renderCanvas();
-                saveToLocalStorage();
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-
-        function updateElementDOM(el) {
-            const g = document.querySelector(`[data-group-id="${el.id}"]`);
-            if (!g) return;
-
-            if (el.type === 'word') {
-                const text = g.querySelector('text');
-                if (text) {
-                    text.setAttribute('x', el.x);
-                    text.setAttribute('y', el.y);
-                    if (el.rotation) text.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
-                    else text.removeAttribute('transform');
-                }
-                const bbox = g.querySelector('[data-bbox]');
-                if (bbox) {
-                    bbox.setAttribute('x', el.x - 4);
-                    bbox.setAttribute('y', el.y - 18);
-                    if (el.rotation) bbox.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
-                    else bbox.removeAttribute('transform');
-                }
-            } else {
-                const lines = g.querySelectorAll('line');
-                if (el.type === 'subject-verb') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX); lines[1].setAttribute('y1', el.y1 - el.splitHeight/2); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1 + el.splitHeight/2); }
-                } else if (el.type === 'direct-object') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1); }
-                } else if (el.type === 'predicate-nom') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX - 15); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y1', el.y1); }
-                } else if (el.type === 'modifier-slant') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                } else if (el.type === 'prepositional-shelf' || el.type === 'adverb-shelf') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.x2); lines[1].setAttribute('y1', el.y2); lines[1].setAttribute('x2', el.x3); lines[1].setAttribute('y2', el.y3); }
-                } else if (el.type === 'participle-shelf') {
-                    const path = g.querySelector('path');
-                    if (path) {
-                        const r = Math.min(16, Math.abs(el.y2 - el.y1) / 2);
-                        path.setAttribute('d', `M ${el.x1} ${el.y1} L ${el.x2} ${el.y2 - r} Q ${el.x2} ${el.y2} ${el.x2 + r} ${el.y2} L ${el.x3} ${el.y3}`);
-                    }
-                } else if (el.type === 'custom-line') {
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                } else if (el.type === 'vertical-stilt') {
-                    const stiltH = el.splitHeight || 50;
-                    if (lines[0]) {
-                        if (!el.flipped) {
-                            lines[0].setAttribute('x1', el.splitX); lines[0].setAttribute('y1', el.y1 - stiltH);
-                            lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1);
-                        } else {
-                            lines[0].setAttribute('x1', el.splitX); lines[0].setAttribute('y1', el.y1);
-                            lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1 + stiltH);
-                        }
-                    }
-                    if (lines[1]) {
-                        lines[1].setAttribute('x1', el.x1); lines[1].setAttribute('y1', el.y1);
-                        lines[1].setAttribute('x2', el.x2); lines[1].setAttribute('y2', el.y2);
-                    }
-                } else if (el.type === 'compound-rocket') {
-                    const topY = Math.min(el.y1, el.y2);
-                    const botY = Math.max(el.y1, el.y2);
-                    const midY = (topY + botY) / 2;
-                    const startX = el.x1;
-                    const endX = el.splitX || (el.x1 + 180);
-
-                    if (!el.flipped) {
-                        if (lines[0]) { lines[0].setAttribute('x1', startX); lines[0].setAttribute('y1', midY); lines[0].setAttribute('x2', startX + 35); lines[0].setAttribute('y2', topY); }
-                        if (lines[1]) { lines[1].setAttribute('x1', startX); lines[1].setAttribute('y1', midY); lines[1].setAttribute('x2', startX + 35); lines[1].setAttribute('y2', botY); }
-                        if (lines[2]) { lines[2].setAttribute('x1', startX + 35); lines[2].setAttribute('y1', topY); lines[2].setAttribute('x2', startX + 35); lines[2].setAttribute('y2', botY); }
-                        if (lines[3]) { lines[3].setAttribute('x1', startX + 35); lines[3].setAttribute('y1', topY); lines[3].setAttribute('x2', endX); lines[3].setAttribute('y2', topY); }
-                        if (lines[4]) { lines[4].setAttribute('x1', startX + 35); lines[4].setAttribute('y1', botY); lines[4].setAttribute('x2', endX); lines[4].setAttribute('y2', botY); }
-                    } else {
-                        if (lines[0]) { lines[0].setAttribute('x1', startX); lines[0].setAttribute('y1', topY); lines[0].setAttribute('x2', startX); lines[0].setAttribute('y2', botY); }
-                        if (lines[1]) { lines[1].setAttribute('x1', startX); lines[1].setAttribute('y1', topY); lines[1].setAttribute('x2', startX + 35); lines[1].setAttribute('y2', midY); }
-                        if (lines[2]) { lines[2].setAttribute('x1', startX); lines[2].setAttribute('y1', botY); lines[2].setAttribute('x2', startX + 35); lines[2].setAttribute('y2', midY); }
-                        if (lines[3]) { lines[3].setAttribute('x1', startX - 150); lines[3].setAttribute('y1', topY); lines[3].setAttribute('x2', startX); lines[3].setAttribute('y2', topY); }
-                        if (lines[4]) { lines[4].setAttribute('x1', startX - 150); lines[4].setAttribute('y1', botY); lines[4].setAttribute('x2', startX); lines[4].setAttribute('y2', botY); }
-                    }
-                }
-
-                const handles = g.querySelectorAll('circle');
-                if (handles.length > 0) {
-                    handles.forEach(h => {
-                        const key = h.getAttribute('data-handle-key');
-                        if (key === 'x1') { h.setAttribute('cx', el.x1); h.setAttribute('cy', el.y1); }
-                        else if (key === 'x2') { h.setAttribute('cx', el.x2); h.setAttribute('cy', el.y2); }
-                        else if (key === 'x3') { h.setAttribute('cx', el.x3); h.setAttribute('cy', el.y3); }
-                        else if (key === 'splitX') { h.setAttribute('cx', el.splitX); h.setAttribute('cy', (el.y1 + el.y2)/2); }
-                        else if (key === 'stiltTip') {
-                            const stiltH = el.splitHeight || 50;
-                            h.setAttribute('cx', el.splitX);
-                            h.setAttribute('cy', !el.flipped ? (el.y1 - stiltH) : (el.y1 + stiltH));
-                        }
-                    });
-                }
-            }
-        }
-
-        const canvas = document.getElementById('diagramCanvas');
-        canvas.onmousedown = (e) => {
-            if (e.target === canvas || e.target.id === 'svgCanvas') {
-                activeSelectedId = null;
-                isPanningCanvas = true;
-                panStartX = e.clientX - canvasPanX;
-                panStartY = e.clientY - canvasPanY;
-                renderCanvas();
-            }
-        };
-
-        window.onmousemove = (e) => {
-            if (isPanningCanvas) {
-                canvasPanX = e.clientX - panStartX;
-                canvasPanY = e.clientY - panStartY;
-                renderCanvas();
-            }
-        };
-
-        window.onmouseup = () => {
-            isPanningCanvas = false;
-        };
-
-        function detachSelected() {
-            if (!activeSelectedId) return;
-            const el = window.scriptureGramData.elements.find(x => x.id === activeSelectedId);
-            if (el && el.type === 'word') {
-                el.attachedTo = null;
-                renderCanvas();
-                saveToLocalStorage();
-                alert('Word detached successfully!');
-            }
-        }
-
-        window.onkeydown = (e) => {
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                if (activeSelectedId && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                    window.scriptureGramData.elements = window.scriptureGramData.elements.filter(x => x.id !== activeSelectedId);
-                    activeSelectedId = null;
-                    renderCanvas();
-                    saveToLocalStorage();
-                }
-            }
-        };
-
-        function exportDiagram() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.scriptureGramData, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "scripturegram_project.json");
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        // Initialize application state
-        loadFromLocalStorage();
-        renderTextFlow();
     </script>
-
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCUXqb92rUbl6G9pfuQCWtUCDoOxfFxWVw",
-    authDomain: "scripturegram.firebaseapp.com",
-    projectId: "scripturegram",
-    storageBucket: "scripturegram.firebasestorage.app",
-    messagingSenderId: "960608823862",
-    appId: "1:960608823862:web:cb7134f418d1185704c697",
-    measurementId: "G-N3RM9JE588"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
- // Keyboard Shortcuts for Shapes
-// ==========================================
-// SCRIPTUREGRAM WORKFLOW UPGRADES (FIXED)
-// ==========================================
-
-// 1. Keyboard Shortcuts (Handles multi-line sidebar buttons)
-document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-    const key = e.key.toLowerCase();
-    let targetKeyword = '';
-
-    if (key === 'b') targetKeyword = 'Subject / Verb';
-    else if (key === 'm') targetKeyword = 'Slanted Modifier';
-    else if (key === 'p') targetKeyword = 'Prep Phrase';
-    else if (key === 'c') targetKeyword = 'Compound Rocket';
-
-    if (targetKeyword) {
-        e.preventDefault();
-        const allElements = Array.from(document.querySelectorAll('button, div, [role="button"]'));
-        const targetEl = allElements.find(el => el.textContent && el.textContent.includes(targetKeyword) && el.children.length <= 4);
-        
-        if (targetEl) {
-            ['mousedown', 'mouseup', 'click'].forEach(eventType => {
-                targetEl.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true, view: window }));
-            });
-        }
-    }
-});
-
-// 2. Word Bank Strikethrough & Auto-Return Monitor
-function updateWordBankStrikethroughs() {
-    const canvasTexts = Array.from(document.querySelectorAll('svg text, canvas, .diagram-node, text, tspan, input'))
-        .map(el => (el.textContent || el.value || '').trim().toLowerCase());
-
-    const wordChips = document.querySelectorAll('button, span, div');
-    
-    wordChips.forEach(chip => {
-        if (chip.children.length === 0 && chip.textContent && chip.textContent.trim().split(/\s+/).length === 1) {
-            const word = chip.textContent.trim().toLowerCase();
-            if (word.length < 2) return;
-
-            const isUsed = canvasTexts.some(text => text.includes(word));
-            
-            if (isUsed) {
-                chip.style.textDecoration = 'line-through';
-                chip.style.opacity = '0.4';
-            } else if (chip.style.textDecoration === 'line-through') {
-                chip.style.textDecoration = 'none';
-                chip.style.opacity = '1';
-            }
-        }
-    });
-}
-
-['click', 'keyup', 'mouseup', 'touchend'].forEach(evt => {
-    document.addEventListener(evt, () => {
-        setTimeout(updateWordBankStrikethroughs, 200);
-    });
-});
-
-// 3. Batch Add Words Helper
-function batchAddWords(wordString) {
-    const input = document.querySelector('input[type="text"]');
-    const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim().toLowerCase() === 'add');
-    
-    if (!input || !addBtn) return;
-    
-    const words = wordString.split(/[\s,]+/).filter(w => w.length > 0);
-    words.forEach(w => {
-        input.value = w;
-        addBtn.click();
-    });
-    input.value = '';
-}
-</script>
-
 </body>
 </html>
