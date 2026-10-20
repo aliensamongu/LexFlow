@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +23,12 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         
@@ -32,7 +38,6 @@
             transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* Dark Theme Variables */
         html.dark body {
             background-color: #0b0f19;
             color: #f3f4f6;
@@ -42,7 +47,6 @@
             background-size: 24px 24px;
         }
 
-        /* Light Theme Variables */
         html:not(.dark) body {
             background-color: #f8fafc;
             color: #0f172a;
@@ -66,9 +70,45 @@
         .node-handle:hover {
             fill: #818cf8;
         }
+
+        .shape-interactive {
+            cursor: grab;
+        }
+        .shape-interactive:active {
+            cursor: grabbing;
+        }
+        body.mod-key-pressed .shape-interactive {
+            cursor: pointer !important;
+        }
+
+        /* Print Styles for True Save to PDF */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #moduleDiagram, #svgCanvas, #svgCanvas * {
+                visibility: visible;
+            }
+            header, aside, #shapeContextMenu, #authModal {
+                display: none !important;
+            }
+            #moduleDiagram {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: white !important;
+            }
+            #svgCanvas {
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col select-none">
+
+<body class="h-screen flex flex-col select-none" onclick="hideContextMenu()">
 
     <!-- Top App Header -->
     <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-2.5 flex justify-between items-center z-50 transition-colors">
@@ -92,14 +132,22 @@
             </button>
         </div>
 
-        <!-- Utility & Theme Actions -->
+        <!-- Utility & User Actions -->
         <div class="flex items-center space-x-2">
+            <button onclick="handleCloudBtnClick()" id="userAuthBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1.5">
+                <i class="fa-solid fa-cloud"></i>
+                <span id="userAuthLabel">Cloud Account</span>
+            </button>
+
             <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
-                <i id="themeIcon" class="fa-solid fa-moon"></i>
-                <span id="themeLabel">Dark</span>
+                <i id="themeIcon" class="fa-solid fa-sun text-amber-500"></i>
+                <span id="themeLabel">Light</span>
+            </button>
+            <button onclick="saveToPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1">
+                <i class="fa-solid fa-file-pdf mr-1"></i> Save to PDF
             </button>
             <button onclick="detachSelected()" class="bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow">
-                <i class="fa-solid fa-unlink mr-1"></i> Detach / Unbind
+                <i class="fa-solid fa-unlink mr-1"></i> Detach
             </button>
             <button onclick="exportDiagram()" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition">
                 <i class="fa-solid fa-download mr-1"></i> Export
@@ -107,30 +155,290 @@
         </div>
     </header>
 
-    <!-- MODULE 1: TEXT FLOW WORKAREA -->
-    <main id="moduleTextFlow" class="flex-1 flex overflow-hidden">
-        <div class="max-w-5xl w-full mx-auto p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
-            <div class="bg-white dark:bg-panelBg p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 shadow-sm transition-colors">
-                <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200">Passage Paste Area</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Paste your full scripture passage below. Press <kbd class="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded text-gray-700 dark:text-gray-300">Enter</kbd> anywhere inside a proposition box to split it into a new line!</p>
-                <textarea id="rawParagraphInput" rows="3" placeholder="Paste full scripture passage here..." class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500 resize-y transition-colors"></textarea>
-                <div class="flex justify-between items-center">
-                    <input type="text" id="passageTitleInput" placeholder="Passage Title (e.g., John 1:1)" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200 w-64 focus:outline-none focus:border-indigo-500 transition-colors">
-                    <div class="space-x-2">
-                        <button onclick="addTextFlowProposition()" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3.5 py-2 rounded-xl transition">
-                            + Empty Proposition
-                        </button>
-                        <button onclick="loadPassageToTextFlow()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-xl transition shadow">
-                            Load Passage Paragraph
-                        </button>
-                    </div>
-                </div>
+<!-- GLOBAL WORKSPACE PROJECTS BAR (SHARED FOR TEXT + DIAGRAM) -->
+<div id="workspaceProjectBar" class="max-w-4xl mx-auto my-3 px-6 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs transition-colors">
+    <div class="flex items-center space-x-2">
+        <span class="font-semibold text-gray-500 dark:text-gray-400">Active Project:</span>
+        <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2.5 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
+            <option value="scriptureGram_default">Default Scratchpad</option>
+        </select>
+        <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New Project</button>
+    </div>
+    <div class="flex items-center space-x-3">
+        <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
+        <button onclick="deleteCurrentProject()" class="px-2.5 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition font-medium">🗑 Delete Project</button>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // COMBINED PROJECT MANAGEMENT (TEXT + DIAGRAM)
+    // ==========================================
+    const projectSelect = document.getElementById('projectSelect');
+    const globalSaveStatus = document.getElementById('globalSaveStatus');
+    let currentProjectKey = localStorage.getItem('scriptureGram_activeProjectKey') || 'scriptureGram_default';
+
+    function getProjectsCatalog() {
+        return JSON.parse(localStorage.getItem('scriptureGram_catalog') || '{}');
+    }
+
+    function populateProjectsMenu() {
+        if (!projectSelect) return;
+        const catalog = getProjectsCatalog();
+        projectSelect.innerHTML = '<option value="scriptureGram_default">Default Scratchpad</option>';
+        
+        Object.keys(catalog).forEach(key => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = catalog[key];
+            if (key === currentProjectKey) opt.selected = true;
+            projectSelect.appendChild(opt);
+        });
+    }
+
+    function saveActiveProjectData() {
+        const flowEditor = document.getElementById('flowEditor');
+        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
+
+        const projectData = {
+            textFlowHTML: flowEditor ? flowEditor.innerHTML : '',
+            diagramSVG: diagramCanvas ? diagramCanvas.innerHTML : '',
+            updatedAt: Date.now()
+        };
+
+        localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
+        if (globalSaveStatus) {
+            globalSaveStatus.textContent = 'Saving...';
+            setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400);
+        }
+    }
+
+    function loadSelectedProject() {
+        if (!projectSelect) return;
+        currentProjectKey = projectSelect.value;
+        localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+
+        const rawData = localStorage.getItem(currentProjectKey);
+        const flowEditor = document.getElementById('flowEditor');
+        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
+
+        if (rawData) {
+            try {
+                const projectData = JSON.parse(rawData);
+                
+                if (flowEditor && projectData.textFlowHTML !== undefined) {
+                    flowEditor.innerHTML = projectData.textFlowHTML;
+                    if (typeof updateWordCount === 'function') updateWordCount();
+                }
+                
+                if (diagramCanvas && projectData.diagramSVG !== undefined) {
+                    diagramCanvas.innerHTML = projectData.diagramSVG;
+                }
+            } catch (e) {
+                if (flowEditor) flowEditor.innerHTML = rawData;
+            }
+        } else {
+            if (flowEditor) flowEditor.innerHTML = '';
+            if (diagramCanvas) diagramCanvas.innerHTML = '';
+        }
+    }
+
+    function saveCurrentAsNewProject() {
+        const title = prompt('Enter a name for this project (e.g., "Hebrews 1:1-4 Complete Analysis"):');
+        if (!title || !title.trim()) return;
+
+        const newKey = 'scriptureGram_proj_' + Date.now();
+        const catalog = getProjectsCatalog();
+        catalog[newKey] = title.trim();
+
+        localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
+        currentProjectKey = newKey;
+        localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+
+        saveActiveProjectData();
+        populateProjectsMenu();
+        if (projectSelect) projectSelect.value = newKey;
+    }
+
+    function deleteCurrentProject() {
+        if (currentProjectKey === 'scriptureGram_default') {
+            if (confirm('Reset default scratchpad (clears text and diagram)?')) {
+                const flowEditor = document.getElementById('flowEditor');
+                const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
+                if (flowEditor) flowEditor.innerHTML = '';
+                if (diagramCanvas) diagramCanvas.innerHTML = '';
+                localStorage.removeItem('scriptureGram_default');
+                if (typeof updateWordCount === 'function') updateWordCount();
+            }
+            return;
+        }
+
+        const catalog = getProjectsCatalog();
+        const name = catalog[currentProjectKey] || 'this project';
+
+        if (confirm(`Delete "${name}" and all associated diagrams/text?`)) {
+            localStorage.removeItem(currentProjectKey);
+            delete catalog[currentProjectKey];
+            localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
+
+            currentProjectKey = 'scriptureGram_default';
+            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+
+            populateProjectsMenu();
+            loadSelectedProject();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        populateProjectsMenu();
+        loadSelectedProject();
+
+        const flowEditor = document.getElementById('flowEditor');
+        if (flowEditor) {
+            flowEditor.addEventListener('input', saveActiveProjectData);
+        }
+
+        const diagramCanvas = document.getElementById('moduleDiagram') || document.getElementById('diagramCanvas');
+        if (diagramCanvas) {
+            const observer = new MutationObserver(saveActiveProjectData);
+            observer.observe(diagramCanvas, { childList: true, subtree: true, attributes: true });
+        }
+    });
+</script>
+
+
+<!-- MODULE 1: TEXT FLOW WORKAREA (FORWARD & BACKWARD SUBORDINATION) -->
+<div id="moduleTextFlow" class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-zinc-950">
+    <div id="wordProcessorPane" class="max-w-3xl mx-auto my-4 p-8 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 min-h-[75vh] flex flex-col transition-colors">
+        
+        <!-- Top Toolbar -->
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-sm">
+            <div class="flex items-center space-x-3">
+                <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide">Thought Flow Document</span>
+                <span id="saveStatus" class="text-xs text-emerald-500 font-medium">Auto-saved</span>
             </div>
-            
-            <!-- Compact document view list -->
-            <div id="textFlowList" class="space-y-1.5 pb-10"></div>
+            <div class="flex items-center space-x-2">
+                <button onclick="document.execCommand('indent', false, null)" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">Indent (Tab) →</button>
+                <button onclick="document.execCommand('outdent', false, null)" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">← Outdent (Shift+Tab)</button>
+                <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition text-xs font-medium">↓ Attach to Clause Below</button>
+                <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition text-xs font-medium">Clear</button>
+            </div>
         </div>
-    </main>
+        
+        <!-- Custom Styling for Forward and Backward Subordination Lines -->
+        <style>
+            /* Standard Subordination (Attaches upward to clause above) */
+            #flowEditor blockquote, 
+            #flowEditor div[style*="margin-left"],
+            #flowEditor p[style*="margin-left"] {
+                border-left: 2px solid #6366f1 !important; /* Indigo line */
+                margin-left: 1.5rem !important;
+                padding-left: 1rem !important;
+                margin-top: 0.3rem !important;
+                margin-bottom: 0.3rem !important;
+                position: relative;
+            }
+
+            /* Forward Subordination (Attaches DOWNWARD to the clause below) */
+            #flowEditor .attach-down {
+                border-left: 2px solid #6366f1 !important;
+                margin-left: 1.5rem !important;
+                padding-left: 1rem !important;
+                position: relative;
+            }
+            
+            /* Visual bracket indicator dropping down to the next clause */
+            #flowEditor .attach-down::after {
+                content: '';
+                position: absolute;
+                bottom: -0.6rem;
+                left: -2px;
+                width: 10px;
+                height: 2px;
+                background-color: #6366f1;
+            }
+        </style>
+        
+        <!-- Editable Document Canvas -->
+        <div id="flowEditor" contenteditable="true" 
+             class="flex-1 outline-none font-serif text-lg leading-loose text-gray-800 dark:text-gray-100 space-y-4 focus:ring-0"
+             style="min-height: 55vh;"
+             placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
+        </div>
+
+        <!-- Bottom Status Bar -->
+        <div class="pt-4 mt-6 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center">
+            <span id="wordCountDisplay">0 words</span>
+            <span class="italic">Tip: Place cursor on "but in these last days" and click "↓ Attach to Clause Below" to show forward connection.</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const editor = document.getElementById('flowEditor');
+    const wordCountDisplay = document.getElementById('wordCountDisplay');
+    const saveStatus = document.getElementById('saveStatus');
+
+    const savedFlow = localStorage.getItem('scriptureGramTextFlow');
+    if (savedFlow && editor) {
+        editor.innerHTML = savedFlow;
+        updateWordCount();
+    }
+
+    if (editor) {
+        editor.addEventListener('input', () => {
+            localStorage.setItem('scriptureGramTextFlow', editor.innerHTML);
+            updateWordCount();
+            if (saveStatus) saveStatus.textContent = 'Saving...';
+            setTimeout(() => { 
+                if (saveStatus) saveStatus.textContent = 'Auto-saved'; 
+            }, 400);
+        });
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    document.execCommand('outdent', false, null);
+                } else {
+                    document.execCommand('indent', false, null);
+                }
+            }
+        });
+    }
+
+    // Function to toggle Forward Subordination (Attach to Clause Below)
+    function toggleAttachDown() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+
+        let node = selection.anchorNode;
+        while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
+            node = node.parentNode;
+        }
+
+        if (node && node !== editor) {
+            node.classList.toggle('attach-down');
+            localStorage.setItem('scriptureGramTextFlow', editor.innerHTML);
+        }
+    }
+
+    function updateWordCount() {
+        if (!editor || !wordCountDisplay) return;
+        const text = editor.innerText || '';
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        wordCountDisplay.textContent = `${words} words`;
+    }
+
+    function clearTextFlow() {
+        if (confirm('Are you sure you want to clear your thought flow notes?')) {
+            if (editor) editor.innerHTML = '';
+            localStorage.removeItem('scriptureGramTextFlow');
+            updateWordCount();
+        }
+    }
+</script>
+
 
     <!-- MODULE 2: SYNTAX DIAGRAM MODULE (PURE SVG) -->
     <main id="moduleDiagram" class="flex-1 hidden flex overflow-hidden relative">
@@ -171,24 +479,28 @@
                         <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Prep Phrase</div>
                         <div class="text-[10px] text-gray-500">Slant + Shelf</div>
                     </button>
+                    <button onclick="spawnShape('participle-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Participle Shelf</div>
+                        <div class="text-[10px] text-gray-500">Curved step shelf</div>
+                    </button>
                     <button onclick="spawnShape('compound-rocket')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
                         <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Compound Rocket</div>
-                        <div class="text-[10px] text-gray-500">Parallel shelves</div>
+                        <div class="text-[10px] text-gray-500">Double parallel shelf</div>
                     </button>
                     <button onclick="spawnShape('vertical-stilt')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
                         <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Vertical Stilt</div>
                         <div class="text-[10px] text-gray-500">Clause pedestal</div>
                     </button>
-                    <button onclick="spawnShape('participle-shelf')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
-                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Participle Shelf</div>
-                        <div class="text-[10px] text-gray-500">Step curve modifier</div>
+                    <button onclick="spawnShape('custom-line')" class="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 p-3 rounded-xl text-left transition group">
+                        <div class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Custom Line</div>
+                        <div class="text-[10px] text-gray-500">Solid / Dashed / Dotted</div>
                     </button>
                 </div>
             </div>
 
             <div class="p-4 border-t border-gray-200 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
-                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Cmd/Ctrl + Drag Word</kbd> Rotate word</div>
-                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Click & Drag Lines</kbd> Move shape + attached words</div>
+                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Right-Click Shape</kbd> Open Context Menu</div>
+                <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Cmd/Ctrl + Drag Shape</kbd> Adjust height & length</div>
                 <div><kbd class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-transparent">Delete Key</kbd> Remove selected item</div>
             </div>
         </aside>
@@ -199,14 +511,219 @@
         </div>
     </main>
 
+    <!-- Context Menu Popup -->
+    <div id="shapeContextMenu" class="hidden absolute z-50 bg-white dark:bg-cardBg border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl py-1.5 w-40 text-xs"></div>
+
+    <!-- AUTHENTICATION / CLOUD ACCOUNT MODAL -->
+    <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-panelBg border border-gray-200 dark:border-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative space-y-4">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center space-y-1">
+                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center mx-auto text-lg shadow-md">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Cloud Account Sync</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Sign in to save your diagrams automatically across all browsers & devices.</p>
+            </div>
+
+            <div id="authForm" class="space-y-3">
+                <button onclick="signInWithGoogle()" class="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-xl py-2 px-3 text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Continue with Google</span>
+                </button>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
+                    <span class="flex-shrink mx-2 text-[10px] text-gray-400 uppercase tracking-wider">or email</span>
+                    <div class="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
+                </div>
+
+                <div class="space-y-2">
+                    <input type="email" id="authEmail" placeholder="Email Address" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
+                    <input type="password" id="authPassword" placeholder="Password" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="flex space-x-2 pt-1">
+                    <button onclick="handleEmailSignIn()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow">Sign In</button>
+                    <button onclick="handleEmailSignUp()" class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold py-2 rounded-xl transition">Register</button>
+                </div>
+            </div>
+
+            <div id="signedInView" class="hidden space-y-3">
+                <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+                    <p class="text-[11px] text-gray-500">Signed in as:</p>
+                    <p class="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" id="userEmailDisplay"></p>
+                </div>
+                <button onclick="syncToCloudNow()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Sync Current Work to Cloud</span>
+                </button>
+                <button onclick="handleSignOut()" class="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-semibold py-2 rounded-xl transition">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Application Controller Script -->
     <script>
+        let auth, db, currentUser = null;
+
+        // Firebase Initialization with Graceful Fallback
+        try {
+            if (typeof firebase !== 'undefined') {
+                const firebaseConfig = {
+  apiKey: "AIzaSyCUXqb92rUbl6G9pfuQCWtUCDoOxfFxWVw",
+  authDomain: "scripturegram.firebaseapp.com",
+  projectId: "scripturegram",
+  storageBucket: "scripturegram.firebasestorage.app",
+  messagingSenderId: "960608823862",
+  appId: "1:960608823862:web:cb7134f418d1185704c697",
+  measurementId: "G-N3RM9JE588"
+};
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                auth.onAuthStateChanged(user => {
+                    currentUser = user;
+                    updateAuthUI();
+                    if (user) loadFromCloud();
+                });
+            }
+        } catch (e) {
+            console.log("Firebase initialized in local mode.");
+        }
+
         window.scriptureGramData = {
             passageTitle: "",
             propositions: [],
             wordsBank: [],
             elements: []
         };
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('scriptureGramProject', JSON.stringify(window.scriptureGramData));
+                if (currentUser && db) syncToCloudSilent();
+            } catch (e) {
+                console.error("Storage error", e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem('scriptureGramProject');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.elements) {
+                        window.scriptureGramData = parsed;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function handleCloudBtnClick() {
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function updateAuthUI() {
+            const label = document.getElementById('userAuthLabel');
+            const authForm = document.getElementById('authForm');
+            const signedInView = document.getElementById('signedInView');
+            const userEmailDisplay = document.getElementById('userEmailDisplay');
+
+            if (currentUser) {
+                label.textContent = currentUser.displayName || currentUser.email.split('@')[0];
+                authForm.classList.add('hidden');
+                signedInView.classList.remove('hidden');
+                userEmailDisplay.textContent = currentUser.email;
+            } else {
+                label.textContent = 'Cloud Account';
+                authForm.classList.remove('hidden');
+                signedInView.classList.add('hidden');
+            }
+        }
+
+        function signInWithGoogle() {
+            if (!auth) return alert("Firebase auth domain configuration required for OAuth.");
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then(() => closeAuthModal()).catch(err => alert(err.message));
+        }
+
+        function handleEmailSignIn() {
+            if (!auth) return alert("Firebase Auth not connected.");
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            if (!email || !pass) return alert("Please enter email & password.");
+            auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => alert(err.message));
+        }
+
+        function handleEmailSignUp() {
+            if (!auth) return alert("Firebase Auth not connected.");
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            if (!email || !pass) return alert("Please enter email & password.");
+            auth.createUserWithEmailAndPassword(email, pass).then(() => {
+                closeAuthModal();
+                syncToCloudNow();
+            }).catch(err => alert(err.message));
+        }
+
+        function handleSignOut() {
+            if (auth) auth.signOut();
+            closeAuthModal();
+        }
+
+        async function syncToCloudNow() {
+            if (!currentUser || !db) return saveToLocalStorage();
+            try {
+                await db.collection('projects').doc(currentUser.uid).set({
+                    data: window.scriptureGramData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Project synced across devices!");
+            } catch (err) {
+                saveToLocalStorage();
+            }
+        }
+
+        async function syncToCloudSilent() {
+            if (!currentUser || !db) return;
+            try {
+                await db.collection('projects').doc(currentUser.uid).set({
+                    data: window.scriptureGramData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (err) {}
+        }
+
+        async function loadFromCloud() {
+            if (!currentUser || !db) return;
+            try {
+                const doc = await db.collection('projects').doc(currentUser.uid).get();
+                if (doc.exists && doc.data().data) {
+                    window.scriptureGramData = doc.data().data;
+                    saveToLocalStorage();
+                    renderTextFlow();
+                    if (!document.getElementById('moduleDiagram').classList.contains('hidden')) {
+                        renderWordBank();
+                        renderCanvas();
+                    }
+                }
+            } catch (err) {}
+        }
+
+        function saveToPDF() {
+            switchModule('diagram');
+            setTimeout(() => { window.print(); }, 200);
+        }
 
         const relationshipOptions = [
             "Independent / Main Clause",
@@ -226,6 +743,54 @@
 
         let activeSelectedId = null;
         let isPanningCanvas = false, panStartX = 0, panStartY = 0, canvasPanX = 0, canvasPanY = 0;
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Meta' || e.key === 'Control') document.body.classList.add('mod-key-pressed');
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Meta' || e.key === 'Control') document.body.classList.remove('mod-key-pressed');
+        });
+
+        function hideContextMenu() {
+            document.getElementById('shapeContextMenu').classList.add('hidden');
+        }
+
+        function showContextMenu(clientX, clientY, el) {
+            const menu = document.getElementById('shapeContextMenu');
+            menu.innerHTML = '';
+
+            if (el.type === 'compound-rocket' || el.type === 'vertical-stilt') {
+                const flipBtn = document.createElement('div');
+                flipBtn.className = "px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 cursor-pointer flex items-center space-x-2 font-medium";
+                flipBtn.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-indigo-500"></i><span>Flip</span>`;
+                flipBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    el.flipped = !el.flipped;
+                    renderCanvas();
+                    saveToLocalStorage();
+                    hideContextMenu();
+                };
+                menu.appendChild(flipBtn);
+            } else if (el.type === 'custom-line') {
+                ['solid', 'dashed', 'dotted'].forEach(style => {
+                    const styleBtn = document.createElement('div');
+                    styleBtn.className = `px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-600/30 text-gray-800 dark:text-gray-200 cursor-pointer flex items-center space-x-2 font-medium capitalize ${el.lineStyle === style ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-600/20' : ''}`;
+                    styleBtn.innerHTML = `<i class="fa-solid fa-minus w-4 text-center"></i><span>${style}</span>`;
+                    styleBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        el.lineStyle = style;
+                        renderCanvas();
+                        saveToLocalStorage();
+                        hideContextMenu();
+                    };
+                    menu.appendChild(styleBtn);
+                });
+            } else return;
+
+            menu.style.left = `${clientX}px`;
+            menu.style.top = `${clientY}px`;
+            menu.classList.remove('hidden');
+        }
 
         function toggleTheme() {
             const html = document.documentElement;
@@ -291,7 +856,8 @@
                 card.innerHTML = `
                     <div class="flex items-center justify-between flex-wrap gap-1">
                         <div class="flex items-center space-x-2">
-                            <span class="mono-font text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">P${idx + 1}</span>${relBadge}
+                            <span class="mono-font text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">P${idx + 1}</span>
+                            ${relBadge}
                         </div>
                         <div class="flex items-center space-x-1">
                             <select onchange="updatePropRelationship(${prop.id}, this.value)" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-[11px] rounded px-2 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -329,6 +895,7 @@
                     p.relationship = val;
                 }
                 renderTextFlow();
+                saveToLocalStorage();
             }
         }
 
@@ -356,6 +923,7 @@
                     window.scriptureGramData.propositions.splice(propIndex + 1, 0, newProp);
 
                     renderTextFlow();
+                    saveToLocalStorage();
 
                     setTimeout(() => {
                         const newTextarea = document.getElementById(`propText-${newProp.id}`);
@@ -391,6 +959,7 @@
 
             document.getElementById('rawParagraphInput').value = '';
             renderTextFlow();
+            saveToLocalStorage();
         }
 
         function addTextFlowProposition() {
@@ -401,6 +970,7 @@
                 relationship: ""
             });
             renderTextFlow();
+            saveToLocalStorage();
         }
 
         function indentProp(id, delta) {
@@ -408,17 +978,22 @@
             if (p) {
                 p.indentLevel = Math.max(0, (p.indentLevel || 0) + delta);
                 renderTextFlow();
+                saveToLocalStorage();
             }
         }
 
         function updateTextFlowProp(id, val) {
             const p = window.scriptureGramData.propositions.find(x => x.id === id);
-            if (p) p.text = val;
+            if (p) {
+                p.text = val;
+                saveToLocalStorage();
+            }
         }
 
         function deleteTextFlowProp(id) {
             window.scriptureGramData.propositions = window.scriptureGramData.propositions.filter(x => x.id !== id);
             renderTextFlow();
+            saveToLocalStorage();
         }
 
         // --- WORD BANK ---
@@ -445,6 +1020,7 @@
                 window.scriptureGramData.wordsBank.push(val);
                 input.value = '';
                 renderWordBank();
+                saveToLocalStorage();
             }
         }
 
@@ -459,6 +1035,7 @@
                 attachedTo: null
             });
             renderCanvas();
+            saveToLocalStorage();
         }
 
         function spawnShape(type) {
@@ -472,17 +1049,31 @@
                 x1: 250 + offsetX, y1: 300 + offsetY,
                 x2: 500 + offsetX, y2: 300 + offsetY,
                 splitX: 375 + offsetX,
-                splitHeight: 40
+                splitHeight: 40,
+                flipped: false,
+                lineStyle: 'solid'
             };
 
             if (type === 'adverb-shelf') {
                 baseObj.x1 = 360 + offsetX; baseObj.y1 = 200 + offsetY;
                 baseObj.x2 = 300 + offsetX; baseObj.y2 = 250 + offsetY;
                 baseObj.x3 = 400 + offsetX; baseObj.y3 = 330 + offsetY;
+            } else if (type === 'participle-shelf') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
+                baseObj.x2 = 300 + offsetX; baseObj.y2 = 260 + offsetY;
+                baseObj.x3 = 420 + offsetX; baseObj.y3 = 260 + offsetY;
             } else if (type === 'compound-rocket') {
-                baseObj.x1 = 250 + offsetX; baseObj.y1 = 260 + offsetY;
-                baseObj.x2 = 250 + offsetX; baseObj.y2 = 340 + offsetY;
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 250 + offsetY;
+                baseObj.x2 = 300 + offsetX; baseObj.y2 = 350 + offsetY;
+                baseObj.splitX = 450 + offsetX;
+            } else if (type === 'vertical-stilt') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 300 + offsetY;
+                baseObj.x2 = 500 + offsetX; baseObj.y2 = 300 + offsetY;
                 baseObj.splitX = 400 + offsetX;
+                baseObj.splitHeight = 50;
+            } else if (type === 'custom-line') {
+                baseObj.x1 = 300 + offsetX; baseObj.y1 = 250 + offsetY;
+                baseObj.x2 = 500 + offsetX; baseObj.y2 = 250 + offsetY;
             } else if (type === 'modifier-slant') {
                 baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
                 baseObj.x2 = 380 + offsetX; baseObj.y2 = 280 + offsetY;
@@ -490,14 +1081,11 @@
                 baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
                 baseObj.x2 = 370 + offsetX; baseObj.y2 = 270 + offsetY;
                 baseObj.x3 = 490 + offsetX; baseObj.y3 = 270 + offsetY;
-            } else if (type === 'participle-shelf') {
-                baseObj.x1 = 300 + offsetX; baseObj.y1 = 200 + offsetY;
-                baseObj.x2 = 340 + offsetX; baseObj.y2 = 250 + offsetY;
-                baseObj.x3 = 460 + offsetX; baseObj.y3 = 250 + offsetY;
             }
 
             window.scriptureGramData.elements.push(baseObj);
             renderCanvas();
+            saveToLocalStorage();
         }
 
         // --- PURE SVG UNIFIED CANVAS RENDERER ---
@@ -514,6 +1102,14 @@
                 const isSelected = (activeSelectedId === el.id);
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 g.setAttribute('data-group-id', el.id);
+                g.setAttribute('class', 'shape-interactive');
+
+                g.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    activeSelectedId = el.id;
+                    showContextMenu(e.clientX, e.clientY, el);
+                };
 
                 if (el.type === 'word') {
                     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -525,6 +1121,7 @@
                     text.setAttribute('font-size', '16');
                     text.setAttribute('font-family', 'Inter, sans-serif');
                     text.setAttribute('font-weight', '600');
+                    text.setAttribute('dominant-baseline', 'alphabetic');
                     if (el.rotation) {
                         text.setAttribute('transform', `rotate(${el.rotation}, ${el.x}, ${el.y})`);
                     }
@@ -568,6 +1165,7 @@
                                 el.text = newTxt;
                             }
                             renderCanvas();
+                            saveToLocalStorage();
                         }
                     };
 
@@ -586,19 +1184,51 @@
                     } else if (el.type === 'adverb-shelf') {
                         g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
                         g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
-                    } else if (el.type === 'prepositional-shelf' || el.type === 'participle-shelf') {
+                    } else if (el.type === 'prepositional-shelf') {
                         g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
                         g.appendChild(createSvgLine(el.x2, el.y2, el.x3, el.y3, stroke, 2.5));
+                    } else if (el.type === 'participle-shelf') {
+                        const r = Math.min(16, Math.abs(el.y2 - el.y1) / 2);
+                        const pathStr = `M ${el.x1} ${el.y1} L ${el.x2} ${el.y2 - r} Q ${el.x2} ${el.y2} ${el.x2 + r} ${el.y2} L ${el.x3} ${el.y3}`;
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', pathStr);
+                        path.setAttribute('stroke', stroke);
+                        path.setAttribute('stroke-width', '2.5');
+                        path.setAttribute('fill', 'none');
+                        path.setAttribute('stroke-linecap', 'round');
+                        g.appendChild(path);
+                    } else if (el.type === 'custom-line') {
+                        let dashArray = null;
+                        if (el.lineStyle === 'dashed') dashArray = '8 6';
+                        else if (el.lineStyle === 'dotted') dashArray = '3 5';
+                        g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5, dashArray));
                     } else if (el.type === 'compound-rocket') {
-                        const midY = (el.y1 + el.y2) / 2;
-                        const rightPointX = el.splitX + 100;
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.splitX, el.y1, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.x1, el.y2, el.splitX, el.y2, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.splitX, el.y1, rightPointX, midY, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.splitX, el.y2, rightPointX, midY, stroke, 2.5));
-                        g.appendChild(createSvgLine(el.x1, el.y1, el.x1, el.y2, stroke, 2, 'dash'));
+                        const topY = Math.min(el.y1, el.y2);
+                        const botY = Math.max(el.y1, el.y2);
+                        const midY = (topY + botY) / 2;
+                        const startX = el.x1;
+                        const endX = el.splitX || (el.x1 + 180);
+
+                        if (!el.flipped) {
+                            g.appendChild(createSvgLine(startX, midY, startX + 35, topY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX, midY, startX + 35, botY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX + 35, topY, startX + 35, botY, stroke, 2, '4 4'));
+                            g.appendChild(createSvgLine(startX + 35, topY, endX, topY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX + 35, botY, endX, botY, stroke, 2.5));
+                        } else {
+                            g.appendChild(createSvgLine(startX, topY, startX, botY, stroke, 2, '4 4'));
+                            g.appendChild(createSvgLine(startX, topY, startX + 35, midY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX, botY, startX + 35, midY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX - 150, topY, startX, topY, stroke, 2.5));
+                            g.appendChild(createSvgLine(startX - 150, botY, startX, botY, stroke, 2.5));
+                        }
                     } else if (el.type === 'vertical-stilt') {
-                        g.appendChild(createSvgLine(el.splitX, el.y1 - el.splitHeight, el.splitX, el.y1, stroke, 2.5));
+                        const stiltH = el.splitHeight || 50;
+                        if (!el.flipped) {
+                            g.appendChild(createSvgLine(el.splitX, el.y1 - stiltH, el.splitX, el.y1, stroke, 2.5));
+                        } else {
+                            g.appendChild(createSvgLine(el.splitX, el.y1, el.splitX, el.y1 + stiltH, stroke, 2.5));
+                        }
                         g.appendChild(createSvgLine(el.x1, el.y1, el.x2, el.y2, stroke, 2.5));
                     }
 
@@ -606,7 +1236,7 @@
                     hitLine.onmousedown = (e) => {
                         e.stopPropagation();
                         activeSelectedId = el.id;
-                        initShapeDrag(e, el);
+                        initShapeInteraction(e, el);
                     };
                     g.appendChild(hitLine);
 
@@ -614,7 +1244,12 @@
                         g.appendChild(createNodeHandle(el.id, 'x1', el.x1, el.y1));
                         g.appendChild(createNodeHandle(el.id, 'x2', el.x2, el.y2));
                         if (el.x3 !== undefined) g.appendChild(createNodeHandle(el.id, 'x3', el.x3, el.y3));
-                        if (el.splitX !== undefined) g.appendChild(createNodeHandle(el.id, 'splitX', el.splitX, el.y1));
+                        if (el.splitX !== undefined && el.type !== 'vertical-stilt') g.appendChild(createNodeHandle(el.id, 'splitX', el.splitX, (el.y1 + el.y2)/2));
+                        if (el.type === 'vertical-stilt') {
+                            const stiltH = el.splitHeight || 50;
+                            const tipY = !el.flipped ? (el.y1 - stiltH) : (el.y1 + stiltH);
+                            g.appendChild(createNodeHandle(el.id, 'stiltTip', el.splitX, tipY));
+                        }
                     }
                 }
 
@@ -622,14 +1257,14 @@
             });
         }
 
-        function createSvgLine(x1, y1, x2, y2, stroke, width, style) {
+        function createSvgLine(x1, y1, x2, y2, stroke, width, dashArray) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', x1); line.setAttribute('y1', y1);
             line.setAttribute('x2', x2); line.setAttribute('y2', y2);
             line.setAttribute('stroke', stroke);
             line.setAttribute('stroke-width', width);
             line.setAttribute('stroke-linecap', 'round');
-            if (style === 'dash') line.setAttribute('stroke-dasharray', '4 4');
+            if (dashArray) line.setAttribute('stroke-dasharray', dashArray);
             return line;
         }
 
@@ -641,6 +1276,7 @@
             circle.setAttribute('stroke', '#ffffff');
             circle.setAttribute('stroke-width', '2');
             circle.setAttribute('class', 'node-handle');
+            circle.setAttribute('data-handle-key', handleKey);
             
             circle.onmousedown = (e) => {
                 e.stopPropagation();
@@ -649,23 +1285,60 @@
             return circle;
         }
 
-        // --- STABLE DRAG & ROTATE ENGINES ---
+        function getClosestPointOnSegment(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return { x: x1, y: y1, dist: Math.hypot(px - x1, py - y1) };
+            
+            let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            
+            const cx = x1 + t * dx;
+            const cy = y1 + t * dy;
+            const dist = Math.hypot(px - cx, py - cy);
+            return { x: cx, y: cy, dist };
+        }
+
         function initHandleDrag(e, elementId, handleKey) {
             const el = window.scriptureGramData.elements.find(x => x.id === elementId);
             if (!el) return;
 
             const startMouseX = e.clientX;
             const startMouseY = e.clientY;
-            const origVals = { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2, x3: el.x3, y3: el.y3, splitX: el.splitX };
+            const origVals = { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2, x3: el.x3, y3: el.y3, splitX: el.splitX, splitHeight: el.splitHeight };
 
             const onMouseMove = (me) => {
                 const dx = me.clientX - startMouseX;
                 const dy = me.clientY - startMouseY;
 
-                if (handleKey === 'x1') { if (origVals.x1 !== undefined) el.x1 = origVals.x1 + dx; if (origVals.y1 !== undefined) el.y1 = origVals.y1 + dy; }
-                else if (handleKey === 'x2') { if (origVals.x2 !== undefined) el.x2 = origVals.x2 + dx; if (origVals.y2 !== undefined) el.y2 = origVals.y2 + dy; }
-                else if (handleKey === 'x3') { if (origVals.x3 !== undefined) el.x3 = origVals.x3 + dx; if (origVals.y3 !== undefined) el.y3 = origVals.y3 + dy; }
-                else if (handleKey === 'splitX') { if (origVals.splitX !== undefined) el.splitX = origVals.splitX + dx; }
+                if (handleKey === 'x1') { 
+                    if (origVals.x1 !== undefined) el.x1 = origVals.x1 + dx; 
+                    if (origVals.y1 !== undefined) el.y1 = origVals.y1 + dy; 
+                }
+                else if (handleKey === 'x2') { 
+                    if (origVals.x2 !== undefined) el.x2 = origVals.x2 + dx; 
+                    if (origVals.y2 !== undefined) el.y2 = origVals.y2 + dy; 
+                    if (el.type === 'participle-shelf') {
+                        el.y3 = el.y2;
+                    }
+                }
+                else if (handleKey === 'x3') { 
+                    if (origVals.x3 !== undefined) el.x3 = origVals.x3 + dx; 
+                    if (origVals.y3 !== undefined) el.y3 = origVals.y3 + dy; 
+                }
+                else if (handleKey === 'splitX') { 
+                    if (origVals.splitX !== undefined) el.splitX = origVals.splitX + dx; 
+                }
+                else if (handleKey === 'stiltTip') {
+                    if (origVals.splitHeight !== undefined) {
+                        if (!el.flipped) {
+                            el.splitHeight = Math.max(15, origVals.splitHeight - dy);
+                        } else {
+                            el.splitHeight = Math.max(15, origVals.splitHeight + dy);
+                        }
+                    }
+                }
 
                 updateElementDOM(el);
             };
@@ -674,6 +1347,61 @@
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
                 renderCanvas();
+                saveToLocalStorage();
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function initShapeInteraction(e, targetEl) {
+            const isModPressed = e.metaKey || e.ctrlKey;
+            
+            if (isModPressed && (targetEl.type === 'participle-shelf' || targetEl.type === 'prepositional-shelf' || targetEl.type === 'adverb-shelf' || targetEl.type === 'custom-line' || targetEl.type === 'compound-rocket' || targetEl.type === 'vertical-stilt')) {
+                initShapeResize(e, targetEl);
+            } else {
+                initShapeDrag(e, targetEl);
+            }
+        }
+
+        function initShapeResize(e, targetEl) {
+            const startMouseX = e.clientX;
+            const startMouseY = e.clientY;
+            const origVals = { x1: targetEl.x1, y1: targetEl.y1, x2: targetEl.x2, y2: targetEl.y2, x3: targetEl.x3, y3: targetEl.y3, splitX: targetEl.splitX, splitHeight: targetEl.splitHeight };
+
+            const onMouseMove = (me) => {
+                const dx = me.clientX - startMouseX;
+                const dy = me.clientY - startMouseY;
+
+                if (targetEl.type === 'participle-shelf' || targetEl.type === 'prepositional-shelf' || targetEl.type === 'adverb-shelf') {
+                    if (origVals.y2 !== undefined) targetEl.y2 = Math.max(origVals.y1 + 5, origVals.y2 + dy);
+                    if (targetEl.type === 'participle-shelf') targetEl.y3 = targetEl.y2;
+                    else if (origVals.y3 !== undefined) targetEl.y3 = targetEl.y2;
+                    
+                    if (origVals.x3 !== undefined) targetEl.x3 = Math.max(targetEl.x2 + 10, origVals.x3 + dx);
+                } else if (targetEl.type === 'custom-line') {
+                    if (origVals.x2 !== undefined) targetEl.x2 = origVals.x2 + dx;
+                    if (origVals.y2 !== undefined) targetEl.y2 = origVals.y2 + dy;
+                } else if (targetEl.type === 'compound-rocket') {
+                    if (origVals.y2 !== undefined) targetEl.y2 = Math.max(origVals.y1 + 20, origVals.y2 + dy);
+                    if (origVals.splitX !== undefined) targetEl.splitX = Math.max(targetEl.x1 + 60, origVals.splitX + dx);
+                } else if (targetEl.type === 'vertical-stilt') {
+                    if (origVals.splitHeight !== undefined) {
+                        targetEl.splitHeight = Math.max(15, origVals.splitHeight + (targetEl.flipped ? dy : -dy));
+                    }
+                    if (origVals.x2 !== undefined) {
+                        targetEl.x2 = Math.max(targetEl.x1 + 40, origVals.x2 + dx);
+                    }
+                }
+
+                updateElementDOM(targetEl);
+            };
+
+            const onMouseUp = () => {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                renderCanvas();
+                saveToLocalStorage();
             };
 
             window.addEventListener('mousemove', onMouseMove);
@@ -710,6 +1438,7 @@
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
                 renderCanvas();
+                saveToLocalStorage();
             };
 
             window.addEventListener('mousemove', onMouseMove);
@@ -729,18 +1458,56 @@
                 el.y = origY + dy;
 
                 if (!me.shiftKey) {
+                    let bestShape = null;
+                    let bestPoint = null;
+                    let minOverallDist = 50;
+
                     window.scriptureGramData.elements.forEach(shape => {
-                        if (shape.type === 'modifier-slant' || shape.type === 'prepositional-shelf' || shape.type === 'adverb-shelf') {
-                            const mx = (shape.x1 + shape.x2) / 2;
-                            const my = (shape.y1 + shape.y2) / 2;
-                            const dist = Math.hypot(mx - el.x, my - el.y);
-                            if (dist < 45) {
-                                el.x = mx + 12;
-                                el.y = my - 12;
-                                el.attachedTo = shape.id;
+                        let segments = [];
+                        if (shape.type === 'modifier-slant') {
+                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
+                        } else if (shape.type === 'prepositional-shelf' || shape.type === 'adverb-shelf' || shape.type === 'participle-shelf') {
+                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
+                            segments.push({ x1: shape.x2, y1: shape.y2, x2: shape.x3, y2: shape.y3 });
+                        } else if (shape.type === 'subject-verb' || shape.type === 'direct-object') {
+                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
+                        } else if (shape.type === 'vertical-stilt') {
+                            segments.push({ x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2 });
+                            const stiltH = shape.splitHeight || 50;
+                            if (!shape.flipped) {
+                                segments.push({ x1: shape.splitX, y1: shape.y1 - stiltH, x2: shape.splitX, y2: shape.y1 });
+                            } else {
+                                segments.push({ x1: shape.splitX, y1: shape.y1, x2: shape.splitX, y2: shape.y1 + stiltH });
                             }
+                        } else if (shape.type === 'compound-rocket') {
+                            const topY = Math.min(shape.y1, shape.y2);
+                            const botY = Math.max(shape.y1, shape.y2);
+                            const midY = (topY + botY) / 2;
+                            const jointX = shape.x1 + 35;
+                            const endX = shape.splitX || (shape.x1 + 180);
+                            segments.push({ x1: shape.x1, y1: midY, x2: jointX, y2: topY });
+                            segments.push({ x1: shape.x1, y1: midY, x2: jointX, y2: botY });
+                            segments.push({ x1: jointX, y1: topY, x2: endX, y2: topY });
+                            segments.push({ x1: jointX, y1: botY, x2: endX, y2: botY });
                         }
+
+                        segments.forEach(seg => {
+                            const pt = getClosestPointOnSegment(el.x, el.y, seg.x1, seg.y1, seg.x2, seg.y2);
+                            if (pt.dist < minOverallDist) {
+                                minOverallDist = pt.dist;
+                                bestShape = shape;
+                                bestPoint = pt;
+                            }
+                        });
                     });
+
+                    if (bestShape && bestPoint) {
+                        el.x = bestPoint.x;
+                        el.y = bestPoint.y;
+                        el.attachedTo = bestShape.id;
+                    } else {
+                        el.attachedTo = null;
+                    }
                 }
                 updateElementDOM(el);
             };
@@ -748,7 +1515,7 @@
             const onMouseUp = () => {
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
-                renderCanvas();
+                saveToLocalStorage();
             };
 
             window.addEventListener('mousemove', onMouseMove);
@@ -775,6 +1542,7 @@
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
                 renderCanvas();
+                saveToLocalStorage();
             };
 
             window.addEventListener('mousemove', onMouseMove);
@@ -810,20 +1578,55 @@
                     if (lines[1]) { lines[1].setAttribute('x1', el.splitX); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1); }
                 } else if (el.type === 'predicate-nom') {
                     if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX - 15); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y1); }
+                    if (lines[1]) { lines[1].setAttribute('x1', el.splitX - 15); lines[1].setAttribute('y1', el.y1 - el.splitHeight); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y1', el.y1); }
                 } else if (el.type === 'modifier-slant') {
                     if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
-                } else if (el.type === 'prepositional-shelf' || el.type === 'participle-shelf' || el.type === 'adverb-shelf') {
+                } else if (el.type === 'prepositional-shelf' || el.type === 'adverb-shelf') {
                     if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
                     if (lines[1]) { lines[1].setAttribute('x1', el.x2); lines[1].setAttribute('y1', el.y2); lines[1].setAttribute('x2', el.x3); lines[1].setAttribute('y2', el.y3); }
+                } else if (el.type === 'participle-shelf') {
+                    const path = g.querySelector('path');
+                    if (path) {
+                        const r = Math.min(16, Math.abs(el.y2 - el.y1) / 2);
+                        path.setAttribute('d', `M ${el.x1} ${el.y1} L ${el.x2} ${el.y2 - r} Q ${el.x2} ${el.y2} ${el.x2 + r} ${el.y2} L ${el.x3} ${el.y3}`);
+                    }
+                } else if (el.type === 'custom-line') {
+                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.x2); lines[0].setAttribute('y2', el.y2); }
+                } else if (el.type === 'vertical-stilt') {
+                    const stiltH = el.splitHeight || 50;
+                    if (lines[0]) {
+                        if (!el.flipped) {
+                            lines[0].setAttribute('x1', el.splitX); lines[0].setAttribute('y1', el.y1 - stiltH);
+                            lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1);
+                        } else {
+                            lines[0].setAttribute('x1', el.splitX); lines[0].setAttribute('y1', el.y1);
+                            lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1 + stiltH);
+                        }
+                    }
+                    if (lines[1]) {
+                        lines[1].setAttribute('x1', el.x1); lines[1].setAttribute('y1', el.y1);
+                        lines[1].setAttribute('x2', el.x2); lines[1].setAttribute('y2', el.y2);
+                    }
                 } else if (el.type === 'compound-rocket') {
-                    const midY = (el.y1 + el.y2) / 2;
-                    const rightPointX = el.splitX + 100;
-                    if (lines[0]) { lines[0].setAttribute('x1', el.x1); lines[0].setAttribute('y1', el.y1); lines[0].setAttribute('x2', el.splitX); lines[0].setAttribute('y2', el.y1); }
-                    if (lines[1]) { lines[1].setAttribute('x1', el.x1); lines[1].setAttribute('y1', el.y2); lines[1].setAttribute('x2', el.splitX); lines[1].setAttribute('y2', el.y2); }
-                    if (lines[2]) { lines[2].setAttribute('x1', el.splitX); lines[2].setAttribute('y1', el.y1); lines[2].setAttribute('x2', rightPointX); lines[2].setAttribute('y2', midY); }
-                    if (lines[3]) { lines[3].setAttribute('x1', el.splitX); lines[3].setAttribute('y1', el.y2); lines[3].setAttribute('x2', rightPointX); lines[3].setAttribute('y2', midY); }
-                    if (lines[4]) { lines[4].setAttribute('x1', el.x1); lines[4].setAttribute('y1', el.y1); lines[4].setAttribute('x2', el.x1); lines[4].setAttribute('y2', el.y2); }
+                    const topY = Math.min(el.y1, el.y2);
+                    const botY = Math.max(el.y1, el.y2);
+                    const midY = (topY + botY) / 2;
+                    const startX = el.x1;
+                    const endX = el.splitX || (el.x1 + 180);
+
+                    if (!el.flipped) {
+                        if (lines[0]) { lines[0].setAttribute('x1', startX); lines[0].setAttribute('y1', midY); lines[0].setAttribute('x2', startX + 35); lines[0].setAttribute('y2', topY); }
+                        if (lines[1]) { lines[1].setAttribute('x1', startX); lines[1].setAttribute('y1', midY); lines[1].setAttribute('x2', startX + 35); lines[1].setAttribute('y2', botY); }
+                        if (lines[2]) { lines[2].setAttribute('x1', startX + 35); lines[2].setAttribute('y1', topY); lines[2].setAttribute('x2', startX + 35); lines[2].setAttribute('y2', botY); }
+                        if (lines[3]) { lines[3].setAttribute('x1', startX + 35); lines[3].setAttribute('y1', topY); lines[3].setAttribute('x2', endX); lines[3].setAttribute('y2', topY); }
+                        if (lines[4]) { lines[4].setAttribute('x1', startX + 35); lines[4].setAttribute('y1', botY); lines[4].setAttribute('x2', endX); lines[4].setAttribute('y2', botY); }
+                    } else {
+                        if (lines[0]) { lines[0].setAttribute('x1', startX); lines[0].setAttribute('y1', topY); lines[0].setAttribute('x2', startX); lines[0].setAttribute('y2', botY); }
+                        if (lines[1]) { lines[1].setAttribute('x1', startX); lines[1].setAttribute('y1', topY); lines[1].setAttribute('x2', startX + 35); lines[1].setAttribute('y2', midY); }
+                        if (lines[2]) { lines[2].setAttribute('x1', startX); lines[2].setAttribute('y1', botY); lines[2].setAttribute('x2', startX + 35); lines[2].setAttribute('y2', midY); }
+                        if (lines[3]) { lines[3].setAttribute('x1', startX - 150); lines[3].setAttribute('y1', topY); lines[3].setAttribute('x2', startX); lines[3].setAttribute('y2', topY); }
+                        if (lines[4]) { lines[4].setAttribute('x1', startX - 150); lines[4].setAttribute('y1', botY); lines[4].setAttribute('x2', startX); lines[4].setAttribute('y2', botY); }
+                    }
                 }
 
                 const handles = g.querySelectorAll('circle');
@@ -833,7 +1636,12 @@
                         if (key === 'x1') { h.setAttribute('cx', el.x1); h.setAttribute('cy', el.y1); }
                         else if (key === 'x2') { h.setAttribute('cx', el.x2); h.setAttribute('cy', el.y2); }
                         else if (key === 'x3') { h.setAttribute('cx', el.x3); h.setAttribute('cy', el.y3); }
-                        else if (key === 'splitX') { h.setAttribute('cx', el.splitX); h.setAttribute('cy', el.y1); }
+                        else if (key === 'splitX') { h.setAttribute('cx', el.splitX); h.setAttribute('cy', (el.y1 + el.y2)/2); }
+                        else if (key === 'stiltTip') {
+                            const stiltH = el.splitHeight || 50;
+                            h.setAttribute('cx', el.splitX);
+                            h.setAttribute('cy', !el.flipped ? (el.y1 - stiltH) : (el.y1 + stiltH));
+                        }
                     });
                 }
             }
@@ -868,6 +1676,7 @@
             if (el && el.type === 'word') {
                 el.attachedTo = null;
                 renderCanvas();
+                saveToLocalStorage();
                 alert('Word detached successfully!');
             }
         }
@@ -878,6 +1687,7 @@
                     window.scriptureGramData.elements = window.scriptureGramData.elements.filter(x => x.id !== activeSelectedId);
                     activeSelectedId = null;
                     renderCanvas();
+                    saveToLocalStorage();
                 }
             }
         };
@@ -896,7 +1706,108 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
+        // Initialize application state
+        loadFromLocalStorage();
         renderTextFlow();
     </script>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCUXqb92rUbl6G9pfuQCWtUCDoOxfFxWVw",
+    authDomain: "scripturegram.firebaseapp.com",
+    projectId: "scripturegram",
+    storageBucket: "scripturegram.firebasestorage.app",
+    messagingSenderId: "960608823862",
+    appId: "1:960608823862:web:cb7134f418d1185704c697",
+    measurementId: "G-N3RM9JE588"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+ // Keyboard Shortcuts for Shapes
+// ==========================================
+// SCRIPTUREGRAM WORKFLOW UPGRADES (FIXED)
+// ==========================================
+
+// 1. Keyboard Shortcuts (Handles multi-line sidebar buttons)
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const key = e.key.toLowerCase();
+    let targetKeyword = '';
+
+    if (key === 'b') targetKeyword = 'Subject / Verb';
+    else if (key === 'm') targetKeyword = 'Slanted Modifier';
+    else if (key === 'p') targetKeyword = 'Prep Phrase';
+    else if (key === 'c') targetKeyword = 'Compound Rocket';
+
+    if (targetKeyword) {
+        e.preventDefault();
+        const allElements = Array.from(document.querySelectorAll('button, div, [role="button"]'));
+        const targetEl = allElements.find(el => el.textContent && el.textContent.includes(targetKeyword) && el.children.length <= 4);
+        
+        if (targetEl) {
+            ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+                targetEl.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true, view: window }));
+            });
+        }
+    }
+});
+
+// 2. Word Bank Strikethrough & Auto-Return Monitor
+function updateWordBankStrikethroughs() {
+    const canvasTexts = Array.from(document.querySelectorAll('svg text, canvas, .diagram-node, text, tspan, input'))
+        .map(el => (el.textContent || el.value || '').trim().toLowerCase());
+
+    const wordChips = document.querySelectorAll('button, span, div');
+    
+    wordChips.forEach(chip => {
+        if (chip.children.length === 0 && chip.textContent && chip.textContent.trim().split(/\s+/).length === 1) {
+            const word = chip.textContent.trim().toLowerCase();
+            if (word.length < 2) return;
+
+            const isUsed = canvasTexts.some(text => text.includes(word));
+            
+            if (isUsed) {
+                chip.style.textDecoration = 'line-through';
+                chip.style.opacity = '0.4';
+            } else if (chip.style.textDecoration === 'line-through') {
+                chip.style.textDecoration = 'none';
+                chip.style.opacity = '1';
+            }
+        }
+    });
+}
+
+['click', 'keyup', 'mouseup', 'touchend'].forEach(evt => {
+    document.addEventListener(evt, () => {
+        setTimeout(updateWordBankStrikethroughs, 200);
+    });
+});
+
+// 3. Batch Add Words Helper
+function batchAddWords(wordString) {
+    const input = document.querySelector('input[type="text"]');
+    const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim().toLowerCase() === 'add');
+    
+    if (!input || !addBtn) return;
+    
+    const words = wordString.split(/[\s,]+/).filter(w => w.length > 0);
+    words.forEach(w => {
+        input.value = w;
+        addBtn.click();
+    });
+    input.value = '';
+}
+</script>
+
 </body>
 </html>
