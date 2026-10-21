@@ -65,7 +65,7 @@
             padding-right: 210px; /* Space reserved for margin metadata controls */
             word-break: break-word;
             line-height: 1.8;
-            transition: margin-left 0.15s ease, border-left 0.15s ease, padding-left 0.15s ease;
+            transition: margin-left 0.15s ease, border-left 0.15s ease;
         }
 
         /* Subordination Lines (Applied strictly per paragraph) */
@@ -74,27 +74,31 @@
             padding-left: 1.2rem !important;
         }
 
-        /* Attach Downward Indicator Styling */
+        /* Straight Down Connector Indicator into Clause Below */
         #flowEditor .attach-down {
-            border-left: 2px dashed #818cf8 !important;
-            padding-left: 2.2rem !important;
+            position: relative;
+            padding-left: 1.8rem !important;
         }
-
         #flowEditor .attach-down::before {
-            content: "↳";
+            content: '';
             position: absolute;
             left: 0.5rem;
-            top: 0.15rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            line-height: 1;
-            color: #6366f1;
-            user-select: none;
-            pointer-events: none;
+            top: 0.2rem;
+            bottom: -0.9rem; /* Extends down to line below */
+            width: 2px;
+            border-left: 2px dashed #6366f1;
+            z-index: 5;
         }
-
-        html.dark #flowEditor .attach-down::before {
-            color: #a5b4fc;
+        #flowEditor .attach-down::after {
+            content: '↓';
+            position: absolute;
+            left: 0.15rem;
+            bottom: -1.2rem;
+            font-size: 13px;
+            font-weight: 700;
+            color: #6366f1;
+            z-index: 6;
+            background: transparent;
         }
 
         /* External Overlay Layer for Controls */
@@ -196,55 +200,104 @@
             border: 1px dashed rgba(99, 102, 241, 0.4);
         }
 
-        /* HIGHLIGHT STYLES WITH DARK MODE SUPPORT */
-        mark.sg-hl-yellow {
-            background-color: #fef08a !important;
-            color: #854d0e !important;
-            border-radius: 3px;
-            padding: 1px 3px;
-        }
-        mark.sg-hl-green {
-            background-color: #bbf7d0 !important;
-            color: #14532d !important;
-            border-radius: 3px;
-            padding: 1px 3px;
-        }
-        mark.sg-hl-blue {
-            background-color: #bfdbfe !important;
-            color: #1e40af !important;
-            border-radius: 3px;
-            padding: 1px 3px;
-        }
-        mark.sg-hl-pink {
-            background-color: #fbcfe8 !important;
-            color: #831843 !important;
-            border-radius: 3px;
-            padding: 1px 3px;
-        }
-        mark.sg-hl-purple {
-            background-color: #e9d5ff !important;
-            color: #581c87 !important;
-            border-radius: 3px;
-            padding: 1px 3px;
-        }
-
-        /* Dark Mode adjustments for high legibility */
-        html.dark mark.sg-hl-yellow { background-color: #854d0e !important; color: #fef08a !important; }
-        html.dark mark.sg-hl-green { background-color: #14532d !important; color: #bbf7d0 !important; }
-        html.dark mark.sg-hl-blue { background-color: #1e3a8a !important; color: #bfdbfe !important; }
-        html.dark mark.sg-hl-pink { background-color: #831843 !important; color: #fbcfe8 !important; }
-        html.dark mark.sg-hl-purple { background-color: #581c87 !important; color: #e9d5ff !important; }
-
-        /* Floating Highlight Toolbar Animation */
+        /* Floating Highlight Toolbar Styles */
         #highlightToolbar {
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            transform: translateY(0);
+            position: absolute;
+            display: none;
+            z-index: 100;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 9999px;
+            padding: 4px 8px;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.15s ease-in-out;
         }
-        #highlightToolbar.hidden {
-            display: none !important;
-            opacity: 0;
-            transform: translateY(6px);
+        html.dark #highlightToolbar {
+            background: #1f2937;
+            border-color: #374151;
         }
+
+        .hl-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            border: 1.5px solid transparent;
+        }
+        .hl-btn:hover {
+            transform: scale(1.15);
+        }
+
+        /* Right-Click Context Menu Styling */
+        #contextMenu {
+            position: fixed;
+            display: none;
+            z-index: 200;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 210px;
+            user-select: none;
+        }
+        html.dark #contextMenu {
+            background: #1f2937;
+            border-color: #374151;
+        }
+
+        .ctx-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.12s ease;
+        }
+        html.dark .ctx-item {
+            color: #e5e7eb;
+        }
+        .ctx-item:hover {
+            background: #f3f4f6;
+        }
+        html.dark .ctx-item:hover {
+            background: #374151;
+        }
+
+        /* Underline Style Rules */
+        u.sg-ul-single {
+            text-decoration: underline !important;
+            text-decoration-style: solid !important;
+            text-decoration-thickness: 1.5px !important;
+            text-underline-offset: 3px !important;
+        }
+        u.sg-ul-double {
+            text-decoration: underline !important;
+            text-decoration-style: double !important;
+            text-decoration-thickness: 2.5px !important;
+            text-underline-offset: 3px !important;
+        }
+
+        /* Custom Color Highlighter Mark Rules */
+        mark.hl-yellow { background-color: #fef08a !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-green  { background-color: #bbf7d0 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-blue   { background-color: #bae6fd !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-pink   { background-color: #fbcfe8 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-purple { background-color: #e9d5ff !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+
+        html.dark mark.hl-yellow { background-color: #854d0e !important; color: #fef08a; }
+        html.dark mark.hl-green  { background-color: #14532d !important; color: #bbf7d0; }
+        html.dark mark.hl-blue   { background-color: #075985 !important; color: #bae6fd; }
+        html.dark mark.hl-pink   { background-color: #831843 !important; color: #fbcfe8; }
+        html.dark mark.hl-purple { background-color: #581c87 !important; color: #e9d5ff; }
     </style>
 </head>
 
@@ -293,7 +346,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP WORKSPACE (FULL WIDTH TEXT FLOW) -->
+    <!-- MAIN APP WORKSPACE -->
     <main class="flex-1 overflow-y-auto px-6 pb-6 bg-gray-50 dark:bg-zinc-950 flex flex-col custom-scrollbar">
         <div id="wordProcessorPane" class="max-w-4xl w-full mx-auto my-2 p-8 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col transition-colors">
             
@@ -325,34 +378,62 @@
                      placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
                 </div>
                 <div id="controlsOverlay"></div>
+
+                <!-- Floating Selection Highlighter & Underline Toolbar -->
+                <div id="highlightToolbar" class="flex items-center space-x-1.5">
+                    <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Highlight:</span>
+                    <button class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow" onclick="applyHighlight('hl-yellow')"></button>
+                    <button class="hl-btn bg-emerald-300 border-emerald-400" title="Green" onclick="applyHighlight('hl-green')"></button>
+                    <button class="hl-btn bg-sky-300 border-sky-400" title="Blue" onclick="applyHighlight('hl-blue')"></button>
+                    <button class="hl-btn bg-pink-300 border-pink-400" title="Pink" onclick="applyHighlight('hl-pink')"></button>
+                    <button class="hl-btn bg-purple-300 border-purple-400" title="Purple" onclick="applyHighlight('hl-purple')"></button>
+                    
+                    <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    
+                    <button class="px-1.5 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400" title="Single Underline" onclick="applyUnderline('single')">U</button>
+                    <button class="px-1.5 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
+
+                    <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    
+                    <button class="text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 px-1 font-semibold" title="Remove Formatting" onclick="clearSelectionFormatting()"><i class="fa-solid fa-eraser"></i></button>
+                </div>
             </div>
 
             <!-- Bottom Status Bar -->
             <div class="pt-4 mt-8 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center shrink-0">
                 <span id="wordCountDisplay">0 words</span>
-                <span class="italic">Tip: Select any phrase to display the floating color highlighter.</span>
+                <span class="italic">Tip: Right-click any line for quick options, or select text to apply highlights & underlines. Custom labels auto-save for re-use.</span>
             </div>
         </div>
     </main>
 
-    <!-- FLOATING SELECTION HIGHLIGHT TOOLBAR -->
-    <div id="highlightToolbar" class="fixed hidden z-50 bg-gray-900/90 dark:bg-zinc-800/95 backdrop-blur-md text-white p-1.5 rounded-full shadow-2xl border border-gray-700/50 flex items-center space-x-1.5 pointer-events-auto">
-        <button onclick="applyHighlight('sg-hl-yellow')" class="w-6 h-6 rounded-full bg-yellow-300 hover:scale-110 transition shadow-inner" title="Yellow Highlight"></button>
-        <button onclick="applyHighlight('sg-hl-green')" class="w-6 h-6 rounded-full bg-green-300 hover:scale-110 transition shadow-inner" title="Green Highlight"></button>
-        <button onclick="applyHighlight('sg-hl-blue')" class="w-6 h-6 rounded-full bg-blue-300 hover:scale-110 transition shadow-inner" title="Blue Highlight"></button>
-        <button onclick="applyHighlight('sg-hl-pink')" class="w-6 h-6 rounded-full bg-pink-300 hover:scale-110 transition shadow-inner" title="Pink Highlight"></button>
-        <button onclick="applyHighlight('sg-hl-purple')" class="w-6 h-6 rounded-full bg-purple-300 hover:scale-110 transition shadow-inner" title="Purple Highlight"></button>
-        <div class="w-px h-4 bg-gray-600 my-auto"></div>
-        <button onclick="applyHighlight(null)" class="px-2 py-0.5 text-[11px] font-semibold text-gray-300 hover:text-white hover:bg-gray-700 rounded-full transition flex items-center" title="Remove Highlight">
-            <i class="fa-solid fa-eraser mr-1"></i> Clear
-        </button>
+    <!-- RIGHT-CLICK CONTEXT MENU -->
+    <div id="contextMenu">
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()">
+            <i class="fa-solid fa-arrow-down-long text-xs"></i>
+            <span>Attach to Clause Below</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item" onclick="ctxIndentLine()">
+            <i class="fa-solid fa-indent text-xs text-gray-400"></i>
+            <span>Indent Line (Tab)</span>
+        </div>
+        <div class="ctx-item" onclick="ctxOutdentLine()">
+            <i class="fa-solid fa-outdent text-xs text-gray-400"></i>
+            <span>Outdent Line (Shift+Tab)</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" onclick="ctxDeleteLine()">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+            <span>Delete Line</span>
+        </div>
     </div>
 
     <!-- SCRIPT ENGINE -->
     <script>
         let currentProjectKey = localStorage.getItem('scriptureGram_activeProjectKey') || 'scriptureGram_default';
         let isFocusModeActive = false;
-        let savedRange = null;
+        let rightClickedBlock = null;
         
         const projectSelect = document.getElementById('projectSelect');
         const globalSaveStatus = document.getElementById('globalSaveStatus');
@@ -361,9 +442,7 @@
         const wordCountDisplay = document.getElementById('wordCountDisplay');
         const saveStatus = document.getElementById('saveStatus');
         const highlightToolbar = document.getElementById('highlightToolbar');
-
-        // Dynamic registry for user-defined custom relations
-        let customRelationsRegistry = JSON.parse(localStorage.getItem('scriptureGram_customRelations') || '{}');
+        const contextMenu = document.getElementById('contextMenu');
 
         const defaultRelations = {
             'Causal': { bg: '#fef3c7', text: '#92400e' },
@@ -376,8 +455,19 @@
             'Explanation': { bg: '#f1f5f9', text: '#334155' }
         };
 
-        function saveCustomRelationsRegistry() {
-            localStorage.setItem('scriptureGram_customRelations', JSON.stringify(customRelationsRegistry));
+        function getCustomRelationsRegistry() {
+            try {
+                return JSON.parse(localStorage.getItem('scriptureGram_customRelations') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveCustomRelationToRegistry(name, bg, text) {
+            if (!name || !name.trim()) return;
+            const registry = getCustomRelationsRegistry();
+            registry[name.trim()] = { bg: bg || '#e0e7ff', text: text || '#3730a3' };
+            localStorage.setItem('scriptureGram_customRelations', JSON.stringify(registry));
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -400,110 +490,178 @@
                         } else {
                             indentLine();
                         }
+                    } else if (e.key === 'Escape') {
+                        hideContextMenu();
                     }
                 });
 
-                window.addEventListener('resize', () => {
-                    syncOverlayControls();
-                    checkTextSelection();
+                // RIGHT-CLICK CONTEXT MENU EVENT
+                editor.addEventListener('contextmenu', (e) => {
+                    let node = e.target;
+                    while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
+                        node = node.parentNode;
+                    }
+
+                    if (node && node !== editor) {
+                        e.preventDefault();
+                        rightClickedBlock = node;
+                        showContextMenu(e.clientX, e.clientY);
+                    }
                 });
 
+                document.addEventListener('click', (e) => {
+                    if (contextMenu && !contextMenu.contains(e.target)) {
+                        hideContextMenu();
+                    }
+                });
+
+                document.addEventListener('selectionchange', handleTextSelection);
+                window.addEventListener('resize', syncOverlayControls);
                 document.querySelector('main').addEventListener('scroll', () => {
                     syncOverlayControls();
-                    checkTextSelection();
+                    hideContextMenu();
                 });
             }
-
-            // Text Selection Listeners for Popup Toolbar
-            document.addEventListener('selectionchange', handleSelectionChange);
-            
-            // Prevent clicking inside the toolbar from losing selection focus
-            highlightToolbar.addEventListener('mousedown', (e) => e.preventDefault());
         });
 
-        function handleSelectionChange() {
-            setTimeout(checkTextSelection, 10);
+        // CONTEXT MENU FUNCTIONS
+        function showContextMenu(x, y) {
+            if (!contextMenu) return;
+            contextMenu.style.display = 'block';
+            
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+
+            const posX = (x + menuWidth > winWidth) ? winWidth - menuWidth - 10 : x;
+            const posY = (y + menuHeight > winHeight) ? winHeight - menuHeight - 10 : y;
+
+            contextMenu.style.left = posX + 'px';
+            contextMenu.style.top = posY + 'px';
         }
 
-        function checkTextSelection() {
+        function hideContextMenu() {
+            if (contextMenu) contextMenu.style.display = 'none';
+        }
+
+        function ctxToggleAttachDown() {
+            if (rightClickedBlock) {
+                rightClickedBlock.classList.toggle('attach-down');
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        function ctxIndentLine() {
+            if (rightClickedBlock) {
+                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
+                rightClickedBlock.style.marginLeft = (currentMargin + 1.5) + 'rem';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        function ctxOutdentLine() {
+            if (rightClickedBlock) {
+                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
+                const newMargin = Math.max(0, currentMargin - 1.5);
+                rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        function ctxDeleteLine() {
+            if (rightClickedBlock) {
+                rightClickedBlock.remove();
+                syncOverlayControls();
+                updateWordCount();
+                saveActiveProjectData();
+            }
+            hideContextMenu();
+        }
+
+        // FLOATING HIGHLIGHTER & UNDERLINE HANDLERS
+        function handleTextSelection() {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !editor.contains(selection.anchorNode)) {
-                if (highlightToolbar) highlightToolbar.classList.add('hidden');
+                if (highlightToolbar) highlightToolbar.style.display = 'none';
                 return;
             }
 
             const range = selection.getRangeAt(0);
-            const text = range.toString().trim();
-
-            if (text.length === 0) {
-                if (highlightToolbar) highlightToolbar.classList.add('hidden');
-                return;
-            }
-
-            savedRange = range.cloneRange();
-
             const rect = range.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) return;
+            const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
 
-            const toolbarWidth = 230;
-            let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
-            let top = rect.top - 42;
-
-            if (left < 10) left = 10;
-            if (left + toolbarWidth > window.innerWidth - 10) left = window.innerWidth - toolbarWidth - 10;
-            if (top < 10) top = rect.bottom + 8;
-
-            highlightToolbar.style.left = `${left}px`;
-            highlightToolbar.style.top = `${top}px`;
-            highlightToolbar.classList.remove('hidden');
+            if (rect.width > 0 && highlightToolbar) {
+                highlightToolbar.style.display = 'flex';
+                highlightToolbar.style.top = (rect.top - wrapperRect.top - 42) + 'px';
+                highlightToolbar.style.left = Math.max(10, (rect.left - wrapperRect.left + (rect.width / 2) - 120)) + 'px';
+            }
         }
 
         function applyHighlight(colorClass) {
-            if (!savedRange) return;
-
             const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(savedRange);
+            if (!selection.rangeCount || selection.isCollapsed) return;
 
-            if (!colorClass) {
-                const mark = getAncestorMark(savedRange.commonAncestorContainer);
-                if (mark) {
-                    const parent = mark.parentNode;
-                    while (mark.firstChild) {
-                        parent.insertBefore(mark.firstChild, mark);
-                    }
-                    parent.removeChild(mark);
-                } else {
-                    document.execCommand('removeFormat', false, null);
-                }
-            } else {
-                const mark = document.createElement('mark');
-                mark.className = colorClass;
-                
-                try {
-                    savedRange.surroundContents(mark);
-                } catch (e) {
-                    const fragment = savedRange.extractContents();
-                    mark.appendChild(fragment);
-                    savedRange.insertNode(mark);
-                }
+            const range = selection.getRangeAt(0);
+            const mark = document.createElement('mark');
+            mark.className = colorClass;
+
+            try {
+                range.surroundContents(mark);
+            } catch (e) {
+                document.execCommand('hiliteColor', false, '#fef08a');
             }
 
             selection.removeAllRanges();
-            if (highlightToolbar) highlightToolbar.classList.add('hidden');
-            savedRange = null;
-
-            syncOverlayControls();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
         }
 
-        function getAncestorMark(node) {
-            let curr = node;
-            while (curr && curr !== editor) {
-                if (curr.nodeName === 'MARK') return curr;
-                curr = curr.parentNode;
+        function applyUnderline(type) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+            const u = document.createElement('u');
+            u.className = type === 'double' ? 'sg-ul-double' : 'sg-ul-single';
+
+            try {
+                range.surroundContents(u);
+            } catch (e) {
+                document.execCommand('underline', false, null);
             }
-            return null;
+
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
+        }
+
+        function clearSelectionFormatting() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            let node = selection.anchorNode;
+            while (node && node !== editor) {
+                if (node.tagName === 'MARK' || node.tagName === 'U') {
+                    const parent = node.parentNode;
+                    while (node.firstChild) {
+                        parent.insertBefore(node.firstChild, node);
+                    }
+                    parent.removeChild(node);
+                    break;
+                }
+                node = node.parentNode;
+            }
+
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
         }
 
         function cleanEditorSpans() {
@@ -557,6 +715,7 @@
 
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
             const blocks = editor.querySelectorAll('p, div, blockquote');
+            const customRegistry = getCustomRelationsRegistry();
 
             blocks.forEach(block => {
                 const hasText = block.textContent.trim().length > 0;
@@ -572,16 +731,15 @@
                     level = 1;
                 }
 
+                // If line is empty, strip indentation border
                 if (!hasText) {
                     block.classList.remove('has-indent', 'attach-down', 'collapsed-active');
                     level = 0;
                 } else if (level > 0 || block.style.marginLeft || block.classList.contains('attach-down')) {
                     if (level === 0) level = 1;
+                    block.classList.add('has-indent');
 
-                    if (!block.classList.contains('attach-down')) {
-                        block.classList.add('has-indent');
-                    }
-
+                    // Position control group in overlay
                     const rect = block.getBoundingClientRect();
                     const topOffset = rect.top - wrapperRect.top;
 
@@ -616,9 +774,9 @@
                         if (relName && defaultRelations[relName]) {
                             select.style.backgroundColor = defaultRelations[relName].bg;
                             select.style.color = defaultRelations[relName].text;
-                        } else if (relName && customRelationsRegistry[relName]) {
-                            select.style.backgroundColor = customRelationsRegistry[relName].bg;
-                            select.style.color = customRelationsRegistry[relName].text;
+                        } else if (relName && customRegistry[relName]) {
+                            select.style.backgroundColor = customRegistry[relName].bg;
+                            select.style.color = customRegistry[relName].text;
                         } else if (bg && text) {
                             select.style.backgroundColor = bg;
                             select.style.color = text;
@@ -636,31 +794,34 @@
                     defaultOpt.textContent = '+ Relation';
                     select.appendChild(defaultOpt);
 
-                    // Standard Presets
+                    // Standard built-in relations
+                    const standardGroup = document.createElement('optgroup');
+                    standardGroup.label = 'Standard Relations';
                     Object.keys(defaultRelations).forEach(relKey => {
                         const opt = document.createElement('option');
                         opt.value = relKey;
                         opt.textContent = relKey;
                         if (relKey === currentRelation) opt.selected = true;
-                        select.appendChild(opt);
+                        standardGroup.appendChild(opt);
                     });
+                    select.appendChild(standardGroup);
 
-                    // Saved Custom Labels
-                    const customKeys = Object.keys(customRelationsRegistry);
+                    // Custom Saved Labels Group
+                    const customKeys = Object.keys(customRegistry);
                     if (customKeys.length > 0) {
-                        const optGroup = document.createElement('optgroup');
-                        optGroup.label = 'Custom Saved Labels';
+                        const customGroup = document.createElement('optgroup');
+                        customGroup.label = 'Custom Saved Labels';
                         customKeys.forEach(customKey => {
                             const opt = document.createElement('option');
                             opt.value = customKey;
                             opt.textContent = customKey;
                             if (customKey === currentRelation) opt.selected = true;
-                            optGroup.appendChild(opt);
+                            customGroup.appendChild(opt);
                         });
-                        select.appendChild(optGroup);
+                        select.appendChild(customGroup);
                     }
 
-                    if (currentRelation && !defaultRelations[currentRelation] && !customRelationsRegistry[currentRelation]) {
+                    if (currentRelation && !defaultRelations[currentRelation] && !customRegistry[currentRelation]) {
                         const customOpt = document.createElement('option');
                         customOpt.value = currentRelation;
                         customOpt.textContent = currentRelation;
@@ -678,17 +839,13 @@
                         if (val === '__custom__') {
                             const customName = prompt('Enter custom relationship name (e.g., "Contrast", "Hortatory"):');
                             if (customName && customName.trim()) {
-                                const cleanName = customName.trim();
-                                block.dataset.relation = cleanName;
-                                if (!block.dataset.relBg) {
-                                    block.dataset.relBg = '#e0e7ff';
-                                    block.dataset.relText = '#3730a3';
-                                }
-                                customRelationsRegistry[cleanName] = {
-                                    bg: block.dataset.relBg,
-                                    text: block.dataset.relText
-                                };
-                                saveCustomRelationsRegistry();
+                                const trimmed = customName.trim();
+                                block.dataset.relation = trimmed;
+                                const defaultBg = '#e0e7ff';
+                                const defaultText = '#3730a3';
+                                block.dataset.relBg = defaultBg;
+                                block.dataset.relText = defaultText;
+                                saveCustomRelationToRegistry(trimmed, defaultBg, defaultText);
                             }
                         } else if (!val) {
                             block.removeAttribute('data-relation');
@@ -696,9 +853,9 @@
                             block.removeAttribute('data-rel-text');
                         } else {
                             block.dataset.relation = val;
-                            if (customRelationsRegistry[val]) {
-                                block.dataset.relBg = customRelationsRegistry[val].bg;
-                                block.dataset.relText = customRelationsRegistry[val].text;
+                            if (customRegistry[val]) {
+                                block.dataset.relBg = customRegistry[val].bg;
+                                block.dataset.relText = customRegistry[val].text;
                             } else {
                                 block.removeAttribute('data-rel-bg');
                                 block.removeAttribute('data-rel-text');
@@ -712,7 +869,7 @@
                     const colorInput = document.createElement('input');
                     colorInput.type = 'color';
                     colorInput.className = 'color-picker-input';
-                    colorInput.value = customBg || (currentRelation && customRelationsRegistry[currentRelation] ? customRelationsRegistry[currentRelation].bg : '#6366f1');
+                    colorInput.value = customBg || (customRegistry[currentRelation] ? customRegistry[currentRelation].bg : '#6366f1');
                     colorInput.onchange = (e) => {
                         const bgHex = e.target.value;
                         const r = parseInt(bgHex.substr(1,2), 16);
@@ -723,14 +880,11 @@
 
                         block.dataset.relBg = bgHex;
                         block.dataset.relText = textHex;
-                        if (!currentRelation) block.dataset.relation = 'Custom';
-
-                        const relName = block.dataset.relation;
-                        if (relName && !defaultRelations[relName]) {
-                            customRelationsRegistry[relName] = { bg: bgHex, text: textHex };
-                            saveCustomRelationsRegistry();
+                        if (!currentRelation) {
+                            block.dataset.relation = 'Custom';
+                            currentRelation = 'Custom';
                         }
-
+                        saveCustomRelationToRegistry(currentRelation, bgHex, textHex);
                         syncOverlayControls();
                         saveActiveProjectData();
                     };
