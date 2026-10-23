@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScriptureGram - Text Flow Workspace</title>
+    <title>LexFlow - Text Flow Workspace</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -51,30 +51,30 @@
         
         [contenteditable]:focus { outline: none; }
 
-        /* Document Canvas Positioning */
         #editorWrapper {
             position: relative;
             width: 100%;
         }
 
-        /* Native Paragraph Styles with Reserved Right Padding for Controls */
-        #flowEditor p, #flowEditor div, #flowEditor blockquote {
+        /* Continuous Subordination Lines */
+        #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
-            margin-top: 0.6rem;
-            margin-bottom: 0.6rem;
-            padding-right: 210px; /* Space reserved for margin metadata controls */
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-top: 0.4rem;
+            padding-bottom: 0.4rem;
+            padding-right: 300px;
             word-break: break-word;
-            line-height: 1.8;
+            line-height: 1.9;
+            font-size: 1.15rem;
             transition: margin-left 0.15s ease, border-left 0.15s ease;
         }
 
-        /* Subordination Lines (Applied strictly per paragraph) */
         #flowEditor .has-indent {
             border-left: 2px solid #6366f1 !important;
             padding-left: 1.2rem !important;
         }
 
-        /* Straight Down Connector Indicator into Clause Below */
         #flowEditor .attach-down {
             position: relative;
             padding-left: 1.8rem !important;
@@ -83,8 +83,8 @@
             content: '';
             position: absolute;
             left: 0.5rem;
-            top: 0.2rem;
-            bottom: -0.9rem; /* Extends down to line below */
+            top: 0;
+            bottom: 0;
             width: 2px;
             border-left: 2px dashed #6366f1;
             z-index: 5;
@@ -93,15 +93,14 @@
             content: '↓';
             position: absolute;
             left: 0.15rem;
-            bottom: -1.2rem;
-            font-size: 13px;
+            bottom: -0.7rem;
+            font-size: 14px;
             font-weight: 700;
             color: #6366f1;
             z-index: 6;
             background: transparent;
         }
 
-        /* External Overlay Layer for Controls */
         #controlsOverlay {
             position: absolute;
             top: 0;
@@ -116,7 +115,7 @@
             right: 0;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             pointer-events: auto;
             user-select: none;
             z-index: 10;
@@ -126,173 +125,244 @@
             display: inline-flex;
             align-items: center;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             background: rgba(99, 102, 241, 0.12);
             color: #4f46e5;
             border: 1px solid rgba(99, 102, 241, 0.25);
-            padding: 3px 8px;
+            padding: 4px 7px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s ease;
         }
-        .flow-badge:hover {
-            background: rgba(99, 102, 241, 0.25);
-        }
+        .flow-badge:hover { background: rgba(99, 102, 241, 0.25); }
         html.dark .flow-badge {
             background: rgba(99, 102, 241, 0.2);
             color: #818cf8;
             border-color: rgba(129, 140, 248, 0.4);
         }
 
-        /* Relationship Dropdown Select Styling */
+        .flow-badge-l0 {
+            background: rgba(156, 163, 175, 0.12);
+            color: #6b7280;
+            border: 1px solid rgba(156, 163, 175, 0.25);
+        }
+        html.dark .flow-badge-l0 {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+            border-color: rgba(156, 163, 175, 0.3);
+        }
+
+        .verse-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 6px;
+            color: #d97706;
+            background: rgba(254, 243, 199, 0.8);
+            border: 1px solid rgba(252, 211, 77, 1);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .verse-badge:hover {
+            background: #fde68a;
+            color: #b45309;
+        }
+        html.dark .verse-badge {
+            color: #fbbf24;
+            background: rgba(120, 53, 15, 0.4);
+            border-color: rgba(180, 83, 9, 0.6);
+        }
+        html.dark .verse-badge:hover {
+            background: rgba(146, 64, 14, 0.7);
+            color: #fcd34d;
+        }
+
+        .discourse-suggestion-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 9999px;
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .discourse-suggestion-btn:hover {
+            background: #fde68a;
+            transform: scale(1.04);
+        }
+        html.dark .discourse-suggestion-btn {
+            background: rgba(180, 83, 9, 0.4);
+            color: #fcd34d;
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+
+        .gk-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 7px;
+            border-radius: 6px;
+            color: #0284c7;
+            background: rgba(224, 242, 254, 0.8);
+            border: 1px solid rgba(186, 230, 253, 1);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .gk-toggle-btn:hover { background: #bae6fd; color: #0369a1; }
+        .gk-toggle-btn.active { background: #0284c7; color: #ffffff; border-color: #0284c7; }
+        html.dark .gk-toggle-btn { color: #38bdf8; background: rgba(12, 74, 110, 0.5); border-color: rgba(3, 105, 161, 0.6); }
+        html.dark .gk-toggle-btn:hover { background: rgba(14, 116, 144, 0.8); color: #f0f9ff; }
+        html.dark .gk-toggle-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+
         .relation-select {
             font-family: 'Inter', sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 9999px;
             cursor: pointer;
             outline: none;
             transition: transform 0.1s;
         }
-        .relation-select:hover {
-            transform: scale(1.02);
-        }
+        .relation-select:hover { transform: scale(1.02); }
 
-        /* Hidden Color Picker Input */
-        .color-picker-input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            position: absolute;
-            pointer-events: none;
-        }
+        .color-picker-input { opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none; }
+        .color-picker-btn { font-size: 13px; color: #9ca3af; cursor: pointer; transition: color 0.15s; padding: 2px; }
+        .color-picker-btn:hover { color: #6366f1; }
 
-        .color-picker-btn {
+        .note-drawer-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
             font-size: 12px;
-            color: #9ca3af;
+            color: #6b7280;
+            background: rgba(229, 231, 235, 0.6);
+            border: 1px solid rgba(209, 213, 219, 0.8);
             cursor: pointer;
-            transition: color 0.15s;
-            padding: 2px;
+            transition: all 0.15s ease;
         }
-        .color-picker-btn:hover {
-            color: #6366f1;
+        .note-drawer-btn:hover { color: #4f46e5; background: rgba(224, 231, 255, 0.8); border-color: rgba(199, 210, 254, 1); }
+        .note-drawer-btn.has-notes { color: #059669; background: rgba(209, 250, 229, 0.7); border-color: rgba(167, 243, 208, 1); font-weight: bold; }
+        html.dark .note-drawer-btn { color: #9ca3af; background: rgba(55, 65, 81, 0.6); border-color: rgba(75, 85, 99, 0.8); }
+        html.dark .note-drawer-btn:hover { color: #818cf8; background: rgba(67, 56, 202, 0.3); border-color: rgba(99, 102, 241, 0.5); }
+        html.dark .note-drawer-btn.has-notes { color: #34d399; background: rgba(6, 78, 59, 0.5); border-color: rgba(16, 185, 129, 0.4); }
+
+        /* LIGHTBOX OVERLAY CARD */
+        .interlinear-standalone-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 18px !important;
+            background: #f0f9ff !important;
+            border-radius: 12px !important;
+            border: 1px solid #bae6fd !important;
+            box-sizing: border-box !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+        html.dark .interlinear-standalone-card {
+            background: rgba(12, 74, 110, 0.85) !important;
+            border-color: rgba(3, 105, 161, 0.8) !important;
+            color: #f3f4f6 !important;
         }
 
-        /* Collapsed State */
-        .collapsed-active {
-            opacity: 0.4;
-            max-height: 1.8em;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
+        .collapsed-active { opacity: 0.4; max-height: 1.8em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-        /* Focus Mode Active States */
-        body.focus-mode #flowEditor > *:not(.focused-branch) {
-            display: none !important;
-        }
-        .focused-branch {
-            background: rgba(99, 102, 241, 0.05);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px dashed rgba(99, 102, 241, 0.4);
-        }
+        body.focus-mode #flowEditor > *:not(.focused-branch) { display: none !important; }
+        .focused-branch { background: rgba(99, 102, 241, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(99, 102, 241, 0.4); }
 
-        /* Floating Highlight Toolbar Styles */
         #highlightToolbar {
-            position: absolute;
-            display: none;
-            z-index: 100;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-radius: 9999px;
-            padding: 4px 8px;
-            align-items: center;
-            gap: 6px;
-            transition: opacity 0.15s ease-in-out;
+            position: absolute; display: none; z-index: 100; background: #ffffff;
+            border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 9999px; padding: 4px 8px; align-items: center; gap: 6px;
         }
-        html.dark #highlightToolbar {
-            background: #1f2937;
-            border-color: #374151;
-        }
+        html.dark #highlightToolbar { background: #1f2937; border-color: #374151; }
+        .hl-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: transform 0.1s ease; border: 1.5px solid transparent; }
+        .hl-btn:hover { transform: scale(1.15); }
 
-        .hl-btn {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.1s ease;
-            border: 1.5px solid transparent;
-        }
-        .hl-btn:hover {
-            transform: scale(1.15);
-        }
-
-        /* Right-Click Context Menu Styling */
         #contextMenu {
-            position: fixed;
-            display: none;
-            z-index: 200;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            border-radius: 12px;
-            padding: 6px;
-            min-width: 210px;
-            user-select: none;
+            position: fixed; display: none; z-index: 200; background: #ffffff;
+            border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+            border-radius: 12px; padding: 6px; min-width: 210px; user-select: none;
         }
-        html.dark #contextMenu {
-            background: #1f2937;
-            border-color: #374151;
-        }
+        html.dark #contextMenu { background: #1f2937; border-color: #374151; }
+        .ctx-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #374151; border-radius: 8px; cursor: pointer; transition: background 0.12s ease; }
+        html.dark .ctx-item { color: #e5e7eb; }
+        .ctx-item:hover { background: #f3f4f6; }
+        html.dark .ctx-item:hover { background: #374151; }
 
-        .ctx-item {
-            display: flex;
+        #exegeticalNoteDrawer, #masterNoteDrawer {
+            position: fixed; top: 0; right: 0; width: 460px; max-width: 100vw; height: 100vh;
+            background: #ffffff; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.15); z-index: 300;
+            transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
+        }
+        html.dark #exegeticalNoteDrawer, html.dark #masterNoteDrawer { background: #111827; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.4); border-left: 1px solid #1f2937; }
+        #exegeticalNoteDrawer.open, #masterNoteDrawer.open { transform: translateX(0); }
+        .note-editor-area img { max-width: 100%; border-radius: 8px; margin: 8px 0; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+        .card-tab-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 8px 12px;
+            white-space: nowrap !important;
+            padding: 6px 12px;
             font-size: 12px;
-            font-weight: 500;
-            color: #374151;
-            border-radius: 8px;
+            font-weight: 600;
+            color: #4b5563;
+            border-bottom: 2px solid transparent;
             cursor: pointer;
-            transition: background 0.12s ease;
+            transition: all 0.15s ease;
         }
-        html.dark .ctx-item {
-            color: #e5e7eb;
+        .card-tab-btn.active {
+            color: #0284c7;
+            border-bottom-color: #0284c7;
+            background: rgba(224, 242, 254, 0.4);
+            border-radius: 4px 4px 0 0;
         }
-        .ctx-item:hover {
-            background: #f3f4f6;
+        html.dark .card-tab-btn { color: #9ca3af; }
+        html.dark .card-tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; background: rgba(12, 74, 110, 0.3); }
+
+        u.sg-ul-single { text-decoration: underline !important; text-decoration-style: solid !important; text-underline-offset: 3px !important; }
+        u.sg-ul-double { text-decoration: underline !important; text-decoration-style: double !important; text-underline-offset: 3px !important; }
+        s.sg-strike { text-decoration: line-through !important; color: #9ca3af; }
+        
+        span.sg-ellipsis-wrap {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px dashed rgba(99, 102, 241, 0.4);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95em;
+            color: #4f46e5;
         }
-        html.dark .ctx-item:hover {
-            background: #374151;
+        html.dark span.sg-ellipsis-wrap {
+            background: rgba(129, 140, 248, 0.12);
+            border-color: rgba(129, 140, 248, 0.4);
+            color: #818cf8;
         }
 
-        /* Underline Style Rules */
-        u.sg-ul-single {
-            text-decoration: underline !important;
-            text-decoration-style: solid !important;
-            text-decoration-thickness: 1.5px !important;
-            text-underline-offset: 3px !important;
-        }
-        u.sg-ul-double {
-            text-decoration: underline !important;
-            text-decoration-style: double !important;
-            text-decoration-thickness: 2.5px !important;
-            text-underline-offset: 3px !important;
-        }
-
-        /* Custom Color Highlighter Mark Rules */
         mark.hl-yellow { background-color: #fef08a !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
         mark.hl-green  { background-color: #bbf7d0 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
         mark.hl-blue   { background-color: #bae6fd !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
         mark.hl-pink   { background-color: #fbcfe8 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
         mark.hl-purple { background-color: #e9d5ff !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
-
         html.dark mark.hl-yellow { background-color: #854d0e !important; color: #fef08a; }
         html.dark mark.hl-green  { background-color: #14532d !important; color: #bbf7d0; }
         html.dark mark.hl-blue   { background-color: #075985 !important; color: #bae6fd; }
@@ -301,46 +371,66 @@
     </style>
 </head>
 
-<body class="h-screen flex flex-col select-none">
+<body class="h-screen flex flex-col select-none overflow-hidden text-sm">
 
     <!-- Top App Header -->
-    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-2.5 flex justify-between items-center z-50 transition-colors shrink-0">
+    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex justify-between items-center z-50 transition-colors shrink-0">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/20">
                 <i class="fa-solid fa-pen-nib text-lg"></i>
             </div>
             <div>
-                <h1 class="text-base font-bold tracking-tight text-gray-900 dark:text-white">ScriptureGram</h1>
-                <p class="text-[11px] text-gray-500 dark:text-gray-400">Text Flow Workspace</p>
+                <h1 class="text-base font-bold tracking-tight text-gray-900 dark:text-white">LexFlow</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Greek Exegetical Thought Flow Workspace</p>
             </div>
         </div>
 
-        <!-- Utility & User Actions -->
-        <div class="flex items-center space-x-2">
-            <button onclick="toggleFocusMode()" id="focusModeBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
+        <div class="flex items-center space-x-2.5">
+            <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
+                <i class="fa-solid fa-book-bookmark text-indigo-500 text-sm"></i>
+                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Heb 1:1-4)" value="Hebrews 1:1-4"
+                       onchange="updatePassageContext()"
+                       class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36">
+                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load SRGNT</button>
+            </div>
+
+            <button onclick="openSrgntWebModal()" class="bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 transition flex items-center space-x-1.5 shadow-sm" title="Open SRGNT Manuscript Collation Tool">
+                <i class="fa-solid fa-globe text-sky-500"></i>
+                <span>SRGNT Collation</span>
+            </button>
+            <button onclick="autoAssignVersesToClauses()" class="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 transition flex items-center space-x-1 shadow-sm" title="Smartly distributes passage verses across your clauses">
+                <i class="fa-solid fa-bolt text-indigo-500"></i>
+                <span>Auto Verses</span>
+            </button>
+            <button onclick="toggleMasterNoteDrawer()" class="bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-book-open text-amber-500"></i>
+                <span>Master Notes</span>
+            </button>
+            <button onclick="toggleFocusMode()" id="focusModeBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
                 <i class="fa-solid fa-expand text-indigo-500"></i>
                 <span id="focusModeLabel">Focus Mode: Off</span>
             </button>
-            <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
+            <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
                 <i id="themeIcon" class="fa-solid fa-sun text-amber-500"></i>
                 <span id="themeLabel">Light</span>
             </button>
-            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1">
+            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow flex items-center space-x-1.5">
                 <i class="fa-solid fa-file-pdf mr-1"></i> Save to PDF
             </button>
         </div>
     </header>
 
     <!-- GLOBAL WORKSPACE PROJECTS BAR -->
-    <div id="workspaceProjectBar" class="max-w-4xl mx-auto my-3 px-6 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs transition-colors shrink-0">
+    <div id="workspaceProjectBar" class="max-w-4xl mx-auto my-3 px-6 py-2.5 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs transition-colors shrink-0">
         <div class="flex items-center space-x-2">
             <span class="font-semibold text-gray-500 dark:text-gray-400">Active Project:</span>
-            <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2.5 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
-                <option value="scriptureGram_default">Default Scratchpad</option>
+            <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-3 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
+                <option value="lexflow_default">Default Scratchpad</option>
             </select>
             <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New Project</button>
         </div>
         <div class="flex items-center space-x-3">
+            <span id="srgntStatus" class="text-xs text-sky-600 dark:text-sky-400 font-medium"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> SRGNT Ready</span>
             <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
             <button onclick="deleteCurrentProject()" class="px-2.5 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition font-medium">🗑 Delete Project</button>
         </div>
@@ -351,16 +441,16 @@
         <div id="wordProcessorPane" class="max-w-4xl w-full mx-auto my-2 p-8 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col transition-colors">
             
             <!-- Top Toolbar -->
-            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-sm shrink-0">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-xs shrink-0">
                 <div class="flex items-center space-x-3">
-                    <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide">Thought Flow Document</span>
-                    <span id="saveStatus" class="text-xs text-emerald-500 font-medium">Auto-saved</span>
+                    <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide text-sm">Thought Flow Document</span>
+                    <span id="saveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="indentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">Indent (Tab) →</button>
-                    <button onclick="outdentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition text-xs font-medium">← Outdent (Shift+Tab)</button>
-                    <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition text-xs font-medium">↓ Attach to Clause Below</button>
-                    <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition text-xs font-medium">Clear</button>
+                    <button onclick="indentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition font-medium">Indent (Tab) →</button>
+                    <button onclick="outdentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition font-medium">← Outdent (Shift+Tab)</button>
+                    <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition font-medium">↓ Attach to Clause Below</button>
+                    <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition font-medium">Clear</button>
                 </div>
             </div>
 
@@ -373,25 +463,27 @@
             <!-- Editor Canvas & Overlay Container -->
             <div id="editorWrapper">
                 <div id="flowEditor" contenteditable="true" 
-                     class="outline-none font-serif text-lg leading-loose text-gray-800 dark:text-gray-100 space-y-4 focus:ring-0"
+                     class="outline-none font-serif text-xl leading-relaxed text-gray-800 dark:text-gray-100 space-y-0 focus:ring-0"
                      style="min-height: 50vh;"
                      placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
                 </div>
                 <div id="controlsOverlay"></div>
 
-                <!-- Floating Selection Highlighter & Underline Toolbar -->
+                <!-- Floating Selection Toolbar -->
                 <div id="highlightToolbar" class="flex items-center space-x-1.5">
-                    <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Highlight:</span>
-                    <button class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow" onclick="applyHighlight('hl-yellow')"></button>
-                    <button class="hl-btn bg-emerald-300 border-emerald-400" title="Green" onclick="applyHighlight('hl-green')"></button>
-                    <button class="hl-btn bg-sky-300 border-sky-400" title="Blue" onclick="applyHighlight('hl-blue')"></button>
-                    <button class="hl-btn bg-pink-300 border-pink-400" title="Pink" onclick="applyHighlight('hl-pink')"></button>
-                    <button class="hl-btn bg-purple-300 border-purple-400" title="Purple" onclick="applyHighlight('hl-purple')"></button>
+                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Format:</span>
+                    <button class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow Highlight" onclick="applyHighlight('hl-yellow')"></button>
+                    <button class="hl-btn bg-emerald-300 border-emerald-400" title="Green Highlight" onclick="applyHighlight('hl-green')"></button>
+                    <button class="hl-btn bg-sky-300 border-sky-400" title="Blue Highlight" onclick="applyHighlight('hl-blue')"></button>
+                    <button class="hl-btn bg-pink-300 border-pink-400" title="Pink Highlight" onclick="applyHighlight('hl-pink')"></button>
+                    <button class="hl-btn bg-purple-300 border-purple-400" title="Purple Highlight" onclick="applyHighlight('hl-purple')"></button>
                     
                     <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
                     
-                    <button class="px-1.5 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400" title="Single Underline" onclick="applyUnderline('single')">U</button>
-                    <button class="px-1.5 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
+                    <button class="px-2 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600" title="Single Underline" onclick="applyUnderline('single')">U</button>
+                    <button class="px-2 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
+                    <button class="px-2 py-0.5 text-xs font-bold line-through text-gray-500 hover:text-indigo-600" title="Strikethrough" onclick="applyStrikethrough()">ab</button>
+                    <button class="px-2 py-0.5 text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded" title="Ellipsis & Caret (...text^)" onclick="applyEllipsisCaret()">...^</button>
 
                     <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
                     
@@ -402,10 +494,59 @@
             <!-- Bottom Status Bar -->
             <div class="pt-4 mt-8 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center shrink-0">
                 <span id="wordCountDisplay">0 words</span>
-                <span class="italic">Tip: Right-click any line for quick options, or select text to apply highlights & underlines. Custom labels auto-save for re-use.</span>
+                <span class="italic">Tip: Right-click any line for Ellipsis (...^), Strikethrough, or Notes.</span>
             </div>
         </div>
+
+        <!-- APP FOOTER ATTRIBUTION -->
+        <footer class="max-w-4xl w-full mx-auto mt-4 px-2 text-center text-xs text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+            <div>LexFlow &bull; Greek Exegetical Thought Flow Workspace</div>
+            <div class="flex items-center space-x-3">
+                <span>Greek Data: <a href="https://greekcntr.org/" target="_blank" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition underline">Center for New Testament Restoration (SRGNT)</a></span>
+                <span>&bull;</span>
+                <span>Lexicon: <a href="https://biblehub.com/" target="_blank" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition underline">Bible Hub</a></span>
+            </div>
+        </footer>
     </main>
+
+    <!-- GREEK INTERLINEAR LIGHTBOX MODAL -->
+    <div id="interlinearLightbox" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 p-6 relative">
+            <button onclick="closeInterlinearLightbox()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-2 z-10 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="interlinearLightboxBody"></div>
+        </div>
+    </div>
+
+    <!-- SRGNT COLLATION WEB APP EMBEDDED MODAL -->
+    <div id="srgntWebModal" class="fixed inset-0 z-[450] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-5xl h-[85vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 flex flex-col relative overflow-hidden">
+            <div class="px-6 py-3.5 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-sky-600 p-1.5 rounded-lg text-white">
+                        <i class="fa-solid fa-globe text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">SRGNT Manuscript Collation Tool</h3>
+                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Hebrews 1:1-4</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a id="srgntExternalLink" href="https://greekcntr.org/collation/" target="_blank" class="text-xs text-sky-600 dark:text-sky-400 hover:underline flex items-center space-x-1 font-medium">
+                        <span>Open in New Tab</span>
+                        <i class="fa-solid fa-external-link text-[10px]"></i>
+                    </a>
+                    <button onclick="closeSrgntWebModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-1 rounded transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 w-full bg-white dark:bg-zinc-950 relative">
+                <iframe id="srgntIframe" src="about:blank" class="w-full h-full border-none" title="SRGNT Collation View"></iframe>
+            </div>
+        </div>
+    </div>
 
     <!-- RIGHT-CLICK CONTEXT MENU -->
     <div id="contextMenu">
@@ -413,7 +554,19 @@
             <i class="fa-solid fa-arrow-down-long text-xs"></i>
             <span>Attach to Clause Below</span>
         </div>
+        <div class="ctx-item text-emerald-600 dark:text-emerald-400" onclick="ctxOpenNoteDrawer()">
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
+            <span>Exegetical Notes</span>
+        </div>
         <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxEllipsisSelection()">
+            <i class="fa-solid fa-ellipsis text-xs"></i>
+            <span>Ellipsis & Caret (...text^)</span>
+        </div>
+        <div class="ctx-item text-gray-700 dark:text-gray-200" onclick="ctxStrikethroughSelection()">
+            <i class="fa-solid fa-strikethrough text-xs text-gray-400"></i>
+            <span>Strikethrough Selection</span>
+        </div>
         <div class="ctx-item" onclick="ctxIndentLine()">
             <i class="fa-solid fa-indent text-xs text-gray-400"></i>
             <span>Indent Line (Tab)</span>
@@ -429,11 +582,101 @@
         </div>
     </div>
 
+    <!-- CLAUSE EXEGETICAL NOTE DRAWER -->
+    <div id="exegeticalNoteDrawer">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-gray-50 dark:bg-zinc-900">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-pen-to-square text-indigo-600 dark:text-indigo-400"></i>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Exegetical Clause Notes</h3>
+            </div>
+            <button onclick="closeNoteDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm p-1 rounded transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="px-4 py-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/50 text-xs shrink-0">
+            <span class="font-semibold text-indigo-600 dark:text-indigo-400">Clause Preview:</span>
+            <p id="drawerClauseText" class="italic text-gray-700 dark:text-gray-300 mt-0.5 line-clamp-2 font-serif text-sm">"..."</p>
+        </div>
+
+        <div class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between text-xs bg-white dark:bg-zinc-900 shrink-0">
+            <div class="flex items-center space-x-1.5">
+                <button onclick="execNoteCommand('bold')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-bold text-gray-700 dark:text-gray-300">B</button>
+                <button onclick="execNoteCommand('italic')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded italic font-serif text-gray-700 dark:text-gray-300">I</button>
+                <button onclick="execNoteCommand('underline')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded underline text-gray-700 dark:text-gray-300">U</button>
+                <button onclick="execNoteCommand('strikeThrough')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded line-through text-gray-700 dark:text-gray-300">S</button>
+                <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                <button onclick="execNoteCommand('insertUnorderedList')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-700 dark:text-gray-300"><i class="fa-solid fa-list-ul"></i></button>
+            </div>
+            <label class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded cursor-pointer transition text-xs font-medium flex items-center space-x-1.5">
+                <i class="fa-solid fa-image text-indigo-500"></i>
+                <span>Attach Pic</span>
+                <input type="file" accept="image/png, image/jpeg, image/gif, image/webp" class="hidden" onchange="handleImageUpload(event)">
+            </label>
+        </div>
+
+        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-900">
+            <div id="clauseNoteEditor" contenteditable="true" 
+                 class="note-editor-area outline-none font-sans text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[300px]"
+                 placeholder="Type exegetical insights, Greek word studies, or click SRGNT morph-cards...">
+            </div>
+        </div>
+
+        <div class="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex justify-between items-center text-xs shrink-0">
+            <span class="text-gray-400 italic">Supports image paste (PNG/JPEG)</span>
+            <button onclick="closeNoteDrawer()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition">Done</button>
+        </div>
+    </div>
+
+    <!-- MASTER ALL NOTES DRAWER -->
+    <div id="masterNoteDrawer">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-gray-50 dark:bg-zinc-900">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-book-open text-amber-500"></i>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Master Exegetical Notes Document</h3>
+            </div>
+            <button onclick="closeMasterNoteDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm p-1 rounded transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="px-4 py-2.5 bg-amber-50/60 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900/50 flex items-center justify-between text-xs shrink-0">
+            <button onclick="importAllNotes()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded transition shadow-sm flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Import All Notes</span>
+            </button>
+            <div class="flex items-center space-x-2">
+                <button onclick="exportMasterNotesToPDF()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Export PDF</span>
+                </button>
+                <button onclick="clearMasterNotes()" class="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded transition">
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-900">
+            <div id="masterNoteEditor" contenteditable="true" 
+                 class="note-editor-area outline-none font-sans text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[350px]"
+                 placeholder="Click 'Import All Notes' above to gather all clause notes into a consolidated document...">
+            </div>
+        </div>
+
+        <div class="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex justify-between items-center text-xs shrink-0">
+            <span class="text-gray-400 italic">Compiles notes across all main & sub-clauses</span>
+            <button onclick="closeMasterNoteDrawer()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded transition">Close</button>
+        </div>
+    </div>
+
     <!-- SCRIPT ENGINE -->
     <script>
-        let currentProjectKey = localStorage.getItem('scriptureGram_activeProjectKey') || 'scriptureGram_default';
+        let currentProjectKey = localStorage.getItem('lexflow_activeProjectKey') || 'lexflow_default';
         let isFocusModeActive = false;
         let rightClickedBlock = null;
+        let activeNoteBlock = null;
+        let activeLightboxBlock = null;
+        let srgntCache = {};
         
         const projectSelect = document.getElementById('projectSelect');
         const globalSaveStatus = document.getElementById('globalSaveStatus');
@@ -441,8 +684,16 @@
         const overlay = document.getElementById('controlsOverlay');
         const wordCountDisplay = document.getElementById('wordCountDisplay');
         const saveStatus = document.getElementById('saveStatus');
+        const srgntStatus = document.getElementById('srgntStatus');
         const highlightToolbar = document.getElementById('highlightToolbar');
         const contextMenu = document.getElementById('contextMenu');
+        
+        const noteDrawer = document.getElementById('exegeticalNoteDrawer');
+        const clauseNoteEditor = document.getElementById('clauseNoteEditor');
+        const drawerClauseText = document.getElementById('drawerClauseText');
+
+        const masterNoteDrawer = document.getElementById('masterNoteDrawer');
+        const masterNoteEditor = document.getElementById('masterNoteEditor');
 
         const defaultRelations = {
             'Causal': { bg: '#fef3c7', text: '#92400e' },
@@ -455,19 +706,155 @@
             'Explanation': { bg: '#f1f5f9', text: '#334155' }
         };
 
+        const discourseMarkerMap = {
+            'therefore': 'Result',
+            'wherefore': 'Result',
+            'so that': 'Purpose',
+            'in order that': 'Purpose',
+            'because': 'Causal',
+            'for': 'Causal',
+            'since': 'Causal',
+            'if': 'Conditional',
+            'unless': 'Conditional',
+            'but': 'Adversative',
+            'however': 'Adversative',
+            'when': 'Temporal',
+            'after': 'Temporal',
+            'while': 'Temporal'
+        };
+
+        const bookNumberMap = {
+            'matthew': 40, 'matt': 40, 'mt': 40,
+            'mark': 41, 'mk': 41,
+            'luke': 42, 'lk': 42,
+            'john': 43, 'jhn': 43, 'jn': 43,
+            'acts': 44, 'act': 44,
+            'romans': 45, 'rom': 45,
+            '1corinthians': 46, '1cor': 46,
+            '2corinthians': 47, '2cor': 47,
+            'galatians': 48, 'gal': 48,
+            'ephesians': 49, 'eph': 49,
+            'philippians': 50, 'php': 50,
+            'colossians': 51, 'col': 51,
+            '1thessalonians': 52, '1thess': 52,
+            '2thessalonians': 53, '2thess': 53,
+            '1timothy': 54, '1tim': 54,
+            '2timothy': 55, '2tim': 55,
+            'titus': 56, 'tit': 56,
+            'philemon': 57, 'phlm': 57,
+            'hebrews': 58, 'heb': 58,
+            'james': 59, 'jas': 59,
+            '1peter': 60, '1pet': 60,
+            '2peter': 61, '2pet': 61,
+            '1john': 62, '1jhn': 62,
+            '2john': 63, '2jhn': 63,
+            '3john': 64, '3jhn': 64,
+            'jude': 65, 'jud': 65,
+            'revelation': 66, 'rev': 66
+        };
+
+        const bookNameMap = {
+            '40': 'Matthew', '41': 'Mark', '42': 'Luke', '43': 'John', '44': 'Acts',
+            '45': 'Romans', '46': '1 Corinthians', '47': '2 Corinthians', '48': 'Galatians',
+            '49': 'Ephesians', '50': 'Philippians', '51': 'Colossians', '52': '1 Thessalonians',
+            '53': '2 Thessalonians', '54': '1 Timothy', '55': '2 Timothy', '56': 'Titus',
+            '57': 'Philemon', '58': 'Hebrews', '59': 'James', '60': '1 Peter',
+            '61': '2 Peter', '62': '1 John', '63': '2 John', '64': '3 John', '65': 'Jude', '66': 'Revelation'
+        };
+
+        const lexicalGlossDictionary = {
+            'τοῖς': 'the / to the',
+            'ὁ': 'the',
+            'ἡ': 'the',
+            'τό': 'the',
+            'τῶν': 'of the / the',
+            'τοῦ': 'of the / the',
+            'τῆς': 'of the / the',
+            'τόν': 'the',
+            'τήν': 'the',
+            'ταῖς': 'to the / with the',
+            'τούς': 'the',
+            'τάς': 'the',
+            'τά': 'the',
+            'κρείττων': 'superior / better',
+            'κρείτтоνος': 'superior / better',
+            'ὅσῳ': 'as much as / by how much',
+            'διαφορώτερον': 'more excellent',
+            'κεκληρονόμηκεν': 'he has inherited',
+            'ὄνομα': 'name',
+            'ἀγγέλων': 'angels',
+            'γενόμενος': 'having become',
+            'πολυμερῶς': 'at many times',
+            'πολυτρόπως': 'in many ways',
+            'πάλαι': 'long ago',
+            'πατράσιν': 'to the fathers',
+            'προφήταις': 'by the prophets',
+            'ἐλάλησεν': 'spoke',
+            'ἡμῖν': 'to us',
+            'υἱῷ': 'by [his] Son',
+            'ἁμαρτιῶν': 'sins',
+            'καθαρισμὸν': 'purification',
+            'ἐκάθισεν': 'sat down',
+            'δεξιᾷ': 'right hand',
+            'μεγαλωσύνης': 'Majesty',
+            'ὑψηλοῖς': 'on high',
+            'δι': 'through',
+            'οὗ': 'whom',
+            'καί': 'also / and',
+            'ἐποίησεν': 'he created / made',
+            'αἰῶνας': 'world / ages',
+            'ὤν': 'being / who is',
+            'ἀπαύγασμα': 'radiance / effulgence',
+            'δόξης': 'glory',
+            'χαρακτήρ': 'exact imprint / representation',
+            'ὑποστάσεως': 'nature / essence',
+            'φέρων': 'upholding / sustaining',
+            'πάντα': 'all things / universe',
+            'ῥήματι': 'word',
+            'δυνάμεως': 'power',
+            'αὐτοῦ': 'his / of him'
+        };
+
+        function cleanGreekWord(w) {
+            if (!w) return '';
+            return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-zα-ω]/g, '');
+        }
+
+        function getEnglishGlossForWord(word, lemma) {
+            const wNorm = cleanGreekWord(word);
+            const lNorm = cleanGreekWord(lemma);
+
+            for (const key of Object.keys(lexicalGlossDictionary)) {
+                const kNorm = cleanGreekWord(key);
+                if (wNorm === kNorm || lNorm === kNorm) {
+                    return lexicalGlossDictionary[key];
+                }
+            }
+
+            if (wNorm.startsWith('τοι') || lNorm.startsWith('ο')) return 'the';
+            return 'term';
+        }
+
+        function formatVerseCodeRef(code) {
+            if (!code || code.length < 8) return code;
+            const b = code.substring(0, 2);
+            const c = parseInt(code.substring(2, 5), 10);
+            const v = parseInt(code.substring(5, 8), 10);
+            const bookName = bookNameMap[b] || 'Scripture';
+            return `${bookName} ${c}:${v}`;
+        }
+
         function getCustomRelationsRegistry() {
             try {
-                return JSON.parse(localStorage.getItem('scriptureGram_customRelations') || '{}');
-            } catch (e) {
-                return {};
-            }
+                return JSON.parse(localStorage.getItem('lexflow_customRelations') || localStorage.getItem('scriptureGram_customRelations') || '{}');
+            } catch (e) { return {}; }
         }
 
         function saveCustomRelationToRegistry(name, bg, text) {
             if (!name || !name.trim()) return;
             const registry = getCustomRelationsRegistry();
             registry[name.trim()] = { bg: bg || '#e0e7ff', text: text || '#3730a3' };
-            localStorage.setItem('scriptureGram_customRelations', JSON.stringify(registry));
+            localStorage.setItem('lexflow_customRelations', JSON.stringify(registry));
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -485,23 +872,21 @@
                 editor.addEventListener('keydown', (e) => {
                     if (e.key === 'Tab') {
                         e.preventDefault();
-                        if (e.shiftKey) {
-                            outdentLine();
-                        } else {
-                            indentLine();
-                        }
+                        if (e.shiftKey) { outdentLine(); } else { indentLine(); }
                     } else if (e.key === 'Escape') {
                         hideContextMenu();
+                        closeNoteDrawer();
+                        closeMasterNoteDrawer();
+                        closeInterlinearLightbox();
+                        closeSrgntWebModal();
                     }
                 });
 
-                // RIGHT-CLICK CONTEXT MENU EVENT
                 editor.addEventListener('contextmenu', (e) => {
                     let node = e.target;
-                    while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
+                    while (node && node.parentNode !== editor && node !== editor) {
                         node = node.parentNode;
                     }
-
                     if (node && node !== editor) {
                         e.preventDefault();
                         rightClickedBlock = node;
@@ -510,9 +895,7 @@
                 });
 
                 document.addEventListener('click', (e) => {
-                    if (contextMenu && !contextMenu.contains(e.target)) {
-                        hideContextMenu();
-                    }
+                    if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
                 });
 
                 document.addEventListener('selectionchange', handleTextSelection);
@@ -522,84 +905,378 @@
                     hideContextMenu();
                 });
             }
+
+            if (clauseNoteEditor) {
+                clauseNoteEditor.addEventListener('input', saveActiveNoteToBlock);
+                clauseNoteEditor.addEventListener('paste', handleNotePaste);
+            }
+
+            if (masterNoteEditor) {
+                masterNoteEditor.addEventListener('input', saveActiveProjectData);
+            }
+
+            updatePassageContext();
         });
 
-        // CONTEXT MENU FUNCTIONS
+        async function fetchSRGNTDataset() {
+            if (srgntCache.loaded) return srgntCache;
+            srgntStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Fetching SRGNT...';
+            try {
+                const response = await fetch('https://cdn.jsdelivr.net/gh/Center-for-New-Testament-Restoration/SR@main/SR.tsv');
+                if (!response.ok) throw new Error('Network response failed');
+                const tsvText = await response.text();
+                
+                const lines = tsvText.split('\n');
+                const index = {};
+                const lemmaIndex = {};
+
+                lines.forEach(line => {
+                    if (!line.trim() || line.startsWith('#') || line.startsWith('Verse')) return;
+                    const cols = line.split('\t');
+                    if (cols.length >= 7) {
+                        const code = cols[0].trim();
+                        const modernText = cols[1].trim().replace(/[¶˚⋄]/g, '');
+                        const koineText = cols[2].trim().replace(/[¶˚⋄]/g, '');
+                        const lemma = cols[3].trim();
+                        let esn = cols[4].trim().replace(/^0+/, '');
+                        const role = cols[5].trim();
+                        const morph = cols[6].trim();
+
+                        const tokenObj = {
+                            word: modernText || koineText,
+                            koine: koineText,
+                            lemma: lemma,
+                            esn: esn,
+                            role: role,
+                            rawMorph: morph,
+                            morph: parseSRGNTMorph(morph, modernText || koineText, lemma),
+                            code: code
+                        };
+
+                        if (!index[code]) index[code] = [];
+                        index[code].push(tokenObj);
+
+                        if (lemma) {
+                            if (!lemmaIndex[lemma]) lemmaIndex[lemma] = [];
+                            lemmaIndex[lemma].push(tokenObj);
+                        }
+                    }
+                });
+
+                srgntCache = { loaded: true, index, lemmaIndex };
+                srgntStatus.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> SRGNT Loaded';
+                return srgntCache;
+            } catch (err) {
+                console.error("SRGNT fetch failed:", err);
+                srgntStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> SRGNT Offline';
+                return null;
+            }
+        }
+
+        function parseSRGNTMorph(code, word, lemma) {
+            if (!code || code.includes('...')) return 'Particle / Word';
+            const cleanCode = code.trim().toUpperCase();
+
+            if (cleanCode.startsWith('T-') || cleanCode === 'T' || (lemma && (lemma === 'ὁ' || lemma === 'ο'))) {
+                return 'Definite Article';
+            }
+            if (cleanCode.startsWith('A-') || cleanCode === 'A' || (lemma && lemma.includes('κρείττων'))) {
+                if (cleanCode.includes('-C') || (word && word.includes('κρείττ'))) return 'Comparative Adjective';
+                if (cleanCode.includes('-S')) return 'Superlative Adjective';
+                return 'Adjective';
+            }
+            if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
+            if (cleanCode.startsWith('V-') || cleanCode === 'V') {
+                if (cleanCode.includes('P')) return 'Participle';
+                return 'Verb';
+            }
+            if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
+            if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-')) return 'Preposition / Pronoun';
+            if (cleanCode.startsWith('C-')) return 'Conjunction';
+
+            return 'Particle / Word';
+        }
+
+        function explainGrammarInPlainEnglish(tok) {
+            const code = tok.rawMorph || '';
+            const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
+            let plainText = "";
+            let significance = "";
+
+            if (tok.morph.includes('Definite Article')) {
+                plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
+                significance = "Definite articles in Koine Greek mark specific entities, nouns, or noun phrases (e.g., 'the fathers', 'the prophets').";
+            } else if (tok.morph.includes('Comparative Adjective')) {
+                plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
+                significance = "Comparative adjectives make direct qualitative comparisons (e.g., Christ being 'superior' or 'better than' angels).";
+            } else if (tok.morph.includes('Adjective')) {
+                plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
+                significance = "Adjectives describe or qualify nouns and entities in the passage.";
+            } else if (tok.morph.includes('Participle')) {
+                plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
+                significance = "Participles act as verbal adjectives, describing background or prior action.";
+            } else if (tok.morph.includes('Verb')) {
+                plainText = `Functions as a <strong>Main Verb</strong> (<em>"${gloss}"</em>).`;
+                significance = "Verbs express the primary movement or statement in the clause.";
+            } else if (tok.morph.includes('Noun')) {
+                plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
+                significance = "Identifies key subjects, objects, or concepts.";
+            } else if (tok.morph.includes('Adverb')) {
+                plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
+                significance = "Adverbs modify verbs or adjectives, describing manner or time.";
+            } else if (tok.morph.includes('Conjunction')) {
+                plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
+                significance = "Connects ideas together logically.";
+            } else {
+                plainText = `Functions as a <strong>Grammatical Word / Preposition</strong> (<em>"${gloss}"</em>).`;
+                significance = "Provides structural context or connection in Koine Greek.";
+            }
+
+            return { plainText, significance, gloss };
+        }
+
+        async function updatePassageContext() {
+            const val = document.getElementById('passageRefInput').value.trim();
+            if (!val) return;
+            await fetchSRGNTDataset();
+            autoAssignVersesToClauses();
+            syncOverlayControls();
+        }
+
+        function autoAssignVersesToClauses() {
+            if (!editor) return;
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            if (blocks.length === 0) return;
+
+            const refInfo = parseCurrentRefRange();
+            const startV = refInfo.startVerse;
+            const endV = refInfo.endVerse;
+
+            blocks.forEach((block, index) => {
+                let calculatedVerse = startV + Math.floor((index / blocks.length) * (endV - startV + 1));
+                if (calculatedVerse > endV) calculatedVerse = endV;
+                if (calculatedVerse < startV) calculatedVerse = startV;
+
+                const text = block.textContent.toLowerCase();
+                if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
+                    calculatedVerse = 1;
+                } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
+                    calculatedVerse = 2;
+                } else if (text.includes('purification') || text.includes('sins') || text.includes('sat down') || text.includes('majesty') || text.includes('on high') || text.includes('radiance') || text.includes('imprint')) {
+                    calculatedVerse = 3;
+                } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited') || text.includes('name')) {
+                    calculatedVerse = 4;
+                }
+
+                block.dataset.verseNum = calculatedVerse;
+            });
+
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function parseCurrentRefRange() {
+            const val = document.getElementById('passageRefInput').value.toLowerCase().replace(/\s+/g, '');
+            const match = val.match(/([0-9]?[a-z]+)([0-9]+)(?::([0-9]+)(?:-([0-9]+))?)?/);
+            if (match) {
+                const bookStr = match[1];
+                const chapNum = parseInt(match[2], 10);
+                const startV = match[3] ? parseInt(match[3], 10) : 1;
+                const endV = match[4] ? parseInt(match[4], 10) : startV;
+                const bookCode = bookNumberMap[bookStr] || 58;
+                return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
+            }
+            return { book: 58, chapter: 1, startVerse: 1, endVerse: 4 };
+        }
+
         function showContextMenu(x, y) {
             if (!contextMenu) return;
             contextMenu.style.display = 'block';
-            
             const winWidth = window.innerWidth;
             const winHeight = window.innerHeight;
             const menuWidth = contextMenu.offsetWidth;
             const menuHeight = contextMenu.offsetHeight;
-
-            const posX = (x + menuWidth > winWidth) ? winWidth - menuWidth - 10 : x;
-            const posY = (y + menuHeight > winHeight) ? winHeight - menuHeight - 10 : y;
-
-            contextMenu.style.left = posX + 'px';
-            contextMenu.style.top = posY + 'px';
+            contextMenu.style.left = ((x + menuWidth > winWidth) ? winWidth - menuWidth - 10 : x) + 'px';
+            contextMenu.style.top = ((y + menuHeight > winHeight) ? winHeight - menuHeight - 10 : y) + 'px';
         }
 
-        function hideContextMenu() {
-            if (contextMenu) contextMenu.style.display = 'none';
+        function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
+        function ctxToggleAttachDown() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('attach-down'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxOpenNoteDrawer() { if (rightClickedBlock) openNoteDrawerForBlock(rightClickedBlock); hideContextMenu(); }
+        
+        function ctxStrikethroughSelection() { applyStrikethrough(); hideContextMenu(); }
+        function ctxEllipsisSelection() { applyEllipsisCaret(); hideContextMenu(); }
+        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxOutdentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); const newMargin = Math.max(0, current - 1.5); rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : ''; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxDeleteLine() { 
+            if (rightClickedBlock) { 
+                rightClickedBlock.remove(); 
+                syncOverlayControls(); 
+                updateWordCount(); 
+                saveActiveProjectData(); 
+            } 
+            hideContextMenu(); 
         }
 
-        function ctxToggleAttachDown() {
-            if (rightClickedBlock) {
-                rightClickedBlock.classList.toggle('attach-down');
-                syncOverlayControls();
+        function openNoteDrawerForBlock(block) {
+            activeNoteBlock = block;
+            drawerClauseText.textContent = `"${block.textContent.trim() || 'Empty clause line'}"`;
+            clauseNoteEditor.innerHTML = block.dataset.exegeticalNotes || '';
+            noteDrawer.classList.add('open');
+            closeMasterNoteDrawer();
+        }
+
+        function closeNoteDrawer() {
+            if (noteDrawer) noteDrawer.classList.remove('open');
+            activeNoteBlock = null;
+        }
+
+        function saveActiveNoteToBlock() {
+            if (!activeNoteBlock) return;
+            const content = clauseNoteEditor.innerHTML.trim();
+            if (content) {
+                activeNoteBlock.dataset.exegeticalNotes = content;
+            } else {
+                activeNoteBlock.removeAttribute('data-exegetical-notes');
+            }
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function execNoteCommand(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            saveActiveNoteToBlock();
+        }
+
+        function handleNotePaste(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') === 0) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        document.execCommand('insertHTML', false, img.outerHTML);
+                        saveActiveNoteToBlock();
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    clauseNoteEditor.focus();
+                    document.execCommand('insertHTML', false, img.outerHTML);
+                    saveActiveNoteToBlock();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleMasterNoteDrawer() {
+            if (masterNoteDrawer.classList.contains('open')) closeMasterNoteDrawer();
+            else openMasterNoteDrawer();
+        }
+
+        function openMasterNoteDrawer() { masterNoteDrawer.classList.add('open'); closeNoteDrawer(); }
+        function closeMasterNoteDrawer() { if (masterNoteDrawer) masterNoteDrawer.classList.remove('open'); }
+
+        function importAllNotes() {
+            if (!editor) return;
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            let compiledHTML = `<h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #4f46e5; border-b: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Compiled Exegetical Notes</h2>`;
+            let notesFound = 0;
+
+            blocks.forEach((block, index) => {
+                const noteContent = block.dataset.exegeticalNotes;
+                if (noteContent && noteContent.trim()) {
+                    notesFound++;
+                    const clauseText = block.textContent.trim();
+                    const relation = block.dataset.relation || 'Main Clause / Subordination';
+                    
+                    let level = 0;
+                    const styleAttr = block.getAttribute('style') || '';
+                    const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                    if (marginMatch) {
+                        const val = parseFloat(marginMatch[1]);
+                        level = val >= 1 ? Math.round(val / 1.5) : 1;
+                    }
+
+                    compiledHTML += `
+                        <div style="margin-bottom: 1.25rem; padding: 0.85rem; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb;">
+                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">
+                                Clause #${index + 1} (L${level} • ${relation})
+                            </div>
+                            <blockquote style="font-family: serif; font-style: italic; color: #374151; border-left: 2px solid #818cf8; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                "${clauseText}"
+                            </blockquote>
+                            <div style="font-size: 0.95rem; color: #111827; line-height: 1.5;">
+                                ${noteContent}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (notesFound === 0) {
+                compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet.</p>`;
+            }
+
+            masterNoteEditor.innerHTML = compiledHTML;
+            saveActiveProjectData();
+        }
+
+        function clearMasterNotes() {
+            if (confirm('Clear compiled master notes?')) {
+                masterNoteEditor.innerHTML = '';
                 saveActiveProjectData();
             }
-            hideContextMenu();
         }
 
-        function ctxIndentLine() {
-            if (rightClickedBlock) {
-                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
-                rightClickedBlock.style.marginLeft = (currentMargin + 1.5) + 'rem';
-                syncOverlayControls();
-                saveActiveProjectData();
-            }
-            hideContextMenu();
+        function exportMasterNotesToPDF() {
+            const printWindow = window.open('', '_blank');
+            const masterHTML = masterNoteEditor.innerHTML || '<p>No compiled notes to export.</p>';
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>LexFlow - Master Exegetical Notes</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; padding: 40px; color: #111827; line-height: 1.6; font-size: 16px; }
+                        h2 { color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+                        blockquote { border-left: 3px solid #6366f1; padding-left: 12px; margin: 8px 0; font-family: Georgia, serif; font-style: italic; background: #f8fafc; }
+                        img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>${masterHTML}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 250);
         }
 
-        function ctxOutdentLine() {
-            if (rightClickedBlock) {
-                const currentMargin = parseFloat(rightClickedBlock.style.marginLeft || '0');
-                const newMargin = Math.max(0, currentMargin - 1.5);
-                rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
-                syncOverlayControls();
-                saveActiveProjectData();
-            }
-            hideContextMenu();
-        }
-
-        function ctxDeleteLine() {
-            if (rightClickedBlock) {
-                rightClickedBlock.remove();
-                syncOverlayControls();
-                updateWordCount();
-                saveActiveProjectData();
-            }
-            hideContextMenu();
-        }
-
-        // FLOATING HIGHLIGHTER & UNDERLINE HANDLERS
         function handleTextSelection() {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !editor.contains(selection.anchorNode)) {
                 if (highlightToolbar) highlightToolbar.style.display = 'none';
                 return;
             }
-
             const range = selection.getRangeAt(0);
             const rect = range.getBoundingClientRect();
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
 
             if (rect.width > 0 && highlightToolbar) {
                 highlightToolbar.style.display = 'flex';
-                highlightToolbar.style.top = (rect.top - wrapperRect.top - 42) + 'px';
+                highlightToolbar.style.top = (rect.top - wrapperRect.top - 44) + 'px';
                 highlightToolbar.style.left = Math.max(10, (rect.left - wrapperRect.left + (rect.width / 2) - 120)) + 'px';
             }
         }
@@ -607,17 +1284,10 @@
         function applyHighlight(colorClass) {
             const selection = window.getSelection();
             if (!selection.rangeCount || selection.isCollapsed) return;
-
             const range = selection.getRangeAt(0);
             const mark = document.createElement('mark');
             mark.className = colorClass;
-
-            try {
-                range.surroundContents(mark);
-            } catch (e) {
-                document.execCommand('hiliteColor', false, '#fef08a');
-            }
-
+            try { range.surroundContents(mark); } catch (e) { document.execCommand('hiliteColor', false, '#fef08a'); }
             selection.removeAllRanges();
             if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
@@ -626,17 +1296,38 @@
         function applyUnderline(type) {
             const selection = window.getSelection();
             if (!selection.rangeCount || selection.isCollapsed) return;
-
             const range = selection.getRangeAt(0);
             const u = document.createElement('u');
             u.className = type === 'double' ? 'sg-ul-double' : 'sg-ul-single';
+            try { range.surroundContents(u); } catch (e) { document.execCommand('underline', false, null); }
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
+        }
 
-            try {
-                range.surroundContents(u);
-            } catch (e) {
-                document.execCommand('underline', false, null);
-            }
+        function applyStrikethrough() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+            const range = selection.getRangeAt(0);
+            const s = document.createElement('s');
+            s.className = 'sg-strike';
+            try { range.surroundContents(s); } catch (e) { document.execCommand('strikeThrough', false, null); }
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            saveActiveProjectData();
+        }
 
+        function applyEllipsisCaret() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+            const selectedText = selection.toString();
+            const span = document.createElement('span');
+            span.className = 'sg-ellipsis-wrap';
+            span.title = 'Ellipsis & Placement Caret';
+            span.textContent = `...${selectedText}^`;
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(span);
             selection.removeAllRanges();
             if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
@@ -645,20 +1336,16 @@
         function clearSelectionFormatting() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
-
             let node = selection.anchorNode;
             while (node && node !== editor) {
-                if (node.tagName === 'MARK' || node.tagName === 'U') {
+                if (node.tagName === 'MARK' || node.tagName === 'U' || node.tagName === 'S' || node.classList.contains('sg-ellipsis-wrap')) {
                     const parent = node.parentNode;
-                    while (node.firstChild) {
-                        parent.insertBefore(node.firstChild, node);
-                    }
+                    while (node.firstChild) parent.insertBefore(node.firstChild, node);
                     parent.removeChild(node);
                     break;
                 }
                 node = node.parentNode;
             }
-
             selection.removeAllRanges();
             if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
@@ -666,11 +1353,9 @@
 
         function cleanEditorSpans() {
             if (!editor) return;
-            const spans = editor.querySelectorAll('span:not(.flow-meta-group)');
+            const spans = editor.querySelectorAll('span:not(.flow-meta-group, .sg-ellipsis-wrap)');
             spans.forEach(span => {
-                while (span.firstChild) {
-                    span.parentNode.insertBefore(span.firstChild, span);
-                }
+                while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
                 span.remove();
             });
         }
@@ -679,10 +1364,7 @@
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
             let block = selection.anchorNode;
-            while (block && block.parentNode !== editor && block !== editor) {
-                block = block.parentNode;
-            }
-
+            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
             if (block && block !== editor) {
                 const currentMargin = parseFloat(block.style.marginLeft || '0');
                 block.style.marginLeft = (currentMargin + 1.5) + 'rem';
@@ -695,10 +1377,7 @@
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
             let block = selection.anchorNode;
-            while (block && block.parentNode !== editor && block !== editor) {
-                block = block.parentNode;
-            }
-
+            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
             if (block && block !== editor) {
                 const currentMargin = parseFloat(block.style.marginLeft || '0');
                 const newMargin = Math.max(0, currentMargin - 1.5);
@@ -708,17 +1387,28 @@
             }
         }
 
-        // SYNC OVERLAY CONTROLS TO EXACT PARAGRAPH POSITIONS
+        function detectDiscourseMarker(lineText) {
+            const lower = lineText.toLowerCase();
+            for (const [marker, rel] of Object.entries(discourseMarkerMap)) {
+                if (new RegExp(`\\b${marker}\\b`, 'i').test(lower)) {
+                    return { word: marker, suggestedRelation: rel };
+                }
+            }
+            return null;
+        }
+
         function syncOverlayControls() {
             if (!editor || !overlay) return;
             overlay.innerHTML = '';
 
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
-            const blocks = editor.querySelectorAll('p, div, blockquote');
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
             const customRegistry = getCustomRelationsRegistry();
+            const refInfo = parseCurrentRefRange();
 
-            blocks.forEach(block => {
-                const hasText = block.textContent.trim().length > 0;
+            blocks.forEach((block, index) => {
+                const text = block.textContent.trim();
+                const hasText = text.length > 0;
 
                 let level = 0;
                 const styleAttr = block.getAttribute('style') || '';
@@ -727,19 +1417,19 @@
                 if (marginMatch) {
                     const val = parseFloat(marginMatch[1]);
                     level = val >= 1 ? Math.round(val / 1.5) : 1;
-                } else if (block.style.marginLeft || block.classList.contains('attach-down')) {
-                    level = 1;
                 }
 
-                // If line is empty, strip indentation border
                 if (!hasText) {
                     block.classList.remove('has-indent', 'attach-down', 'collapsed-active');
                     level = 0;
-                } else if (level > 0 || block.style.marginLeft || block.classList.contains('attach-down')) {
-                    if (level === 0) level = 1;
-                    block.classList.add('has-indent');
+                } else {
+                    if (level > 0) block.classList.add('has-indent');
+                    else block.classList.remove('has-indent');
 
-                    // Position control group in overlay
+                    if (!block.dataset.verseNum) {
+                        block.dataset.verseNum = refInfo.startVerse || 1;
+                    }
+
                     const rect = block.getBoundingClientRect();
                     const topOffset = rect.top - wrapperRect.top;
 
@@ -749,173 +1439,474 @@
 
                     const group = document.createElement('div');
                     group.className = 'flow-meta-group';
-                    group.style.top = topOffset + 'px';
+                    group.style.top = (topOffset + 6) + 'px';
 
-                    // Level Badge
                     const badge = document.createElement('span');
-                    badge.className = 'flow-badge';
+                    badge.className = level === 0 ? 'flow-badge flow-badge-l0' : 'flow-badge';
                     const isCollapsed = block.classList.contains('collapsed-active');
                     badge.innerHTML = isCollapsed 
-                        ? `L${level} <i class="fa-solid fa-chevron-right ml-1.5 text-[9px]"></i>` 
-                        : `L${level} <i class="fa-solid fa-chevron-down ml-1.5 text-[9px]"></i>`;
-
-                    badge.title = 'Click to collapse/expand branch';
+                        ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` 
+                        : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
                     badge.onclick = () => {
                         block.classList.toggle('collapsed-active');
                         syncOverlayControls();
                         saveActiveProjectData();
                     };
 
-                    // Relationship Dropdown
-                    const select = document.createElement('select');
-                    select.className = 'relation-select';
+                    group.appendChild(badge);
 
-                    function updateSelectStyle(relName, bg, text) {
-                        if (relName && defaultRelations[relName]) {
-                            select.style.backgroundColor = defaultRelations[relName].bg;
-                            select.style.color = defaultRelations[relName].text;
-                        } else if (relName && customRegistry[relName]) {
-                            select.style.backgroundColor = customRegistry[relName].bg;
-                            select.style.color = customRegistry[relName].text;
-                        } else if (bg && text) {
-                            select.style.backgroundColor = bg;
-                            select.style.color = text;
-                        } else {
-                            select.style.backgroundColor = '';
-                            select.style.color = '';
-                            select.className = 'relation-select bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700';
-                        }
+                    const discourseMatch = detectDiscourseMarker(text);
+                    if (discourseMatch && !currentRelation && level > 0) {
+                        const sugBtn = document.createElement('button');
+                        sugBtn.className = 'discourse-suggestion-btn';
+                        sugBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Suggest: ${discourseMatch.suggestedRelation}`;
+                        sugBtn.title = `Detected connector "${discourseMatch.word}". Click to apply ${discourseMatch.suggestedRelation} relationship.`;
+                        sugBtn.onclick = () => {
+                            block.dataset.relation = discourseMatch.suggestedRelation;
+                            syncOverlayControls();
+                            saveActiveProjectData();
+                        };
+                        group.appendChild(sugBtn);
                     }
 
-                    updateSelectStyle(currentRelation, customBg, customText);
+                    if (level > 0) {
+                        const select = document.createElement('select');
+                        select.className = 'relation-select';
 
-                    const defaultOpt = document.createElement('option');
-                    defaultOpt.value = '';
-                    defaultOpt.textContent = '+ Relation';
-                    select.appendChild(defaultOpt);
-
-                    // Standard built-in relations
-                    const standardGroup = document.createElement('optgroup');
-                    standardGroup.label = 'Standard Relations';
-                    Object.keys(defaultRelations).forEach(relKey => {
-                        const opt = document.createElement('option');
-                        opt.value = relKey;
-                        opt.textContent = relKey;
-                        if (relKey === currentRelation) opt.selected = true;
-                        standardGroup.appendChild(opt);
-                    });
-                    select.appendChild(standardGroup);
-
-                    // Custom Saved Labels Group
-                    const customKeys = Object.keys(customRegistry);
-                    if (customKeys.length > 0) {
-                        const customGroup = document.createElement('optgroup');
-                        customGroup.label = 'Custom Saved Labels';
-                        customKeys.forEach(customKey => {
-                            const opt = document.createElement('option');
-                            opt.value = customKey;
-                            opt.textContent = customKey;
-                            if (customKey === currentRelation) opt.selected = true;
-                            customGroup.appendChild(opt);
-                        });
-                        select.appendChild(customGroup);
-                    }
-
-                    if (currentRelation && !defaultRelations[currentRelation] && !customRegistry[currentRelation]) {
-                        const customOpt = document.createElement('option');
-                        customOpt.value = currentRelation;
-                        customOpt.textContent = currentRelation;
-                        customOpt.selected = true;
-                        select.appendChild(customOpt);
-                    }
-
-                    const addCustomOpt = document.createElement('option');
-                    addCustomOpt.value = '__custom__';
-                    addCustomOpt.textContent = '+ Custom Label...';
-                    select.appendChild(addCustomOpt);
-
-                    select.onchange = () => {
-                        const val = select.value;
-                        if (val === '__custom__') {
-                            const customName = prompt('Enter custom relationship name (e.g., "Contrast", "Hortatory"):');
-                            if (customName && customName.trim()) {
-                                const trimmed = customName.trim();
-                                block.dataset.relation = trimmed;
-                                const defaultBg = '#e0e7ff';
-                                const defaultText = '#3730a3';
-                                block.dataset.relBg = defaultBg;
-                                block.dataset.relText = defaultText;
-                                saveCustomRelationToRegistry(trimmed, defaultBg, defaultText);
-                            }
-                        } else if (!val) {
-                            block.removeAttribute('data-relation');
-                            block.removeAttribute('data-rel-bg');
-                            block.removeAttribute('data-rel-text');
-                        } else {
-                            block.dataset.relation = val;
-                            if (customRegistry[val]) {
-                                block.dataset.relBg = customRegistry[val].bg;
-                                block.dataset.relText = customRegistry[val].text;
+                        function updateSelectStyle(relName, bg, text) {
+                            if (relName && defaultRelations[relName]) {
+                                select.style.backgroundColor = defaultRelations[relName].bg;
+                                select.style.color = defaultRelations[relName].text;
+                            } else if (relName && customRegistry[relName]) {
+                                select.style.backgroundColor = customRegistry[relName].bg;
+                                select.style.color = customRegistry[relName].text;
+                            } else if (bg && text) {
+                                select.style.backgroundColor = bg;
+                                select.style.color = text;
                             } else {
+                                select.style.backgroundColor = '';
+                                select.style.color = '';
+                                select.className = 'relation-select bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700';
+                            }
+                        }
+
+                        updateSelectStyle(currentRelation, customBg, customText);
+
+                        const defaultOpt = document.createElement('option');
+                        defaultOpt.value = ''; defaultOpt.textContent = '+ Relation';
+                        select.appendChild(defaultOpt);
+
+                        const standardGroup = document.createElement('optgroup');
+                        standardGroup.label = 'Standard Relations';
+                        Object.keys(defaultRelations).forEach(relKey => {
+                            const opt = document.createElement('option');
+                            opt.value = relKey; opt.textContent = relKey;
+                            if (relKey === currentRelation) opt.selected = true;
+                            standardGroup.appendChild(opt);
+                        });
+                        select.appendChild(standardGroup);
+
+                        const customKeys = Object.keys(customRegistry);
+                        if (customKeys.length > 0) {
+                            const customGroup = document.createElement('optgroup');
+                            customGroup.label = 'Custom Saved Labels';
+                            customKeys.forEach(customKey => {
+                                const opt = document.createElement('option');
+                                opt.value = customKey; opt.textContent = customKey;
+                                if (customKey === currentRelation) opt.selected = true;
+                                customGroup.appendChild(opt);
+                            });
+                            select.appendChild(customGroup);
+                        }
+
+                        const addCustomOpt = document.createElement('option');
+                        addCustomOpt.value = '__custom__'; addCustomOpt.textContent = '+ Custom Label...';
+                        select.appendChild(addCustomOpt);
+
+                        select.onchange = () => {
+                            const val = select.value;
+                            if (val === '__custom__') {
+                                const customName = prompt('Enter custom relationship name:');
+                                if (customName && customName.trim()) {
+                                    const trimmed = customName.trim();
+                                    block.dataset.relation = trimmed;
+                                    block.dataset.relBg = '#e0e7ff';
+                                    block.dataset.relText = '#3730a3';
+                                    saveCustomRelationToRegistry(trimmed, '#e0e7ff', '#3730a3');
+                                }
+                            } else if (!val) {
+                                block.removeAttribute('data-relation');
                                 block.removeAttribute('data-rel-bg');
                                 block.removeAttribute('data-rel-text');
+                            } else {
+                                block.dataset.relation = val;
+                                if (customRegistry[val]) {
+                                    block.dataset.relBg = customRegistry[val].bg;
+                                    block.dataset.relText = customRegistry[val].text;
+                                }
                             }
+                            syncOverlayControls();
+                            saveActiveProjectData();
+                        };
+
+                        const colorInput = document.createElement('input');
+                        colorInput.type = 'color'; colorInput.className = 'color-picker-input';
+                        colorInput.value = customBg || '#6366f1';
+                        colorInput.onchange = (e) => {
+                            const bgHex = e.target.value;
+                            block.dataset.relBg = bgHex; block.dataset.relText = '#ffffff';
+                            if (!currentRelation) block.dataset.relation = 'Custom';
+                            saveCustomRelationToRegistry(currentRelation || 'Custom', bgHex, '#ffffff');
+                            syncOverlayControls(); saveActiveProjectData();
+                        };
+
+                        const colorBtn = document.createElement('label');
+                        colorBtn.className = 'color-picker-btn';
+                        colorBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
+                        colorBtn.onclick = () => colorInput.click();
+                        colorBtn.appendChild(colorInput);
+
+                        group.appendChild(select);
+                        group.appendChild(colorBtn);
+                    }
+
+                    const verseBadge = document.createElement('span');
+                    verseBadge.className = 'verse-badge';
+                    verseBadge.textContent = `v${block.dataset.verseNum}`;
+                    verseBadge.title = 'Click to change verse number for this clause line';
+                    verseBadge.onclick = () => {
+                        const newV = prompt('Enter verse number for this clause line (e.g., 1, 2, 3, 4):', block.dataset.verseNum);
+                        if (newV && !isNaN(newV)) {
+                            block.dataset.verseNum = parseInt(newV, 10);
+                            verseBadge.textContent = `v${block.dataset.verseNum}`;
+                            saveActiveProjectData();
                         }
-                        syncOverlayControls();
-                        saveActiveProjectData();
+                    };
+                    group.appendChild(verseBadge);
+
+                    const isGkActive = activeLightboxBlock === block;
+                    const gkBtn = document.createElement('button');
+                    gkBtn.className = isGkActive ? 'gk-toggle-btn active' : 'gk-toggle-btn';
+                    gkBtn.innerHTML = 'Gk';
+                    gkBtn.title = 'Open Greek Interlinear Lightbox Study';
+                    gkBtn.onclick = async () => {
+                        if (activeLightboxBlock === block) {
+                            closeInterlinearLightbox();
+                        } else {
+                            activeLightboxBlock = block;
+                            syncOverlayControls();
+                            const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
+                            await openInterlinearLightbox(block, refInfo, targetVerse);
+                        }
                     };
 
-                    // Color Picker
-                    const colorInput = document.createElement('input');
-                    colorInput.type = 'color';
-                    colorInput.className = 'color-picker-input';
-                    colorInput.value = customBg || (customRegistry[currentRelation] ? customRegistry[currentRelation].bg : '#6366f1');
-                    colorInput.onchange = (e) => {
-                        const bgHex = e.target.value;
-                        const r = parseInt(bgHex.substr(1,2), 16);
-                        const g = parseInt(bgHex.substr(3,2), 16);
-                        const b = parseInt(bgHex.substr(5,2), 16);
-                        const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-                        const textHex = yiq >= 128 ? '#111827' : '#f9fafb';
+                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
+                    const noteBtn = document.createElement('button');
+                    noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
+                    noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
+                    noteBtn.title = hasNotes ? 'Edit clause notes' : 'Add exegetical notes';
+                    noteBtn.onclick = () => openNoteDrawerForBlock(block);
 
-                        block.dataset.relBg = bgHex;
-                        block.dataset.relText = textHex;
-                        if (!currentRelation) {
-                            block.dataset.relation = 'Custom';
-                            currentRelation = 'Custom';
-                        }
-                        saveCustomRelationToRegistry(currentRelation, bgHex, textHex);
-                        syncOverlayControls();
-                        saveActiveProjectData();
-                    };
-
-                    const colorBtn = document.createElement('label');
-                    colorBtn.className = 'color-picker-btn';
-                    colorBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
-                    colorBtn.title = 'Choose custom color';
-                    colorBtn.onclick = () => colorInput.click();
-                    colorBtn.appendChild(colorInput);
-
-                    // Focus Button
                     const focusBtn = document.createElement('button');
                     focusBtn.className = 'text-gray-400 hover:text-indigo-600 px-1 text-xs transition';
                     focusBtn.innerHTML = '<i class="fa-solid fa-bullseye"></i>';
-                    focusBtn.title = 'Isolate this branch';
                     focusBtn.onclick = () => {
                         document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
                         block.classList.toggle('focused-branch');
                         if (!isFocusModeActive) toggleFocusMode();
                     };
 
-                    group.appendChild(badge);
-                    group.appendChild(select);
-                    group.appendChild(colorBtn);
+                    group.appendChild(gkBtn);
+                    group.appendChild(noteBtn);
                     group.appendChild(focusBtn);
                     overlay.appendChild(group);
-                } else {
-                    block.classList.remove('has-indent', 'collapsed-active');
                 }
             });
+        }
+
+        /* ROBUST SEMANTIC WINDOW CLAUSE TOKEN FILTERING */
+        function getClauseFilteredTokens(block, verseTokens) {
+            if (!verseTokens || verseTokens.length === 0) return [];
+            const text = block.textContent.toLowerCase();
+
+            let matchedIndices = [];
+            verseTokens.forEach((t, i) => {
+                const l = t.lemma.toLowerCase();
+                const w = t.word.toLowerCase();
+                if (
+                    (text.includes('purification') && (l.includes('καθαρισμ') || l.includes('ἁμαρτ') || l.includes('ποιέω') || w.includes('καθαρισμ') || w.includes('ἁμαρτ'))) ||
+                    (text.includes('power') && (l.includes('δυναμ') || l.includes('ῥῆμα') || w.includes('δυναμ') || w.includes('ῥήμα'))) ||
+                    (text.includes('radiance') && (l.includes('ἀπαύγασμ') || l.includes('δόξ') || w.includes('ἀπαύγασμ') || w.includes('δόξ'))) ||
+                    (text.includes('imprint') && (l.includes('χαρακτήρ') || l.includes('ὑπόστασις') || w.includes('χαρακτήρ') || w.includes('ὑποστάσ'))) ||
+                    (text.includes('upholds') && (l.includes('φέρω') || l.includes('πᾶς') || w.includes('φέρ') || w.includes('πάντ'))) ||
+                    (text.includes('sat down') && (l.includes('καθίζω') || l.includes('δεξιός') || l.includes('μεγαλωσύνης') || w.includes('καθισ') || w.includes('δεξι') || w.includes('μεγαλωσ'))) ||
+                    (text.includes('superior') && (l.includes('κρείσσων') || l.includes('ἄγγελος') || w.includes('κρείττ') || w.includes('ἀγγέλ')))
+                ) {
+                    matchedIndices.push(i);
+                }
+            });
+
+            if (matchedIndices.length > 0) {
+                let expandedIndices = new Set();
+                matchedIndices.forEach(idx => {
+                    expandedIndices.add(idx);
+                    if (idx > 0) expandedIndices.add(idx - 1);
+                    if (idx > 1) expandedIndices.add(idx - 2);
+                    if (idx < verseTokens.length - 1) expandedIndices.add(idx + 1);
+                    if (idx < verseTokens.length - 2) expandedIndices.add(idx + 2);
+                });
+                const sortedIndices = Array.from(expandedIndices).sort((a, b) => a - b);
+                return sortedIndices.map(i => verseTokens[i]);
+            }
+
+            // Fallback proportional chunking if no explicit keyword match
+            const targetVerse = String(block.dataset.verseNum);
+            const sameVerseBlocks = Array.from(editor.children).filter(b => 
+                b.textContent.trim().length > 0 &&
+                String(b.dataset.verseNum) === targetVerse
+            );
+
+            if (sameVerseBlocks.length <= 1) return verseTokens;
+
+            const myIndex = sameVerseBlocks.indexOf(block);
+            const totalVerseBlocks = sameVerseBlocks.length;
+            const chunk = Math.max(1, Math.ceil(verseTokens.length / totalVerseBlocks));
+            const start = myIndex * chunk;
+            const end = Math.min(verseTokens.length, start + chunk);
+
+            const result = verseTokens.slice(start, end);
+            return result.length > 0 ? result : verseTokens;
+        }
+
+        async function openInterlinearLightbox(block, refInfo, targetVerseNum) {
+            const lightbox = document.getElementById('interlinearLightbox');
+            const body = document.getElementById('interlinearLightboxBody');
+            if (!lightbox || !body) return;
+
+            lightbox.classList.remove('hidden');
+            body.innerHTML = `<div class="p-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading SRGNT Greek Data...</div>`;
+
+            const data = await fetchSRGNTDataset();
+            if (!data || !data.index) {
+                body.innerHTML = `<div class="p-6 text-amber-600">SRGNT Greek dataset offline.</div>`;
+                return;
+            }
+
+            const text = block.textContent.toLowerCase();
+            let effectiveVerse = targetVerseNum;
+            if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
+                effectiveVerse = 1;
+            } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
+                effectiveVerse = 2;
+            } else if (text.includes('sins') || text.includes('purification') || text.includes('sat down') || text.includes('radiance') || text.includes('imprint')) {
+                effectiveVerse = 3;
+            } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited')) {
+                effectiveVerse = 4;
+            }
+            block.dataset.verseNum = effectiveVerse;
+
+            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${effectiveVerse.toString().padStart(3, '0')}`;
+            const verseTokens = data.index[verseCode];
+
+            if (!verseTokens || verseTokens.length === 0) {
+                body.innerHTML = `<div class="p-6 text-amber-600 font-medium">⚠️ No Greek tokens found for verse ${effectiveVerse}.</div>`;
+                return;
+            }
+
+            const isFullVerse = block.dataset.interlinearMode === 'verse';
+            let tokens = isFullVerse ? verseTokens : getClauseFilteredTokens(block, verseTokens);
+
+            if (block.dataset.activeGkIndex === undefined) {
+                block.dataset.activeGkIndex = 0;
+            }
+            let idx = parseInt(block.dataset.activeGkIndex, 10);
+            if (idx >= tokens.length) idx = 0;
+
+            const tok = tokens[idx];
+            const breakdown = explainGrammarInPlainEnglish(tok);
+
+            let relatedPassagesHTML = `<p style="color: #4b5563; margin-bottom: 6px;">No other recorded occurrences of lemma <strong>${tok.lemma}</strong> in the dataset.</p>`;
+            if (tok.lemma && data.lemmaIndex && data.lemmaIndex[tok.lemma]) {
+                const matches = data.lemmaIndex[tok.lemma].slice(0, 5);
+                relatedPassagesHTML = `
+                    <p style="color: #4b5563; margin-bottom: 6px;">Key occurrences of lemma <strong>${tok.lemma}</strong> in the New Testament:</p>
+                    <ul style="list-style-type: disc; padding-left: 18px; color: #1f2937; line-height: 1.5;">
+                        ${matches.map(m => `<li><strong>${formatVerseCodeRef(m.code)}</strong> — "${m.word}"</li>`).join('')}
+                    </ul>
+                `;
+            }
+
+            if (!block.dataset.activeCardTab) {
+                block.dataset.activeCardTab = 'grammar';
+            }
+            const activeTab = block.dataset.activeCardTab;
+
+            body.innerHTML = `
+                <div class="interlinear-standalone-card">
+                    <!-- TOP HEADER BAR -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(186, 230, 253, 0.6); padding-bottom: 8px; margin-bottom: 12px; width: 100%; font-size: 13px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-weight: bold; color: #0369a1; white-space: nowrap;"><i class="fa-solid fa-language mr-1"></i> Greek Interlinear Lightbox (v${effectiveVerse})</span>
+                            <span style="background: rgba(186, 230, 253, 0.6); color: #0369a1; font-family: monospace; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap;">Word ${idx + 1} of ${tokens.length}</span>
+                            <button onclick="toggleLightboxInterlinearMode()" style="font-size: 11px; padding: 2px 8px; background: ${isFullVerse ? '#e0f2fe' : '#bae6fd'}; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                                ${isFullVerse ? 'Showing: Full Verse' : 'Showing: Clause Words'}
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <button onclick="navigateLightboxWordIndex(-1)" style="padding: 5px 12px; background: #ffffff; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-chevron-left mr-1"></i> Prev Word</button>
+                            <button onclick="navigateLightboxWordIndex(1)" style="padding: 5px 12px; background: #ffffff; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Next Word <i class="fa-solid fa-chevron-right ml-1"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- CARD MAIN CONTAINER WITH PROMINENT ENGLISH GLOSS -->
+                    <div style="width: 100%; padding: 14px 16px; border-radius: 8px; background: #ffffff; border: 1px solid #bae6fd; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                                <span style="font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #0f172a; white-space: nowrap;">${tok.word}</span>
+                                <span style="font-size: 18px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; border: 1px solid #bae6fd; white-space: nowrap;">
+                                    "${breakdown.gloss}"
+                                </span>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #4f46e5; white-space: nowrap;">Lemma: ${tok.lemma}</div>
+                                    <div style="font-size: 11px; font-family: monospace; color: #6b7280; white-space: nowrap;">Strong's G${tok.esn} • ${tok.morph}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <button onclick='openLexiconLightbox("${tok.esn}", "${tok.word}", "${tok.lemma}")' style="padding: 6px 12px; background: #0284c7; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3);">
+                                    <i class="fa-solid fa-book mr-1"></i> Lexicon
+                                </button>
+                                <button onclick='copyWordStudyToNotesLightbox(${JSON.stringify(tok)})' style="padding: 6px 14px; background: #4f46e5; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);">
+                                    <i class="fa-solid fa-plus mr-1"></i> Copy to Notes
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CARD INTERNAL TABS -->
+                        <div style="display: flex; gap: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; padding-bottom: 4px; overflow-x: auto; white-space: nowrap;">
+                            <button onclick="switchLightboxTab('grammar')" class="card-tab-btn ${activeTab === 'grammar' ? 'active' : ''}"><i class="fa-solid fa-book-open mr-1"></i> Grammar & Meaning</button>
+                            <button onclick="switchLightboxTab('crossref')" class="card-tab-btn ${activeTab === 'crossref' ? 'active' : ''}"><i class="fa-solid fa-code-branch mr-1"></i> Related Passages</button>
+                            <button onclick="switchLightboxTab('translations')" class="card-tab-btn ${activeTab === 'translations' ? 'active' : ''}"><i class="fa-solid fa-language mr-1"></i> Translation Comparison</button>
+                        </div>
+
+                        <!-- TAB 1 CONTENT -->
+                        <div id="cardTabGrammar" style="display: ${activeTab === 'grammar' ? 'block' : 'none'}; width: 100%;">
+                            <div style="padding: 12px 14px; background: #fef3c7; border: 1px solid #fde047; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 13px; color: #78350f; line-height: 1.5;">
+                                <strong><i class="fa-solid fa-lightbulb mr-1"></i> Plain-English Meaning:</strong> ${breakdown.plainText} ${breakdown.significance}
+                            </div>
+                        </div>
+
+                        <!-- TAB 2 CONTENT -->
+                        <div id="cardTabCrossRef" style="display: ${activeTab === 'crossref' ? 'block' : 'none'}; font-size: 12px; width: 100%;">
+                            ${relatedPassagesHTML}
+                        </div>
+
+                        <!-- TAB 3 CONTENT -->
+                        <div id="cardTabTranslations" style="display: ${activeTab === 'translations' ? 'block' : 'none'}; font-size: 12px; width: 100%;">
+                            <p style="color: #4b5563; margin-bottom: 6px;">How major English versions translate this term/clause:</p>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                    <strong style="color: #4f46e5;">ESV / NASB:</strong> Translated accurately as "${breakdown.gloss}".
+                                </div>
+                                <div style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                    <strong style="color: #4f46e5;">KJV / NKJV:</strong> Traditional theological rendering consistent with historic English Bibles.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeInterlinearLightbox() {
+            const lightbox = document.getElementById('interlinearLightbox');
+            if (lightbox) lightbox.classList.add('hidden');
+            activeLightboxBlock = null;
+            syncOverlayControls();
+        }
+
+        function openLexiconLightbox(esn, word, lemma) {
+            let cleanEsNumber = String(esn || '4487').replace(/^0+/, '');
+            if (cleanEsNumber.length > 4 && cleanEsNumber.endsWith('0')) {
+                cleanEsNumber = cleanEsNumber.slice(0, 4);
+            }
+            const targetUrl = `https://biblehub.com/greek/${cleanEsNumber}.htm`;
+            window.open(targetUrl, '_blank');
+        }
+
+        function openSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            const iframe = document.getElementById('srgntIframe');
+            const subtext = document.getElementById('srgntModalSubtext');
+            const extLink = document.getElementById('srgntExternalLink');
+            if (!modal || !iframe) return;
+
+            const passageVal = document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value.trim() : 'Hebrews 1:1-4';
+            if (subtext) subtext.textContent = `Target Passage Reference: ${passageVal}`;
+            if (extLink) extLink.href = 'https://greekcntr.org/collation/';
+
+            if (iframe.src === 'about:blank' || iframe.src === '') {
+                iframe.src = 'https://greekcntr.org/collation/';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function toggleLightboxInterlinearMode() {
+            if (!activeLightboxBlock) return;
+            activeLightboxBlock.dataset.interlinearMode = activeLightboxBlock.dataset.interlinearMode === 'verse' ? 'clause' : 'verse';
+            activeLightboxBlock.dataset.activeGkIndex = 0;
+            const refInfo = parseCurrentRefRange();
+            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
+            openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
+        }
+
+        function switchLightboxTab(tabName) {
+            if (!activeLightboxBlock) return;
+            activeLightboxBlock.dataset.activeCardTab = tabName;
+            const refInfo = parseCurrentRefRange();
+            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
+            openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
+        }
+
+        function navigateLightboxWordIndex(direction) {
+            if (!activeLightboxBlock) return;
+            const refInfo = parseCurrentRefRange();
+            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
+            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${targetVerseNum.toString().padStart(3, '0')}`;
+            
+            if (srgntCache && srgntCache.index && srgntCache.index[verseCode]) {
+                const verseTokens = srgntCache.index[verseCode];
+                const isFullVerse = activeLightboxBlock.dataset.interlinearMode === 'verse';
+                const tokens = isFullVerse ? verseTokens : getClauseFilteredTokens(activeLightboxBlock, verseTokens);
+
+                let idx = parseInt(activeLightboxBlock.dataset.activeGkIndex || '0', 10);
+                idx += direction;
+                if (idx < 0) idx = tokens.length - 1;
+                if (idx >= tokens.length) idx = 0;
+                activeLightboxBlock.dataset.activeGkIndex = idx;
+                openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
+            }
+        }
+
+        function copyWordStudyToNotesLightbox(tok) {
+            if (!activeLightboxBlock) return;
+            const breakdown = explainGrammarInPlainEnglish(tok);
+            const htmlToInsert = `
+                <div style="margin-top: 6px; margin-bottom: 6px; padding: 6px 10px; background: #e0e7ff; border-left: 3px solid #4f46e5; border-radius: 6px; font-size: 0.85rem;">
+                    <strong>${tok.word}</strong> ("${breakdown.gloss}" - <em>${tok.lemma}</em> - G${tok.esn}): ${breakdown.plainText}
+                </div>
+            `;
+            openNoteDrawerForBlock(activeLightboxBlock);
+            if (clauseNoteEditor) {
+                clauseNoteEditor.focus();
+                document.execCommand('insertHTML', false, htmlToInsert);
+                saveActiveNoteToBlock();
+            }
         }
 
         function toggleFocusMode() {
@@ -928,11 +1919,11 @@
 
             if (isFocusModeActive) {
                 label.textContent = "Focus Mode: On";
-                btn.className = "bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-sm";
+                btn.className = "bg-indigo-600 text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-sm";
                 if (banner) banner.classList.remove('hidden');
             } else {
                 label.textContent = "Focus Mode: Off";
-                btn.className = "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5";
+                btn.className = "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5";
                 if (banner) banner.classList.add('hidden');
                 document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
             }
@@ -949,12 +1940,8 @@
         function toggleAttachDown() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
-
             let node = selection.anchorNode;
-            while (node && node !== editor && !['P', 'DIV', 'BLOCKQUOTE'].includes(node.nodeName)) {
-                node = node.parentNode;
-            }
-
+            while (node && node.parentNode !== editor && node !== editor) node = node.parentNode;
             if (node && node !== editor) {
                 node.classList.toggle('attach-down');
                 syncOverlayControls();
@@ -963,27 +1950,21 @@
         }
 
         function clearTextFlow() {
-            if (confirm('Are you sure you want to clear your thought flow notes?')) {
+            if (confirm('Clear your thought flow notes?')) {
                 if (editor) editor.innerHTML = '';
-                updateWordCount();
-                syncOverlayControls();
-                saveActiveProjectData();
+                updateWordCount(); syncOverlayControls(); saveActiveProjectData();
             }
         }
 
-        // PROJECT MANAGEMENT
-        function getProjectsCatalog() {
-            return JSON.parse(localStorage.getItem('scriptureGram_catalog') || '{}');
-        }
+        function getProjectsCatalog() { return JSON.parse(localStorage.getItem('lexflow_catalog') || localStorage.getItem('scriptureGram_catalog') || '{}'); }
 
         function populateProjectsMenu() {
             if (!projectSelect) return;
             const catalog = getProjectsCatalog();
-            projectSelect.innerHTML = '<option value="scriptureGram_default">Default Scratchpad</option>';
+            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad</option>';
             Object.keys(catalog).forEach(key => {
                 const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = catalog[key];
+                opt.value = key; opt.textContent = catalog[key];
                 if (key === currentProjectKey) opt.selected = true;
                 projectSelect.appendChild(opt);
             });
@@ -992,35 +1973,37 @@
         function saveActiveProjectData() {
             const projectData = {
                 textFlowHTML: editor.innerHTML,
+                masterNotesHTML: masterNoteEditor ? masterNoteEditor.innerHTML : '',
+                passageRef: document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value : '',
                 updatedAt: Date.now()
             };
             localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
-            if (globalSaveStatus) {
-                globalSaveStatus.textContent = 'Saving...';
-                setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400);
-            }
-            if (saveStatus) {
-                saveStatus.textContent = 'Saving...';
-                setTimeout(() => { saveStatus.textContent = 'Auto-saved'; }, 400);
-            }
+            if (globalSaveStatus) { globalSaveStatus.textContent = 'Saving...'; setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400); }
+            if (saveStatus) { saveStatus.textContent = 'Saving...'; setTimeout(() => { saveStatus.textContent = 'Auto-saved'; }, 400); }
         }
 
         function loadSelectedProject() {
             if (!projectSelect) return;
             currentProjectKey = projectSelect.value;
-            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+            localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
 
-            const rawData = localStorage.getItem(currentProjectKey);
+            let rawData = localStorage.getItem(currentProjectKey);
+            if (!rawData && currentProjectKey === 'lexflow_default') {
+                rawData = localStorage.getItem('scriptureGram_default');
+            }
 
             if (rawData) {
                 try {
                     const projectData = JSON.parse(rawData);
                     if (editor) editor.innerHTML = projectData.textFlowHTML || '';
-                } catch (e) {
-                    if (editor) editor.innerHTML = rawData;
-                }
+                    if (masterNoteEditor) masterNoteEditor.innerHTML = projectData.masterNotesHTML || '';
+                    if (projectData.passageRef && document.getElementById('passageRefInput')) {
+                        document.getElementById('passageRefInput').value = projectData.passageRef;
+                    }
+                } catch (e) { if (editor) editor.innerHTML = rawData; }
             } else {
                 if (editor) editor.innerHTML = '';
+                if (masterNoteEditor) masterNoteEditor.innerHTML = '';
             }
             cleanEditorSpans();
             syncOverlayControls();
@@ -1028,26 +2011,27 @@
         }
 
         function saveCurrentAsNewProject() {
-            const title = prompt('Enter a name for this project (e.g., "Hebrews 1:1-4 Flow"):');
+            const title = prompt('Enter project name (e.g., "Hebrews 1:1-4 Flow"):');
             if (!title || !title.trim()) return;
-            const newKey = 'scriptureGram_proj_' + Date.now();
+            const newKey = 'lexflow_proj_' + Date.now();
             const catalog = getProjectsCatalog();
             catalog[newKey] = title.trim();
-            localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
+            localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
             currentProjectKey = newKey;
-            localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
+            localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
             saveActiveProjectData();
             populateProjectsMenu();
             if (projectSelect) projectSelect.value = newKey;
         }
 
         function deleteCurrentProject() {
-            if (currentProjectKey === 'scriptureGram_default') {
+            if (currentProjectKey === 'lexflow_default') {
                 if (confirm('Reset default scratchpad?')) {
                     if (editor) editor.innerHTML = '';
+                    if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                    localStorage.removeItem('lexflow_default');
                     localStorage.removeItem('scriptureGram_default');
-                    updateWordCount();
-                    syncOverlayControls();
+                    updateWordCount(); syncOverlayControls();
                 }
                 return;
             }
@@ -1055,15 +2039,13 @@
                 localStorage.removeItem(currentProjectKey);
                 let catalog = getProjectsCatalog();
                 delete catalog[currentProjectKey];
-                localStorage.setItem('scriptureGram_catalog', JSON.stringify(catalog));
-                currentProjectKey = 'scriptureGram_default';
-                localStorage.setItem('scriptureGram_activeProjectKey', currentProjectKey);
-                populateProjectsMenu();
-                loadSelectedProject();
+                localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
+                currentProjectKey = 'lexflow_default';
+                localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
+                populateProjectsMenu(); loadSelectedProject();
             }
         }
 
-        // THEME TOGGLE
         function toggleTheme() {
             const html = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
@@ -1071,7 +2053,7 @@
             
             html.classList.toggle('dark');
             const isDark = html.classList.contains('dark');
-            localStorage.setItem('scriptureGram_theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('lexflow_theme', isDark ? 'dark' : 'light');
 
             if (isDark) {
                 themeIcon.className = "fa-solid fa-moon text-indigo-400";
@@ -1082,7 +2064,8 @@
             }
         }
 
-        if (localStorage.getItem('scriptureGram_theme') === 'dark' || (!localStorage.getItem('scriptureGram_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const savedTheme = localStorage.getItem('lexflow_theme') || localStorage.getItem('scriptureGram_theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
             const themeIcon = document.getElementById('themeIcon');
             const themeLabel = document.getElementById('themeLabel');
