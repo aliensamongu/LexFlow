@@ -57,21 +57,37 @@
             width: 100%;
         }
 
-        /* Continuous Subordination Lines - Responsive for Tablets & Desktop */
+        /* Continuous Subordination Lines - Fully Seamless Vertical Line */
         #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
             padding-right: 320px;
             word-break: break-word;
-            line-height: 1.9;
+            line-height: 1.8;
             font-size: 1.15rem;
-            transition: margin-left 0.15s ease, border-left 0.15s ease;
+            transition: margin-left 0.15s ease;
         }
 
-        /* Tablet & Mobile Breakpoint: Stack controls below clause to prevent text squishing */
+        #flowEditor .has-indent {
+            position: relative;
+            padding-left: 1.2rem !important;
+        }
+
+        #flowEditor .has-indent::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -1px;
+            bottom: -1px;
+            width: 2.5px;
+            background-color: #6366f1;
+            z-index: 2;
+        }
+
+        /* Responsive Breakpoint for Tablets/Mobile */
         @media (max-width: 1024px) {
             #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
                 padding-right: 15px !important;
@@ -86,21 +102,26 @@
             }
         }
 
-        #flowEditor .has-indent {
-            border-left: 2px solid #6366f1 !important;
-            padding-left: 1.2rem !important;
+/* PARALLEL LIST / HANGING INDENT ALIGNMENT */
+        #flowEditor .parallel-indent {
+            padding-left: 5rem !important;
+        }
+        #flowEditor .parallel-indent::before {
+            content: '';
+            display: none;
         }
 
-        #flowEditor .attach-down {
+
+      #flowEditor .attach-down {
             position: relative;
-            padding-left: 1.8rem !important;
+            padding-left: 1.2rem !important;
         }
         #flowEditor .attach-down::before {
             content: '';
             position: absolute;
-            left: 0.5rem;
+            left: 0.4rem; /* Moves the dashed line closer to the text */
             top: 0;
-            bottom: 0;
+            bottom: -0.2rem;
             width: 2px;
             border-left: 2px dashed #6366f1;
             z-index: 5;
@@ -108,8 +129,8 @@
         #flowEditor .attach-down::after {
             content: '↓';
             position: absolute;
-            left: 0.15rem;
-            bottom: -0.7rem;
+            left: 0.05rem; /* Aligns the arrow directly under the line */
+            bottom: -0.8rem;
             font-size: 14px;
             font-weight: 700;
             color: #6366f1;
@@ -391,29 +412,29 @@
 
     <!-- Top App Header -->
     <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-50 transition-colors shrink-0">
-       <div class="flex items-center space-x-3">
-    <!-- Transparent SVG Logo -->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="150" height="32" class="text-gray-900 dark:text-white">
-      <defs>
-        <linearGradient id="lexFlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#6366f1" />
-          <stop offset="100%" stop-color="#0284c7" />
-        </linearGradient>
-      </defs>
-      <g transform="translate(4, 5)">
-        <path d="M 12 4 C 6 4, 4 8, 4 14 L 4 26 C 4 32, 6 36, 12 36" fill="none" stroke="url(#lexFlowGrad)" stroke-width="3.5" stroke-linecap="round"/>
-        <path d="M 16 12 L 26 12 C 29 12, 31 14, 31 17 C 31 20, 29 22, 26 22 L 16 22" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M 22 22 L 29 29 C 31 31, 33 32, 36 32" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="12" cy="20" r="3" fill="#0284c7" />
-      </g>
-      <text x="52" y="32" font-family="'Inter', system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="currentColor" letter-spacing="-0.5">
-        Lex<tspan fill="url(#lexFlowGrad)">Flow</tspan>
-      </text>
-    </svg>
-    <div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Greek Exegetical Thought Flow Workspace</p>
-    </div>
-</div>
+        <div class="flex items-center space-x-3">
+            <!-- Transparent SVG Logo -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="150" height="32" class="text-gray-900 dark:text-white">
+              <defs>
+                <linearGradient id="lexFlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#0284c7" />
+                </linearGradient>
+              </defs>
+              <g transform="translate(4, 5)">
+                <path d="M 12 4 C 6 4, 4 8, 4 14 L 4 26 C 4 32, 6 36, 12 36" fill="none" stroke="url(#lexFlowGrad)" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 16 12 L 26 12 C 29 12, 31 14, 31 17 C 31 20, 29 22, 26 22 L 16 22" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 22 22 L 29 29 C 31 31, 33 32, 36 32" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="12" cy="20" r="3" fill="#0284c7" />
+              </g>
+              <text x="52" y="32" font-family="'Inter', system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="currentColor" letter-spacing="-0.5">
+                Lex<tspan fill="url(#lexFlowGrad)">Flow</tspan>
+              </text>
+            </svg>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Greek Exegetical Thought Flow Workspace</p>
+            </div>
+        </div>
 
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
@@ -457,11 +478,23 @@
                 <option value="lexflow_default">Default Scratchpad</option>
             </select>
             <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New</button>
+            <button onclick="exportAllProjects()" class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded font-medium transition flex items-center space-x-1">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Export</span>
+            </button>
+            <label class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded font-medium transition cursor-pointer flex items-center space-x-1">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Import</span>
+                <input type="file" accept=".json" class="hidden" onchange="importAllProjects(event)">
+            </label>
         </div>
         <div class="flex items-center space-x-3">
             <span id="srgntStatus" class="text-xs text-sky-600 dark:text-sky-400 font-medium"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> SRGNT Ready</span>
             <span id="globalSaveStatus" class="text-emerald-500 font-medium hidden sm:inline">Auto-saved</span>
-            <button onclick="deleteCurrentProject()" class="px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition font-medium">🗑</button>
+            <button onclick="deleteCurrentProject()" class="px-2.5 py-1 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded transition font-medium flex items-center space-x-1 shadow-sm">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Delete</span>
+            </button>
         </div>
     </div>
 
@@ -600,6 +633,12 @@
             <i class="fa-solid fa-indent text-xs text-gray-400"></i>
             <span>Indent Line (Tab)</span>
         </div>
+
+	<div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxToggleParallelIndent()">
+            <i class="fa-solid fa-list-ul text-xs"></i>
+            <span>Toggle Parallel List Indent</span>
+        </div>	
+
         <div class="ctx-item" onclick="ctxOutdentLine()">
             <i class="fa-solid fa-outdent text-xs text-gray-400"></i>
             <span>Outdent Line (Shift+Tab)</span>
@@ -792,6 +831,12 @@
         };
 
         const lexicalGlossDictionary = {
+            'λαλήσας': 'having spoken',
+            'λαλησας': 'having spoken',
+            'ἐλάλησεν': 'he spoke',
+            'ελαλησεν': 'he spoke',
+            'λαλέω': 'speak / say',
+            'λαλεω': 'speak / say',
             'τοῖς': 'the / to the',
             'ὁ': 'the',
             'ἡ': 'the',
@@ -818,7 +863,6 @@
             'πάλαι': 'long ago',
             'πατράσιν': 'to the fathers',
             'προφήταις': 'by the prophets',
-            'ἐλάλησεν': 'spoke',
             'ἡμῖν': 'to us',
             'υἱῷ': 'by [his] Son',
             'ἁμαρτιῶν': 'sins',
@@ -860,6 +904,7 @@
                 }
             }
 
+            if (wNorm.includes('λαλησ') || lNorm.includes('λαλε')) return 'speak / say';
             if (wNorm.startsWith('τοι') || lNorm.startsWith('ο')) return 'the';
             return 'term';
         }
@@ -1002,67 +1047,118 @@
             }
         }
 
-        function parseSRGNTMorph(code, word, lemma) {
-            if (!code || code.includes('...')) return 'Particle / Word';
-            const cleanCode = code.trim().toUpperCase();
+      
+	/* STRICT & ACCURATE SRGNT MORPHOLOGICAL PARSER */
+function parseSRGNTMorph(code, word, lemma) {
+    if (!code || code.includes('...')) return 'Particle / Word';
+    const cleanCode = code.trim().toUpperCase();
+    const wNorm = cleanGreekWord(word);
+    const lNorm = cleanGreekWord(lemma);
 
-            if (cleanCode.startsWith('T-') || cleanCode === 'T' || (lemma && (lemma === 'ὁ' || lemma === 'ο'))) {
-                return 'Definite Article';
-            }
-            if (cleanCode.startsWith('A-') || cleanCode === 'A' || (lemma && lemma.includes('κρείττων'))) {
-                if (cleanCode.includes('-C') || (word && word.includes('κρείττ'))) return 'Comparative Adjective';
-                if (cleanCode.includes('-S')) return 'Superlative Adjective';
-                return 'Adjective';
-            }
-            if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
-            if (cleanCode.startsWith('V-') || cleanCode === 'V') {
-                if (cleanCode.includes('P')) return 'Participle';
-                return 'Verb';
-            }
-            if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
-            if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-')) return 'Preposition / Pronoun';
-            if (cleanCode.startsWith('C-')) return 'Conjunction';
+    // Common Koine Definite Article forms (Normalized)
+    const articleForms = ['ο', 'η', 'το', 'των', 'του', 'της', 'τον', 'την', 'ταις', 'τοις', 'τους', 'τας', 'τα'];
 
-            return 'Particle / Word';
+    // 1. DEFINITE ARTICLES (Check FIRST via code or exact dictionary match)
+    if (
+        cleanCode.startsWith('T-') || 
+        cleanCode === 'T' || 
+        articleForms.includes(wNorm) || 
+        articleForms.includes(lNorm) ||
+        lNorm === 'ὁ' || lNorm === 'ο'
+    ) {
+        return 'Definite Article';
+    }
+
+    // 2. VERBS & PARTICIPLES
+    if (cleanCode.startsWith('V-') || cleanCode.startsWith('V') || wNorm.includes('λαλησ') || lNorm.includes('λαλε')) {
+        if (cleanCode.includes('-P') || cleanCode.includes('PAP') || cleanCode.includes('AAP') || cleanCode.includes('PEP') || cleanCode.includes('AEP') || wNorm.endsWith('σας')) {
+            return 'Participle';
         }
-
-        function explainGrammarInPlainEnglish(tok) {
-            const code = tok.rawMorph || '';
-            const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
-            let plainText = "";
-            let significance = "";
-
-            if (tok.morph.includes('Definite Article')) {
-                plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
-                significance = "Definite articles in Koine Greek mark specific entities, nouns, or noun phrases (e.g., 'the fathers', 'the prophets').";
-            } else if (tok.morph.includes('Comparative Adjective')) {
-                plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
-                significance = "Comparative adjectives make direct qualitative comparisons (e.g., Christ being 'superior' or 'better than' angels).";
-            } else if (tok.morph.includes('Adjective')) {
-                plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
-                significance = "Adjectives describe or qualify nouns and entities in the passage.";
-            } else if (tok.morph.includes('Participle')) {
-                plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
-                significance = "Participles act as verbal adjectives, describing background or prior action.";
-            } else if (tok.morph.includes('Verb')) {
-                plainText = `Functions as a <strong>Main Verb</strong> (<em>"${gloss}"</em>).`;
-                significance = "Verbs express the primary movement or statement in the clause.";
-            } else if (tok.morph.includes('Noun')) {
-                plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
-                significance = "Identifies key subjects, objects, or concepts.";
-            } else if (tok.morph.includes('Adverb')) {
-                plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
-                significance = "Adverbs modify verbs or adjectives, describing manner or time.";
-            } else if (tok.morph.includes('Conjunction')) {
-                plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
-                significance = "Connects ideas together logically.";
-            } else {
-                plainText = `Functions as a <strong>Grammatical Word / Preposition</strong> (<em>"${gloss}"</em>).`;
-                significance = "Provides structural context or connection in Koine Greek.";
-            }
-
-            return { plainText, significance, gloss };
+        if (cleanCode.includes('AAI') || cleanCode.includes('PAI') || cleanCode.includes('FAI') || cleanCode.includes('LAI') || cleanCode.includes('-I') || wNorm.startsWith('ελαλησ')) {
+            return 'Aorist Indicative Verb';
         }
+        if (cleanCode.includes('-S') || cleanCode.includes('PAS') || cleanCode.includes('AAS')) {
+            return 'Subjunctive Verb';
+        }
+        if (cleanCode.includes('-N') || cleanCode.includes('PAN') || cleanCode.includes('AAN')) {
+            return 'Infinitive Verb';
+        }
+        if (cleanCode.includes('-M') || cleanCode.includes('PAM') || cleanCode.includes('AAM')) {
+            return 'Imperative Verb';
+        }
+        return 'Verb';
+    }
+
+    // 3. NOUNS & ADJECTIVES
+    if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
+    if (cleanCode.startsWith('A-') || cleanCode === 'A' || lNorm.includes('κρείττων')) {
+        if (cleanCode.includes('-C') || wNorm.includes('κρείττ')) return 'Comparative Adjective';
+        if (cleanCode.includes('-S')) return 'Superlative Adjective';
+        return 'Adjective';
+    }
+
+    // 4. ADVERBS & CONJUNCTIONS
+    if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
+    if (cleanCode.startsWith('C-') || cleanCode.startsWith('CONJ')) return 'Conjunction';
+
+    // 5. PREPOSITIONS (Strict check for PREP or standard Greek prepositions)
+    const prepositionForms = ['εν', 'εις', 'εκ', 'δια', 'προς', 'απο', 'υπο', 'μετα', 'παρα', 'περι', 'επι', 'συν', 'κατα'];
+    if (cleanCode.startsWith('PREP') || cleanCode.includes('PREP') || prepositionForms.includes(wNorm) || prepositionForms.includes(lNorm)) {
+        return 'Preposition';
+    }
+
+    // 6. PRONOUNS
+    if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-') || cleanCode.startsWith('PRO')) {
+        return 'Pronoun';
+    }
+
+    return 'Grammatical Particle';
+}
+
+/* ACCURATE EXPLANATION GENERATOR */
+function explainGrammarInPlainEnglish(tok) {
+    const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
+    let plainText = "";
+    let significance = "";
+
+    if (tok.morph === 'Definite Article') {
+        plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
+        significance = "Definite articles in Koine Greek mark specific entities, nouns, or substantive concepts.";
+    } else if (tok.morph.includes('Participle')) {
+        plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
+        significance = "Participles act as verbal adjectives, communicating prior, concurrent, or circumstantial background action relative to the main verb.";
+    } else if (tok.morph.includes('Indicative Verb') || tok.morph.includes('Verb')) {
+        plainText = `Functions as an <strong>Indicative Main Verb</strong> (<em>"${gloss}"</em>).`;
+        significance = "Indicative verbs make direct assertions or declarations in past, present, or future time, forming the primary backbone of the clause.";
+    } else if (tok.morph.includes('Comparative Adjective')) {
+        plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
+        significance = "Comparative adjectives express higher or superior degree between entities.";
+    } else if (tok.morph.includes('Adjective')) {
+        plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
+        significance = "Adjectives qualify, describe, or modify nouns in the clause.";
+    } else if (tok.morph.includes('Noun')) {
+        plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
+        significance = "Identifies key subjects, direct/indirect objects, or concepts.";
+    } else if (tok.morph.includes('Adverb')) {
+        plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
+        significance = "Adverbs modify verbs or adjectives, describing manner, place, or time.";
+    } else if (tok.morph.includes('Conjunction')) {
+        plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
+        significance = "Connects clauses and structures logical relationships.";
+    } else if (tok.morph === 'Preposition') {
+        plainText = `Functions as a <strong>Preposition</strong> (<em>"${gloss}"</em>).`;
+        significance = "Establishes spatial, temporal, or logical relationship to neighboring nouns.";
+    } else if (tok.morph === 'Pronoun') {
+        plainText = `Functions as a <strong>Pronoun</strong> (<em>"${gloss}"</em>).`;
+        significance = "Replaces a noun or refers back to an antecedent.";
+    } else {
+        plainText = `Functions as a <strong>Grammatical Word / Particle</strong> (<em>"${gloss}"</em>).`;
+        significance = "Provides structural context or emphasis in Koine Greek.";
+    }
+
+    return { plainText, significance, gloss };
+}
+
 
         async function updatePassageContext() {
             const val = document.getElementById('passageRefInput').value.trim();
@@ -1135,7 +1231,16 @@
         
         function ctxStrikethroughSelection() { applyStrikethrough(); hideContextMenu(); }
         function ctxEllipsisSelection() { applyEllipsisCaret(); hideContextMenu(); }
-        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; 
+	function ctxToggleParallelIndent() {
+    if (rightClickedBlock) {
+        rightClickedBlock.classList.toggle('parallel-indent');
+        syncOverlayControls();
+        saveActiveProjectData();
+    }
+    hideContextMenu();
+}
+syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function ctxOutdentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); const newMargin = Math.max(0, current - 1.5); rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : ''; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function ctxDeleteLine() { 
             if (rightClickedBlock) { 
@@ -1347,21 +1452,34 @@
         }
 
         function applyEllipsisCaret() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount || selection.isCollapsed) return;
-            const selectedText = selection.toString();
-            const span = document.createElement('span');
-            span.className = 'sg-ellipsis-wrap';
-            span.title = 'Ellipsis & Placement Caret';
-            span.textContent = `...${selectedText}^`;
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(span);
-            selection.removeAllRanges();
-            if (highlightToolbar) highlightToolbar.style.display = 'none';
-            saveActiveProjectData();
-        }
+    const selection = window.getSelection();
+    if (!selection.rangeCount || selection.isCollapsed) return;
 
+    const selectedText = selection.toString().trim();
+    if (!selectedText) return;
+
+    // 1. Format the phrase with caret at the beginning and ellipsis for clipboard
+    const formattedSnippet = `...^${selectedText}`;
+
+    // 2. Copy formatted text directly to clipboard
+    navigator.clipboard.writeText(formattedSnippet).then(() => {
+        // 3. Replace extracted phrase in text with a visual marker
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.className = 'sg-ellipsis-wrap';
+        span.title = 'Extracted phrase (copied to clipboard)';
+        span.textContent = `[...]`;
+
+        range.deleteContents();
+        range.insertNode(span);
+        selection.removeAllRanges();
+
+        if (highlightToolbar) highlightToolbar.style.display = 'none';
+        saveActiveProjectData();
+    }).catch(err => {
+        console.error('Failed to copy text to clipboard: ', err);
+    });
+}
         function clearSelectionFormatting() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -1473,9 +1591,17 @@
                     const badge = document.createElement('span');
                     badge.className = level === 0 ? 'flow-badge flow-badge-l0' : 'flow-badge';
                     const isCollapsed = block.classList.contains('collapsed-active');
-                    badge.innerHTML = isCollapsed 
+                    
+                    let badgeHTML = isCollapsed 
                         ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` 
                         : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
+
+                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
+                    if (hasNotes) {
+                        badgeHTML += `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 ml-1.5 shadow-sm shadow-emerald-500/50" title="Contains Exegetical Notes"></span>`;
+                    }
+
+                    badge.innerHTML = badgeHTML;
                     badge.onclick = () => {
                         block.classList.toggle('collapsed-active');
                         syncOverlayControls();
@@ -1484,8 +1610,10 @@
 
                     group.appendChild(badge);
 
+                    const isAttachedDown = block.classList.contains('attach-down');
                     const discourseMatch = detectDiscourseMarker(text);
-                    if (discourseMatch && !currentRelation && level > 0) {
+
+                    if (discourseMatch && !currentRelation && (level > 0 || isAttachedDown)) {
                         const sugBtn = document.createElement('button');
                         sugBtn.className = 'discourse-suggestion-btn';
                         sugBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Suggest: ${discourseMatch.suggestedRelation}`;
@@ -1498,7 +1626,7 @@
                         group.appendChild(sugBtn);
                     }
 
-                    if (level > 0) {
+                    if (level > 0 || isAttachedDown) {
                         const select = document.createElement('select');
                         select.className = 'relation-select';
 
@@ -1629,7 +1757,6 @@
                         }
                     };
 
-                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
                     const noteBtn = document.createElement('button');
                     noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
                     noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
@@ -1669,7 +1796,8 @@
                     (text.includes('imprint') && (l.includes('χαρακτήρ') || l.includes('ὑπόστασις') || w.includes('χαρακτήρ') || w.includes('ὑποστάσ'))) ||
                     (text.includes('upholds') && (l.includes('φέρω') || l.includes('πᾶς') || w.includes('φέρ') || w.includes('πάντ'))) ||
                     (text.includes('sat down') && (l.includes('καθίζω') || l.includes('δεξιός') || l.includes('μεγαλωσύνης') || w.includes('καθισ') || w.includes('δεξι') || w.includes('μεγαλωσ'))) ||
-                    (text.includes('superior') && (l.includes('κρείσσων') || l.includes('ἄγγελος') || w.includes('κρείττ') || w.includes('ἀγγέλ')))
+                    (text.includes('superior') && (l.includes('κρείσσων') || l.includes('ἄγγελος') || w.includes('κρείττ') || w.includes('ἀγγέλ'))) ||
+                    (text.includes('spoke') && (l.includes('λαλέω') || w.includes('λαλησ') || w.includes('ελαλησ')))
                 ) {
                     matchedIndices.push(i);
                 }
@@ -2072,6 +2200,50 @@
                 localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
                 populateProjectsMenu(); loadSelectedProject();
             }
+        }
+
+        function exportAllProjects() {
+            const catalog = getProjectsCatalog();
+            const exportData = { catalog, projects: {} };
+            Object.keys(catalog).forEach(key => {
+                exportData.projects[key] = localStorage.getItem(key);
+            });
+            exportData.projects['lexflow_default'] = localStorage.getItem('lexflow_default');
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lexflow-projects-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importAllProjects(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.catalog) {
+                        localStorage.setItem('lexflow_catalog', JSON.stringify(data.catalog));
+                    }
+                    if (data.projects) {
+                        Object.keys(data.projects).forEach(key => {
+                            if (data.projects[key]) {
+                                localStorage.setItem(key, data.projects[key]);
+                            }
+                        });
+                    }
+                    populateProjectsMenu();
+                    loadSelectedProject();
+                    alert('Projects successfully imported!');
+                } catch (err) {
+                    alert('Invalid project backup file.');
+                }
+            };
+            reader.readAsText(file);
         }
 
         function toggleTheme() {
