@@ -47,7 +47,7 @@
 
         #editorWrapper { position: relative; width: 100%; }
 
-        /* Continuous Solid Subordination Lines */
+        /* Document Flow Indentation Lines */
         #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
             margin-top: 0 !important;
@@ -231,7 +231,7 @@
         html.dark .ctx-item:hover { background: #374151; }
 
         .builtin-drawer {
-            position: fixed; top: 0; right: 0; width: 100%; max-width: 500px; height: 100vh;
+            position: fixed; top: 0; right: 0; width: 100%; max-width: 520px; height: 100vh;
             background: #ffffff; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.15); z-index: 300;
             transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
@@ -264,7 +264,7 @@
             </button>
             <button onclick="toggleSyntaxTreeDrawer()" class="bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-semibold px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-sitemap text-purple-500"></i>
-                <span>Syntax Tree</span>
+                <span>Discourse Tree</span>
             </button>
             <button onclick="toggleMasterNoteDrawer()" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-book-open text-amber-500"></i>
@@ -392,18 +392,22 @@
         </div>
     </div>
 
-    <!-- BUILT-IN VISUAL SYNTAX TREE DRAWER -->
-    <div id="syntaxTreeDrawer" class="builtin-drawer">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-sitemap text-purple-600"></i>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Visual Clause Dependency Tree</h3>
+    <!-- FULLSCREEN EXEGETICAL DISCOURSE TREE MODAL (TRUE NESTED TREE) -->
+    <div id="syntaxTreeDrawer" class="fixed inset-0 z-[350] bg-white dark:bg-zinc-900 hidden flex-col">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900 shrink-0">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-sitemap text-purple-600 text-lg"></i>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Exegetical Discourse Tree Viewer (Nested Tree)</h3>
             </div>
-            <button onclick="toggleSyntaxTreeDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="toggleSyntaxTreeDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-2 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar space-y-3 font-sans text-xs" id="syntaxTreeContentArea">
-            <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800">
-                <strong>Visual Dependency Tree:</strong> Interactive hierarchy mapping head clauses to subordinated modifiers.
+        <div class="flex-1 p-8 overflow-y-auto custom-scrollbar max-w-6xl w-full mx-auto space-y-3 font-sans text-xs" id="syntaxTreeContentArea">
+            <div class="p-4 bg-purple-50 dark:bg-purple-950/35 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex items-center justify-between">
+                <div>
+                    <strong>Nested Discourse Tree:</strong> Continuous vertical spine borders with clean horizontal connector ticks. Click any relation badge to edit or set a Custom Relation.
+                </div>
             </div>
         </div>
     </div>
@@ -794,7 +798,19 @@
         }
 
         function toggleLxxDrawer() { document.getElementById('lxxDrawer').classList.toggle('open'); }
-        function toggleSyntaxTreeDrawer() { generateVisualSyntaxTree(); document.getElementById('syntaxTreeDrawer').classList.toggle('open'); }
+        
+        function toggleSyntaxTreeDrawer() {
+            const drawer = document.getElementById('syntaxTreeDrawer');
+            if (drawer.classList.contains('hidden')) {
+                generateVisualSyntaxTree();
+                drawer.classList.remove('hidden');
+                drawer.classList.add('flex');
+            } else {
+                drawer.classList.remove('flex');
+                drawer.classList.add('hidden');
+            }
+        }
+
         function toggleMasterNoteDrawer() { document.getElementById('masterNoteDrawer').classList.toggle('open'); }
         function closeNoteDrawer() { document.getElementById('exegeticalNoteDrawer').classList.remove('open'); activeNoteBlock = null; }
 
@@ -814,38 +830,155 @@
             saveActiveProjectData();
         }
 
+        /* SEMANTIC DISCOURSE FUNCTION PARSER */
+        function detectDiscourseFunction(text, level) {
+            const lower = text.toLowerCase().trim();
+
+            if (level === 0) return 'Main Proposition';
+
+            if (lower.startsWith('to ') || lower.includes('to be ')) return 'Purpose / Result';
+            if (lower.startsWith('through ') || lower.startsWith('by ')) return 'Agent / Means';
+            if (lower.startsWith('in ') || lower.startsWith('at ') || lower.startsWith('on ')) return 'Sphere / Location';
+            if (lower.startsWith('which ') || lower.startsWith('who ') || lower.startsWith('whom ') || lower.startsWith('whose ') || lower.startsWith('that ')) return 'Referent / Relative';
+            if (lower.startsWith('from ')) return 'Source / Origin';
+            if (lower.startsWith('according to ')) return 'Standard / Norm';
+            if (lower.startsWith('because ') || lower.startsWith('for ')) return 'Ground / Reason';
+            if (lower.startsWith('if ') || lower.startsWith('when ') || lower.startsWith('while ') || lower.startsWith('as ')) return 'Condition / Time';
+            if (lower.startsWith('concerning ')) return 'Referent / Theme';
+
+            if (level === 1) return 'Modifier / Subordinate';
+            if (level === 2) return 'Sub-Modifier (L2)';
+            return 'Detail / Expansion (L3+)';
+        }
+
+        function editRelation(block, badgeElement) {
+            const currentRel = block.dataset.customRelation || badgeElement.textContent.trim().replace(/^[^a-zA-Z0-9]+/, '');
+            const presets = [
+                'Main Proposition',
+                'Purpose / Result',
+                'Agent / Means',
+                'Sphere / Location',
+                'Referent / Relative',
+                'Source / Origin',
+                'Standard / Norm',
+                'Ground / Reason',
+                'Condition / Time',
+                'Modifier / Subordinate',
+                'Sub-Modifier (L2)',
+                'Detail / Expansion (L3+)',
+                'Custom Relation...'
+            ];
+
+            let choice = prompt(`Select or type new exegetical relation:\n\nPresets:\n- ${presets.slice(0, 12).join('\n- ')}\n\n(Type any custom relation or select preset)`, currentRel);
+            if (choice !== null && choice.trim() !== '') {
+                if (choice === 'Custom Relation...') {
+                    choice = prompt('Enter custom relation name:', '');
+                }
+                if (choice && choice.trim() !== '') {
+                    block.dataset.customRelation = choice.trim();
+                    saveActiveProjectData();
+                    generateVisualSyntaxTree();
+                }
+            }
+        }
+
+        /* TRUE HIERARCHICAL TREE PARSER & RENDERER (USING CONTINUOUS SPINE CONTAINERS) */
         function generateVisualSyntaxTree() {
             const container = document.getElementById('syntaxTreeContentArea');
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            let html = `<div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800 mb-3"><strong>Visual Dependency Tree:</strong> Node hierarchy mapping head clauses to subordinated modifiers.</div>`;
+            
+            let html = `
+                <div class="p-4 bg-purple-50 dark:bg-purple-950/35 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex items-center justify-between">
+                    <div>
+                        <strong>Nested Discourse Tree:</strong> Continuous vertical spine borders with clean horizontal connector ticks. Click any relation badge to edit or set a Custom Relation.
+                    </div>
+                </div>
+            `;
+
             if (blocks.length === 0) {
                 container.innerHTML = html + `<p class="italic text-gray-400">No clauses found in editor canvas.</p>`;
                 return;
             }
-            blocks.forEach((block, index) => {
+
+            const items = blocks.map((block, index) => {
                 const text = block.textContent.trim();
                 const styleAttr = block.getAttribute('style') || '';
                 const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)/);
-                const level = marginMatch ? Math.round(parseFloat(marginMatch[1]) / 1.5) : 0;
-                const rel = block.dataset.relation || (level === 0 ? 'Head Clause' : 'Subordinate');
-                const vNum = block.dataset.verseNum || (index + 1);
+                let level = marginMatch ? Math.round(parseFloat(marginMatch[1]) / 1.5) : 0;
+                if (block.classList.contains('parallel-indent-2')) level = 2;
+                if (block.classList.contains('parallel-indent-3')) level = 3;
+                if (block.classList.contains('parallel-indent-4')) level = 4;
+                if (block.classList.contains('attach-down')) level++;
 
-                let cardBg = level === 0 ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-zinc-800/80 border-gray-200 dark:border-zinc-700';
-                let leftIndent = (level * 24) + 'px';
-                let badgeColor = level === 0 ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white';
+                if (level === 0 && index > 0) {
+                    const lower = text.toLowerCase();
+                    if (lower.startsWith('which') || lower.startsWith('who') || lower.startsWith('that') || lower.includes('promised')) level = 2;
+                    else if (lower.startsWith('through') || lower.startsWith('in') || lower.startsWith('according') || lower.startsWith('from') || lower.startsWith('concerning')) level = 2;
+                    else level = 1;
+                }
 
-                html += `
-                    <div style="margin-left: ${leftIndent};" class="relative">
-                        <div class="p-3 rounded-xl border ${cardBg} shadow-sm transition-all mb-2">
-                            <div class="flex items-center justify-between mb-1 text-[11px]">
-                                <span class="font-mono font-bold px-1.5 py-0.5 rounded ${badgeColor}">v${vNum}</span>
-                                <span class="font-semibold text-purple-700 dark:text-purple-300 uppercase">L${level} &bull; ${rel}</span>
-                            </div>
-                            <div class="font-serif text-sm text-gray-800 dark:text-gray-100">"${text}"</div>
+                return {
+                    block,
+                    index,
+                    text,
+                    level,
+                    verseNum: block.dataset.verseNum || (index + 1),
+                    customRel: block.dataset.customRelation || detectDiscourseFunction(text, level),
+                    children: []
+                };
+            });
+
+            // Build hierarchical tree structure from flat list
+            let rootNodes = [];
+            let stack = [];
+
+            items.forEach(node => {
+                while (stack.length > 0 && stack[stack.length - 1].level >= node.level) {
+                    stack.pop();
+                }
+                if (stack.length === 0) {
+                    rootNodes.push(node);
+                } else {
+                    stack[stack.length - 1].children.push(node);
+                }
+                stack.push(node);
+            });
+
+            function renderNode(node) {
+                const badgeColor = node.level === 0 ? 'bg-purple-600 text-white' : 'bg-indigo-600 text-white';
+                
+                let childrenHTML = '';
+                if (node.children.length > 0) {
+                    childrenHTML = `
+                        <div class="pl-8 ml-3 border-l-2 border-purple-500 space-y-3 mt-3 relative">
+                            ${node.children.map(child => renderNode(child)).join('')}
                         </div>
+                    `;
+                }
+
+                return `
+                    <div class="relative my-2">
+                        <div class="p-4 bg-gray-50 dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm flex flex-col space-y-1.5 w-full max-w-2xl relative">
+                            ${node.level > 0 ? '<div class="absolute -left-8 top-1/2 w-8 h-px bg-purple-500"></div>' : ''}
+                            <div class="flex items-center justify-between text-xs space-x-4">
+                                <span class="font-mono font-bold px-2 py-0.5 rounded ${badgeColor}">v${node.verseNum}</span>
+                                <span onclick="editRelation(editor.children[${node.index}], this)" class="font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider cursor-pointer hover:underline bg-purple-100 dark:bg-purple-950/60 px-2.5 py-1 rounded-md border border-purple-200 dark:border-purple-800 transition" title="Click to edit relation">
+                                    <i class="fa-solid fa-pen text-[9px] mr-1"></i> ${node.customRel}
+                                </span>
+                            </div>
+                            <div class="font-serif text-base text-gray-900 dark:text-gray-100 italic">"${node.text}"</div>
+                        </div>
+                        ${childrenHTML}
                     </div>
                 `;
+            }
+
+            html += `<div class="space-y-3 pb-8">`;
+            rootNodes.forEach(node => {
+                html += renderNode(node);
             });
+            html += `</div>`;
+
             container.innerHTML = html;
         }
 
