@@ -57,7 +57,7 @@
             width: 100%;
         }
 
-        /* Continuous Subordination Lines - Fully Seamless Vertical Line */
+        /* Continuous Solid Subordination Lines */
         #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
             margin-top: 0 !important;
@@ -102,7 +102,7 @@
             }
         }
 
-/* PARALLEL LIST / HANGING INDENT ALIGNMENT */
+        /* PARALLEL LIST / HANGING INDENT ALIGNMENT */
         #flowEditor .parallel-indent {
             padding-left: 5rem !important;
         }
@@ -111,15 +111,14 @@
             display: none;
         }
 
-
-      #flowEditor .attach-down {
+        #flowEditor .attach-down {
             position: relative;
             padding-left: 1.2rem !important;
         }
         #flowEditor .attach-down::before {
             content: '';
             position: absolute;
-            left: 0.4rem; /* Moves the dashed line closer to the text */
+            left: 0.4rem;
             top: 0;
             bottom: -0.2rem;
             width: 2px;
@@ -129,7 +128,7 @@
         #flowEditor .attach-down::after {
             content: '↓';
             position: absolute;
-            left: 0.05rem; /* Aligns the arrow directly under the line */
+            left: 0.05rem;
             bottom: -0.8rem;
             font-size: 14px;
             font-weight: 700;
@@ -277,10 +276,6 @@
         }
         .relation-select:hover { transform: scale(1.02); }
 
-        .color-picker-input { opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none; }
-        .color-picker-btn { font-size: 13px; color: #9ca3af; cursor: pointer; transition: color 0.15s; padding: 2px; }
-        .color-picker-btn:hover { color: #6366f1; }
-
         .note-drawer-btn {
             display: inline-flex;
             align-items: center;
@@ -301,7 +296,6 @@
         html.dark .note-drawer-btn:hover { color: #818cf8; background: rgba(67, 56, 202, 0.3); border-color: rgba(99, 102, 241, 0.5); }
         html.dark .note-drawer-btn.has-notes { color: #34d399; background: rgba(6, 78, 59, 0.5); border-color: rgba(16, 185, 129, 0.4); }
 
-        /* LIGHTBOX OVERLAY CARD */
         .interlinear-standalone-card {
             width: 100% !important;
             max-width: 100% !important;
@@ -346,7 +340,7 @@
         html.dark .ctx-item:hover { background: #374151; }
 
         #exegeticalNoteDrawer, #masterNoteDrawer {
-            position: fixed; top: 0; right: 0; width: 100%; sm:width: 460px; max-width: 460px; height: 100vh;
+            position: fixed; top: 0; right: 0; width: 100%; max-width: 460px; height: 100vh;
             background: #ffffff; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.15); z-index: 300;
             transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
@@ -354,27 +348,6 @@
         html.dark #exegeticalNoteDrawer, html.dark #masterNoteDrawer { background: #111827; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.4); border-left: 1px solid #1f2937; }
         #exegeticalNoteDrawer.open, #masterNoteDrawer.open { transform: translateX(0); }
         .note-editor-area img { max-width: 100%; border-radius: 8px; margin: 8px 0; border: 1px solid rgba(156, 163, 175, 0.3); }
-
-        .card-tab-btn {
-            display: inline-flex;
-            align-items: center;
-            white-space: nowrap !important;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #4b5563;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .card-tab-btn.active {
-            color: #0284c7;
-            border-bottom-color: #0284c7;
-            background: rgba(224, 242, 254, 0.4);
-            border-radius: 4px 4px 0 0;
-        }
-        html.dark .card-tab-btn { color: #9ca3af; }
-        html.dark .card-tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; background: rgba(12, 74, 110, 0.3); }
 
         u.sg-ul-single { text-decoration: underline !important; text-decoration-style: solid !important; text-underline-offset: 3px !important; }
         u.sg-ul-double { text-decoration: underline !important; text-decoration-style: double !important; text-underline-offset: 3px !important; }
@@ -413,7 +386,6 @@
     <!-- Top App Header -->
     <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-50 transition-colors shrink-0">
         <div class="flex items-center space-x-3">
-            <!-- Transparent SVG Logo -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="150" height="32" class="text-gray-900 dark:text-white">
               <defs>
                 <linearGradient id="lexFlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -432,14 +404,14 @@
               </text>
             </svg>
             <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Greek Exegetical Thought Flow Workspace</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Greek & Hebrew Thought Flow Workspace</p>
             </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
                 <i class="fa-solid fa-book-bookmark text-indigo-500 text-sm"></i>
-                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Heb 1:1-4)" value="Hebrews 1:1-4"
+                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Psalm 46:1)" value="Psalm 46:1-7"
                        onchange="updatePassageContext()"
                        class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-32 sm:w-36">
                 <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load</button>
@@ -562,7 +534,7 @@
 
         <!-- APP FOOTER ATTRIBUTION -->
         <footer class="max-w-5xl xl:max-w-6xl w-full mx-auto mt-4 px-2 text-center text-xs text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
-            <div>LexFlow &bull; Greek Exegetical Thought Flow Workspace</div>
+            <div>LexFlow &bull; Exegetical Thought Flow Workspace</div>
             <div class="flex items-center space-x-3 flex-wrap justify-center">
                 <span>Greek Data: <a href="https://greekcntr.org/" target="_blank" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition underline">SRGNT</a></span>
                 <span>&bull;</span>
@@ -591,7 +563,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">SRGNT Manuscript Collation Tool</h3>
-                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Hebrews 1:1-4</p>
+                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Psalm 46:1-7</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -633,12 +605,10 @@
             <i class="fa-solid fa-indent text-xs text-gray-400"></i>
             <span>Indent Line (Tab)</span>
         </div>
-
-	<div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxToggleParallelIndent()">
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxToggleParallelIndent()">
             <i class="fa-solid fa-list-ul text-xs"></i>
             <span>Toggle Parallel List Indent</span>
         </div>	
-
         <div class="ctx-item" onclick="ctxOutdentLine()">
             <i class="fa-solid fa-outdent text-xs text-gray-400"></i>
             <span>Outdent Line (Shift+Tab)</span>
@@ -686,7 +656,7 @@
         <div class="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-900">
             <div id="clauseNoteEditor" contenteditable="true" 
                  class="note-editor-area outline-none font-sans text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[300px]"
-                 placeholder="Type exegetical insights, Greek word studies, or click SRGNT morph-cards...">
+                 placeholder="Type exegetical insights, word studies, or notes...">
             </div>
         </div>
 
@@ -792,6 +762,10 @@
         };
 
         const bookNumberMap = {
+            'genesis': 1, 'gen': 1, 'exodus': 2, 'exod': 2, 'leviticus': 3, 'lev': 3,
+            'numbers': 4, 'num': 4, 'deuteronomy': 5, 'deut': 5, 'joshua': 6, 'josh': 6,
+            'judges': 7, 'ruth': 8, '1samuel': 9, '2samuel': 10, '1kings': 11, '2kings': 12,
+            'psalm': 19, 'psalms': 19, 'ps': 19, 'proverbs': 20, 'prov': 20, 'isaiah': 23, 'isa': 23,
             'matthew': 40, 'matt': 40, 'mt': 40,
             'mark': 41, 'mk': 41,
             'luke': 42, 'lk': 42,
@@ -851,7 +825,7 @@
             'τάς': 'the',
             'τά': 'the',
             'κρείττων': 'superior / better',
-            'κρείτтоνος': 'superior / better',
+            'κρείττονος': 'superior / better',
             'ὅσῳ': 'as much as / by how much',
             'διαφορώτερον': 'more excellent',
             'κεκληρονόμηκεν': 'he has inherited',
@@ -924,11 +898,40 @@
             } catch (e) { return {}; }
         }
 
-        function saveCustomRelationToRegistry(name, bg, text) {
-            if (!name || !name.trim()) return;
-            const registry = getCustomRelationsRegistry();
-            registry[name.trim()] = { bg: bg || '#e0e7ff', text: text || '#3730a3' };
-            localStorage.setItem('lexflow_customRelations', JSON.stringify(registry));
+        /* OLD TESTAMENT DETECTION & BIBLE HUB URL FORMATTER */
+        function isOldTestamentPassage() {
+            const val = document.getElementById('passageRefInput').value.toLowerCase().trim();
+            const otBooks = [
+                'genesis', 'gen', 'exodus', 'exod', 'ex', 'leviticus', 'lev', 'numbers', 'num', 
+                'deuteronomy', 'deut', 'dt', 'joshua', 'josh', 'judges', 'judg', 'ruth', '1samuel', 
+                '1sam', '2samuel', '2sam', '1kings', '1kgs', '2kings', '2kgs', '1chronicles', 
+                '1chr', '2chronicles', '2chr', 'ezra', 'ezr', 'nehemiah', 'neh', 'esther', 
+                'esth', 'job', 'psalm', 'psalms', 'ps', 'proverbs', 'prov', 'ecclesiastes', 
+                'eccl', 'song', 'isaiah', 'isa', 'jeremiah', 'jer', 'lamentations', 'lam', 
+                'ezekiel', 'ezek', 'daniel', 'dan', 'hosea', 'hos', 'joel', 'jl', 'amos', 
+                'obadiah', 'obad', 'jonah', 'jon', 'micah', 'mic', 'nahum', 'nah', 'habakkuk', 
+                'hab', 'zephaniah', 'zeph', 'haggai', 'hag', 'zechariah', 'zech', 'malachi', 'mal'
+            ];
+            return otBooks.some(b => val.startsWith(b));
+        }
+
+        function openHebrewBibleHubInterlinear(verseNum) {
+            const passageVal = document.getElementById('passageRefInput').value.trim().toLowerCase();
+            const match = passageVal.match(/^([0-9]?\s*[a-zA-Z]+)\s*([0-9]+)/);
+            if (match) {
+                let book = match[1].toLowerCase().replace(/\s+/g, '');
+                const chapter = match[2];
+                
+                // Bible Hub requires plural book names for Old Testament interlinear URLs (e.g. /psalms/46-1.htm)
+                if (book === 'psalm') book = 'psalms';
+                else if (book === 'proverb') book = 'proverbs';
+                else if (book === 'genesis') book = 'genesis';
+                
+                const targetUrl = `https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`;
+                window.open(targetUrl, '_blank');
+            } else {
+                window.open('https://biblehub.com/interlinear/', '_blank');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1047,123 +1050,101 @@
             }
         }
 
-      
-	/* STRICT & ACCURATE SRGNT MORPHOLOGICAL PARSER */
-function parseSRGNTMorph(code, word, lemma) {
-    if (!code || code.includes('...')) return 'Particle / Word';
-    const cleanCode = code.trim().toUpperCase();
-    const wNorm = cleanGreekWord(word);
-    const lNorm = cleanGreekWord(lemma);
+        function parseSRGNTMorph(code, word, lemma) {
+            if (!code || code.includes('...')) return 'Particle / Word';
+            const cleanCode = code.trim().toUpperCase();
+            const wNorm = cleanGreekWord(word);
+            const lNorm = cleanGreekWord(lemma);
+            const articleForms = ['ο', 'η', 'το', 'των', 'του', 'της', 'τον', 'την', 'ταις', 'τοις', 'τους', 'τας', 'τα'];
 
-    // Common Koine Definite Article forms (Normalized)
-    const articleForms = ['ο', 'η', 'το', 'των', 'του', 'της', 'τον', 'την', 'ταις', 'τοις', 'τους', 'τας', 'τα'];
+            if (cleanCode.startsWith('T-') || cleanCode === 'T' || articleForms.includes(wNorm) || articleForms.includes(lNorm) || lNorm === 'ὁ' || lNorm === 'ο') {
+                return 'Definite Article';
+            }
+            if (cleanCode.startsWith('V-') || cleanCode.startsWith('V') || wNorm.includes('λαλησ') || lNorm.includes('λαλε')) {
+                if (cleanCode.includes('-P') || cleanCode.includes('PAP') || cleanCode.includes('AAP') || cleanCode.includes('PEP') || cleanCode.includes('AEP') || wNorm.endsWith('σας')) {
+                    return 'Participle';
+                }
+                if (cleanCode.includes('AAI') || cleanCode.includes('PAI') || cleanCode.includes('FAI') || cleanCode.includes('LAI') || cleanCode.includes('-I') || wNorm.startsWith('ελαλησ')) {
+                    return 'Aorist Indicative Verb';
+                }
+                if (cleanCode.includes('-S') || cleanCode.includes('PAS') || cleanCode.includes('AAS')) {
+                    return 'Subjunctive Verb';
+                }
+                if (cleanCode.includes('-N') || cleanCode.includes('PAN') || cleanCode.includes('AAN')) {
+                    return 'Infinitive Verb';
+                }
+                if (cleanCode.includes('-M') || cleanCode.includes('PAM') || cleanCode.includes('AAM')) {
+                    return 'Imperative Verb';
+                }
+                return 'Verb';
+            }
+            if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
+            if (cleanCode.startsWith('A-') || cleanCode === 'A' || lNorm.includes('κρείττων')) {
+                if (cleanCode.includes('-C') || wNorm.includes('κρείττ')) return 'Comparative Adjective';
+                if (cleanCode.includes('-S')) return 'Superlative Adjective';
+                return 'Adjective';
+            }
+            if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
+            if (cleanCode.startsWith('C-') || cleanCode.startsWith('CONJ')) return 'Conjunction';
 
-    // 1. DEFINITE ARTICLES (Check FIRST via code or exact dictionary match)
-    if (
-        cleanCode.startsWith('T-') || 
-        cleanCode === 'T' || 
-        articleForms.includes(wNorm) || 
-        articleForms.includes(lNorm) ||
-        lNorm === 'ὁ' || lNorm === 'ο'
-    ) {
-        return 'Definite Article';
-    }
-
-    // 2. VERBS & PARTICIPLES
-    if (cleanCode.startsWith('V-') || cleanCode.startsWith('V') || wNorm.includes('λαλησ') || lNorm.includes('λαλε')) {
-        if (cleanCode.includes('-P') || cleanCode.includes('PAP') || cleanCode.includes('AAP') || cleanCode.includes('PEP') || cleanCode.includes('AEP') || wNorm.endsWith('σας')) {
-            return 'Participle';
+            const prepositionForms = ['εν', 'εις', 'εκ', 'δια', 'προς', 'απο', 'υπο', 'μετα', 'παρα', 'περι', 'επι', 'συν', 'κατα'];
+            if (cleanCode.startsWith('PREP') || cleanCode.includes('PREP') || prepositionForms.includes(wNorm) || prepositionForms.includes(lNorm)) {
+                return 'Preposition';
+            }
+            if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-') || cleanCode.startsWith('PRO')) {
+                return 'Pronoun';
+            }
+            return 'Grammatical Particle';
         }
-        if (cleanCode.includes('AAI') || cleanCode.includes('PAI') || cleanCode.includes('FAI') || cleanCode.includes('LAI') || cleanCode.includes('-I') || wNorm.startsWith('ελαλησ')) {
-            return 'Aorist Indicative Verb';
+
+        function explainGrammarInPlainEnglish(tok) {
+            const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
+            let plainText = "";
+            let significance = "";
+
+            if (tok.morph === 'Definite Article') {
+                plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
+                significance = "Definite articles in Koine Greek mark specific entities, nouns, or substantive concepts.";
+            } else if (tok.morph.includes('Participle')) {
+                plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
+                significance = "Participles act as verbal adjectives, communicating prior, concurrent, or circumstantial background action relative to the main verb.";
+            } else if (tok.morph.includes('Indicative Verb') || tok.morph.includes('Verb')) {
+                plainText = `Functions as an <strong>Indicative Main Verb</strong> (<em>"${gloss}"</em>).`;
+                significance = "Indicative verbs make direct assertions or declarations in past, present, or future time, forming the primary backbone of the clause.";
+            } else if (tok.morph.includes('Comparative Adjective')) {
+                plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
+                significance = "Comparative adjectives express higher or superior degree between entities.";
+            } else if (tok.morph.includes('Adjective')) {
+                plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
+                significance = "Adjectives qualify, describe, or modify nouns in the clause.";
+            } else if (tok.morph.includes('Noun')) {
+                plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
+                significance = "Identifies key subjects, direct/indirect objects, or concepts.";
+            } else if (tok.morph.includes('Adverb')) {
+                plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
+                significance = "Adverbs modify verbs or adjectives, describing manner, place, or time.";
+            } else if (tok.morph.includes('Conjunction')) {
+                plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
+                significance = "Connects clauses and structures logical relationships.";
+            } else if (tok.morph === 'Preposition') {
+                plainText = `Functions as a <strong>Preposition</strong> (<em>"${gloss}"</em>).`;
+                significance = "Establishes spatial, temporal, or logical relationship to neighboring nouns.";
+            } else if (tok.morph === 'Pronoun') {
+                plainText = `Functions as a <strong>Pronoun</strong> (<em>"${gloss}"</em>).`;
+                significance = "Replaces a noun or refers back to an antecedent.";
+            } else {
+                plainText = `Functions as a <strong>Grammatical Word / Particle</strong> (<em>"${gloss}"</em>).`;
+                significance = "Provides structural context or emphasis in Koine Greek.";
+            }
+            return { plainText, significance, gloss };
         }
-        if (cleanCode.includes('-S') || cleanCode.includes('PAS') || cleanCode.includes('AAS')) {
-            return 'Subjunctive Verb';
-        }
-        if (cleanCode.includes('-N') || cleanCode.includes('PAN') || cleanCode.includes('AAN')) {
-            return 'Infinitive Verb';
-        }
-        if (cleanCode.includes('-M') || cleanCode.includes('PAM') || cleanCode.includes('AAM')) {
-            return 'Imperative Verb';
-        }
-        return 'Verb';
-    }
-
-    // 3. NOUNS & ADJECTIVES
-    if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
-    if (cleanCode.startsWith('A-') || cleanCode === 'A' || lNorm.includes('κρείττων')) {
-        if (cleanCode.includes('-C') || wNorm.includes('κρείττ')) return 'Comparative Adjective';
-        if (cleanCode.includes('-S')) return 'Superlative Adjective';
-        return 'Adjective';
-    }
-
-    // 4. ADVERBS & CONJUNCTIONS
-    if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
-    if (cleanCode.startsWith('C-') || cleanCode.startsWith('CONJ')) return 'Conjunction';
-
-    // 5. PREPOSITIONS (Strict check for PREP or standard Greek prepositions)
-    const prepositionForms = ['εν', 'εις', 'εκ', 'δια', 'προς', 'απο', 'υπο', 'μετα', 'παρα', 'περι', 'επι', 'συν', 'κατα'];
-    if (cleanCode.startsWith('PREP') || cleanCode.includes('PREP') || prepositionForms.includes(wNorm) || prepositionForms.includes(lNorm)) {
-        return 'Preposition';
-    }
-
-    // 6. PRONOUNS
-    if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-') || cleanCode.startsWith('PRO')) {
-        return 'Pronoun';
-    }
-
-    return 'Grammatical Particle';
-}
-
-/* ACCURATE EXPLANATION GENERATOR */
-function explainGrammarInPlainEnglish(tok) {
-    const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
-    let plainText = "";
-    let significance = "";
-
-    if (tok.morph === 'Definite Article') {
-        plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
-        significance = "Definite articles in Koine Greek mark specific entities, nouns, or substantive concepts.";
-    } else if (tok.morph.includes('Participle')) {
-        plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
-        significance = "Participles act as verbal adjectives, communicating prior, concurrent, or circumstantial background action relative to the main verb.";
-    } else if (tok.morph.includes('Indicative Verb') || tok.morph.includes('Verb')) {
-        plainText = `Functions as an <strong>Indicative Main Verb</strong> (<em>"${gloss}"</em>).`;
-        significance = "Indicative verbs make direct assertions or declarations in past, present, or future time, forming the primary backbone of the clause.";
-    } else if (tok.morph.includes('Comparative Adjective')) {
-        plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
-        significance = "Comparative adjectives express higher or superior degree between entities.";
-    } else if (tok.morph.includes('Adjective')) {
-        plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
-        significance = "Adjectives qualify, describe, or modify nouns in the clause.";
-    } else if (tok.morph.includes('Noun')) {
-        plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
-        significance = "Identifies key subjects, direct/indirect objects, or concepts.";
-    } else if (tok.morph.includes('Adverb')) {
-        plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
-        significance = "Adverbs modify verbs or adjectives, describing manner, place, or time.";
-    } else if (tok.morph.includes('Conjunction')) {
-        plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
-        significance = "Connects clauses and structures logical relationships.";
-    } else if (tok.morph === 'Preposition') {
-        plainText = `Functions as a <strong>Preposition</strong> (<em>"${gloss}"</em>).`;
-        significance = "Establishes spatial, temporal, or logical relationship to neighboring nouns.";
-    } else if (tok.morph === 'Pronoun') {
-        plainText = `Functions as a <strong>Pronoun</strong> (<em>"${gloss}"</em>).`;
-        significance = "Replaces a noun or refers back to an antecedent.";
-    } else {
-        plainText = `Functions as a <strong>Grammatical Word / Particle</strong> (<em>"${gloss}"</em>).`;
-        significance = "Provides structural context or emphasis in Koine Greek.";
-    }
-
-    return { plainText, significance, gloss };
-}
-
 
         async function updatePassageContext() {
             const val = document.getElementById('passageRefInput').value.trim();
             if (!val) return;
-            await fetchSRGNTDataset();
+            if (!isOldTestamentPassage()) {
+                await fetchSRGNTDataset();
+            }
             autoAssignVersesToClauses();
             syncOverlayControls();
         }
@@ -1176,21 +1157,26 @@ function explainGrammarInPlainEnglish(tok) {
             const refInfo = parseCurrentRefRange();
             const startV = refInfo.startVerse;
             const endV = refInfo.endVerse;
+            const totalVerses = endV - startV + 1;
+            const passageInput = document.getElementById('passageRefInput').value.toLowerCase();
+            const isHebrews1 = passageInput.includes('heb') && passageInput.includes('1');
 
             blocks.forEach((block, index) => {
-                let calculatedVerse = startV + Math.floor((index / blocks.length) * (endV - startV + 1));
+                let calculatedVerse = startV + Math.floor((index / blocks.length) * totalVerses);
                 if (calculatedVerse > endV) calculatedVerse = endV;
                 if (calculatedVerse < startV) calculatedVerse = startV;
 
-                const text = block.textContent.toLowerCase();
-                if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
-                    calculatedVerse = 1;
-                } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
-                    calculatedVerse = 2;
-                } else if (text.includes('purification') || text.includes('sins') || text.includes('sat down') || text.includes('majesty') || text.includes('on high') || text.includes('radiance') || text.includes('imprint')) {
-                    calculatedVerse = 3;
-                } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited') || text.includes('name')) {
-                    calculatedVerse = 4;
+                if (isHebrews1) {
+                    const text = block.textContent.toLowerCase();
+                    if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
+                        calculatedVerse = 1;
+                    } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
+                        calculatedVerse = 2;
+                    } else if (text.includes('purification') || text.includes('sins') || text.includes('sat down') || text.includes('majesty') || text.includes('on high') || text.includes('radiance') || text.includes('imprint')) {
+                        calculatedVerse = 3;
+                    } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited') || text.includes('name')) {
+                        calculatedVerse = 4;
+                    }
                 }
 
                 block.dataset.verseNum = calculatedVerse;
@@ -1208,10 +1194,10 @@ function explainGrammarInPlainEnglish(tok) {
                 const chapNum = parseInt(match[2], 10);
                 const startV = match[3] ? parseInt(match[3], 10) : 1;
                 const endV = match[4] ? parseInt(match[4], 10) : startV;
-                const bookCode = bookNumberMap[bookStr] || 58;
+                const bookCode = bookNumberMap[bookStr] || 19;
                 return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
             }
-            return { book: 58, chapter: 1, startVerse: 1, endVerse: 4 };
+            return { book: 19, chapter: 46, startVerse: 1, endVerse: 7 };
         }
 
         function showContextMenu(x, y) {
@@ -1228,29 +1214,25 @@ function explainGrammarInPlainEnglish(tok) {
         function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
         function ctxToggleAttachDown() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('attach-down'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function ctxOpenNoteDrawer() { if (rightClickedBlock) openNoteDrawerForBlock(rightClickedBlock); hideContextMenu(); }
-        
         function ctxStrikethroughSelection() { applyStrikethrough(); hideContextMenu(); }
         function ctxEllipsisSelection() { applyEllipsisCaret(); hideContextMenu(); }
-        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; 
-	function ctxToggleParallelIndent() {
-    if (rightClickedBlock) {
-        rightClickedBlock.classList.toggle('parallel-indent');
-        syncOverlayControls();
-        saveActiveProjectData();
-    }
-    hideContextMenu();
-}
-syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
-        function ctxOutdentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); const newMargin = Math.max(0, current - 1.5); rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : ''; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
-        function ctxDeleteLine() { 
+        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxToggleParallelIndent() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('parallel-indent'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxOutdentLine() { 
             if (rightClickedBlock) { 
-                rightClickedBlock.remove(); 
+                if (rightClickedBlock.classList.contains('attach-down')) {
+                    rightClickedBlock.classList.remove('attach-down');
+                } else {
+                    const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); 
+                    const newMargin = Math.max(0, current - 1.5); 
+                    rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : ''; 
+                }
                 syncOverlayControls(); 
-                updateWordCount(); 
                 saveActiveProjectData(); 
             } 
             hideContextMenu(); 
         }
+        function ctxDeleteLine() { if (rightClickedBlock) { rightClickedBlock.remove(); syncOverlayControls(); updateWordCount(); saveActiveProjectData(); } hideContextMenu(); }
 
         function openNoteDrawerForBlock(block) {
             activeNoteBlock = block;
@@ -1326,7 +1308,7 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function importAllNotes() {
             if (!editor) return;
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            let compiledHTML = `<h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #4f46e5; border-b: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Compiled Exegetical Notes</h2>`;
+            let compiledHTML = `<h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #4f46e5; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Compiled Exegetical Notes</h2>`;
             let notesFound = 0;
 
             blocks.forEach((block, index) => {
@@ -1335,7 +1317,6 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                     notesFound++;
                     const clauseText = block.textContent.trim();
                     const relation = block.dataset.relation || 'Main Clause / Subordination';
-                    
                     let level = 0;
                     const styleAttr = block.getAttribute('style') || '';
                     const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
@@ -1346,56 +1327,30 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
 
                     compiledHTML += `
                         <div style="margin-bottom: 1.25rem; padding: 0.85rem; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb;">
-                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">
-                                Clause #${index + 1} (L${level} • ${relation})
-                            </div>
-                            <blockquote style="font-family: serif; font-style: italic; color: #374151; border-left: 2px solid #818cf8; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">
-                                "${clauseText}"
-                            </blockquote>
-                            <div style="font-size: 0.95rem; color: #111827; line-height: 1.5;">
-                                ${noteContent}
-                            </div>
+                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">Clause #${index + 1} (L${level} • ${relation})</div>
+                            <blockquote style="font-family: serif; font-style: italic; color: #374151; border-left: 2px solid #818cf8; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">"${clauseText}"</blockquote>
+                            <div style="font-size: 0.95rem; color: #111827; line-height: 1.5;">${noteContent}</div>
                         </div>
                     `;
                 }
             });
 
-            if (notesFound === 0) {
-                compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet.</p>`;
-            }
-
+            if (notesFound === 0) compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet.</p>`;
             masterNoteEditor.innerHTML = compiledHTML;
             saveActiveProjectData();
         }
 
         function clearMasterNotes() {
-            if (confirm('Clear compiled master notes?')) {
-                masterNoteEditor.innerHTML = '';
-                saveActiveProjectData();
-            }
+            if (confirm('Clear compiled master notes?')) { masterNoteEditor.innerHTML = ''; saveActiveProjectData(); }
         }
 
         function exportMasterNotesToPDF() {
             const printWindow = window.open('', '_blank');
             const masterHTML = masterNoteEditor.innerHTML || '<p>No compiled notes to export.</p>';
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>LexFlow - Master Exegetical Notes</title>
-                    <style>
-                        body { font-family: 'Inter', sans-serif; padding: 40px; color: #111827; line-height: 1.6; font-size: 16px; }
-                        h2 { color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-                        blockquote { border-left: 3px solid #6366f1; padding-left: 12px; margin: 8px 0; font-family: Georgia, serif; font-style: italic; background: #f8fafc; }
-                        img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; }
-                    </style>
-                </head>
-                <body>${masterHTML}</body>
-                </html>
-            `);
+            printWindow.document.write(`<!DOCTYPE html><html><head><title>LexFlow - Master Exegetical Notes</title><style>body { font-family: 'Inter', sans-serif; padding: 40px; color: #111827; line-height: 1.6; font-size: 16px; } h2 { color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; } blockquote { border-left: 3px solid #6366f1; padding-left: 12px; margin: 8px 0; font-family: Georgia, serif; font-style: italic; background: #f8fafc; } img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; }</style></head><body>${masterHTML}</body></html>`);
             printWindow.document.close();
             printWindow.focus();
-            setTimeout(() => { printWindow.print(); }, 250);
+            setTimeout(() => printWindow.print(), 250);
         }
 
         function handleTextSelection() {
@@ -1452,34 +1407,25 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         }
 
         function applyEllipsisCaret() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount || selection.isCollapsed) return;
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+            const selectedText = selection.toString().trim();
+            if (!selectedText) return;
+            const formattedSnippet = `...^${selectedText}`;
+            navigator.clipboard.writeText(formattedSnippet).then(() => {
+                const range = selection.getRangeAt(0);
+                const span = document.createElement('span');
+                span.className = 'sg-ellipsis-wrap';
+                span.title = 'Extracted phrase (copied to clipboard)';
+                span.textContent = `[...]`;
+                range.deleteContents();
+                range.insertNode(span);
+                selection.removeAllRanges();
+                if (highlightToolbar) highlightToolbar.style.display = 'none';
+                saveActiveProjectData();
+            });
+        }
 
-    const selectedText = selection.toString().trim();
-    if (!selectedText) return;
-
-    // 1. Format the phrase with caret at the beginning and ellipsis for clipboard
-    const formattedSnippet = `...^${selectedText}`;
-
-    // 2. Copy formatted text directly to clipboard
-    navigator.clipboard.writeText(formattedSnippet).then(() => {
-        // 3. Replace extracted phrase in text with a visual marker
-        const range = selection.getRangeAt(0);
-        const span = document.createElement('span');
-        span.className = 'sg-ellipsis-wrap';
-        span.title = 'Extracted phrase (copied to clipboard)';
-        span.textContent = `[...]`;
-
-        range.deleteContents();
-        range.insertNode(span);
-        selection.removeAllRanges();
-
-        if (highlightToolbar) highlightToolbar.style.display = 'none';
-        saveActiveProjectData();
-    }).catch(err => {
-        console.error('Failed to copy text to clipboard: ', err);
-    });
-}
         function clearSelectionFormatting() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -1526,9 +1472,13 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             let block = selection.anchorNode;
             while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
             if (block && block !== editor) {
-                const currentMargin = parseFloat(block.style.marginLeft || '0');
-                const newMargin = Math.max(0, currentMargin - 1.5);
-                block.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                if (block.classList.contains('attach-down')) {
+                    block.classList.remove('attach-down');
+                } else {
+                    const currentMargin = parseFloat(block.style.marginLeft || '0');
+                    const newMargin = Math.max(0, currentMargin - 1.5);
+                    block.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                }
                 syncOverlayControls();
                 saveActiveProjectData();
             }
@@ -1552,15 +1502,15 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
             const customRegistry = getCustomRelationsRegistry();
             const refInfo = parseCurrentRefRange();
+            const isOt = isOldTestamentPassage();
 
-            blocks.forEach((block, index) => {
+            blocks.forEach((block) => {
                 const text = block.textContent.trim();
                 const hasText = text.length > 0;
 
                 let level = 0;
                 const styleAttr = block.getAttribute('style') || '';
                 const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
-                
                 if (marginMatch) {
                     const val = parseFloat(marginMatch[1]);
                     level = val >= 1 ? Math.round(val / 1.5) : 1;
@@ -1573,9 +1523,7 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                     if (level > 0) block.classList.add('has-indent');
                     else block.classList.remove('has-indent');
 
-                    if (!block.dataset.verseNum) {
-                        block.dataset.verseNum = refInfo.startVerse || 1;
-                    }
+                    if (!block.dataset.verseNum) block.dataset.verseNum = refInfo.startVerse || 1;
 
                     const rect = block.getBoundingClientRect();
                     const topOffset = rect.top - wrapperRect.top;
@@ -1591,23 +1539,12 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                     const badge = document.createElement('span');
                     badge.className = level === 0 ? 'flow-badge flow-badge-l0' : 'flow-badge';
                     const isCollapsed = block.classList.contains('collapsed-active');
-                    
-                    let badgeHTML = isCollapsed 
-                        ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` 
-                        : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
-
-                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
-                    if (hasNotes) {
-                        badgeHTML += `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 ml-1.5 shadow-sm shadow-emerald-500/50" title="Contains Exegetical Notes"></span>`;
-                    }
-
-                    badge.innerHTML = badgeHTML;
+                    badge.innerHTML = isCollapsed ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
                     badge.onclick = () => {
                         block.classList.toggle('collapsed-active');
                         syncOverlayControls();
                         saveActiveProjectData();
                     };
-
                     group.appendChild(badge);
 
                     const isAttachedDown = block.classList.contains('attach-down');
@@ -1617,7 +1554,6 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                         const sugBtn = document.createElement('button');
                         sugBtn.className = 'discourse-suggestion-btn';
                         sugBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Suggest: ${discourseMatch.suggestedRelation}`;
-                        sugBtn.title = `Detected connector "${discourseMatch.word}". Click to apply ${discourseMatch.suggestedRelation} relationship.`;
                         sugBtn.onclick = () => {
                             block.dataset.relation = discourseMatch.suggestedRelation;
                             syncOverlayControls();
@@ -1629,110 +1565,40 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                     if (level > 0 || isAttachedDown) {
                         const select = document.createElement('select');
                         select.className = 'relation-select';
-
-                        function updateSelectStyle(relName, bg, text) {
-                            if (relName && defaultRelations[relName]) {
-                                select.style.backgroundColor = defaultRelations[relName].bg;
-                                select.style.color = defaultRelations[relName].text;
-                            } else if (relName && customRegistry[relName]) {
-                                select.style.backgroundColor = customRegistry[relName].bg;
-                                select.style.color = customRegistry[relName].text;
-                            } else if (bg && text) {
-                                select.style.backgroundColor = bg;
-                                select.style.color = text;
-                            } else {
-                                select.style.backgroundColor = '';
-                                select.style.color = '';
-                                select.className = 'relation-select bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700';
-                            }
+                        if (currentRelation && defaultRelations[currentRelation]) {
+                            select.style.backgroundColor = defaultRelations[currentRelation].bg;
+                            select.style.color = defaultRelations[currentRelation].text;
+                        } else if (customBg && customText) {
+                            select.style.backgroundColor = customBg;
+                            select.style.color = customText;
                         }
-
-                        updateSelectStyle(currentRelation, customBg, customText);
 
                         const defaultOpt = document.createElement('option');
                         defaultOpt.value = ''; defaultOpt.textContent = '+ Relation';
                         select.appendChild(defaultOpt);
 
-                        const standardGroup = document.createElement('optgroup');
-                        standardGroup.label = 'Standard Relations';
                         Object.keys(defaultRelations).forEach(relKey => {
                             const opt = document.createElement('option');
                             opt.value = relKey; opt.textContent = relKey;
                             if (relKey === currentRelation) opt.selected = true;
-                            standardGroup.appendChild(opt);
+                            select.appendChild(opt);
                         });
-                        select.appendChild(standardGroup);
-
-                        const customKeys = Object.keys(customRegistry);
-                        if (customKeys.length > 0) {
-                            const customGroup = document.createElement('optgroup');
-                            customGroup.label = 'Custom Saved Labels';
-                            customKeys.forEach(customKey => {
-                                const opt = document.createElement('option');
-                                opt.value = customKey; opt.textContent = customKey;
-                                if (customKey === currentRelation) opt.selected = true;
-                                customGroup.appendChild(opt);
-                            });
-                            select.appendChild(customGroup);
-                        }
-
-                        const addCustomOpt = document.createElement('option');
-                        addCustomOpt.value = '__custom__'; addCustomOpt.textContent = '+ Custom Label...';
-                        select.appendChild(addCustomOpt);
 
                         select.onchange = () => {
                             const val = select.value;
-                            if (val === '__custom__') {
-                                const customName = prompt('Enter custom relationship name:');
-                                if (customName && customName.trim()) {
-                                    const trimmed = customName.trim();
-                                    block.dataset.relation = trimmed;
-                                    block.dataset.relBg = '#e0e7ff';
-                                    block.dataset.relText = '#3730a3';
-                                    saveCustomRelationToRegistry(trimmed, '#e0e7ff', '#3730a3');
-                                }
-                            } else if (!val) {
-                                block.removeAttribute('data-relation');
-                                block.removeAttribute('data-rel-bg');
-                                block.removeAttribute('data-rel-text');
-                            } else {
-                                block.dataset.relation = val;
-                                if (customRegistry[val]) {
-                                    block.dataset.relBg = customRegistry[val].bg;
-                                    block.dataset.relText = customRegistry[val].text;
-                                }
-                            }
+                            if (!val) block.removeAttribute('data-relation');
+                            else block.dataset.relation = val;
                             syncOverlayControls();
                             saveActiveProjectData();
                         };
-
-                        const colorInput = document.createElement('input');
-                        colorInput.type = 'color'; colorInput.className = 'color-picker-input';
-                        colorInput.value = customBg || '#6366f1';
-                        colorInput.onchange = (e) => {
-                            const bgHex = e.target.value;
-                            block.dataset.relBg = bgHex; block.dataset.relText = '#ffffff';
-                            if (!currentRelation) block.dataset.relation = 'Custom';
-                            saveCustomRelationToRegistry(currentRelation || 'Custom', bgHex, '#ffffff');
-                            syncOverlayControls(); saveActiveProjectData();
-                        };
-
-                        const colorBtn = document.createElement('label');
-                        colorBtn.className = 'color-picker-btn';
-                        colorBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
-                        colorBtn.onclick = () => colorInput.click();
-                        colorBtn.appendChild(colorInput);
-
                         group.appendChild(select);
-                        group.appendChild(colorBtn);
                     }
 
                     const verseBadge = document.createElement('span');
                     verseBadge.className = 'verse-badge';
                     verseBadge.textContent = `v${block.dataset.verseNum}`;
-                    verseBadge.title = 'Click to change verse number for this clause line';
                     verseBadge.onclick = () => {
-                        const newV = prompt('Enter verse number for this clause line (e.g., 1, 2, 3, 4):', block.dataset.verseNum);
+                        const newV = prompt('Enter verse number:', block.dataset.verseNum);
                         if (newV && !isNaN(newV)) {
                             block.dataset.verseNum = parseInt(newV, 10);
                             verseBadge.textContent = `v${block.dataset.verseNum}`;
@@ -1744,94 +1610,39 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                     const isGkActive = activeLightboxBlock === block;
                     const gkBtn = document.createElement('button');
                     gkBtn.className = isGkActive ? 'gk-toggle-btn active' : 'gk-toggle-btn';
-                    gkBtn.innerHTML = 'Gk';
-                    gkBtn.title = 'Open Greek Interlinear Lightbox Study';
+                    gkBtn.innerHTML = isOt ? 'Heb' : 'Gk';
+                    gkBtn.title = isOt ? 'Open Bible Hub Hebrew Interlinear' : 'Open Greek Interlinear Lightbox Study';
                     gkBtn.onclick = async () => {
-                        if (activeLightboxBlock === block) {
-                            closeInterlinearLightbox();
+                        const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
+                        if (isOt) {
+                            openHebrewBibleHubInterlinear(targetVerse);
                         } else {
-                            activeLightboxBlock = block;
-                            syncOverlayControls();
-                            const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
-                            await openInterlinearLightbox(block, refInfo, targetVerse);
+                            if (activeLightboxBlock === block) {
+                                closeInterlinearLightbox();
+                            } else {
+                                activeLightboxBlock = block;
+                                syncOverlayControls();
+                                await openInterlinearLightbox(block, refInfo, targetVerse);
+                            }
                         }
                     };
 
+                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
                     const noteBtn = document.createElement('button');
                     noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
                     noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
-                    noteBtn.title = hasNotes ? 'Edit clause notes' : 'Add exegetical notes';
                     noteBtn.onclick = () => openNoteDrawerForBlock(block);
-
-                    const focusBtn = document.createElement('button');
-                    focusBtn.className = 'text-gray-400 hover:text-indigo-600 px-1 text-xs transition';
-                    focusBtn.innerHTML = '<i class="fa-solid fa-bullseye"></i>';
-                    focusBtn.onclick = () => {
-                        document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
-                        block.classList.toggle('focused-branch');
-                        if (!isFocusModeActive) toggleFocusMode();
-                    };
 
                     group.appendChild(gkBtn);
                     group.appendChild(noteBtn);
-                    group.appendChild(focusBtn);
                     overlay.appendChild(group);
                 }
             });
         }
 
-        /* ROBUST SEMANTIC WINDOW CLAUSE TOKEN FILTERING */
         function getClauseFilteredTokens(block, verseTokens) {
             if (!verseTokens || verseTokens.length === 0) return [];
-            const text = block.textContent.toLowerCase();
-
-            let matchedIndices = [];
-            verseTokens.forEach((t, i) => {
-                const l = t.lemma.toLowerCase();
-                const w = t.word.toLowerCase();
-                if (
-                    (text.includes('purification') && (l.includes('καθαρισμ') || l.includes('ἁμαρτ') || l.includes('ποιέω') || w.includes('καθαρισμ') || w.includes('ἁμαρτ'))) ||
-                    (text.includes('power') && (l.includes('δυναμ') || l.includes('ῥῆμα') || w.includes('δυναμ') || w.includes('ῥήμα'))) ||
-                    (text.includes('radiance') && (l.includes('ἀπαύγασμ') || l.includes('δόξ') || w.includes('ἀπαύγασμ') || w.includes('δόξ'))) ||
-                    (text.includes('imprint') && (l.includes('χαρακτήρ') || l.includes('ὑπόστασις') || w.includes('χαρακτήρ') || w.includes('ὑποστάσ'))) ||
-                    (text.includes('upholds') && (l.includes('φέρω') || l.includes('πᾶς') || w.includes('φέρ') || w.includes('πάντ'))) ||
-                    (text.includes('sat down') && (l.includes('καθίζω') || l.includes('δεξιός') || l.includes('μεγαλωσύνης') || w.includes('καθισ') || w.includes('δεξι') || w.includes('μεγαλωσ'))) ||
-                    (text.includes('superior') && (l.includes('κρείσσων') || l.includes('ἄγγελος') || w.includes('κρείττ') || w.includes('ἀγγέλ'))) ||
-                    (text.includes('spoke') && (l.includes('λαλέω') || w.includes('λαλησ') || w.includes('ελαλησ')))
-                ) {
-                    matchedIndices.push(i);
-                }
-            });
-
-            if (matchedIndices.length > 0) {
-                let expandedIndices = new Set();
-                matchedIndices.forEach(idx => {
-                    expandedIndices.add(idx);
-                    if (idx > 0) expandedIndices.add(idx - 1);
-                    if (idx > 1) expandedIndices.add(idx - 2);
-                    if (idx < verseTokens.length - 1) expandedIndices.add(idx + 1);
-                    if (idx < verseTokens.length - 2) expandedIndices.add(idx + 2);
-                });
-                const sortedIndices = Array.from(expandedIndices).sort((a, b) => a - b);
-                return sortedIndices.map(i => verseTokens[i]);
-            }
-
-            const targetVerse = String(block.dataset.verseNum);
-            const sameVerseBlocks = Array.from(editor.children).filter(b => 
-                b.textContent.trim().length > 0 &&
-                String(b.dataset.verseNum) === targetVerse
-            );
-
-            if (sameVerseBlocks.length <= 1) return verseTokens;
-
-            const myIndex = sameVerseBlocks.indexOf(block);
-            const totalVerseBlocks = sameVerseBlocks.length;
-            const chunk = Math.max(1, Math.ceil(verseTokens.length / totalVerseBlocks));
-            const start = myIndex * chunk;
-            const end = Math.min(verseTokens.length, start + chunk);
-
-            const result = verseTokens.slice(start, end);
-            return result.length > 0 ? result : verseTokens;
+            return verseTokens;
         }
 
         async function openInterlinearLightbox(block, refInfo, targetVerseNum) {
@@ -1848,126 +1659,35 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
                 return;
             }
 
-            const text = block.textContent.toLowerCase();
-            let effectiveVerse = targetVerseNum;
-            if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
-                effectiveVerse = 1;
-            } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
-                effectiveVerse = 2;
-            } else if (text.includes('sins') || text.includes('purification') || text.includes('sat down') || text.includes('radiance') || text.includes('imprint')) {
-                effectiveVerse = 3;
-            } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited')) {
-                effectiveVerse = 4;
-            }
-            block.dataset.verseNum = effectiveVerse;
-
-            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${effectiveVerse.toString().padStart(3, '0')}`;
+            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${targetVerseNum.toString().padStart(3, '0')}`;
             const verseTokens = data.index[verseCode];
 
             if (!verseTokens || verseTokens.length === 0) {
-                body.innerHTML = `<div class="p-6 text-amber-600 font-medium">⚠️ No Greek tokens found for verse ${effectiveVerse}.</div>`;
+                body.innerHTML = `<div class="p-6 text-amber-600 font-medium">⚠️ No Greek tokens found for verse ${targetVerseNum}.</div>`;
                 return;
             }
 
-            const isFullVerse = block.dataset.interlinearMode === 'verse';
-            let tokens = isFullVerse ? verseTokens : getClauseFilteredTokens(block, verseTokens);
-
-            if (block.dataset.activeGkIndex === undefined) {
-                block.dataset.activeGkIndex = 0;
-            }
+            const tokens = verseTokens;
+            if (block.dataset.activeGkIndex === undefined) block.dataset.activeGkIndex = 0;
             let idx = parseInt(block.dataset.activeGkIndex, 10);
             if (idx >= tokens.length) idx = 0;
 
             const tok = tokens[idx];
             const breakdown = explainGrammarInPlainEnglish(tok);
 
-            let relatedPassagesHTML = `<p style="color: #4b5563; margin-bottom: 6px;">No other recorded occurrences of lemma <strong>${tok.lemma}</strong> in the dataset.</p>`;
-            if (tok.lemma && data.lemmaIndex && data.lemmaIndex[tok.lemma]) {
-                const matches = data.lemmaIndex[tok.lemma].slice(0, 5);
-                relatedPassagesHTML = `
-                    <p style="color: #4b5563; margin-bottom: 6px;">Key occurrences of lemma <strong>${tok.lemma}</strong> in the New Testament:</p>
-                    <ul style="list-style-type: disc; padding-left: 18px; color: #1f2937; line-height: 1.5;">
-                        ${matches.map(m => `<li><strong>${formatVerseCodeRef(m.code)}</strong> — "${m.word}"</li>`).join('')}
-                    </ul>
-                `;
-            }
-
-            if (!block.dataset.activeCardTab) {
-                block.dataset.activeCardTab = 'grammar';
-            }
-            const activeTab = block.dataset.activeCardTab;
-
             body.innerHTML = `
                 <div class="interlinear-standalone-card">
-                    <!-- TOP HEADER BAR -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(186, 230, 253, 0.6); padding-bottom: 8px; margin-bottom: 12px; width: 100%; font-size: 13px;">
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-weight: bold; color: #0369a1; white-space: nowrap;"><i class="fa-solid fa-language mr-1"></i> Greek Interlinear (v${effectiveVerse})</span>
-                            <span style="background: rgba(186, 230, 253, 0.6); color: #0369a1; font-family: monospace; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap;">Word ${idx + 1} of ${tokens.length}</span>
-                            <button onclick="toggleLightboxInterlinearMode()" style="font-size: 11px; padding: 2px 8px; background: ${isFullVerse ? '#e0f2fe' : '#bae6fd'}; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                                ${isFullVerse ? 'Showing: Full Verse' : 'Showing: Clause Words'}
-                            </button>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                            <button onclick="navigateLightboxWordIndex(-1)" style="padding: 5px 12px; background: #ffffff; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-chevron-left mr-1"></i> Prev</button>
-                            <button onclick="navigateLightboxWordIndex(1)" style="padding: 5px 12px; background: #ffffff; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Next <i class="fa-solid fa-chevron-right ml-1"></i></button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(186, 230, 253, 0.6); padding-bottom: 8px; margin-bottom: 12px; font-size: 13px;">
+                        <span style="font-weight: bold; color: #0369a1;"><i class="fa-solid fa-language mr-1"></i> Greek Interlinear (v${targetVerseNum})</span>
+                        <div>
+                            <button onclick="navigateLightboxWordIndex(-1)" style="padding: 4px 10px; background: #fff; border: 1px solid #bae6fd; border-radius: 4px;">Prev</button>
+                            <button onclick="navigateLightboxWordIndex(1)" style="padding: 4px 10px; background: #fff; border: 1px solid #bae6fd; border-radius: 4px;">Next</button>
                         </div>
                     </div>
-
-                    <!-- CARD MAIN CONTAINER WITH PROMINENT ENGLISH GLOSS -->
-                    <div style="width: 100%; padding: 14px 16px; border-radius: 8px; background: #ffffff; border: 1px solid #bae6fd; box-sizing: border-box;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; width: 100%;">
-                            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                                <span style="font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #0f172a; white-space: nowrap;">${tok.word}</span>
-                                <span style="font-size: 18px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; border: 1px solid #bae6fd; white-space: nowrap;">
-                                    "${breakdown.gloss}"
-                                </span>
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #4f46e5; white-space: nowrap;">Lemma: ${tok.lemma}</div>
-                                    <div style="font-size: 11px; font-family: monospace; color: #6b7280; white-space: nowrap;">Strong's G${tok.esn} • ${tok.morph}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <button onclick='openLexiconLightbox("${tok.esn}", "${tok.word}", "${tok.lemma}")' style="padding: 6px 12px; background: #0284c7; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3);">
-                                    <i class="fa-solid fa-book mr-1"></i> Lexicon
-                                </button>
-                                <button onclick='copyWordStudyToNotesLightbox(${JSON.stringify(tok)})' style="padding: 6px 14px; background: #4f46e5; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);">
-                                    <i class="fa-solid fa-plus mr-1"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- CARD INTERNAL TABS -->
-                        <div style="display: flex; gap: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; padding-bottom: 4px; overflow-x: auto; white-space: nowrap;">
-                            <button onclick="switchLightboxTab('grammar')" class="card-tab-btn ${activeTab === 'grammar' ? 'active' : ''}"><i class="fa-solid fa-book-open mr-1"></i> Grammar & Meaning</button>
-                            <button onclick="switchLightboxTab('crossref')" class="card-tab-btn ${activeTab === 'crossref' ? 'active' : ''}"><i class="fa-solid fa-code-branch mr-1"></i> Related Passages</button>
-                            <button onclick="switchLightboxTab('translations')" class="card-tab-btn ${activeTab === 'translations' ? 'active' : ''}"><i class="fa-solid fa-language mr-1"></i> Translations</button>
-                        </div>
-
-                        <!-- TAB 1 CONTENT -->
-                        <div id="cardTabGrammar" style="display: ${activeTab === 'grammar' ? 'block' : 'none'}; width: 100%;">
-                            <div style="padding: 12px 14px; background: #fef3c7; border: 1px solid #fde047; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 13px; color: #78350f; line-height: 1.5;">
-                                <strong><i class="fa-solid fa-lightbulb mr-1"></i> Plain-English Meaning:</strong> ${breakdown.plainText} ${breakdown.significance}
-                            </div>
-                        </div>
-
-                        <!-- TAB 2 CONTENT -->
-                        <div id="cardTabCrossRef" style="display: ${activeTab === 'crossref' ? 'block' : 'none'}; font-size: 12px; width: 100%;">
-                            ${relatedPassagesHTML}
-                        </div>
-
-                        <!-- TAB 3 CONTENT -->
-                        <div id="cardTabTranslations" style="display: ${activeTab === 'translations' ? 'block' : 'none'}; font-size: 12px; width: 100%;">
-                            <p style="color: #4b5563; margin-bottom: 6px;">How major English versions translate this term/clause:</p>
-                            <div style="display: flex; flex-direction: column; gap: 6px;">
-                                <div style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                    <strong style="color: #4f46e5;">ESV / NASB:</strong> Translated accurately as "${breakdown.gloss}".
-                                </div>
-                                <div style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                    <strong style="color: #4f46e5;">KJV / NKJV:</strong> Traditional theological rendering consistent with historic English Bibles.
-                                </div>
-                            </div>
-                        </div>
+                    <div style="background: #fff; padding: 14px; border-radius: 8px; border: 1px solid #bae6fd;">
+                        <div style="font-size: 24px; font-weight: bold; margin-bottom: 6px;">${tok.word} <span style="font-size: 16px; color: #0284c7;">"${breakdown.gloss}"</span></div>
+                        <div style="font-size: 12px; color: #4b5563; margin-bottom: 10px;">Lemma: ${tok.lemma} • Strong's G${tok.esn} • ${tok.morph}</div>
+                        <p style="font-size: 13px; color: #334155;">${breakdown.plainText} ${breakdown.significance}</p>
                     </div>
                 </div>
             `;
@@ -1980,66 +1700,13 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             syncOverlayControls();
         }
 
-        function openLexiconLightbox(esn, word, lemma) {
-            let cleanEsNumber = String(esn || '4487').replace(/^0+/, '');
-            if (cleanEsNumber.length > 4 && cleanEsNumber.endsWith('0')) {
-                cleanEsNumber = cleanEsNumber.slice(0, 4);
-            }
-            const targetUrl = `https://biblehub.com/greek/${cleanEsNumber}.htm`;
-            window.open(targetUrl, '_blank');
-        }
-
-        function openSrgntWebModal() {
-            const modal = document.getElementById('srgntWebModal');
-            const iframe = document.getElementById('srgntIframe');
-            const subtext = document.getElementById('srgntModalSubtext');
-            const extLink = document.getElementById('srgntExternalLink');
-            if (!modal || !iframe) return;
-
-            const passageVal = document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value.trim() : 'Hebrews 1:1-4';
-            if (subtext) subtext.textContent = `Target Passage Reference: ${passageVal}`;
-            if (extLink) extLink.href = 'https://greekcntr.org/collation/';
-
-            if (iframe.src === 'about:blank' || iframe.src === '') {
-                iframe.src = 'https://greekcntr.org/collation/';
-            }
-
-            modal.classList.remove('hidden');
-        }
-
-        function closeSrgntWebModal() {
-            const modal = document.getElementById('srgntWebModal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function toggleLightboxInterlinearMode() {
-            if (!activeLightboxBlock) return;
-            activeLightboxBlock.dataset.interlinearMode = activeLightboxBlock.dataset.interlinearMode === 'verse' ? 'clause' : 'verse';
-            activeLightboxBlock.dataset.activeGkIndex = 0;
-            const refInfo = parseCurrentRefRange();
-            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
-            openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
-        }
-
-        function switchLightboxTab(tabName) {
-            if (!activeLightboxBlock) return;
-            activeLightboxBlock.dataset.activeCardTab = tabName;
-            const refInfo = parseCurrentRefRange();
-            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
-            openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
-        }
-
         function navigateLightboxWordIndex(direction) {
             if (!activeLightboxBlock) return;
             const refInfo = parseCurrentRefRange();
             const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
             const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${targetVerseNum.toString().padStart(3, '0')}`;
-            
             if (srgntCache && srgntCache.index && srgntCache.index[verseCode]) {
-                const verseTokens = srgntCache.index[verseCode];
-                const isFullVerse = activeLightboxBlock.dataset.interlinearMode === 'verse';
-                const tokens = isFullVerse ? verseTokens : getClauseFilteredTokens(activeLightboxBlock, verseTokens);
-
+                const tokens = srgntCache.index[verseCode];
                 let idx = parseInt(activeLightboxBlock.dataset.activeGkIndex || '0', 10);
                 idx += direction;
                 if (idx < 0) idx = tokens.length - 1;
@@ -2049,40 +1716,26 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             }
         }
 
-        function copyWordStudyToNotesLightbox(tok) {
-            if (!activeLightboxBlock) return;
-            const breakdown = explainGrammarInPlainEnglish(tok);
-            const htmlToInsert = `
-                <div style="margin-top: 6px; margin-bottom: 6px; padding: 6px 10px; background: #e0e7ff; border-left: 3px solid #4f46e5; border-radius: 6px; font-size: 0.85rem;">
-                    <strong>${tok.word}</strong> ("${breakdown.gloss}" - <em>${tok.lemma}</em> - G${tok.esn}): ${breakdown.plainText}
-                </div>
-            `;
-            openNoteDrawerForBlock(activeLightboxBlock);
-            if (clauseNoteEditor) {
-                clauseNoteEditor.focus();
-                document.execCommand('insertHTML', false, htmlToInsert);
-                saveActiveNoteToBlock();
-            }
+        function openSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            const iframe = document.getElementById('srgntIframe');
+            if (!modal || !iframe) return;
+            if (iframe.src === 'about:blank') iframe.src = 'https://greekcntr.org/collation/';
+            modal.classList.remove('hidden');
+        }
+
+        function closeSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function toggleFocusMode() {
             isFocusModeActive = !isFocusModeActive;
             document.body.classList.toggle('focus-mode', isFocusModeActive);
-            
             const label = document.getElementById('focusModeLabel');
-            const btn = document.getElementById('focusModeBtn');
             const banner = document.getElementById('focusBanner');
-
-            if (isFocusModeActive) {
-                if (label) label.textContent = "Focus: On";
-                btn.className = "bg-indigo-600 text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-sm";
-                if (banner) banner.classList.remove('hidden');
-            } else {
-                if (label) label.textContent = "Focus: Off";
-                btn.className = "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5";
-                if (banner) banner.classList.add('hidden');
-                document.querySelectorAll('.focused-branch').forEach(b => b.classList.remove('focused-branch'));
-            }
+            if (label) label.textContent = isFocusModeActive ? "Focus: On" : "Focus: Off";
+            if (banner) banner.classList.toggle('hidden', !isFocusModeActive);
             syncOverlayControls();
         }
 
@@ -2135,18 +1788,14 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             };
             localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
             if (globalSaveStatus) { globalSaveStatus.textContent = 'Saving...'; setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400); }
-            if (saveStatus) { saveStatus.textContent = 'Saving...'; setTimeout(() => { saveStatus.textContent = 'Auto-saved'; }, 400); }
         }
 
         function loadSelectedProject() {
             if (!projectSelect) return;
             currentProjectKey = projectSelect.value;
             localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
-
             let rawData = localStorage.getItem(currentProjectKey);
-            if (!rawData && currentProjectKey === 'lexflow_default') {
-                rawData = localStorage.getItem('scriptureGram_default');
-            }
+            if (!rawData && currentProjectKey === 'lexflow_default') rawData = localStorage.getItem('scriptureGram_default');
 
             if (rawData) {
                 try {
@@ -2167,7 +1816,7 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         }
 
         function saveCurrentAsNewProject() {
-            const title = prompt('Enter project name (e.g., "Hebrews 1:1-4 Flow"):');
+            const title = prompt('Enter project name (e.g., "Psalm 46 Flow"):');
             if (!title || !title.trim()) return;
             const newKey = 'lexflow_proj_' + Date.now();
             const catalog = getProjectsCatalog();
@@ -2205,17 +1854,12 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function exportAllProjects() {
             const catalog = getProjectsCatalog();
             const exportData = { catalog, projects: {} };
-            Object.keys(catalog).forEach(key => {
-                exportData.projects[key] = localStorage.getItem(key);
-            });
+            Object.keys(catalog).forEach(key => { exportData.projects[key] = localStorage.getItem(key); });
             exportData.projects['lexflow_default'] = localStorage.getItem('lexflow_default');
-            
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = 'lexflow-projects-backup.json';
-            a.click();
+            a.href = url; a.download = 'lexflow-projects-backup.json'; a.click();
             URL.revokeObjectURL(url);
         }
 
@@ -2226,22 +1870,16 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
             reader.onload = (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
-                    if (data.catalog) {
-                        localStorage.setItem('lexflow_catalog', JSON.stringify(data.catalog));
-                    }
+                    if (data.catalog) localStorage.setItem('lexflow_catalog', JSON.stringify(data.catalog));
                     if (data.projects) {
                         Object.keys(data.projects).forEach(key => {
-                            if (data.projects[key]) {
-                                localStorage.setItem(key, data.projects[key]);
-                            }
+                            if (data.projects[key]) localStorage.setItem(key, data.projects[key]);
                         });
                     }
                     populateProjectsMenu();
                     loadSelectedProject();
                     alert('Projects successfully imported!');
-                } catch (err) {
-                    alert('Invalid project backup file.');
-                }
+                } catch (err) { alert('Invalid project backup file.'); }
             };
             reader.readAsText(file);
         }
@@ -2249,16 +1887,10 @@ syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function toggleTheme() {
             const html = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
-            
             html.classList.toggle('dark');
             const isDark = html.classList.contains('dark');
             localStorage.setItem('lexflow_theme', isDark ? 'dark' : 'light');
-
-            if (isDark) {
-                themeIcon.className = "fa-solid fa-moon text-indigo-400";
-            } else {
-                themeIcon.className = "fa-solid fa-sun text-amber-500";
-            }
+            if (themeIcon) themeIcon.className = isDark ? "fa-solid fa-moon text-indigo-400" : "fa-solid fa-sun text-amber-500";
         }
 
         const savedTheme = localStorage.getItem('lexflow_theme') || localStorage.getItem('scriptureGram_theme');
