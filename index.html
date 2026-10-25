@@ -411,9 +411,9 @@
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
                 <i class="fa-solid fa-book-bookmark text-indigo-500 text-sm"></i>
-                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Psalm 46:1)" value="Psalm 46:1-7"
+                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Psalm 46:1-11)" value="Psalm 46:1-11"
                        onchange="updatePassageContext()"
-                       class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-32 sm:w-36">
+                       class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36 sm:w-40">
                 <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load</button>
             </div>
 
@@ -421,7 +421,7 @@
                 <i class="fa-solid fa-globe text-sky-500"></i>
                 <span class="hidden sm:inline">SRGNT Collation</span>
             </button>
-            <button onclick="autoAssignVersesToClauses()" class="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 transition flex items-center space-x-1 shadow-sm" title="Smartly distributes passage verses across your clauses">
+            <button onclick="autoAssignVersesFromPassageRange()" class="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 transition flex items-center space-x-1 shadow-sm" title="Coordinates verses across your clauses based on the passage range">
                 <i class="fa-solid fa-bolt text-indigo-500"></i>
                 <span class="hidden sm:inline">Auto Verses</span>
             </button>
@@ -436,8 +436,9 @@
             <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1">
                 <i id="themeIcon" class="fa-solid fa-sun text-amber-500"></i>
             </button>
-            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center space-x-1">
+            <button onclick="exportCleanPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center space-x-1.5" title="Export Clean PDF (Text, Indents & Subordination Lines)">
                 <i class="fa-solid fa-file-pdf"></i>
+                <span>Export PDF</span>
             </button>
         </div>
     </header>
@@ -563,7 +564,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">SRGNT Manuscript Collation Tool</h3>
-                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Psalm 46:1-7</p>
+                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Psalm 46:1-11</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -804,101 +805,6 @@
             '61': '2 Peter', '62': '1 John', '63': '2 John', '64': '3 John', '65': 'Jude', '66': 'Revelation'
         };
 
-        const lexicalGlossDictionary = {
-            'λαλήσας': 'having spoken',
-            'λαλησας': 'having spoken',
-            'ἐλάλησεν': 'he spoke',
-            'ελαλησεν': 'he spoke',
-            'λαλέω': 'speak / say',
-            'λαλεω': 'speak / say',
-            'τοῖς': 'the / to the',
-            'ὁ': 'the',
-            'ἡ': 'the',
-            'τό': 'the',
-            'τῶν': 'of the / the',
-            'τοῦ': 'of the / the',
-            'τῆς': 'of the / the',
-            'τόν': 'the',
-            'τήν': 'the',
-            'ταῖς': 'to the / with the',
-            'τούς': 'the',
-            'τάς': 'the',
-            'τά': 'the',
-            'κρείττων': 'superior / better',
-            'κρείττονος': 'superior / better',
-            'ὅσῳ': 'as much as / by how much',
-            'διαφορώτερον': 'more excellent',
-            'κεκληρονόμηκεν': 'he has inherited',
-            'ὄνομα': 'name',
-            'ἀγγέλων': 'angels',
-            'γενόμενος': 'having become',
-            'πολυμερῶς': 'at many times',
-            'πολυτρόπως': 'in many ways',
-            'πάλαι': 'long ago',
-            'πατράσιν': 'to the fathers',
-            'προφήταις': 'by the prophets',
-            'ἡμῖν': 'to us',
-            'υἱῷ': 'by [his] Son',
-            'ἁμαρτιῶν': 'sins',
-            'καθαρισμὸν': 'purification',
-            'ἐκάθισεν': 'sat down',
-            'δεξιᾷ': 'right hand',
-            'μεγαλωσύνης': 'Majesty',
-            'ὑψηλοῖς': 'on high',
-            'δι': 'through',
-            'οὗ': 'whom',
-            'καί': 'also / and',
-            'ἐποίησεν': 'he created / made',
-            'αἰῶνας': 'world / ages',
-            'ὤν': 'being / who is',
-            'ἀπαύγασμα': 'radiance / effulgence',
-            'δόξης': 'glory',
-            'χαρακτήρ': 'exact imprint / representation',
-            'ὑποστάσεως': 'nature / essence',
-            'φέρων': 'upholding / sustaining',
-            'πάντα': 'all things / universe',
-            'ῥήματι': 'word',
-            'δυνάμεως': 'power',
-            'αὐτοῦ': 'his / of him'
-        };
-
-        function cleanGreekWord(w) {
-            if (!w) return '';
-            return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-zα-ω]/g, '');
-        }
-
-        function getEnglishGlossForWord(word, lemma) {
-            const wNorm = cleanGreekWord(word);
-            const lNorm = cleanGreekWord(lemma);
-
-            for (const key of Object.keys(lexicalGlossDictionary)) {
-                const kNorm = cleanGreekWord(key);
-                if (wNorm === kNorm || lNorm === kNorm) {
-                    return lexicalGlossDictionary[key];
-                }
-            }
-
-            if (wNorm.includes('λαλησ') || lNorm.includes('λαλε')) return 'speak / say';
-            if (wNorm.startsWith('τοι') || lNorm.startsWith('ο')) return 'the';
-            return 'term';
-        }
-
-        function formatVerseCodeRef(code) {
-            if (!code || code.length < 8) return code;
-            const b = code.substring(0, 2);
-            const c = parseInt(code.substring(2, 5), 10);
-            const v = parseInt(code.substring(5, 8), 10);
-            const bookName = bookNameMap[b] || 'Scripture';
-            return `${bookName} ${c}:${v}`;
-        }
-
-        function getCustomRelationsRegistry() {
-            try {
-                return JSON.parse(localStorage.getItem('lexflow_customRelations') || localStorage.getItem('scriptureGram_customRelations') || '{}');
-            } catch (e) { return {}; }
-        }
-
-        /* OLD TESTAMENT DETECTION & BIBLE HUB URL FORMATTER */
         function isOldTestamentPassage() {
             const val = document.getElementById('passageRefInput').value.toLowerCase().trim();
             const otBooks = [
@@ -921,14 +827,8 @@
             if (match) {
                 let book = match[1].toLowerCase().replace(/\s+/g, '');
                 const chapter = match[2];
-                
-                // Bible Hub requires plural book names for Old Testament interlinear URLs (e.g. /psalms/46-1.htm)
                 if (book === 'psalm') book = 'psalms';
-                else if (book === 'proverb') book = 'proverbs';
-                else if (book === 'genesis') book = 'genesis';
-                
-                const targetUrl = `https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`;
-                window.open(targetUrl, '_blank');
+                window.open(`https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`, '_blank');
             } else {
                 window.open('https://biblehub.com/interlinear/', '_blank');
             }
@@ -944,6 +844,12 @@
                     syncOverlayControls();
                     updateWordCount();
                     saveActiveProjectData();
+                });
+
+                editor.addEventListener('paste', (e) => {
+                    setTimeout(() => {
+                        autoAssignVersesFromPassageRange();
+                    }, 50);
                 });
 
                 editor.addEventListener('keydown', (e) => {
@@ -982,174 +888,17 @@
                     hideContextMenu();
                 });
             }
-
-            if (clauseNoteEditor) {
-                clauseNoteEditor.addEventListener('input', saveActiveNoteToBlock);
-                clauseNoteEditor.addEventListener('paste', handleNotePaste);
-            }
-
-            if (masterNoteEditor) {
-                masterNoteEditor.addEventListener('input', saveActiveProjectData);
-            }
-
             updatePassageContext();
         });
 
-        async function fetchSRGNTDataset() {
-            if (srgntCache.loaded) return srgntCache;
-            srgntStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Fetching SRGNT...';
-            try {
-                const response = await fetch('https://cdn.jsdelivr.net/gh/Center-for-New-Testament-Restoration/SR@main/SR.tsv');
-                if (!response.ok) throw new Error('Network response failed');
-                const tsvText = await response.text();
-                
-                const lines = tsvText.split('\n');
-                const index = {};
-                const lemmaIndex = {};
-
-                lines.forEach(line => {
-                    if (!line.trim() || line.startsWith('#') || line.startsWith('Verse')) return;
-                    const cols = line.split('\t');
-                    if (cols.length >= 7) {
-                        const code = cols[0].trim();
-                        const modernText = cols[1].trim().replace(/[¶˚⋄]/g, '');
-                        const koineText = cols[2].trim().replace(/[¶˚⋄]/g, '');
-                        const lemma = cols[3].trim();
-                        let esn = cols[4].trim().replace(/^0+/, '');
-                        const role = cols[5].trim();
-                        const morph = cols[6].trim();
-
-                        const tokenObj = {
-                            word: modernText || koineText,
-                            koine: koineText,
-                            lemma: lemma,
-                            esn: esn,
-                            role: role,
-                            rawMorph: morph,
-                            morph: parseSRGNTMorph(morph, modernText || koineText, lemma),
-                            code: code
-                        };
-
-                        if (!index[code]) index[code] = [];
-                        index[code].push(tokenObj);
-
-                        if (lemma) {
-                            if (!lemmaIndex[lemma]) lemmaIndex[lemma] = [];
-                            lemmaIndex[lemma].push(tokenObj);
-                        }
-                    }
-                });
-
-                srgntCache = { loaded: true, index, lemmaIndex };
-                srgntStatus.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> SRGNT Loaded';
-                return srgntCache;
-            } catch (err) {
-                console.error("SRGNT fetch failed:", err);
-                srgntStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> SRGNT Offline';
-                return null;
-            }
-        }
-
-        function parseSRGNTMorph(code, word, lemma) {
-            if (!code || code.includes('...')) return 'Particle / Word';
-            const cleanCode = code.trim().toUpperCase();
-            const wNorm = cleanGreekWord(word);
-            const lNorm = cleanGreekWord(lemma);
-            const articleForms = ['ο', 'η', 'το', 'των', 'του', 'της', 'τον', 'την', 'ταις', 'τοις', 'τους', 'τας', 'τα'];
-
-            if (cleanCode.startsWith('T-') || cleanCode === 'T' || articleForms.includes(wNorm) || articleForms.includes(lNorm) || lNorm === 'ὁ' || lNorm === 'ο') {
-                return 'Definite Article';
-            }
-            if (cleanCode.startsWith('V-') || cleanCode.startsWith('V') || wNorm.includes('λαλησ') || lNorm.includes('λαλε')) {
-                if (cleanCode.includes('-P') || cleanCode.includes('PAP') || cleanCode.includes('AAP') || cleanCode.includes('PEP') || cleanCode.includes('AEP') || wNorm.endsWith('σας')) {
-                    return 'Participle';
-                }
-                if (cleanCode.includes('AAI') || cleanCode.includes('PAI') || cleanCode.includes('FAI') || cleanCode.includes('LAI') || cleanCode.includes('-I') || wNorm.startsWith('ελαλησ')) {
-                    return 'Aorist Indicative Verb';
-                }
-                if (cleanCode.includes('-S') || cleanCode.includes('PAS') || cleanCode.includes('AAS')) {
-                    return 'Subjunctive Verb';
-                }
-                if (cleanCode.includes('-N') || cleanCode.includes('PAN') || cleanCode.includes('AAN')) {
-                    return 'Infinitive Verb';
-                }
-                if (cleanCode.includes('-M') || cleanCode.includes('PAM') || cleanCode.includes('AAM')) {
-                    return 'Imperative Verb';
-                }
-                return 'Verb';
-            }
-            if (cleanCode.startsWith('N-') || cleanCode === 'N') return 'Noun';
-            if (cleanCode.startsWith('A-') || cleanCode === 'A' || lNorm.includes('κρείττων')) {
-                if (cleanCode.includes('-C') || wNorm.includes('κρείττ')) return 'Comparative Adjective';
-                if (cleanCode.includes('-S')) return 'Superlative Adjective';
-                return 'Adjective';
-            }
-            if (cleanCode.startsWith('D-') || cleanCode.startsWith('ADV')) return 'Adverb';
-            if (cleanCode.startsWith('C-') || cleanCode.startsWith('CONJ')) return 'Conjunction';
-
-            const prepositionForms = ['εν', 'εις', 'εκ', 'δια', 'προς', 'απο', 'υπο', 'μετα', 'παρα', 'περι', 'επι', 'συν', 'κατα'];
-            if (cleanCode.startsWith('PREP') || cleanCode.includes('PREP') || prepositionForms.includes(wNorm) || prepositionForms.includes(lNorm)) {
-                return 'Preposition';
-            }
-            if (cleanCode.startsWith('P-') || cleanCode.startsWith('R-') || cleanCode.startsWith('PRO')) {
-                return 'Pronoun';
-            }
-            return 'Grammatical Particle';
-        }
-
-        function explainGrammarInPlainEnglish(tok) {
-            const gloss = getEnglishGlossForWord(tok.word, tok.lemma);
-            let plainText = "";
-            let significance = "";
-
-            if (tok.morph === 'Definite Article') {
-                plainText = `This is the <strong>Definite Article</strong> (<em>"${gloss}"</em>).`;
-                significance = "Definite articles in Koine Greek mark specific entities, nouns, or substantive concepts.";
-            } else if (tok.morph.includes('Participle')) {
-                plainText = `This is a <strong>Participle</strong> (<em>"${gloss}"</em>).`;
-                significance = "Participles act as verbal adjectives, communicating prior, concurrent, or circumstantial background action relative to the main verb.";
-            } else if (tok.morph.includes('Indicative Verb') || tok.morph.includes('Verb')) {
-                plainText = `Functions as an <strong>Indicative Main Verb</strong> (<em>"${gloss}"</em>).`;
-                significance = "Indicative verbs make direct assertions or declarations in past, present, or future time, forming the primary backbone of the clause.";
-            } else if (tok.morph.includes('Comparative Adjective')) {
-                plainText = `This is a <strong>Comparative Adjective</strong> meaning <em>"${gloss}"</em>.`;
-                significance = "Comparative adjectives express higher or superior degree between entities.";
-            } else if (tok.morph.includes('Adjective')) {
-                plainText = `Functions as an <strong>Adjective</strong> (<em>"${gloss}"</em>).`;
-                significance = "Adjectives qualify, describe, or modify nouns in the clause.";
-            } else if (tok.morph.includes('Noun')) {
-                plainText = `Functions as a <strong>Noun / Entity</strong> (<em>"${gloss}"</em>).`;
-                significance = "Identifies key subjects, direct/indirect objects, or concepts.";
-            } else if (tok.morph.includes('Adverb')) {
-                plainText = `Functions as an <strong>Adverb</strong> (<em>"${gloss}"</em>).`;
-                significance = "Adverbs modify verbs or adjectives, describing manner, place, or time.";
-            } else if (tok.morph.includes('Conjunction')) {
-                plainText = `Functions as a <strong>Conjunction / Connector</strong> (<em>"${gloss}"</em>).`;
-                significance = "Connects clauses and structures logical relationships.";
-            } else if (tok.morph === 'Preposition') {
-                plainText = `Functions as a <strong>Preposition</strong> (<em>"${gloss}"</em>).`;
-                significance = "Establishes spatial, temporal, or logical relationship to neighboring nouns.";
-            } else if (tok.morph === 'Pronoun') {
-                plainText = `Functions as a <strong>Pronoun</strong> (<em>"${gloss}"</em>).`;
-                significance = "Replaces a noun or refers back to an antecedent.";
-            } else {
-                plainText = `Functions as a <strong>Grammatical Word / Particle</strong> (<em>"${gloss}"</em>).`;
-                significance = "Provides structural context or emphasis in Koine Greek.";
-            }
-            return { plainText, significance, gloss };
-        }
-
-        async function updatePassageContext() {
+        function updatePassageContext() {
             const val = document.getElementById('passageRefInput').value.trim();
             if (!val) return;
-            if (!isOldTestamentPassage()) {
-                await fetchSRGNTDataset();
-            }
-            autoAssignVersesToClauses();
-            syncOverlayControls();
+            autoAssignVersesFromPassageRange();
         }
 
-        function autoAssignVersesToClauses() {
+        /* TRUE RANGE-BASED VERSE DISTRIBUTION */
+        function autoAssignVersesFromPassageRange() {
             if (!editor) return;
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
             if (blocks.length === 0) return;
@@ -1158,27 +907,13 @@
             const startV = refInfo.startVerse;
             const endV = refInfo.endVerse;
             const totalVerses = endV - startV + 1;
-            const passageInput = document.getElementById('passageRefInput').value.toLowerCase();
-            const isHebrews1 = passageInput.includes('heb') && passageInput.includes('1');
 
             blocks.forEach((block, index) => {
                 let calculatedVerse = startV + Math.floor((index / blocks.length) * totalVerses);
                 if (calculatedVerse > endV) calculatedVerse = endV;
                 if (calculatedVerse < startV) calculatedVerse = startV;
 
-                if (isHebrews1) {
-                    const text = block.textContent.toLowerCase();
-                    if (text.includes('many times') || text.includes('many ways') || text.includes('fathers') || text.includes('prophets') || text.includes('long ago')) {
-                        calculatedVerse = 1;
-                    } else if (text.includes('last days') || text.includes('heir') || text.includes('world') || text.includes('spoke to us')) {
-                        calculatedVerse = 2;
-                    } else if (text.includes('purification') || text.includes('sins') || text.includes('sat down') || text.includes('majesty') || text.includes('on high') || text.includes('radiance') || text.includes('imprint')) {
-                        calculatedVerse = 3;
-                    } else if (text.includes('as much') || text.includes('superior') || text.includes('angels') || text.includes('inherited') || text.includes('name')) {
-                        calculatedVerse = 4;
-                    }
-                }
-
+                // Explicitly store the calculated verse on the element
                 block.dataset.verseNum = calculatedVerse;
             });
 
@@ -1197,7 +932,7 @@
                 const bookCode = bookNumberMap[bookStr] || 19;
                 return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
             }
-            return { book: 19, chapter: 46, startVerse: 1, endVerse: 7 };
+            return { book: 19, chapter: 46, startVerse: 1, endVerse: 11 };
         }
 
         function showContextMenu(x, y) {
@@ -1344,13 +1079,67 @@
             if (confirm('Clear compiled master notes?')) { masterNoteEditor.innerHTML = ''; saveActiveProjectData(); }
         }
 
-        function exportMasterNotesToPDF() {
+        /* DEDICATED CLEAN PDF EXPORT */
+        function exportCleanPDF() {
             const printWindow = window.open('', '_blank');
-            const masterHTML = masterNoteEditor.innerHTML || '<p>No compiled notes to export.</p>';
-            printWindow.document.write(`<!DOCTYPE html><html><head><title>LexFlow - Master Exegetical Notes</title><style>body { font-family: 'Inter', sans-serif; padding: 40px; color: #111827; line-height: 1.6; font-size: 16px; } h2 { color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; } blockquote { border-left: 3px solid #6366f1; padding-left: 12px; margin: 8px 0; font-family: Georgia, serif; font-style: italic; background: #f8fafc; } img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; }</style></head><body>${masterHTML}</body></html>`);
+            const passageRef = document.getElementById('passageRefInput').value.trim() || 'Thought Flow Passage';
+            
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            let flowHTML = '';
+
+            blocks.forEach(block => {
+                const text = block.textContent.trim();
+                const styleAttr = block.getAttribute('style') || '';
+                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                let marginLeftRem = marginMatch ? parseFloat(marginMatch[1]) : 0;
+                
+                if (block.classList.contains('parallel-indent')) {
+                    marginLeftRem = Math.max(marginLeftRem, 5.0);
+                }
+
+                const isAttachedDown = block.classList.contains('attach-down');
+                const relation = block.dataset.relation ? ` <span style="font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">[${block.dataset.relation}]</span>` : '';
+                const verseNum = block.dataset.verseNum ? `<span style="font-size: 11px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 2px 5px; border-radius: 4px; margin-right: 6px;">v${block.dataset.verseNum}</span>` : '';
+
+                let borderLeftStyle = '';
+                if (marginLeftRem > 0 || isAttachedDown) {
+                    const styleType = isAttachedDown ? 'dashed' : 'solid';
+                    borderLeftStyle = `border-left: 2.5px ${styleType} #6366f1; padding-left: 1rem;`;
+                }
+
+                flowHTML += `
+                    <div style="margin-left: ${marginLeftRem}rem; margin-bottom: 0.8rem; position: relative; ${borderLeftStyle}">
+                        ${verseNum}${text}${relation}
+                    </div>
+                `;
+            });
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>LexFlow - ${passageRef}</title>
+                    <style>
+                        body { font-family: Georgia, serif; padding: 50px; color: #111827; line-height: 1.7; font-size: 15px; }
+                        h1 { font-family: 'Inter', sans-serif; font-size: 20px; color: #1f2937; margin-bottom: 4px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+                        .subtitle { font-family: 'Inter', sans-serif; font-size: 12px; color: #6b7280; margin-bottom: 30px; }
+                        @media print {
+                            body { padding: 20px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${passageRef} &bull; Thought Flow Analysis</h1>
+                    <div class="subtitle">Generated with LexFlow Exegetical Workspace</div>
+                    <div style="margin-top: 20px;">
+                        ${flowHTML || '<p style="font-style: italic; color: #9ca3af;">No thought flow content found.</p>'}
+                    </div>
+                </body>
+                </html>
+            `);
             printWindow.document.close();
             printWindow.focus();
-            setTimeout(() => printWindow.print(), 250);
+            setTimeout(() => { printWindow.print(); }, 300);
         }
 
         function handleTextSelection() {
@@ -1500,11 +1289,11 @@
 
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            const customRegistry = getCustomRelationsRegistry();
             const refInfo = parseCurrentRefRange();
             const isOt = isOldTestamentPassage();
+            const totalVerses = refInfo.endVerse - refInfo.startVerse + 1;
 
-            blocks.forEach((block) => {
+            blocks.forEach((block, index) => {
                 const text = block.textContent.trim();
                 const hasText = text.length > 0;
 
@@ -1523,7 +1312,12 @@
                     if (level > 0) block.classList.add('has-indent');
                     else block.classList.remove('has-indent');
 
-                    if (!block.dataset.verseNum) block.dataset.verseNum = refInfo.startVerse || 1;
+                    // Automatically coordinate verse numbers across the passage range if missing
+                    if (!block.dataset.verseNum) {
+                        let calcV = refInfo.startVerse + Math.floor((index / Math.max(1, blocks.length)) * totalVerses);
+                        if (calcV > refInfo.endVerse) calcV = refInfo.endVerse;
+                        block.dataset.verseNum = calcV;
+                    }
 
                     const rect = block.getBoundingClientRect();
                     const topOffset = rect.top - wrapperRect.top;
@@ -1599,10 +1393,11 @@
                     verseBadge.textContent = `v${block.dataset.verseNum}`;
                     verseBadge.onclick = () => {
                         const newV = prompt('Enter verse number:', block.dataset.verseNum);
-                        if (newV && !isNaN(newV)) {
+                        if (newV !== null && !isNaN(newV) && newV.trim() !== '') {
                             block.dataset.verseNum = parseInt(newV, 10);
                             verseBadge.textContent = `v${block.dataset.verseNum}`;
                             saveActiveProjectData();
+                            syncOverlayControls();
                         }
                     };
                     group.appendChild(verseBadge);
@@ -1616,14 +1411,6 @@
                         const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
                         if (isOt) {
                             openHebrewBibleHubInterlinear(targetVerse);
-                        } else {
-                            if (activeLightboxBlock === block) {
-                                closeInterlinearLightbox();
-                            } else {
-                                activeLightboxBlock = block;
-                                syncOverlayControls();
-                                await openInterlinearLightbox(block, refInfo, targetVerse);
-                            }
                         }
                     };
 
@@ -1638,95 +1425,6 @@
                     overlay.appendChild(group);
                 }
             });
-        }
-
-        function getClauseFilteredTokens(block, verseTokens) {
-            if (!verseTokens || verseTokens.length === 0) return [];
-            return verseTokens;
-        }
-
-        async function openInterlinearLightbox(block, refInfo, targetVerseNum) {
-            const lightbox = document.getElementById('interlinearLightbox');
-            const body = document.getElementById('interlinearLightboxBody');
-            if (!lightbox || !body) return;
-
-            lightbox.classList.remove('hidden');
-            body.innerHTML = `<div class="p-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading SRGNT Greek Data...</div>`;
-
-            const data = await fetchSRGNTDataset();
-            if (!data || !data.index) {
-                body.innerHTML = `<div class="p-6 text-amber-600">SRGNT Greek dataset offline.</div>`;
-                return;
-            }
-
-            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${targetVerseNum.toString().padStart(3, '0')}`;
-            const verseTokens = data.index[verseCode];
-
-            if (!verseTokens || verseTokens.length === 0) {
-                body.innerHTML = `<div class="p-6 text-amber-600 font-medium">⚠️ No Greek tokens found for verse ${targetVerseNum}.</div>`;
-                return;
-            }
-
-            const tokens = verseTokens;
-            if (block.dataset.activeGkIndex === undefined) block.dataset.activeGkIndex = 0;
-            let idx = parseInt(block.dataset.activeGkIndex, 10);
-            if (idx >= tokens.length) idx = 0;
-
-            const tok = tokens[idx];
-            const breakdown = explainGrammarInPlainEnglish(tok);
-
-            body.innerHTML = `
-                <div class="interlinear-standalone-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(186, 230, 253, 0.6); padding-bottom: 8px; margin-bottom: 12px; font-size: 13px;">
-                        <span style="font-weight: bold; color: #0369a1;"><i class="fa-solid fa-language mr-1"></i> Greek Interlinear (v${targetVerseNum})</span>
-                        <div>
-                            <button onclick="navigateLightboxWordIndex(-1)" style="padding: 4px 10px; background: #fff; border: 1px solid #bae6fd; border-radius: 4px;">Prev</button>
-                            <button onclick="navigateLightboxWordIndex(1)" style="padding: 4px 10px; background: #fff; border: 1px solid #bae6fd; border-radius: 4px;">Next</button>
-                        </div>
-                    </div>
-                    <div style="background: #fff; padding: 14px; border-radius: 8px; border: 1px solid #bae6fd;">
-                        <div style="font-size: 24px; font-weight: bold; margin-bottom: 6px;">${tok.word} <span style="font-size: 16px; color: #0284c7;">"${breakdown.gloss}"</span></div>
-                        <div style="font-size: 12px; color: #4b5563; margin-bottom: 10px;">Lemma: ${tok.lemma} • Strong's G${tok.esn} • ${tok.morph}</div>
-                        <p style="font-size: 13px; color: #334155;">${breakdown.plainText} ${breakdown.significance}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        function closeInterlinearLightbox() {
-            const lightbox = document.getElementById('interlinearLightbox');
-            if (lightbox) lightbox.classList.add('hidden');
-            activeLightboxBlock = null;
-            syncOverlayControls();
-        }
-
-        function navigateLightboxWordIndex(direction) {
-            if (!activeLightboxBlock) return;
-            const refInfo = parseCurrentRefRange();
-            const targetVerseNum = parseInt(activeLightboxBlock.dataset.verseNum, 10) || refInfo.startVerse || 1;
-            const verseCode = `${refInfo.book.toString().padStart(2, '0')}${refInfo.chapter.toString().padStart(3, '0')}${targetVerseNum.toString().padStart(3, '0')}`;
-            if (srgntCache && srgntCache.index && srgntCache.index[verseCode]) {
-                const tokens = srgntCache.index[verseCode];
-                let idx = parseInt(activeLightboxBlock.dataset.activeGkIndex || '0', 10);
-                idx += direction;
-                if (idx < 0) idx = tokens.length - 1;
-                if (idx >= tokens.length) idx = 0;
-                activeLightboxBlock.dataset.activeGkIndex = idx;
-                openInterlinearLightbox(activeLightboxBlock, refInfo, targetVerseNum);
-            }
-        }
-
-        function openSrgntWebModal() {
-            const modal = document.getElementById('srgntWebModal');
-            const iframe = document.getElementById('srgntIframe');
-            if (!modal || !iframe) return;
-            if (iframe.src === 'about:blank') iframe.src = 'https://greekcntr.org/collation/';
-            modal.classList.remove('hidden');
-        }
-
-        function closeSrgntWebModal() {
-            const modal = document.getElementById('srgntWebModal');
-            if (modal) modal.classList.add('hidden');
         }
 
         function toggleFocusMode() {
