@@ -38,43 +38,29 @@
         html.dark body { background-color: #0b0f19; color: #f3f4f6; }
         html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
         html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
         [contenteditable]:focus { outline: none; }
 
-        #editorWrapper { position: relative; width: 100%; }
+        #editorWrapper { position: relative; width: 100%; min-height: 50vh; }
+        #printDocumentTitle { display: none; }
 
-        /* Document Flow Indentation Lines */
+        /* Expanded Document Flow Paragraph Rules for Deep Indents */
         #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
             margin-top: 0 !important;
             margin-bottom: 0 !important;
             padding-top: 0.35rem;
             padding-bottom: 0.35rem;
-            padding-right: 340px;
+            padding-right: 220px;
+            padding-left: 3rem;
             word-break: break-word;
             line-height: 1.8;
             font-size: 1.15rem;
             transition: margin-left 0.15s ease;
-        }
-
-        #flowEditor .has-indent {
-            position: relative;
-            padding-left: 1.2rem !important;
-        }
-
-        #flowEditor .has-indent::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: -1px;
-            bottom: -1px;
-            width: 2.5px;
-            background-color: #6366f1;
-            z-index: 2;
         }
 
         @media (max-width: 1024px) {
@@ -92,37 +78,10 @@
         }
 
         /* Multi-Tier Adjustable Parallel Indents */
-        #flowEditor .parallel-indent, #flowEditor .parallel-indent-1 { padding-left: 5rem !important; }
-        #flowEditor .parallel-indent-2 { padding-left: 8rem !important; }
-        #flowEditor .parallel-indent-3 { padding-left: 11rem !important; }
-        #flowEditor .parallel-indent-4 { padding-left: 14rem !important; }
-        #flowEditor [class*="parallel-indent"]::before { content: ''; display: none; }
-
-        #flowEditor .attach-down {
-            position: relative;
-            padding-left: 1.2rem !important;
-        }
-        #flowEditor .attach-down::before {
-            content: '';
-            position: absolute;
-            left: 0.4rem;
-            top: 0;
-            bottom: -0.2rem;
-            width: 2px;
-            border-left: 2px dashed #6366f1;
-            z-index: 5;
-        }
-        #flowEditor .attach-down::after {
-            content: '↓';
-            position: absolute;
-            left: 0.05rem;
-            bottom: -0.8rem;
-            font-size: 14px;
-            font-weight: 700;
-            color: #6366f1;
-            z-index: 6;
-            background: transparent;
-        }
+        #flowEditor .parallel-indent, #flowEditor .parallel-indent-1 { padding-left: 7rem !important; }
+        #flowEditor .parallel-indent-2 { padding-left: 10rem !important; }
+        #flowEditor .parallel-indent-3 { padding-left: 13rem !important; }
+        #flowEditor .parallel-indent-4 { padding-left: 16rem !important; }
 
         #controlsOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
 
@@ -131,10 +90,97 @@
             right: 0;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             pointer-events: auto;
             user-select: none;
             z-index: 10;
+        }
+
+        /* Fully Movable Floating Canvas Shapes Overlay */
+        #shapesLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .floating-shape {
+            position: absolute;
+            cursor: move;
+            pointer-events: auto;
+            box-sizing: border-box;
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+            background: rgba(99, 102, 241, 0.02);
+            touch-action: none;
+        }
+        .floating-shape:hover, .floating-shape.selected {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+        }
+        .floating-shape svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            pointer-events: none;
+        }
+        .shape-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            display: none;
+            z-index: 30;
+        }
+        .floating-shape:hover .shape-handle, .floating-shape.selected .shape-handle { display: block; }
+        .handle-top { top: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .handle-bottom { bottom: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .handle-right { top: 50%; right: -4px; transform: translateY(-50%); cursor: ew-resize; }
+
+        /* Floating Mini Shapes Palette Widget */
+        #floatingMiniPalette {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 250;
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+        html:not(.dark) #floatingMiniPalette {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #e2e8f0;
+        }
+        .mini-shape-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .mini-shape-btn:hover {
+            background: #6366f1;
+            color: #ffffff;
         }
 
         /* Focus Mode Rules */
@@ -162,30 +208,6 @@
             border-color: #f59e0b;
         }
 
-        .gk-toggle-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: #0369a1;
-            background: #e0f2fe;
-            border: 1px solid #0284c7;
-            cursor: pointer;
-        }
-        html.dark .gk-toggle-btn {
-            color: #bae6fd;
-            background: #0c4a6e;
-            border-color: #38bdf8;
-        }
-        .gk-toggle-btn.active {
-            background: #0284c7;
-            color: #ffffff;
-        }
-
         .note-drawer-btn {
             display: inline-flex;
             align-items: center;
@@ -209,6 +231,11 @@
             background: #d1fae5;
             border-color: #10b981;
             font-weight: bold;
+        }
+        html.dark .note-drawer-btn.has-notes {
+            color: #34d399;
+            background: #064e3b;
+            border-color: #059669;
         }
 
         #highlightToolbar {
@@ -239,6 +266,58 @@
         html.dark .builtin-drawer { background: #111827; border-left: 1px solid #1f2937; color: #f3f4f6; }
         .builtin-drawer.open { transform: translateX(0); }
         .note-editor-area img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+
+        /* CLEAN PRINT & PDF STYLING */
+        @media print {
+            body, html {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                overflow: visible !important;
+                height: auto !important;
+            }
+            header, #projectBar, #floatingMiniPalette, .builtin-drawer, #contextMenu, #highlightToolbar, #controlsOverlay, #focusBanner, .doc-action-bar, #bibleHubPopupWindow, #cntrPopupWindow, #kudosPopupWindow {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                overflow: visible !important;
+            }
+            .max-w-7xl {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #printDocumentTitle {
+                display: block !important;
+                font-size: 1.5rem;
+                font-weight: 700;
+                font-family: 'Inter', sans-serif;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 2px solid #e2e8f0;
+                color: #0f172a;
+            }
+            #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
+                padding-right: 0 !important;
+                color: #0f172a !important;
+            }
+            .floating-shape {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            .shape-handle {
+                display: none !important;
+            }
+            .floating-shape svg path {
+                stroke: #4f46e5 !important;
+            }
+        }
     </style>
 </head>
 
@@ -254,17 +333,30 @@
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
                 <i class="fa-solid fa-book-bookmark text-indigo-500 text-xs"></i>
-                <input type="text" id="passageRefInput" value="Romans 1:1-7" onchange="updatePassageContext()" class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-32">
-                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 text-white font-medium px-2.5 py-1 rounded">Load</button>
+                <input type="text" id="passageRefInput" value="" placeholder="e.g. 1 Peter 1:1" onchange="updatePassageContext()" class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36">
+                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 text-white font-medium px-2.5 py-1 rounded">Set</button>
             </div>
 
-            <button onclick="toggleLxxDrawer()" class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-scroll text-emerald-500"></i>
-                <span id="lxxBtnLabel">Parallel Viewer</span>
+            <!-- Two Separate Buttons: Bible Hub & CNTR Collation -->
+            <button onclick="openBibleHubModal()" class="bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-book-bible text-sky-500"></i>
+                <span>Bible Hub Interlinear</span>
             </button>
-            <button onclick="toggleSyntaxTreeDrawer()" class="bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-semibold px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-sitemap text-purple-500"></i>
-                <span>Discourse Tree</span>
+
+            <button onclick="openCntrModal()" class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-scroll text-emerald-500"></i>
+                <span>CNTR Collation</span>
+            </button>
+
+            <!-- Kudos Button -->
+            <button onclick="openKudosModal()" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-heart text-amber-500"></i>
+                <span>Kudos</span>
+            </button>
+
+            <button onclick="toggleShapesDrawer()" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-shapes text-indigo-500"></i>
+                <span>Shapes</span>
             </button>
             <button onclick="toggleMasterNoteDrawer()" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-book-open text-amber-500"></i>
@@ -284,31 +376,28 @@
         </div>
     </header>
 
-    <!-- Project Bar -->
-    <div class="max-w-5xl w-full mx-auto my-2 px-4 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0">
+    <!-- Expanded Project Bar -->
+    <div id="projectBar" class="max-w-7xl w-full mx-auto my-2 px-4 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0">
         <div class="flex items-center space-x-2">
-            <span class="font-semibold text-gray-400">Project:</span>
-            <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
-                <option value="lexflow_default">Default Scratchpad</option>
+            <span class="font-semibold text-gray-400">Saved Projects:</span>
+            <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-3 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
+                <option value="lexflow_default">Default Scratchpad (Clean Slate)</option>
             </select>
-            <button onclick="saveCurrentAsNewProject()" class="px-2.5 py-1 bg-emerald-600 text-white rounded font-medium">+ Save As New</button>
-            <button onclick="exportAllProjects()" class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded">Export JSON</button>
-            <label class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded cursor-pointer">
-                Import JSON <input type="file" accept=".json" class="hidden" onchange="importAllProjects(event)">
-            </label>
+            <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 text-white rounded font-semibold shadow-sm">+ New Project</button>
+            <button onclick="deleteCurrentProject()" class="px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded font-medium" title="Delete current project">Delete</button>
         </div>
         <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
     </div>
 
-    <!-- Workspace Area -->
+    <!-- Workspace Area (Expanded to max-w-7xl) -->
     <main class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 bg-gray-50 dark:bg-zinc-950 flex flex-col custom-scrollbar">
-        <div class="max-w-5xl w-full mx-auto my-2 p-8 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col">
+        <div class="max-w-7xl w-full mx-auto my-2 p-8 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col">
             <div id="focusBanner" class="hidden mb-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300">
                 <span><i class="fa-solid fa-bullseye mr-1.5"></i> <strong>Focus Mode Active</strong> (Right-click any clause or click its line to isolate)</span>
                 <button onclick="toggleFocusMode()" class="px-2.5 py-1 bg-indigo-600 text-white font-medium rounded">Exit Focus</button>
             </div>
 
-            <div class="flex justify-between pb-4 mb-4 border-b border-gray-200 dark:border-zinc-800 text-xs">
+            <div class="doc-action-bar flex justify-between pb-4 mb-4 border-b border-gray-200 dark:border-zinc-800 text-xs">
                 <div class="flex items-center space-x-3">
                     <span class="font-bold text-gray-800 dark:text-gray-200">Thought Flow Document</span>
                     <button onclick="autoAssignVersesSmartly()" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded font-semibold border border-indigo-200 dark:border-indigo-800"><i class="fa-solid fa-bolt mr-1"></i> Auto Verses</button>
@@ -316,17 +405,22 @@
                 <div class="flex items-center space-x-2">
                     <button onclick="indentLine()" class="px-2.5 py-1 bg-gray-100 dark:bg-zinc-800 rounded font-medium">Indent (Tab)</button>
                     <button onclick="outdentLine()" class="px-2.5 py-1 bg-gray-100 dark:bg-zinc-800 rounded font-medium">Outdent (Shift+Tab)</button>
-                    <button onclick="toggleAttachDown()" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded font-medium">↓ Attach</button>
                     <button onclick="clearTextFlow()" class="text-red-500 font-medium ml-2">Clear</button>
                 </div>
             </div>
 
+            <!-- Print Header Title -->
+            <div id="printDocumentTitle"></div>
+
             <div id="editorWrapper">
+                <!-- Text Flow Editor -->
                 <div id="flowEditor" contenteditable="true" 
-                     class="outline-none font-serif text-xl leading-relaxed text-gray-800 dark:text-gray-100 space-y-0"
+                     class="outline-none font-serif text-xl leading-relaxed text-gray-800 dark:text-gray-100 space-y-0 relative z-10"
                      style="min-height: 50vh;"
                      placeholder="Paste your passage here...">
                 </div>
+                <!-- Interactive Shapes Overlay Layer -->
+                <div id="shapesLayer"></div>
                 <div id="controlsOverlay"></div>
 
                 <!-- Floating Selection Toolbar -->
@@ -347,10 +441,20 @@
         </div>
     </main>
 
+    <!-- FLOATING MINI PALETTE WIDGET -->
+    <div id="floatingMiniPalette">
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-tl', 'Top-Left Elbow')" title="Top-Left Elbow"><i class="fa-solid fa-arrow-turn-down text-xs"></i></button>
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-tr', 'Top-Right Elbow')" title="Top-Right Elbow"><i class="fa-solid fa-arrow-turn-down text-xs scale-x-[-1]"></i></button>
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-bl', 'Bottom-Left Elbow')" title="Bottom-Left Elbow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 20 H8 V4"/></svg></button>
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('spine', 'Vertical Spine')" title="Vertical Spine"><i class="fa-solid fa-grip-lines-vertical text-xs"></i></button>
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('line-horiz', 'Horizontal Line')" title="Horizontal Line"><i class="fa-solid fa-grip-lines text-xs"></i></button>
+        <button class="mini-shape-btn" onclick="spawnFloatingShape('arrow-down', 'Down Arrow')" title="Down Arrow"><i class="fa-solid fa-arrow-down text-xs"></i></button>
+        <button class="mini-shape-btn" onclick="toggleFloatingMiniPalette()" title="Close Mini Palette"><i class="fa-solid fa-xmark text-xs text-red-400"></i></button>
+    </div>
+
     <!-- RIGHT-CLICK CONTEXT MENU -->
     <div id="contextMenu">
         <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleFocusBranch()"><i class="fa-solid fa-bullseye text-xs"></i> Toggle Focus on Branch</div>
-        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()"><i class="fa-solid fa-arrow-down-long text-xs"></i> Attach to Clause Below</div>
         <div class="ctx-item text-emerald-600 dark:text-emerald-400" onclick="ctxOpenNoteDrawer()"><i class="fa-solid fa-pen-to-square text-xs"></i> Exegetical Notes</div>
         <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
         <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxEllipsisSelection()"><i class="fa-solid fa-ellipsis text-xs"></i> Ellipsis & Caret (...text^)</div>
@@ -362,51 +466,147 @@
         <div class="ctx-item text-red-500" onclick="ctxDeleteLine()"><i class="fa-solid fa-trash-can text-xs"></i> Delete Line</div>
     </div>
 
-    <!-- UNIVERSAL GREEK / HEBREW INTERLINEAR LIGHTBOX MODAL -->
-    <div id="interlinearLightbox" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <button onclick="closeInterlinearLightbox()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-2 z-10 transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div id="interlinearLightboxBody"></div>
+    <!-- BIBLE HUB MODAL WINDOW -->
+    <div id="bibleHubPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="w-full max-w-6xl bg-[#fdfbf7] dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-300 dark:border-zinc-800 flex flex-col relative h-[92vh] overflow-hidden">
+            <div class="px-5 py-3 bg-sky-100 dark:bg-zinc-900 border-b border-sky-200 dark:border-zinc-800 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-gray-900 dark:text-white text-sm">Bible Hub Interlinear Viewer</span>
+                    <span id="bibleHubHeaderPassageBadge" class="px-2.5 py-0.5 bg-white dark:bg-zinc-800 rounded font-mono text-xs font-bold text-sky-800 dark:text-sky-400 border border-sky-300 dark:border-zinc-700">1 Peter 1:1</span>
+                </div>
+                <button onclick="closeBibleHubModal()" class="text-gray-600 hover:text-red-600 dark:text-gray-300 text-lg font-bold px-2 py-1 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="px-5 py-2.5 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+                <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                    <span class="font-semibold text-gray-500">Passage:</span>
+                    <select id="bhBookSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none">
+                        <option value="Matthew">Matthew</option><option value="Mark">Mark</option><option value="Luke">Luke</option><option value="John">John</option><option value="Acts">Acts</option><option value="Romans">Romans</option><option value="1 Corinthians">1 Corinthians</option><option value="2 Corinthians">2 Corinthians</option><option value="Galatians">Galatians</option><option value="Ephesians">Ephesians</option><option value="Philippians">Philippians</option><option value="Colossians">Colossians</option><option value="1 Thessalonians">1 Thessalonians</option><option value="2 Thessalonians">2 Thessalonians</option><option value="1 Timothy">1 Timothy</option><option value="2 Timothy">2 Timothy</option><option value="Titus">Titus</option><option value="Philemon">Philemon</option><option value="Hebrews">Hebrews</option><option value="James">James</option><option value="1 Peter" selected>1 Peter</option><option value="2 Peter">2 Peter</option><option value="1 John">1 John</option><option value="2 John">2 John</option><option value="3 John">3 John</option><option value="Jude">Jude</option><option value="Revelation">Revelation</option>
+                    </select>
+                    <select id="bhChapSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option>
+                    </select>
+                    <span class="font-bold">:</span>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="stepBhVerse(-1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Previous Verse"><i class="fa-solid fa-chevron-left"></i></button>
+                        <select id="bhVerseSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option>
+                        </select>
+                        <button onclick="stepBhVerse(1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Next Verse"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a id="bibleHubExternalLink" href="https://biblehub.com/interlinear/1_peter/1-1.htm" target="_blank" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded shadow-sm flex items-center space-x-1">
+                        <span>Open in New Tab</span> <i class="fa-solid fa-external-link text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="flex-1 bg-white dark:bg-zinc-950 relative overflow-hidden flex flex-col">
+                <iframe id="bibleHubIframe" src="" class="w-full flex-1 border-0"></iframe>
+            </div>
         </div>
     </div>
 
-    <!-- BUILT-IN PARALLEL VIEWER DRAWER -->
-    <div id="lxxDrawer" class="builtin-drawer">
+    <!-- CNTR COLLATION MODAL WINDOW -->
+    <div id="cntrPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="w-full max-w-6xl bg-[#fdfbf7] dark:bg-zinc-900 rounded-2xl shadow-2xl border border-emerald-300 dark:border-zinc-800 flex flex-col relative h-[92vh] overflow-hidden">
+            <div class="px-5 py-3 bg-emerald-100 dark:bg-zinc-900 border-b border-emerald-200 dark:border-zinc-800 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-gray-900 dark:text-white text-sm"><span class="text-emerald-700">CNTR</span> Center for New Testament Restoration - Collation Page</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="https://greekcntr.org/collation/" target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded text-xs flex items-center space-x-1">
+                        <span>Open CNTR in New Tab</span> <i class="fa-solid fa-external-link text-[10px]"></i>
+                    </a>
+                    <button onclick="closeCntrModal()" class="text-gray-600 hover:text-red-600 dark:text-gray-300 text-lg font-bold px-2 py-1 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 bg-white dark:bg-zinc-950 relative overflow-hidden flex flex-col">
+                <iframe src="https://greekcntr.org/collation/" class="w-full flex-1 border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- KUDOS & ATTRIBUTIONS MODAL WINDOW -->
+    <div id="kudosPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-amber-300 dark:border-zinc-800 flex flex-col relative overflow-hidden p-6">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-zinc-800">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-heart text-amber-500 text-lg"></i>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-base">Scholarly Attribution & Kudos</h3>
+                </div>
+                <button onclick="closeKudosModal()" class="text-gray-400 hover:text-gray-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="py-6 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p>
+                    LexFlow is deeply grateful to the following foundational projects and institutions for making their scholarly resources, manuscript witness data, and interlinear tools publicly accessible for biblical scholarship and exegetical study:
+                </p>
+                <div class="p-4 bg-amber-50 dark:bg-zinc-800/60 rounded-xl border border-amber-200 dark:border-zinc-700 space-y-2">
+                    <div class="font-bold text-amber-900 dark:text-amber-400"><i class="fa-solid fa-scroll mr-1.5"></i> Center for New Testament Restoration (CNTR / SRGNT)</div>
+                    <p class="text-xs">Providing comprehensive Greek New Testament collation matrices, manuscript witness metrics, and textual restoration data.</p>
+                </div>
+                <div class="p-4 bg-sky-50 dark:bg-zinc-800/60 rounded-xl border border-sky-200 dark:border-zinc-700 space-y-2">
+                    <div class="font-bold text-sky-900 dark:text-sky-400"><i class="fa-solid fa-book-bible mr-1.5"></i> Bible Hub</div>
+                    <p class="text-xs">Providing exceptional verse-by-verse Greek interlinear tools, grammatical parsing tags, Strong's concordance numbers, and cross-reference resources.</p>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-gray-200 dark:border-zinc-800 flex justify-end">
+                <button onclick="closeKudosModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING SHAPES PALETTE DRAWER -->
+    <div id="shapesDrawer" class="builtin-drawer">
         <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900">
             <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-scroll text-emerald-600"></i>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white" id="lxxDrawerTitle">Original Language Parallel Viewer</h3>
+                <i class="fa-solid fa-shapes text-indigo-600"></i>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Shapes Palette</h3>
             </div>
-            <button onclick="toggleLxxDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="toggleShapesDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar space-y-4 text-sm" id="lxxContentArea">
-            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800 text-xs font-sans">
-                <strong>Parallel Study:</strong> Access original language interlinears instantly for any Bible passage.
-            </div>
-            <div class="p-3 bg-gray-50 dark:bg-zinc-800/60 rounded border border-gray-200 dark:border-zinc-700" id="lxxDynamicPreview">
-                <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">Passage Reference</div>
-                <div class="font-serif italic text-gray-800 dark:text-gray-200">Click any interlinear button (Gk / Heb) on your text flow to inspect specific verses.</div>
-            </div>
+        <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 flex items-center justify-between text-xs">
+            <span>Click any connector shape below to spawn it. Use arrow keys to fine-tune position, and press <strong>Delete</strong> when selected to remove!</span>
+            <button onclick="toggleFloatingMiniPalette()" class="px-2.5 py-1 bg-indigo-600 text-white font-medium rounded shadow hover:bg-indigo-700 transition shrink-0 ml-2">Dock as Mini-Palette</button>
         </div>
-    </div>
+        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="spawnFloatingShape('elbow-tl', 'Top-Left Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M20 4 H8 V20"/></svg>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Top-Left Elbow</span>
+                </button>
+                <button onclick="spawnFloatingShape('elbow-tr', 'Top-Right Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M4 4 H16 V20"/></svg>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Top-Right Elbow</span>
+                </button>
+                <button onclick="spawnFloatingShape('elbow-bl', 'Bottom-Left Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M20 20 H8 V4"/></svg>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Bottom-Left Elbow</span>
+                </button>
+                <button onclick="spawnFloatingShape('spine', 'Vertical Spine / Line')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 2 V22"/></svg>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Vertical Spine</span>
+                </button>
+                <button onclick="spawnFloatingShape('line-horiz', 'Horizontal Line')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition col-span-2">
+                    <svg width="40" height="24" viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M2 12 H38"/></svg>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Horizontal Line</span>
+                </button>
+            </div>
 
-    <!-- FULLSCREEN EXEGETICAL DISCOURSE TREE MODAL (TRUE NESTED TREE) -->
-    <div id="syntaxTreeDrawer" class="fixed inset-0 z-[350] bg-white dark:bg-zinc-900 hidden flex-col">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900 shrink-0">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-sitemap text-purple-600 text-lg"></i>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">Exegetical Discourse Tree Viewer (Nested Tree)</h3>
-            </div>
-            <button onclick="toggleSyntaxTreeDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-2 transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="flex-1 p-8 overflow-y-auto custom-scrollbar max-w-6xl w-full mx-auto space-y-3 font-sans text-xs" id="syntaxTreeContentArea">
-            <div class="p-4 bg-purple-50 dark:bg-purple-950/35 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex items-center justify-between">
-                <div>
-                    <strong>Nested Discourse Tree:</strong> Continuous vertical spine borders with clean horizontal connector ticks. Click any relation badge to edit or set a Custom Relation.
+            <div class="pt-2 border-t border-gray-200 dark:border-zinc-800">
+                <div class="font-bold text-gray-600 dark:text-gray-400 mb-2">Downward Attachment Arrows</div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="spawnFloatingShape('arrow-down', 'Down Arrow Pointer')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 2 V18 M6 12 L12 20 L18 12"/></svg>
+                        <span class="font-semibold text-gray-700 dark:text-gray-200">Down Arrow</span>
+                    </button>
+                    <button onclick="spawnFloatingShape('arrow-up', 'Up Arrow Pointer')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 22 V6 M6 12 L12 4 L18 12"/></svg>
+                        <span class="font-semibold text-gray-700 dark:text-gray-200">Up Arrow</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -452,14 +652,18 @@
         let currentProjectKey = localStorage.getItem('lexflow_activeProjectKey') || 'lexflow_default';
         let rightClickedBlock = null;
         let activeNoteBlock = null;
-        let activeLightboxBlock = null;
         let isFocusModeActive = false;
+        let selectedFloatingShape = null;
         
         const editor = document.getElementById('flowEditor');
+        const shapesLayer = document.getElementById('shapesLayer');
         const overlay = document.getElementById('controlsOverlay');
         const projectSelect = document.getElementById('projectSelect');
         const contextMenu = document.getElementById('contextMenu');
         const highlightToolbar = document.getElementById('highlightToolbar');
+        const workspaceMain = document.querySelector('main');
+        const floatingMiniPalette = document.getElementById('floatingMiniPalette');
+        const clauseNoteEditor = document.getElementById('clauseNoteEditor');
 
         const otBooks = [
             'genesis', 'gen', 'exodus', 'exod', 'leviticus', 'lev', 'numbers', 'num', 
@@ -473,74 +677,12 @@
             'hab', 'zephaniah', 'zeph', 'haggai', 'hag', 'zechariah', 'zech', 'malachi', 'mal'
         ];
 
-        /* UNIVERSAL GREEK & HEBREW LEXICON DICTIONARY */
-        const greekDictionary = {
-            'paul': { g: 'G3972', greek: 'Παῦλος', trans: 'Paulos', pos: 'Noun', gloss: 'Paul' },
-            'servant': { g: 'G1401', greek: 'δοῦλος', trans: 'doulos', pos: 'Noun', gloss: 'servant, bondservant' },
-            'christ': { g: 'G5547', greek: 'Χριστός', trans: 'Christos', pos: 'Noun', gloss: 'Christ, Messiah' },
-            'jesus': { g: 'G2424', greek: 'Ἰησοῦς', trans: 'Iēsous', pos: 'Noun', gloss: 'Jesus' },
-            'god': { g: 'G2316', greek: 'θεός', trans: 'theos', pos: 'Noun', gloss: 'God' },
-            'lord': { g: 'G2962', greek: 'κύριος', trans: 'kyrios', pos: 'Noun', gloss: 'Lord, master' },
-            'spirit': { g: 'G4151', greek: 'πνεῦμα', trans: 'pneuma', pos: 'Noun', gloss: 'spirit, wind, breath' },
-            'faith': { g: 'G4102', greek: 'πίστις', trans: 'pistis', pos: 'Noun', gloss: 'faith, belief, trust' },
-            'grace': { g: 'G5485', greek: 'χάρις', trans: 'charis', pos: 'Noun', gloss: 'grace, favor' },
-            'peace': { g: 'G1515', greek: 'εἰρήνη', trans: 'eirēnē', pos: 'Noun', gloss: 'peace' },
-            'love': { g: 'G26', greek: 'ἀγάπη', trans: 'agapē', pos: 'Noun', gloss: 'love, affection' },
-            'word': { g: 'G3056', greek: 'λόγος', trans: 'logos', pos: 'Noun', gloss: 'word, statement' },
-            'gospel': { g: 'G2098', greek: 'εὐαγγέλιον', trans: 'euangelion', pos: 'Noun', gloss: 'gospel, good news' },
-            'power': { g: 'G1411', greek: 'δύναμις', trans: 'dynamis', pos: 'Noun', gloss: 'power, miracle' },
-            'righteousness': { g: 'G1343', greek: 'δικαιοσύνη', trans: 'dikaiosynē', pos: 'Noun', gloss: 'righteousness' },
-            'saved': { g: 'G4982', greek: 'σῴζω', trans: 'sōzō', pos: 'Verb', gloss: 'to save, rescue' },
-            'life': { g: 'G2222', greek: 'ζωή', trans: 'zōē', pos: 'Noun', gloss: 'life' },
-            'truth': { g: 'G225', greek: 'ἀλήθεια', trans: 'alētheia', pos: 'Noun', gloss: 'truth' },
-            'father': { g: 'G3962', greek: 'πατήρ', trans: 'patēr', pos: 'Noun', gloss: 'father' },
-            'son': { g: 'G5207', greek: 'υἱός', trans: 'huios', pos: 'Noun', gloss: 'son' },
-            'glory': { g: 'G1391', greek: 'δόξα', trans: 'doxa', pos: 'Noun', gloss: 'glory, majesty' },
-            'law': { g: 'G3551', greek: 'νόμος', trans: 'nomos', pos: 'Noun', gloss: 'law, principle' },
-            'sin': { g: 'G266', greek: 'ἁμαρτία', trans: 'hamartia', pos: 'Noun', gloss: 'sin' },
-            'death': { g: 'G2288', greek: 'θάνατος', trans: 'thanatos', pos: 'Noun', gloss: 'death' },
-            'body': { g: 'G4983', greek: 'σῶμα', trans: 'sōma', pos: 'Noun', gloss: 'body' },
-            'heart': { g: 'G2588', greek: 'καρδία', trans: 'kardia', pos: 'Noun', gloss: 'heart' },
-            'hope': { g: 'G1680', greek: 'ἐλπίς', trans: 'elpis', pos: 'Noun', gloss: 'hope' },
-            'call': { g: 'G2564', greek: 'καλέω', trans: 'kaleō', pos: 'Verb', gloss: 'to call' },
-            'know': { g: 'G1097', greek: 'γινώσκω', trans: 'ginōskō', pos: 'Verb', gloss: 'to know' },
-            'believe': { g: 'G4100', greek: 'πιστεύω', trans: 'pisteuō', pos: 'Verb', gloss: 'to believe' },
-            'all': { g: 'G3956', greek: 'πᾶς', trans: 'pas', pos: 'Adjective', gloss: 'all, every' },
-            'man': { g: 'G444', greek: 'ἄνθρωπος', trans: 'anthrōpos', pos: 'Noun', gloss: 'man, human' },
-            'long ago': { g: 'G3819', greek: 'πάλαι', trans: 'palai', pos: 'Adverb', gloss: 'long ago' },
-            'prophets': { g: 'G4396', greek: 'προφήτης', trans: 'prophētes', pos: 'Noun', gloss: 'prophet' }
-        };
-
-        const hebrewDictionary = {
-            'god': { h: 'H430', hebrew: 'אֱלֹהִים', trans: 'elohim', pos: 'Noun', gloss: 'God' },
-            'lord': { h: 'H3068', hebrew: 'יְהוָה', trans: 'yahweh', pos: 'Noun', gloss: 'YHWH, the LORD' },
-            'heaven': { h: 'H8064', hebrew: 'שָׁמַיִם', trans: 'shamayim', pos: 'Noun', gloss: 'heavens' },
-            'earth': { h: 'H776', hebrew: 'אֶרֶץ', trans: 'erets', pos: 'Noun', gloss: 'earth, land' },
-            'light': { h: 'H216', hebrew: 'אוֹר', trans: 'or', pos: 'Noun', gloss: 'light' },
-            'day': { h: 'H3117', hebrew: 'יוֹם', trans: 'yom', pos: 'Noun', gloss: 'day' },
-            'word': { h: 'H1697', hebrew: 'דָּבָר', trans: 'dabar', pos: 'Noun', gloss: 'word' },
-            'peace': { h: 'H7965', hebrew: 'שָׁלוֹם', trans: 'shalom', pos: 'Noun', gloss: 'peace' }
-        };
-
-        function isOldTestamentPassage() {
-            const val = document.getElementById('passageRefInput').value.toLowerCase().trim();
-            return otBooks.some(b => val.startsWith(b));
-        }
-
         function updatePassageContext() {
-            const isOt = isOldTestamentPassage();
-            const label = document.getElementById('lxxBtnLabel');
-            if (label) label.textContent = isOt ? 'LXX / Hebrew Viewer' : 'NT Greek Viewer';
-            
             const refVal = document.getElementById('passageRefInput').value.trim();
-            const preview = document.getElementById('lxxDynamicPreview');
-            if (preview) {
-                preview.innerHTML = `
-                    <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">${refVal} Interlinear Link</div>
-                    <a href="${getBibleHubInterlinearUrl(refVal, 1)}" target="_blank" class="text-xs text-indigo-600 dark:text-indigo-400 underline font-medium">Open full chapter/verse interlinear on Bible Hub &rarr;</a>
-                `;
-            }
+            const printTitle = document.getElementById('printDocumentTitle');
+            if (printTitle) printTitle.textContent = refVal || 'Exegetical Thought Flow Document';
             autoAssignVersesSmartly();
+            saveActiveProjectData();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -548,7 +690,29 @@
             loadSelectedProject();
             updatePassageContext();
 
+            // Instant live-saving for clause notes
+            if (clauseNoteEditor) {
+                clauseNoteEditor.addEventListener('input', () => {
+                    if (!activeNoteBlock) return;
+                    const content = clauseNoteEditor.innerHTML.trim();
+                    if (content) {
+                        activeNoteBlock.dataset.exegeticalNotes = content;
+                    } else {
+                        activeNoteBlock.removeAttribute('data-exegetical-notes');
+                    }
+                    syncOverlayControls();
+                    saveActiveProjectData();
+                });
+            }
+
             if (editor) {
+                editor.addEventListener('focus', () => {
+                    if (selectedFloatingShape) {
+                        selectedFloatingShape.classList.remove('selected');
+                        selectedFloatingShape = null;
+                    }
+                }, true);
+
                 editor.addEventListener('input', () => {
                     syncOverlayControls();
                     saveActiveProjectData();
@@ -573,10 +737,54 @@
                 });
                 document.addEventListener('click', (e) => {
                     if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
+                    if (!e.target.closest('.floating-shape') && !e.target.closest('button') && !e.target.closest('#floatingMiniPalette') && selectedFloatingShape) {
+                        selectedFloatingShape.classList.remove('selected');
+                        selectedFloatingShape = null;
+                    }
                 });
+
+                window.addEventListener('keydown', (e) => {
+                    if (!selectedFloatingShape) return;
+                    const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement === editor) return;
+
+                    const step = e.shiftKey ? 10 : 1;
+                    let left = parseFloat(selectedFloatingShape.style.left) || 0;
+                    let top = parseFloat(selectedFloatingShape.style.top) || 0;
+                    let moved = false;
+
+                    if (e.key === 'ArrowLeft') { left -= step; moved = true; }
+                    else if (e.key === 'ArrowRight') { left += step; moved = true; }
+                    else if (e.key === 'ArrowUp') { top -= step; moved = true; }
+                    else if (e.key === 'ArrowDown') { top += step; moved = true; }
+
+                    if (moved) {
+                        e.preventDefault();
+                        selectedFloatingShape.style.left = left + 'px';
+                        selectedFloatingShape.style.top = top + 'px';
+                        saveActiveProjectData();
+                    }
+
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault();
+                        selectedFloatingShape.remove();
+                        selectedFloatingShape = null;
+                        saveActiveProjectData();
+                    }
+                });
+
                 document.addEventListener('selectionchange', handleTextSelection);
             }
         });
+
+        function toggleFloatingMiniPalette() {
+            if (floatingMiniPalette.style.display === 'flex') {
+                floatingMiniPalette.style.display = 'none';
+            } else {
+                floatingMiniPalette.style.display = 'flex';
+                toggleShapesDrawer();
+            }
+        }
 
         function showContextMenu(x, y) {
             contextMenu.style.display = 'block';
@@ -594,7 +802,6 @@
             hideContextMenu();
         }
 
-        function ctxToggleAttachDown() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('attach-down'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
         function ctxOpenNoteDrawer() { if (rightClickedBlock) openNoteBlock(rightClickedBlock); hideContextMenu(); }
         function ctxStrikethroughSelection() { applyStrikethrough(); hideContextMenu(); }
         function ctxEllipsisSelection() { applyEllipsisCaret(); hideContextMenu(); }
@@ -700,91 +907,90 @@
             saveActiveProjectData();
         }
 
-        function getBibleHubInterlinearUrl(passageRef, verseNum) {
-            const cleaned = passageRef.toLowerCase().trim();
-            const match = cleaned.match(/^([1-3]?\s*[a-z\s]+?)\s+([0-9]+):([0-9]+)/);
+        function parsePassageInput(inputStr) {
+            const cleaned = inputStr.trim() || "1 Peter 1:1";
+            const match = cleaned.match(/^([1-3]?\s*[a-z\s]+?)\s+([0-9]+):([0-9]+)/i);
             if (match) {
-                let book = match[1].replace(/\s+/g, '');
-                let chapter = match[2];
-                return `https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`;
+                return {
+                    book: match[1].trim(),
+                    chapter: parseInt(match[2], 10),
+                    verse: parseInt(match[3], 10)
+                };
             }
-            return `https://biblehub.com/interlinear/`;
+            return { book: "1 Peter", chapter: 1, verse: 1 };
         }
 
-        function openInterlinearLightbox(verseNum, block) {
-            activeLightboxBlock = block;
-            const isOt = isOldTestamentPassage();
-            const lightbox = document.getElementById('interlinearLightbox');
-            const body = document.getElementById('interlinearLightboxBody');
-            const passageName = document.getElementById('passageRefInput').value.trim();
-            const clauseText = block.textContent.trim().toLowerCase();
-            const dict = isOt ? hebrewDictionary : greekDictionary;
-
-            let matchedCards = [];
-            Object.keys(dict).forEach(keyword => {
-                if (clauseText.includes(keyword)) {
-                    matchedCards.push(dict[keyword]);
+        // Bible Hub Modal Controls
+        function openBibleHubModal() {
+            const passageRef = document.getElementById('passageRefInput').value.trim() || "1 Peter 1:1";
+            const parsed = parsePassageInput(passageRef);
+            
+            const bookSelect = document.getElementById('bhBookSelect');
+            for (let opt of bookSelect.options) {
+                if (opt.value.toLowerCase().includes(parsed.book.toLowerCase())) {
+                    bookSelect.value = opt.value;
+                    break;
                 }
-            });
-
-            let cardsHTML = '';
-            if (matchedCards.length > 0) {
-                cardsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">`;
-                matchedCards.forEach(item => {
-                    const code = isOt ? item.h : item.g;
-                    const word = isOt ? item.hebrew : item.greek;
-                    const numOnly = code.replace(/[^0-9]/g, '');
-                    const hubUrl = `https://biblehub.com/${isOt ? 'hebrew' : 'greek'}/${numOnly}.htm`;
-
-                    cardsHTML += `
-                        <div class="p-3 bg-gray-50 dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between font-mono text-xs text-sky-600 dark:text-sky-400 font-bold mb-1">
-                                    <span>${code} (${word})</span>
-                                    <span>${item.pos}</span>
-                                </div>
-                                <div class="font-serif text-lg font-bold text-gray-900 dark:text-white mb-0.5">${word}</div>
-                                <div class="text-xs text-gray-500 italic mb-3">${item.trans} &bull; "${item.gloss}"</div>
-                            </div>
-                            <a href="${hubUrl}" target="_blank" class="inline-flex items-center justify-center space-x-1 text-xs font-semibold px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition">
-                                <span>Lexicon (Bible Hub)</span> <i class="fa-solid fa-external-link text-[10px]"></i>
-                            </a>
-                        </div>
-                    `;
-                });
-                cardsHTML += `</div>`;
-            } else {
-                const verseUrl = getBibleHubInterlinearUrl(passageName, verseNum);
-                cardsHTML = `
-                    <div class="p-4 bg-gray-50 dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 text-center">
-                        <p class="text-xs text-gray-600 dark:text-gray-300 mb-3">No direct lemma mapped for this specific clause text. Click below to inspect the full verse interlinear on Bible Hub:</p>
-                        <a href="${verseUrl}" target="_blank" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow inline-flex items-center space-x-1.5">
-                            <span>Open Verse ${verseNum} Interlinear on Bible Hub</span>
-                            <i class="fa-solid fa-external-link text-[10px]"></i>
-                        </a>
-                    </div>
-                `;
             }
+            document.getElementById('bhChapSelect').value = parsed.chapter;
+            document.getElementById('bhVerseSelect').value = parsed.verse;
 
-            body.innerHTML = `
-                <div class="flex items-center space-x-2 mb-4">
-                    <div class="bg-sky-600 text-white p-1.5 rounded-lg"><i class="fa-solid fa-book-bible"></i></div>
-                    <div>
-                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">${passageName} &bull; Verse ${verseNum}</h3>
-                        <p class="text-xs text-gray-500">Clause: "${block.textContent.trim().substring(0, 45)}..."</p>
-                    </div>
-                </div>
-                <div class="p-3 mb-3 bg-sky-50 dark:bg-sky-950/50 rounded-lg border border-sky-200 dark:border-sky-800 text-xs">
-                    Original language word cards mapped for this clause. Click <strong>Lexicon (Bible Hub)</strong> for full definitions.
-                </div>
-                ${cardsHTML}
-            `;
-            lightbox.classList.remove('hidden');
+            renderBibleHubViewer();
+            document.getElementById('bibleHubPopupWindow').classList.remove('hidden');
         }
 
-        function closeInterlinearLightbox() {
-            document.getElementById('interlinearLightbox').classList.add('hidden');
-            activeLightboxBlock = null;
+        function closeBibleHubModal() {
+            document.getElementById('bibleHubPopupWindow').classList.add('hidden');
+        }
+
+        function stepBhVerse(direction) {
+            const verseSelect = document.getElementById('bhVerseSelect');
+            let currentIdx = verseSelect.selectedIndex;
+            let newIdx = currentIdx + direction;
+            if (newIdx >= 0 && newIdx < verseSelect.options.length) {
+                verseSelect.selectedIndex = newIdx;
+                renderBibleHubViewer();
+            }
+        }
+
+        function getBibleHubUrl(book, chapter, verse) {
+            let b = book.toLowerCase().trim()
+                .replace(/\s+/g, '_')
+                .replace(/1\s*/g, '1_')
+                .replace(/2\s*/g, '2_')
+                .replace(/3\s*/g, '3_');
+            b = b.replace(/__+/g, '_');
+            return `https://biblehub.com/interlinear/${b}/${chapter}-${verse}.htm`;
+        }
+
+        function renderBibleHubViewer() {
+            const book = document.getElementById('bhBookSelect').value;
+            const chapter = document.getElementById('bhChapSelect').value;
+            const verse = document.getElementById('bhVerseSelect').value;
+            const targetRefStr = `${book} ${chapter}:${verse}`;
+
+            document.getElementById('bibleHubHeaderPassageBadge').textContent = targetRefStr;
+            const targetUrl = getBibleHubUrl(book, chapter, verse);
+            document.getElementById('bibleHubExternalLink').href = targetUrl;
+            document.getElementById('bibleHubIframe').src = targetUrl;
+        }
+
+        // CNTR Modal Controls
+        function openCntrModal() {
+            document.getElementById('cntrPopupWindow').classList.remove('hidden');
+        }
+
+        function closeCntrModal() {
+            document.getElementById('cntrPopupWindow').classList.add('hidden');
+        }
+
+        // Kudos Modal Controls
+        function openKudosModal() {
+            document.getElementById('kudosPopupWindow').classList.remove('hidden');
+        }
+
+        function closeKudosModal() {
+            document.getElementById('kudosPopupWindow').classList.add('hidden');
         }
 
         function toggleFocusMode() {
@@ -797,18 +1003,151 @@
             syncOverlayControls();
         }
 
-        function toggleLxxDrawer() { document.getElementById('lxxDrawer').classList.toggle('open'); }
-        
-        function toggleSyntaxTreeDrawer() {
-            const drawer = document.getElementById('syntaxTreeDrawer');
-            if (drawer.classList.contains('hidden')) {
-                generateVisualSyntaxTree();
-                drawer.classList.remove('hidden');
-                drawer.classList.add('flex');
-            } else {
-                drawer.classList.remove('flex');
-                drawer.classList.add('hidden');
+        function toggleShapesDrawer() { document.getElementById('shapesDrawer').classList.toggle('open'); }
+
+        function spawnFloatingShape(shapeType, title) {
+            const container = document.createElement('div');
+            container.className = 'floating-shape selected';
+            container.title = title;
+            container.dataset.shapeType = shapeType;
+            
+            const currentScroll = workspaceMain ? workspaceMain.scrollTop : 0;
+            container.style.left = '20px';
+            container.style.top = (currentScroll + 30) + 'px';
+            container.style.width = '40px';
+            container.style.height = '60px';
+
+            if (selectedFloatingShape) selectedFloatingShape.classList.remove('selected');
+            selectedFloatingShape = container;
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            svg.setAttribute('preserveAspectRatio', 'none');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', '#6366f1');
+            svg.setAttribute('stroke-width', '4');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+
+            let pathData = '';
+            if (shapeType === 'elbow-tl') pathData = 'M 100 3 H 3 V 100';
+            else if (shapeType === 'elbow-tr') pathData = 'M 0 3 H 97 V 100';
+            else if (shapeType === 'elbow-bl') pathData = 'M 100 97 H 3 V 0';
+            else if (shapeType === 'spine') pathData = 'M 50 0 V 100';
+            else if (shapeType === 'line-horiz') {
+                pathData = 'M 0 50 H 100';
+                container.style.height = '20px';
             }
+            else if (shapeType === 'arrow-down') pathData = 'M 50 0 V 75 M 30 55 L 50 85 L 70 55';
+            else if (shapeType === 'arrow-up') pathData = 'M 50 25 V 100 M 30 45 L 50 15 L 70 45';
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            svg.appendChild(path);
+            container.appendChild(svg);
+
+            const handleTop = document.createElement('span');
+            handleTop.className = 'shape-handle handle-top';
+            const handleBottom = document.createElement('span');
+            handleBottom.className = 'shape-handle handle-bottom';
+            const handleRight = document.createElement('span');
+            handleRight.className = 'shape-handle handle-right';
+
+            container.appendChild(handleTop);
+            container.appendChild(handleBottom);
+            container.appendChild(handleRight);
+
+            setupFloatingInteractions(container, handleTop, handleBottom, handleRight);
+
+            shapesLayer.appendChild(container);
+            saveActiveProjectData();
+        }
+
+        function setupFloatingInteractions(shape, hTop, hBottom, hRight) {
+            shape.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('shape-handle')) return;
+                e.stopPropagation();
+                if (selectedFloatingShape && selectedFloatingShape !== shape) {
+                    selectedFloatingShape.classList.remove('selected');
+                }
+                shape.classList.add('selected');
+                selectedFloatingShape = shape;
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startLeft = shape.offsetLeft;
+                const startTop = shape.offsetTop;
+
+                function onMouseMove(moveEvent) {
+                    shape.style.left = Math.max(0, startLeft + (moveEvent.clientX - startX)) + 'px';
+                    shape.style.top = Math.max(0, startTop + (moveEvent.clientY - startY)) + 'px';
+                }
+
+                function onMouseUp() {
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    saveActiveProjectData();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+
+            let resizeType = null;
+            let startY, startH, startX, startW;
+
+            function onResizeMove(e) {
+                const dy = e.clientY - startY;
+                const dx = e.clientX - startX;
+
+                if (resizeType === 'bottom') {
+                    shape.style.height = Math.max(15, startH + dy) + 'px';
+                } else if (resizeType === 'top') {
+                    const newH = Math.max(15, startH - dy);
+                    const newTop = shape.offsetTop + dy;
+                    if (newH > 15) {
+                        shape.style.height = newH + 'px';
+                        shape.style.top = newTop + 'px';
+                    }
+                } else if (resizeType === 'right') {
+                    shape.style.width = Math.max(15, startW + dx) + 'px';
+                }
+            }
+
+            function onResizeUp() {
+                window.removeEventListener('mousemove', onResizeMove);
+                window.removeEventListener('mouseup', onResizeUp);
+                saveActiveProjectData();
+            }
+
+            hBottom.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                resizeType = 'bottom';
+                startY = e.clientY;
+                startH = shape.offsetHeight;
+                window.addEventListener('mousemove', onResizeMove);
+                window.addEventListener('mouseup', onResizeUp);
+            });
+
+            hTop.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                resizeType = 'top';
+                startY = e.clientY;
+                startH = shape.offsetHeight;
+                window.addEventListener('mousemove', onResizeMove);
+                window.addEventListener('mouseup', onResizeUp);
+            });
+
+            hRight.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                resizeType = 'right';
+                startX = e.clientX;
+                startW = shape.offsetWidth;
+                window.addEventListener('mousemove', onResizeMove);
+                window.addEventListener('mouseup', onResizeUp);
+            });
         }
 
         function toggleMasterNoteDrawer() { document.getElementById('masterNoteDrawer').classList.toggle('open'); }
@@ -817,174 +1156,13 @@
         function openNoteBlock(block) {
             activeNoteBlock = block;
             document.getElementById('drawerClauseText').textContent = `"${block.textContent.trim()}"`;
-            document.getElementById('clauseNoteEditor').innerHTML = block.dataset.exegeticalNotes || '';
+            clauseNoteEditor.innerHTML = block.dataset.exegeticalNotes || '';
             document.getElementById('exegeticalNoteDrawer').classList.add('open');
-        }
-
-        function saveActiveNoteToBlock() {
-            if (!activeNoteBlock) return;
-            const content = clauseNoteEditor.innerHTML.trim();
-            if (content) activeNoteBlock.dataset.exegeticalNotes = content;
-            else activeNoteBlock.removeAttribute('data-exegetical-notes');
-            syncOverlayControls();
-            saveActiveProjectData();
-        }
-
-        /* SEMANTIC DISCOURSE FUNCTION PARSER */
-        function detectDiscourseFunction(text, level) {
-            const lower = text.toLowerCase().trim();
-
-            if (level === 0) return 'Main Proposition';
-
-            if (lower.startsWith('to ') || lower.includes('to be ')) return 'Purpose / Result';
-            if (lower.startsWith('through ') || lower.startsWith('by ')) return 'Agent / Means';
-            if (lower.startsWith('in ') || lower.startsWith('at ') || lower.startsWith('on ')) return 'Sphere / Location';
-            if (lower.startsWith('which ') || lower.startsWith('who ') || lower.startsWith('whom ') || lower.startsWith('whose ') || lower.startsWith('that ')) return 'Referent / Relative';
-            if (lower.startsWith('from ')) return 'Source / Origin';
-            if (lower.startsWith('according to ')) return 'Standard / Norm';
-            if (lower.startsWith('because ') || lower.startsWith('for ')) return 'Ground / Reason';
-            if (lower.startsWith('if ') || lower.startsWith('when ') || lower.startsWith('while ') || lower.startsWith('as ')) return 'Condition / Time';
-            if (lower.startsWith('concerning ')) return 'Referent / Theme';
-
-            if (level === 1) return 'Modifier / Subordinate';
-            if (level === 2) return 'Sub-Modifier (L2)';
-            return 'Detail / Expansion (L3+)';
-        }
-
-        function editRelation(block, badgeElement) {
-            const currentRel = block.dataset.customRelation || badgeElement.textContent.trim().replace(/^[^a-zA-Z0-9]+/, '');
-            const presets = [
-                'Main Proposition',
-                'Purpose / Result',
-                'Agent / Means',
-                'Sphere / Location',
-                'Referent / Relative',
-                'Source / Origin',
-                'Standard / Norm',
-                'Ground / Reason',
-                'Condition / Time',
-                'Modifier / Subordinate',
-                'Sub-Modifier (L2)',
-                'Detail / Expansion (L3+)',
-                'Custom Relation...'
-            ];
-
-            let choice = prompt(`Select or type new exegetical relation:\n\nPresets:\n- ${presets.slice(0, 12).join('\n- ')}\n\n(Type any custom relation or select preset)`, currentRel);
-            if (choice !== null && choice.trim() !== '') {
-                if (choice === 'Custom Relation...') {
-                    choice = prompt('Enter custom relation name:', '');
-                }
-                if (choice && choice.trim() !== '') {
-                    block.dataset.customRelation = choice.trim();
-                    saveActiveProjectData();
-                    generateVisualSyntaxTree();
-                }
-            }
-        }
-
-        /* TRUE HIERARCHICAL TREE PARSER & RENDERER (USING CONTINUOUS SPINE CONTAINERS) */
-        function generateVisualSyntaxTree() {
-            const container = document.getElementById('syntaxTreeContentArea');
-            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            
-            let html = `
-                <div class="p-4 bg-purple-50 dark:bg-purple-950/35 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex items-center justify-between">
-                    <div>
-                        <strong>Nested Discourse Tree:</strong> Continuous vertical spine borders with clean horizontal connector ticks. Click any relation badge to edit or set a Custom Relation.
-                    </div>
-                </div>
-            `;
-
-            if (blocks.length === 0) {
-                container.innerHTML = html + `<p class="italic text-gray-400">No clauses found in editor canvas.</p>`;
-                return;
-            }
-
-            const items = blocks.map((block, index) => {
-                const text = block.textContent.trim();
-                const styleAttr = block.getAttribute('style') || '';
-                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)/);
-                let level = marginMatch ? Math.round(parseFloat(marginMatch[1]) / 1.5) : 0;
-                if (block.classList.contains('parallel-indent-2')) level = 2;
-                if (block.classList.contains('parallel-indent-3')) level = 3;
-                if (block.classList.contains('parallel-indent-4')) level = 4;
-                if (block.classList.contains('attach-down')) level++;
-
-                if (level === 0 && index > 0) {
-                    const lower = text.toLowerCase();
-                    if (lower.startsWith('which') || lower.startsWith('who') || lower.startsWith('that') || lower.includes('promised')) level = 2;
-                    else if (lower.startsWith('through') || lower.startsWith('in') || lower.startsWith('according') || lower.startsWith('from') || lower.startsWith('concerning')) level = 2;
-                    else level = 1;
-                }
-
-                return {
-                    block,
-                    index,
-                    text,
-                    level,
-                    verseNum: block.dataset.verseNum || (index + 1),
-                    customRel: block.dataset.customRelation || detectDiscourseFunction(text, level),
-                    children: []
-                };
-            });
-
-            // Build hierarchical tree structure from flat list
-            let rootNodes = [];
-            let stack = [];
-
-            items.forEach(node => {
-                while (stack.length > 0 && stack[stack.length - 1].level >= node.level) {
-                    stack.pop();
-                }
-                if (stack.length === 0) {
-                    rootNodes.push(node);
-                } else {
-                    stack[stack.length - 1].children.push(node);
-                }
-                stack.push(node);
-            });
-
-            function renderNode(node) {
-                const badgeColor = node.level === 0 ? 'bg-purple-600 text-white' : 'bg-indigo-600 text-white';
-                
-                let childrenHTML = '';
-                if (node.children.length > 0) {
-                    childrenHTML = `
-                        <div class="pl-8 ml-3 border-l-2 border-purple-500 space-y-3 mt-3 relative">
-                            ${node.children.map(child => renderNode(child)).join('')}
-                        </div>
-                    `;
-                }
-
-                return `
-                    <div class="relative my-2">
-                        <div class="p-4 bg-gray-50 dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm flex flex-col space-y-1.5 w-full max-w-2xl relative">
-                            ${node.level > 0 ? '<div class="absolute -left-8 top-1/2 w-8 h-px bg-purple-500"></div>' : ''}
-                            <div class="flex items-center justify-between text-xs space-x-4">
-                                <span class="font-mono font-bold px-2 py-0.5 rounded ${badgeColor}">v${node.verseNum}</span>
-                                <span onclick="editRelation(editor.children[${node.index}], this)" class="font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider cursor-pointer hover:underline bg-purple-100 dark:bg-purple-950/60 px-2.5 py-1 rounded-md border border-purple-200 dark:border-purple-800 transition" title="Click to edit relation">
-                                    <i class="fa-solid fa-pen text-[9px] mr-1"></i> ${node.customRel}
-                                </span>
-                            </div>
-                            <div class="font-serif text-base text-gray-900 dark:text-gray-100 italic">"${node.text}"</div>
-                        </div>
-                        ${childrenHTML}
-                    </div>
-                `;
-            }
-
-            html += `<div class="space-y-3 pb-8">`;
-            rootNodes.forEach(node => {
-                html += renderNode(node);
-            });
-            html += `</div>`;
-
-            container.innerHTML = html;
         }
 
         function autoAssignVersesSmartly() {
             if (!editor) return;
-            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
             const refVal = document.getElementById('passageRefInput').value.trim();
             const rangeMatch = refVal.match(/:([0-9]+)\s*-\s*([0-9]+)/);
             let startVerse = 1;
@@ -1021,22 +1199,11 @@
             if (!editor || !overlay) return;
             overlay.innerHTML = '';
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
-            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            const isOt = isOldTestamentPassage();
+            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
 
-            blocks.forEach((block, index) => {
+            blocks.forEach((block) => {
                 const text = block.textContent.trim();
                 if (!text) return;
-
-                let level = 0;
-                const styleAttr = block.getAttribute('style') || '';
-                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)/);
-                if (marginMatch) {
-                    const val = parseFloat(marginMatch[1]);
-                    level = val >= 1 ? Math.round(val / 1.5) : 1;
-                }
-                if (level > 0) block.classList.add('has-indent');
-                else block.classList.remove('has-indent');
 
                 const rect = block.getBoundingClientRect();
                 const topOffset = rect.top - wrapperRect.top;
@@ -1059,22 +1226,12 @@
                 };
                 group.appendChild(verseBadge);
 
-                // Lightbox Button
-                const gkBtn = document.createElement('button');
-                gkBtn.className = activeLightboxBlock === block ? 'gk-toggle-btn active' : 'gk-toggle-btn';
-                gkBtn.textContent = isOt ? 'Heb' : 'Gk';
-                gkBtn.title = isOt ? 'Open Hebrew Interlinear Lightbox' : 'Open Greek Interlinear Lightbox';
-                gkBtn.onclick = () => {
-                    const targetVerse = parseInt(block.dataset.verseNum, 10) || 1;
-                    openInterlinearLightbox(targetVerse, block);
-                };
-                group.appendChild(gkBtn);
-
-                // Notes Button
+                // Notes Button with Paper/Document Icon Indicator when Notes Exist
                 const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
                 const noteBtn = document.createElement('button');
                 noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
-                noteBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
+                noteBtn.title = hasNotes ? 'View/Edit Exegetical Notes (Notes Taken)' : 'Add Exegetical Notes';
                 noteBtn.onclick = () => openNoteBlock(block);
                 group.appendChild(noteBtn);
 
@@ -1112,9 +1269,7 @@
             let block = selection.anchorNode;
             while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
             if (block && block !== editor) {
-                if (block.classList.contains('attach-down')) {
-                    block.classList.remove('attach-down');
-                } else if (block.classList.contains('parallel-indent-4')) {
+                if (block.classList.contains('parallel-indent-4')) {
                     block.classList.remove('parallel-indent-4');
                     block.classList.add('parallel-indent-3');
                 } else if (block.classList.contains('parallel-indent-3')) {
@@ -1135,24 +1290,17 @@
             }
         }
 
-        function toggleAttachDown() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            let block = selection.anchorNode;
-            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
-            if (block && block !== editor) {
-                block.classList.toggle('attach-down');
-                syncOverlayControls();
-                saveActiveProjectData();
+        function clearTextFlow() {
+            if (confirm("Clear canvas?")) { 
+                editor.innerHTML = ''; 
+                shapesLayer.innerHTML = ''; 
+                syncOverlayControls(); 
+                saveActiveProjectData(); 
             }
         }
 
-        function clearTextFlow() {
-            if (confirm("Clear canvas?")) { editor.innerHTML = ''; syncOverlayControls(); saveActiveProjectData(); }
-        }
-
         function importAllNotes() {
-            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
             let compiled = `<h2>Compiled Notes</h2>`;
             blocks.forEach((b, i) => {
                 if (b.dataset.exegeticalNotes) {
@@ -1169,7 +1317,7 @@
 
         function populateProjectsMenu() {
             const catalog = getProjectsCatalog();
-            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad</option>';
+            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad (Clean Slate)</option>';
             Object.keys(catalog).forEach(key => {
                 const opt = document.createElement('option');
                 opt.value = key; opt.textContent = catalog[key];
@@ -1181,6 +1329,7 @@
         function saveActiveProjectData() {
             const data = {
                 textFlowHTML: editor.innerHTML,
+                shapesHTML: shapesLayer.innerHTML,
                 masterNotesHTML: masterNoteEditor ? masterNoteEditor.innerHTML : '',
                 passageRef: document.getElementById('passageRefInput').value,
                 updatedAt: Date.now()
@@ -1195,18 +1344,27 @@
             if (raw) {
                 const d = JSON.parse(raw);
                 editor.innerHTML = d.textFlowHTML || '';
+                shapesLayer.innerHTML = d.shapesHTML || '';
                 if (masterNoteEditor) masterNoteEditor.innerHTML = d.masterNotesHTML || '';
-                if (d.passageRef) document.getElementById('passageRefInput').value = d.passageRef;
+                document.getElementById('passageRefInput').value = d.passageRef || '';
+                shapesLayer.querySelectorAll('.floating-shape').forEach(shape => {
+                    const hTop = shape.querySelector('.handle-top');
+                    const hBottom = shape.querySelector('.handle-bottom');
+                    const hRight = shape.querySelector('.handle-right');
+                    if (hTop && hBottom && hRight) setupFloatingInteractions(shape, hTop, hBottom, hRight);
+                });
             } else {
                 editor.innerHTML = '';
+                shapesLayer.innerHTML = '';
                 if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                document.getElementById('passageRefInput').value = '';
             }
             updatePassageContext();
             syncOverlayControls();
         }
 
         function saveCurrentAsNewProject() {
-            const title = prompt('Project name (e.g., Romans 1 Flow):');
+            const title = prompt('Enter new project title (e.g., 1 Peter 1:1-8):');
             if (!title) return;
             const newKey = 'lexflow_proj_' + Date.now();
             const catalog = getProjectsCatalog();
@@ -1214,42 +1372,40 @@
             localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
             currentProjectKey = newKey;
             localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
+            
+            editor.innerHTML = '';
+            shapesLayer.innerHTML = '';
+            if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+            document.getElementById('passageRefInput').value = title.trim();
+            
             saveActiveProjectData();
             populateProjectsMenu();
             projectSelect.value = newKey;
+            updatePassageContext();
         }
 
-        function exportAllProjects() {
-            const catalog = getProjectsCatalog();
-            const exportData = { catalog, projects: {} };
-            Object.keys(catalog).forEach(k => { exportData.projects[k] = localStorage.getItem(k); });
-            exportData.projects['lexflow_default'] = localStorage.getItem('lexflow_default');
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'lexflow-projects-backup.json';
-            a.click();
-        }
-
-        function importAllProjects(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                try {
-                    const data = JSON.parse(evt.target.result);
-                    if (data.catalog) localStorage.setItem('lexflow_catalog', JSON.stringify(data.catalog));
-                    if (data.projects) {
-                        Object.keys(data.projects).forEach(k => {
-                            if (data.projects[k]) localStorage.setItem(k, data.projects[k]);
-                        });
-                    }
-                    populateProjectsMenu();
-                    loadSelectedProject();
-                    alert('Imported successfully!');
-                } catch (err) { alert('Invalid file.'); }
-            };
-            reader.readAsText(file);
+        function deleteCurrentProject() {
+            if (currentProjectKey === 'lexflow_default') {
+                if (confirm('Clear the default scratchpad?')) {
+                    editor.innerHTML = '';
+                    shapesLayer.innerHTML = '';
+                    document.getElementById('passageRefInput').value = '';
+                    if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                    saveActiveProjectData();
+                    updatePassageContext();
+                }
+                return;
+            }
+            if (confirm(`Are you sure you want to delete this project?`)) {
+                localStorage.removeItem(currentProjectKey);
+                const catalog = getProjectsCatalog();
+                delete catalog[currentProjectKey];
+                localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
+                currentProjectKey = 'lexflow_default';
+                localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
+                populateProjectsMenu();
+                loadSelectedProject();
+            }
         }
 
         function toggleTheme() {
@@ -1261,7 +1417,13 @@
 
         if (localStorage.getItem('lexflow_theme') === 'dark') document.documentElement.classList.add('dark');
 
-        function exportCleanPDF() { window.print(); }
+        function exportCleanPDF() { 
+            if (selectedFloatingShape) {
+                selectedFloatingShape.classList.remove('selected');
+                selectedFloatingShape = null;
+            }
+            window.print(); 
+        }
     </script>
 </body>
 </html>
