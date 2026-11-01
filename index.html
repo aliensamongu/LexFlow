@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LexFlow - Integrated Exegetical Workspace</title>
+    <title>LexFlow - Text Flow Workspace</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,34 +35,59 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        html.dark body { background-color: #0b0f19; color: #f3f4f6; }
-        html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
+        html.dark body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+
+        html:not(.dark) body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
         html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
         [contenteditable]:focus { outline: none; }
 
-        #editorWrapper { position: relative; width: 100%; min-height: 50vh; }
-        #printDocumentTitle { display: none; }
+        #editorWrapper {
+            position: relative;
+            width: 100%;
+        }
 
-        /* Expanded Document Flow Paragraph Rules for Deep Indents */
+        /* Continuous Solid Subordination Lines */
         #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
             position: relative;
             margin-top: 0 !important;
             margin-bottom: 0 !important;
             padding-top: 0.35rem;
             padding-bottom: 0.35rem;
-            padding-right: 220px;
-            padding-left: 3rem;
+            padding-right: 320px;
             word-break: break-word;
             line-height: 1.8;
             font-size: 1.15rem;
             transition: margin-left 0.15s ease;
         }
 
+        #flowEditor .has-indent {
+            position: relative;
+            padding-left: 1.2rem !important;
+        }
+
+        #flowEditor .has-indent::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -1px;
+            bottom: -1px;
+            width: 2.5px;
+            background-color: #6366f1;
+            z-index: 2;
+        }
+
+        /* Responsive Breakpoint for Tablets/Mobile */
         @media (max-width: 1024px) {
             #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
                 padding-right: 15px !important;
@@ -77,117 +102,93 @@
             }
         }
 
-        /* Multi-Tier Adjustable Parallel Indents */
-        #flowEditor .parallel-indent, #flowEditor .parallel-indent-1 { padding-left: 7rem !important; }
-        #flowEditor .parallel-indent-2 { padding-left: 10rem !important; }
-        #flowEditor .parallel-indent-3 { padding-left: 13rem !important; }
-        #flowEditor .parallel-indent-4 { padding-left: 16rem !important; }
+        /* PARALLEL LIST / HANGING INDENT ALIGNMENT */
+        #flowEditor .parallel-indent {
+            padding-left: 5rem !important;
+        }
+        #flowEditor .parallel-indent::before {
+            content: '';
+            display: none;
+        }
 
-        #controlsOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        #flowEditor .attach-down {
+            position: relative;
+            padding-left: 1.2rem !important;
+        }
+        #flowEditor .attach-down::before {
+            content: '';
+            position: absolute;
+            left: 0.4rem;
+            top: 0;
+            bottom: -0.2rem;
+            width: 2px;
+            border-left: 2px dashed #6366f1;
+            z-index: 5;
+        }
+        #flowEditor .attach-down::after {
+            content: '↓';
+            position: absolute;
+            left: 0.05rem;
+            bottom: -0.8rem;
+            font-size: 14px;
+            font-weight: 700;
+            color: #6366f1;
+            z-index: 6;
+            background: transparent;
+        }
+
+        #controlsOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
 
         .flow-meta-group {
             position: absolute;
             right: 0;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             pointer-events: auto;
             user-select: none;
             z-index: 10;
         }
 
-        /* Fully Movable Floating Canvas Shapes Overlay */
-        #shapesLayer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .floating-shape {
-            position: absolute;
-            cursor: move;
-            pointer-events: auto;
-            box-sizing: border-box;
-            border: 1px dashed rgba(99, 102, 241, 0.3);
-            background: rgba(99, 102, 241, 0.02);
-            touch-action: none;
-        }
-        .floating-shape:hover, .floating-shape.selected {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.08);
-            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
-        }
-        .floating-shape svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-            pointer-events: none;
-        }
-        .shape-handle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #6366f1;
-            border: 1px solid #ffffff;
-            border-radius: 50%;
-            display: none;
-            z-index: 30;
-        }
-        .floating-shape:hover .shape-handle, .floating-shape.selected .shape-handle { display: block; }
-        .handle-top { top: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-        .handle-bottom { bottom: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-        .handle-right { top: 50%; right: -4px; transform: translateY(-50%); cursor: ew-resize; }
-
-        /* Floating Mini Shapes Palette Widget */
-        #floatingMiniPalette {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 250;
-            background: rgba(17, 24, 39, 0.9);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 8px;
-            display: none;
+        .flow-badge {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-        }
-        html:not(.dark) #floatingMiniPalette {
-            background: rgba(255, 255, 255, 0.95);
-            border-color: #e2e8f0;
-        }
-        .mini-shape-btn {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: rgba(99, 102, 241, 0.1);
-            color: #6366f1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.12);
+            color: #4f46e5;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            padding: 4px 7px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            transition: all 0.15s ease;
         }
-        .mini-shape-btn:hover {
-            background: #6366f1;
-            color: #ffffff;
+        .flow-badge:hover { background: rgba(99, 102, 241, 0.25); }
+        html.dark .flow-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border-color: rgba(129, 140, 248, 0.4);
         }
 
-        /* Focus Mode Rules */
-        body.focus-mode #flowEditor > *:not(.focused-branch) { display: none !important; }
-        .focused-branch { background: rgba(99, 102, 241, 0.08); padding: 4px 8px; border-radius: 8px; border: 1px dashed rgba(99, 102, 241, 0.5); }
+        .flow-badge-l0 {
+            background: rgba(156, 163, 175, 0.12);
+            color: #6b7280;
+            border: 1px solid rgba(156, 163, 175, 0.25);
+        }
+        html.dark .flow-badge-l0 {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+            border-color: rgba(156, 163, 175, 0.3);
+        }
 
-        /* High-Contrast Badges */
         .verse-badge {
             display: inline-flex;
             align-items: center;
@@ -195,18 +196,85 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             font-weight: 700;
-            padding: 3px 7px;
+            padding: 3px 6px;
             border-radius: 6px;
-            color: #b45309;
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
+            color: #d97706;
+            background: rgba(254, 243, 199, 0.8);
+            border: 1px solid rgba(252, 211, 77, 1);
             cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .verse-badge:hover {
+            background: #fde68a;
+            color: #b45309;
         }
         html.dark .verse-badge {
-            color: #fef08a;
-            background: #78350f;
-            border-color: #f59e0b;
+            color: #fbbf24;
+            background: rgba(120, 53, 15, 0.4);
+            border-color: rgba(180, 83, 9, 0.6);
         }
+        html.dark .verse-badge:hover {
+            background: rgba(146, 64, 14, 0.7);
+            color: #fcd34d;
+        }
+
+        .discourse-suggestion-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 9999px;
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .discourse-suggestion-btn:hover {
+            background: #fde68a;
+            transform: scale(1.04);
+        }
+        html.dark .discourse-suggestion-btn {
+            background: rgba(180, 83, 9, 0.4);
+            color: #fcd34d;
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+
+        .gk-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 7px;
+            border-radius: 6px;
+            color: #0284c7;
+            background: rgba(224, 242, 254, 0.8);
+            border: 1px solid rgba(186, 230, 253, 1);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .gk-toggle-btn:hover { background: #bae6fd; color: #0369a1; }
+        .gk-toggle-btn.active { background: #0284c7; color: #ffffff; border-color: #0284c7; }
+        html.dark .gk-toggle-btn { color: #38bdf8; background: rgba(12, 74, 110, 0.5); border-color: rgba(3, 105, 161, 0.6); }
+        html.dark .gk-toggle-btn:hover { background: rgba(14, 116, 144, 0.8); color: #f0f9ff; }
+        html.dark .gk-toggle-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+
+        .relation-select {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.1s;
+        }
+        .relation-select:hover { transform: scale(1.02); }
 
         .note-drawer-btn {
             display: inline-flex;
@@ -216,27 +284,40 @@
             height: 26px;
             border-radius: 6px;
             font-size: 12px;
-            color: #4b5563;
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
+            color: #6b7280;
+            background: rgba(229, 231, 235, 0.6);
+            border: 1px solid rgba(209, 213, 219, 0.8);
             cursor: pointer;
+            transition: all 0.15s ease;
         }
-        html.dark .note-drawer-btn {
-            color: #d1d5db;
-            background: #374151;
-            border-color: #4b5563;
+        .note-drawer-btn:hover { color: #4f46e5; background: rgba(224, 231, 255, 0.8); border-color: rgba(199, 210, 254, 1); }
+        .note-drawer-btn.has-notes { color: #059669; background: rgba(209, 250, 229, 0.7); border-color: rgba(167, 243, 208, 1); font-weight: bold; }
+        html.dark .note-drawer-btn { color: #9ca3af; background: rgba(55, 65, 81, 0.6); border-color: rgba(75, 85, 99, 0.8); }
+        html.dark .note-drawer-btn:hover { color: #818cf8; background: rgba(67, 56, 202, 0.3); border-color: rgba(99, 102, 241, 0.5); }
+        html.dark .note-drawer-btn.has-notes { color: #34d399; background: rgba(6, 78, 59, 0.5); border-color: rgba(16, 185, 129, 0.4); }
+
+        .interlinear-standalone-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 18px !important;
+            background: #f0f9ff !important;
+            border-radius: 12px !important;
+            border: 1px solid #bae6fd !important;
+            box-sizing: border-box !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
         }
-        .note-drawer-btn.has-notes {
-            color: #047857;
-            background: #d1fae5;
-            border-color: #10b981;
-            font-weight: bold;
+        html.dark .interlinear-standalone-card {
+            background: rgba(12, 74, 110, 0.85) !important;
+            border-color: rgba(3, 105, 161, 0.8) !important;
+            color: #f3f4f6 !important;
         }
-        html.dark .note-drawer-btn.has-notes {
-            color: #34d399;
-            background: #064e3b;
-            border-color: #059669;
-        }
+
+        .collapsed-active { opacity: 0.4; max-height: 1.8em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        body.focus-mode #flowEditor > *:not(.focused-branch) { display: none !important; }
+        .focused-branch { background: rgba(99, 102, 241, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(99, 102, 241, 0.4); }
 
         #highlightToolbar {
             position: absolute; display: none; z-index: 100; background: #ffffff;
@@ -244,591 +325,822 @@
             border-radius: 9999px; padding: 4px 8px; align-items: center; gap: 6px;
         }
         html.dark #highlightToolbar { background: #1f2937; border-color: #374151; }
-        .hl-btn { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 1.5px solid transparent; }
+        .hl-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: transform 0.1s ease; border: 1.5px solid transparent; }
+        .hl-btn:hover { transform: scale(1.15); }
 
         #contextMenu {
             position: fixed; display: none; z-index: 200; background: #ffffff;
             border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
-            border-radius: 12px; padding: 6px; min-width: 220px; user-select: none;
+            border-radius: 12px; padding: 6px; min-width: 210px; user-select: none;
         }
         html.dark #contextMenu { background: #1f2937; border-color: #374151; }
-        .ctx-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; font-size: 13px; font-weight: 500; color: #374151; border-radius: 8px; cursor: pointer; }
+        .ctx-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #374151; border-radius: 8px; cursor: pointer; transition: background 0.12s ease; }
         html.dark .ctx-item { color: #e5e7eb; }
         .ctx-item:hover { background: #f3f4f6; }
         html.dark .ctx-item:hover { background: #374151; }
 
-        .builtin-drawer {
-            position: fixed; top: 0; right: 0; width: 100%; max-width: 520px; height: 100vh;
+        #exegeticalNoteDrawer, #masterNoteDrawer {
+            position: fixed; top: 0; right: 0; width: 100%; max-width: 460px; height: 100vh;
             background: #ffffff; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.15); z-index: 300;
             transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
-        html.dark .builtin-drawer { background: #111827; border-left: 1px solid #1f2937; color: #f3f4f6; }
-        .builtin-drawer.open { transform: translateX(0); }
-        .note-editor-area img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+        html.dark #exegeticalNoteDrawer, html.dark #masterNoteDrawer { background: #111827; box-shadow: -10px 0 25px rgba(0, 0, 0, 0.4); border-left: 1px solid #1f2937; }
+        #exegeticalNoteDrawer.open, #masterNoteDrawer.open { transform: translateX(0); }
+        .note-editor-area img { max-width: 100%; border-radius: 8px; margin: 8px 0; border: 1px solid rgba(156, 163, 175, 0.3); }
 
-        /* CLEAN PRINT & PDF STYLING */
-        @media print {
-            body, html {
-                background: #ffffff !important;
-                color: #0f172a !important;
-                overflow: visible !important;
-                height: auto !important;
-            }
-            header, #projectBar, #floatingMiniPalette, .builtin-drawer, #contextMenu, #highlightToolbar, #controlsOverlay, #focusBanner, .doc-action-bar, #bibleHubPopupWindow, #cntrPopupWindow, #kudosPopupWindow {
-                display: none !important;
-            }
-            main {
-                padding: 0 !important;
-                margin: 0 !important;
-                background: transparent !important;
-                overflow: visible !important;
-            }
-            .max-w-7xl {
-                max-width: 100% !important;
-                width: 100% !important;
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            #printDocumentTitle {
-                display: block !important;
-                font-size: 1.5rem;
-                font-weight: 700;
-                font-family: 'Inter', sans-serif;
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 2px solid #e2e8f0;
-                color: #0f172a;
-            }
-            #flowEditor > p, #flowEditor > div, #flowEditor > blockquote {
-                padding-right: 0 !important;
-                color: #0f172a !important;
-            }
-            .floating-shape {
-                border: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-            }
-            .shape-handle {
-                display: none !important;
-            }
-            .floating-shape svg path {
-                stroke: #4f46e5 !important;
-            }
+        u.sg-ul-single { text-decoration: underline !important; text-decoration-style: solid !important; text-underline-offset: 3px !important; }
+        u.sg-ul-double { text-decoration: underline !important; text-decoration-style: double !important; text-underline-offset: 3px !important; }
+        s.sg-strike { text-decoration: line-through !important; color: #9ca3af; }
+        
+        span.sg-ellipsis-wrap {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px dashed rgba(99, 102, 241, 0.4);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95em;
+            color: #4f46e5;
         }
+        html.dark span.sg-ellipsis-wrap {
+            background: rgba(129, 140, 248, 0.12);
+            border-color: rgba(129, 140, 248, 0.4);
+            color: #818cf8;
+        }
+
+        mark.hl-yellow { background-color: #fef08a !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-green  { background-color: #bbf7d0 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-blue   { background-color: #bae6fd !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-pink   { background-color: #fbcfe8 !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        mark.hl-purple { background-color: #e9d5ff !important; color: inherit; padding: 1px 3px; border-radius: 3px; }
+        html.dark mark.hl-yellow { background-color: #854d0e !important; color: #fef08a; }
+        html.dark mark.hl-green  { background-color: #14532d !important; color: #bbf7d0; }
+        html.dark mark.hl-blue   { background-color: #075985 !important; color: #bae6fd; }
+        html.dark mark.hl-pink   { background-color: #831843 !important; color: #fbcfe8; }
+        html.dark mark.hl-purple { background-color: #581c87 !important; color: #e9d5ff; }
     </style>
 </head>
 
 <body class="h-screen flex flex-col select-none overflow-hidden text-sm">
 
-    <!-- Top Header -->
-    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-50 shrink-0">
+    <!-- Top App Header -->
+    <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-50 transition-colors shrink-0">
         <div class="flex items-center space-x-3">
-            <span class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">Lex<span class="text-indigo-600">Flow</span></span>
-            <span class="text-xs text-gray-400">Integrated Exegetical Workspace</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="150" height="32" class="text-gray-900 dark:text-white">
+              <defs>
+                <linearGradient id="lexFlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#0284c7" />
+                </linearGradient>
+              </defs>
+              <g transform="translate(4, 5)">
+                <path d="M 12 4 C 6 4, 4 8, 4 14 L 4 26 C 4 32, 6 36, 12 36" fill="none" stroke="url(#lexFlowGrad)" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 16 12 L 26 12 C 29 12, 31 14, 31 17 C 31 20, 29 22, 26 22 L 16 22" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 22 22 L 29 29 C 31 31, 33 32, 36 32" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="12" cy="20" r="3" fill="#0284c7" />
+              </g>
+              <text x="52" y="32" font-family="'Inter', system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="currentColor" letter-spacing="-0.5">
+                Lex<tspan fill="url(#lexFlowGrad)">Flow</tspan>
+              </text>
+            </svg>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Greek & Hebrew Thought Flow Workspace</p>
+            </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
-                <i class="fa-solid fa-book-bookmark text-indigo-500 text-xs"></i>
-                <input type="text" id="passageRefInput" value="" placeholder="e.g. 1 Peter 1:1" onchange="updatePassageContext()" class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36">
-                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 text-white font-medium px-2.5 py-1 rounded">Set</button>
+                <i class="fa-solid fa-book-bookmark text-indigo-500 text-sm"></i>
+                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Psalm 46:1-11)" value="Psalm 46:1-11"
+                       onchange="updatePassageContext()"
+                       class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36 sm:w-40">
+                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load</button>
             </div>
 
-            <!-- Two Separate Buttons: Bible Hub & CNTR Collation -->
-            <button onclick="openBibleHubModal()" class="bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-book-bible text-sky-500"></i>
-                <span>Bible Hub Interlinear</span>
+            <button onclick="openSrgntWebModal()" class="bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 transition flex items-center space-x-1.5 shadow-sm" title="Open SRGNT Manuscript Collation Tool">
+                <i class="fa-solid fa-globe text-sky-500"></i>
+                <span class="hidden sm:inline">SRGNT Collation</span>
             </button>
-
-            <button onclick="openCntrModal()" class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-scroll text-emerald-500"></i>
-                <span>CNTR Collation</span>
+            <button onclick="autoAssignVersesFromPassageRange()" class="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 transition flex items-center space-x-1 shadow-sm" title="Coordinates verses across your clauses based on the passage range">
+                <i class="fa-solid fa-bolt text-indigo-500"></i>
+                <span class="hidden sm:inline">Auto Verses</span>
             </button>
-
-            <!-- Kudos Button -->
-            <button onclick="openKudosModal()" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-heart text-amber-500"></i>
-                <span>Kudos</span>
-            </button>
-
-            <button onclick="toggleShapesDrawer()" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-shapes text-indigo-500"></i>
-                <span>Shapes</span>
-            </button>
-            <button onclick="toggleMasterNoteDrawer()" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center space-x-1.5 shadow-sm">
+            <button onclick="toggleMasterNoteDrawer()" class="bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-book-open text-amber-500"></i>
                 <span>Notes</span>
             </button>
-            <button onclick="toggleFocusMode()" id="focusModeBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1">
+            <button onclick="toggleFocusMode()" id="focusModeBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1.5">
                 <i class="fa-solid fa-expand text-indigo-500"></i>
-                <span id="focusModeLabel" class="hidden sm:inline">Focus: Off</span>
+                <span id="focusModeLabel" class="hidden md:inline">Focus: Off</span>
             </button>
-            <button onclick="toggleTheme()" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+            <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 transition flex items-center space-x-1">
                 <i id="themeIcon" class="fa-solid fa-sun text-amber-500"></i>
             </button>
-            <button onclick="exportCleanPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center space-x-1.5">
+            <button onclick="exportCleanPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center space-x-1.5" title="Export Clean PDF (Text, Indents & Subordination Lines)">
                 <i class="fa-solid fa-file-pdf"></i>
-                <span>PDF</span>
+                <span>Export PDF</span>
             </button>
         </div>
     </header>
 
-    <!-- Expanded Project Bar -->
-    <div id="projectBar" class="max-w-7xl w-full mx-auto my-2 px-4 py-2 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0">
-        <div class="flex items-center space-x-2">
-            <span class="font-semibold text-gray-400">Saved Projects:</span>
+    <!-- GLOBAL WORKSPACE PROJECTS BAR -->
+    <div id="workspaceProjectBar" class="max-w-5xl xl:max-w-6xl w-full mx-auto my-3 px-4 sm:px-6 py-2.5 bg-white dark:bg-zinc-900 shadow-sm rounded-lg border border-gray-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs transition-colors shrink-0">
+        <div class="flex items-center space-x-2 flex-wrap gap-2">
+            <span class="font-semibold text-gray-500 dark:text-gray-400">Project:</span>
             <select id="projectSelect" onchange="loadSelectedProject()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-3 py-1 outline-none font-medium border border-gray-200 dark:border-zinc-700">
-                <option value="lexflow_default">Default Scratchpad (Clean Slate)</option>
+                <option value="lexflow_default">Default Scratchpad</option>
             </select>
-            <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 text-white rounded font-semibold shadow-sm">+ New Project</button>
-            <button onclick="deleteCurrentProject()" class="px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded font-medium" title="Delete current project">Delete</button>
+            <button onclick="saveCurrentAsNewProject()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition shadow-sm">+ Save As New</button>
+            <button onclick="exportAllProjects()" class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded font-medium transition flex items-center space-x-1">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Export</span>
+            </button>
+            <label class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded font-medium transition cursor-pointer flex items-center space-x-1">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Import</span>
+                <input type="file" accept=".json" class="hidden" onchange="importAllProjects(event)">
+            </label>
         </div>
-        <span id="globalSaveStatus" class="text-emerald-500 font-medium">Auto-saved</span>
+        <div class="flex items-center space-x-3">
+            <span id="srgntStatus" class="text-xs text-sky-600 dark:text-sky-400 font-medium"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> SRGNT Ready</span>
+            <span id="globalSaveStatus" class="text-emerald-500 font-medium hidden sm:inline">Auto-saved</span>
+            <button onclick="deleteCurrentProject()" class="px-2.5 py-1 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded transition font-medium flex items-center space-x-1 shadow-sm">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Delete</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Workspace Area (Expanded to max-w-7xl) -->
+    <!-- MAIN APP WORKSPACE -->
     <main class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 bg-gray-50 dark:bg-zinc-950 flex flex-col custom-scrollbar">
-        <div class="max-w-7xl w-full mx-auto my-2 p-8 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col">
-            <div id="focusBanner" class="hidden mb-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300">
-                <span><i class="fa-solid fa-bullseye mr-1.5"></i> <strong>Focus Mode Active</strong> (Right-click any clause or click its line to isolate)</span>
-                <button onclick="toggleFocusMode()" class="px-2.5 py-1 bg-indigo-600 text-white font-medium rounded">Exit Focus</button>
-            </div>
-
-            <div class="doc-action-bar flex justify-between pb-4 mb-4 border-b border-gray-200 dark:border-zinc-800 text-xs">
+        <div id="wordProcessorPane" class="max-w-5xl xl:max-w-6xl w-full mx-auto my-2 p-6 sm:p-10 md:p-12 bg-white dark:bg-zinc-900 shadow-xl rounded-xl border border-gray-200 dark:border-zinc-800 flex flex-col transition-colors">
+            
+            <!-- Top Toolbar -->
+            <div class="flex flex-wrap items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-zinc-800 text-xs gap-3 shrink-0">
                 <div class="flex items-center space-x-3">
-                    <span class="font-bold text-gray-800 dark:text-gray-200">Thought Flow Document</span>
-                    <button onclick="autoAssignVersesSmartly()" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded font-semibold border border-indigo-200 dark:border-indigo-800"><i class="fa-solid fa-bolt mr-1"></i> Auto Verses</button>
+                    <span class="font-bold text-gray-800 dark:text-gray-200 tracking-wide text-sm">Thought Flow Document</span>
+                    <span id="saveStatus" class="text-emerald-500 font-medium hidden sm:inline">Auto-saved</span>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="indentLine()" class="px-2.5 py-1 bg-gray-100 dark:bg-zinc-800 rounded font-medium">Indent (Tab)</button>
-                    <button onclick="outdentLine()" class="px-2.5 py-1 bg-gray-100 dark:bg-zinc-800 rounded font-medium">Outdent (Shift+Tab)</button>
-                    <button onclick="clearTextFlow()" class="text-red-500 font-medium ml-2">Clear</button>
+                <div class="flex items-center flex-wrap gap-2">
+                    <button onclick="indentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition font-medium">Indent →</button>
+                    <button onclick="outdentLine()" class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-md transition font-medium">← Outdent</button>
+                    <button onclick="toggleAttachDown()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-md transition font-medium">↓ Attach</button>
+                    <button onclick="clearTextFlow()" class="px-3 py-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition font-medium">Clear</button>
                 </div>
             </div>
 
-            <!-- Print Header Title -->
-            <div id="printDocumentTitle"></div>
-
+            <!-- Focus Mode Exit Banner -->
+            <div id="focusBanner" class="hidden mb-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300">
+                <span><i class="fa-solid fa-bullseye mr-1.5"></i> <strong>Focus Mode Active</strong></span>
+                <button onclick="toggleFocusMode()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition">Exit</button>
+            </div>
+            
+            <!-- Editor Canvas & Overlay Container -->
             <div id="editorWrapper">
-                <!-- Text Flow Editor -->
                 <div id="flowEditor" contenteditable="true" 
-                     class="outline-none font-serif text-xl leading-relaxed text-gray-800 dark:text-gray-100 space-y-0 relative z-10"
+                     class="outline-none font-serif text-xl leading-relaxed text-gray-800 dark:text-gray-100 space-y-0 focus:ring-0"
                      style="min-height: 50vh;"
-                     placeholder="Paste your passage here...">
+                     placeholder="Begin typing or pasting your scripture passage here to analyze the flow of thought...">
                 </div>
-                <!-- Interactive Shapes Overlay Layer -->
-                <div id="shapesLayer"></div>
                 <div id="controlsOverlay"></div>
 
                 <!-- Floating Selection Toolbar -->
                 <div id="highlightToolbar" class="flex items-center space-x-1.5">
-                    <button class="hl-btn bg-yellow-300" onclick="applyHighlight('hl-yellow')"></button>
-                    <button class="hl-btn bg-emerald-300" onclick="applyHighlight('hl-green')"></button>
-                    <button class="hl-btn bg-sky-300" onclick="applyHighlight('hl-blue')"></button>
-                    <button class="hl-btn bg-pink-300" onclick="applyHighlight('hl-pink')"></button>
-                    <button class="hl-btn bg-purple-300" onclick="applyHighlight('hl-purple')"></button>
+                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Format:</span>
+                    <button class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow Highlight" onclick="applyHighlight('hl-yellow')"></button>
+                    <button class="hl-btn bg-emerald-300 border-emerald-400" title="Green Highlight" onclick="applyHighlight('hl-green')"></button>
+                    <button class="hl-btn bg-sky-300 border-sky-400" title="Blue Highlight" onclick="applyHighlight('hl-blue')"></button>
+                    <button class="hl-btn bg-pink-300 border-pink-400" title="Pink Highlight" onclick="applyHighlight('hl-pink')"></button>
+                    <button class="hl-btn bg-purple-300 border-purple-400" title="Purple Highlight" onclick="applyHighlight('hl-purple')"></button>
+                    
                     <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                    <button class="px-1.5 text-xs font-bold underline" onclick="applyUnderline('single')">U</button>
-                    <button class="px-1.5 text-xs font-bold" style="text-decoration: underline double;" onclick="applyUnderline('double')">U</button>
-                    <button class="px-1.5 text-xs font-bold line-through" onclick="applyStrikethrough()">S</button>
-                    <button class="px-1.5 text-xs font-bold font-mono text-indigo-600" onclick="applyEllipsisCaret()">...^</button>
-                    <button class="px-1 text-xs text-red-500" onclick="clearSelectionFormatting()"><i class="fa-solid fa-eraser"></i></button>
+                    
+                    <button class="px-2 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600" title="Single Underline" onclick="applyUnderline('single')">U</button>
+                    <button class="px-2 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
+                    <button class="px-2 py-0.5 text-xs font-bold line-through text-gray-500 hover:text-indigo-600" title="Strikethrough" onclick="applyStrikethrough()">ab</button>
+                    <button class="px-2 py-0.5 text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded" title="Ellipsis & Caret (...text^)" onclick="applyEllipsisCaret()">...^</button>
+
+                    <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    
+                    <button class="text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 px-1 font-semibold" title="Remove Formatting" onclick="clearSelectionFormatting()"><i class="fa-solid fa-eraser"></i></button>
                 </div>
+            </div>
+
+            <!-- Bottom Status Bar -->
+            <div class="pt-4 mt-8 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center shrink-0">
+                <span id="wordCountDisplay">0 words</span>
+                <span class="italic hidden sm:inline">Tip: Tap or right-click any line for Ellipsis, Strikethrough, or Notes.</span>
             </div>
         </div>
+
+        <!-- APP FOOTER ATTRIBUTION -->
+        <footer class="max-w-5xl xl:max-w-6xl w-full mx-auto mt-4 px-2 text-center text-xs text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+            <div>LexFlow &bull; Exegetical Thought Flow Workspace</div>
+            <div class="flex items-center space-x-3 flex-wrap justify-center">
+                <span>Greek Data: <a href="https://greekcntr.org/" target="_blank" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition underline">SRGNT</a></span>
+                <span>&bull;</span>
+                <span>Lexicon: <a href="https://biblehub.com/" target="_blank" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition underline">Bible Hub</a></span>
+            </div>
+        </footer>
     </main>
 
-    <!-- FLOATING MINI PALETTE WIDGET -->
-    <div id="floatingMiniPalette">
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-tl', 'Top-Left Elbow')" title="Top-Left Elbow"><i class="fa-solid fa-arrow-turn-down text-xs"></i></button>
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-tr', 'Top-Right Elbow')" title="Top-Right Elbow"><i class="fa-solid fa-arrow-turn-down text-xs scale-x-[-1]"></i></button>
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('elbow-bl', 'Bottom-Left Elbow')" title="Bottom-Left Elbow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 20 H8 V4"/></svg></button>
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('spine', 'Vertical Spine')" title="Vertical Spine"><i class="fa-solid fa-grip-lines-vertical text-xs"></i></button>
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('line-horiz', 'Horizontal Line')" title="Horizontal Line"><i class="fa-solid fa-grip-lines text-xs"></i></button>
-        <button class="mini-shape-btn" onclick="spawnFloatingShape('arrow-down', 'Down Arrow')" title="Down Arrow"><i class="fa-solid fa-arrow-down text-xs"></i></button>
-        <button class="mini-shape-btn" onclick="toggleFloatingMiniPalette()" title="Close Mini Palette"><i class="fa-solid fa-xmark text-xs text-red-400"></i></button>
+    <!-- GREEK INTERLINEAR LIGHTBOX MODAL -->
+    <div id="interlinearLightbox" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeInterlinearLightbox()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-2 z-10 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="interlinearLightboxBody"></div>
+        </div>
     </div>
 
-    <!-- RIGHT-CLICK CONTEXT MENU -->
-    <div id="contextMenu">
-        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleFocusBranch()"><i class="fa-solid fa-bullseye text-xs"></i> Toggle Focus on Branch</div>
-        <div class="ctx-item text-emerald-600 dark:text-emerald-400" onclick="ctxOpenNoteDrawer()"><i class="fa-solid fa-pen-to-square text-xs"></i> Exegetical Notes</div>
-        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
-        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxEllipsisSelection()"><i class="fa-solid fa-ellipsis text-xs"></i> Ellipsis & Caret (...text^)</div>
-        <div class="ctx-item" onclick="ctxStrikethroughSelection()"><i class="fa-solid fa-strikethrough text-xs"></i> Strikethrough Selection</div>
-        <div class="ctx-item" onclick="ctxIndentLine()"><i class="fa-solid fa-indent text-xs"></i> Indent Line (Tab)</div>
-        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleParallelIndent()"><i class="fa-solid fa-list-ul text-xs"></i> Toggle Parallel List Indent</div>
-        <div class="ctx-item" onclick="ctxOutdentLine()"><i class="fa-solid fa-outdent text-xs"></i> Outdent Line (Shift+Tab)</div>
-        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
-        <div class="ctx-item text-red-500" onclick="ctxDeleteLine()"><i class="fa-solid fa-trash-can text-xs"></i> Delete Line</div>
-    </div>
-
-    <!-- BIBLE HUB MODAL WINDOW -->
-    <div id="bibleHubPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
-        <div class="w-full max-w-6xl bg-[#fdfbf7] dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-300 dark:border-zinc-800 flex flex-col relative h-[92vh] overflow-hidden">
-            <div class="px-5 py-3 bg-sky-100 dark:bg-zinc-900 border-b border-sky-200 dark:border-zinc-800 flex justify-between items-center shrink-0">
+    <!-- SRGNT COLLATION WEB APP EMBEDDED MODAL -->
+    <div id="srgntWebModal" class="fixed inset-0 z-[450] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-5xl h-[85vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 flex flex-col relative overflow-hidden">
+            <div class="px-6 py-3.5 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
                 <div class="flex items-center space-x-3">
-                    <span class="font-bold text-gray-900 dark:text-white text-sm">Bible Hub Interlinear Viewer</span>
-                    <span id="bibleHubHeaderPassageBadge" class="px-2.5 py-0.5 bg-white dark:bg-zinc-800 rounded font-mono text-xs font-bold text-sky-800 dark:text-sky-400 border border-sky-300 dark:border-zinc-700">1 Peter 1:1</span>
-                </div>
-                <button onclick="closeBibleHubModal()" class="text-gray-600 hover:text-red-600 dark:text-gray-300 text-lg font-bold px-2 py-1 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="px-5 py-2.5 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-                <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-                    <span class="font-semibold text-gray-500">Passage:</span>
-                    <select id="bhBookSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none">
-                        <option value="Matthew">Matthew</option><option value="Mark">Mark</option><option value="Luke">Luke</option><option value="John">John</option><option value="Acts">Acts</option><option value="Romans">Romans</option><option value="1 Corinthians">1 Corinthians</option><option value="2 Corinthians">2 Corinthians</option><option value="Galatians">Galatians</option><option value="Ephesians">Ephesians</option><option value="Philippians">Philippians</option><option value="Colossians">Colossians</option><option value="1 Thessalonians">1 Thessalonians</option><option value="2 Thessalonians">2 Thessalonians</option><option value="1 Timothy">1 Timothy</option><option value="2 Timothy">2 Timothy</option><option value="Titus">Titus</option><option value="Philemon">Philemon</option><option value="Hebrews">Hebrews</option><option value="James">James</option><option value="1 Peter" selected>1 Peter</option><option value="2 Peter">2 Peter</option><option value="1 John">1 John</option><option value="2 John">2 John</option><option value="3 John">3 John</option><option value="Jude">Jude</option><option value="Revelation">Revelation</option>
-                    </select>
-                    <select id="bhChapSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16">
-                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option>
-                    </select>
-                    <span class="font-bold">:</span>
-                    <div class="flex items-center space-x-1">
-                        <button onclick="stepBhVerse(-1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Previous Verse"><i class="fa-solid fa-chevron-left"></i></button>
-                        <select id="bhVerseSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16">
-                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option>
-                        </select>
-                        <button onclick="stepBhVerse(1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Next Verse"><i class="fa-solid fa-chevron-right"></i></button>
+                    <div class="bg-sky-600 p-1.5 rounded-lg text-white">
+                        <i class="fa-solid fa-globe text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">SRGNT Manuscript Collation Tool</h3>
+                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Psalm 46:1-11</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a id="bibleHubExternalLink" href="https://biblehub.com/interlinear/1_peter/1-1.htm" target="_blank" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded shadow-sm flex items-center space-x-1">
-                        <span>Open in New Tab</span> <i class="fa-solid fa-external-link text-[10px]"></i>
+                    <a id="srgntExternalLink" href="https://greekcntr.org/collation/" target="_blank" class="text-xs text-sky-600 dark:text-sky-400 hover:underline flex items-center space-x-1 font-medium">
+                        <span>Open in New Tab</span>
+                        <i class="fa-solid fa-external-link text-[10px]"></i>
                     </a>
-                </div>
-            </div>
-            <div class="flex-1 bg-white dark:bg-zinc-950 relative overflow-hidden flex flex-col">
-                <iframe id="bibleHubIframe" src="" class="w-full flex-1 border-0"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- CNTR COLLATION MODAL WINDOW -->
-    <div id="cntrPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
-        <div class="w-full max-w-6xl bg-[#fdfbf7] dark:bg-zinc-900 rounded-2xl shadow-2xl border border-emerald-300 dark:border-zinc-800 flex flex-col relative h-[92vh] overflow-hidden">
-            <div class="px-5 py-3 bg-emerald-100 dark:bg-zinc-900 border-b border-emerald-200 dark:border-zinc-800 flex justify-between items-center shrink-0">
-                <div class="flex items-center space-x-3">
-                    <span class="font-bold text-gray-900 dark:text-white text-sm"><span class="text-emerald-700">CNTR</span> Center for New Testament Restoration - Collation Page</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="https://greekcntr.org/collation/" target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded text-xs flex items-center space-x-1">
-                        <span>Open CNTR in New Tab</span> <i class="fa-solid fa-external-link text-[10px]"></i>
-                    </a>
-                    <button onclick="closeCntrModal()" class="text-gray-600 hover:text-red-600 dark:text-gray-300 text-lg font-bold px-2 py-1 transition">
+                    <button onclick="closeSrgntWebModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold p-1 rounded transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             </div>
-            <div class="flex-1 bg-white dark:bg-zinc-950 relative overflow-hidden flex flex-col">
-                <iframe src="https://greekcntr.org/collation/" class="w-full flex-1 border-0"></iframe>
+            <div class="flex-1 w-full bg-white dark:bg-zinc-950 relative">
+                <iframe id="srgntIframe" src="about:blank" class="w-full h-full border-none" title="SRGNT Collation View"></iframe>
             </div>
         </div>
     </div>
 
-    <!-- KUDOS & ATTRIBUTIONS MODAL WINDOW -->
-    <div id="kudosPopupWindow" class="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 hidden">
-        <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-amber-300 dark:border-zinc-800 flex flex-col relative overflow-hidden p-6">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-zinc-800">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-heart text-amber-500 text-lg"></i>
-                    <h3 class="font-bold text-gray-900 dark:text-white text-base">Scholarly Attribution & Kudos</h3>
-                </div>
-                <button onclick="closeKudosModal()" class="text-gray-400 hover:text-gray-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="py-6 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                <p>
-                    LexFlow is deeply grateful to the following foundational projects and institutions for making their scholarly resources, manuscript witness data, and interlinear tools publicly accessible for biblical scholarship and exegetical study:
-                </p>
-                <div class="p-4 bg-amber-50 dark:bg-zinc-800/60 rounded-xl border border-amber-200 dark:border-zinc-700 space-y-2">
-                    <div class="font-bold text-amber-900 dark:text-amber-400"><i class="fa-solid fa-scroll mr-1.5"></i> Center for New Testament Restoration (CNTR / SRGNT)</div>
-                    <p class="text-xs">Providing comprehensive Greek New Testament collation matrices, manuscript witness metrics, and textual restoration data.</p>
-                </div>
-                <div class="p-4 bg-sky-50 dark:bg-zinc-800/60 rounded-xl border border-sky-200 dark:border-zinc-700 space-y-2">
-                    <div class="font-bold text-sky-900 dark:text-sky-400"><i class="fa-solid fa-book-bible mr-1.5"></i> Bible Hub</div>
-                    <p class="text-xs">Providing exceptional verse-by-verse Greek interlinear tools, grammatical parsing tags, Strong's concordance numbers, and cross-reference resources.</p>
-                </div>
-            </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-zinc-800 flex justify-end">
-                <button onclick="closeKudosModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg text-xs">Close</button>
-            </div>
+    <!-- RIGHT-CLICK CONTEXT MENU -->
+    <div id="contextMenu">
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()">
+            <i class="fa-solid fa-arrow-down-long text-xs"></i>
+            <span>Attach to Clause Below</span>
+        </div>
+        <div class="ctx-item text-emerald-600 dark:text-emerald-400" onclick="ctxOpenNoteDrawer()">
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
+            <span>Exegetical Notes</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxEllipsisSelection()">
+            <i class="fa-solid fa-ellipsis text-xs"></i>
+            <span>Ellipsis & Caret (...text^)</span>
+        </div>
+        <div class="ctx-item text-gray-700 dark:text-gray-200" onclick="ctxStrikethroughSelection()">
+            <i class="fa-solid fa-strikethrough text-xs text-gray-400"></i>
+            <span>Strikethrough Selection</span>
+        </div>
+        <div class="ctx-item" onclick="ctxIndentLine()">
+            <i class="fa-solid fa-indent text-xs text-gray-400"></i>
+            <span>Indent Line (Tab)</span>
+        </div>
+        <div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxToggleParallelIndent()">
+            <i class="fa-solid fa-list-ul text-xs"></i>
+            <span>Toggle Parallel List Indent</span>
+        </div>	
+        <div class="ctx-item" onclick="ctxOutdentLine()">
+            <i class="fa-solid fa-outdent text-xs text-gray-400"></i>
+            <span>Outdent Line (Shift+Tab)</span>
+        </div>
+        <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+        <div class="ctx-item text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" onclick="ctxDeleteLine()">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+            <span>Delete Line</span>
         </div>
     </div>
 
-    <!-- FLOATING SHAPES PALETTE DRAWER -->
-    <div id="shapesDrawer" class="builtin-drawer">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900">
+    <!-- CLAUSE EXEGETICAL NOTE DRAWER -->
+    <div id="exegeticalNoteDrawer">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-gray-50 dark:bg-zinc-900">
             <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-shapes text-indigo-600"></i>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Shapes Palette</h3>
-            </div>
-            <button onclick="toggleShapesDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 flex items-center justify-between text-xs">
-            <span>Click any connector shape below to spawn it. Use arrow keys to fine-tune position, and press <strong>Delete</strong> when selected to remove!</span>
-            <button onclick="toggleFloatingMiniPalette()" class="px-2.5 py-1 bg-indigo-600 text-white font-medium rounded shadow hover:bg-indigo-700 transition shrink-0 ml-2">Dock as Mini-Palette</button>
-        </div>
-        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs">
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="spawnFloatingShape('elbow-tl', 'Top-Left Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M20 4 H8 V20"/></svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Top-Left Elbow</span>
-                </button>
-                <button onclick="spawnFloatingShape('elbow-tr', 'Top-Right Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M4 4 H16 V20"/></svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Top-Right Elbow</span>
-                </button>
-                <button onclick="spawnFloatingShape('elbow-bl', 'Bottom-Left Elbow')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M20 20 H8 V4"/></svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Bottom-Left Elbow</span>
-                </button>
-                <button onclick="spawnFloatingShape('spine', 'Vertical Spine / Line')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 2 V22"/></svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Vertical Spine</span>
-                </button>
-                <button onclick="spawnFloatingShape('line-horiz', 'Horizontal Line')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition col-span-2">
-                    <svg width="40" height="24" viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M2 12 H38"/></svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Horizontal Line</span>
-                </button>
-            </div>
-
-            <div class="pt-2 border-t border-gray-200 dark:border-zinc-800">
-                <div class="font-bold text-gray-600 dark:text-gray-400 mb-2">Downward Attachment Arrows</div>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="spawnFloatingShape('arrow-down', 'Down Arrow Pointer')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 2 V18 M6 12 L12 20 L18 12"/></svg>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Down Arrow</span>
-                    </button>
-                    <button onclick="spawnFloatingShape('arrow-up', 'Up Arrow Pointer')" class="p-3 bg-gray-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center space-y-2 transition">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-600"><path d="M12 22 V6 M6 12 L12 4 L18 12"/></svg>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Up Arrow</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CLAUSE NOTE DRAWER -->
-    <div id="exegeticalNoteDrawer" class="builtin-drawer">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                <i class="fa-solid fa-pen-to-square text-indigo-600 dark:text-indigo-400"></i>
                 <h3 class="text-sm font-bold text-gray-900 dark:text-white">Exegetical Clause Notes</h3>
             </div>
-            <button onclick="closeNoteDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeNoteDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm p-1 rounded transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 text-xs">
-            <p id="drawerClauseText" class="italic text-gray-600 dark:text-gray-300 font-serif">"..."</p>
+
+        <div class="px-4 py-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/50 text-xs shrink-0">
+            <span class="font-semibold text-indigo-600 dark:text-indigo-400">Clause Preview:</span>
+            <p id="drawerClauseText" class="italic text-gray-700 dark:text-gray-300 mt-0.5 line-clamp-2 font-serif text-sm">"..."</p>
         </div>
-        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar">
-            <div id="clauseNoteEditor" contenteditable="true" class="note-editor-area outline-none text-sm leading-relaxed" placeholder="Type clause notes or paste images here..."></div>
+
+        <div class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between text-xs bg-white dark:bg-zinc-900 shrink-0">
+            <div class="flex items-center space-x-1.5">
+                <button onclick="execNoteCommand('bold')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-bold text-gray-700 dark:text-gray-300">B</button>
+                <button onclick="execNoteCommand('italic')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded italic font-serif text-gray-700 dark:text-gray-300">I</button>
+                <button onclick="execNoteCommand('underline')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded underline text-gray-700 dark:text-gray-300">U</button>
+                <button onclick="execNoteCommand('strikeThrough')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded line-through text-gray-700 dark:text-gray-300">S</button>
+                <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                <button onclick="execNoteCommand('insertUnorderedList')" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-700 dark:text-gray-300"><i class="fa-solid fa-list-ul"></i></button>
+            </div>
+            <label class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded cursor-pointer transition text-xs font-medium flex items-center space-x-1.5">
+                <i class="fa-solid fa-image text-indigo-500"></i>
+                <span>Attach Pic</span>
+                <input type="file" accept="image/png, image/jpeg, image/gif, image/webp" class="hidden" onchange="handleImageUpload(event)">
+            </label>
+        </div>
+
+        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-900">
+            <div id="clauseNoteEditor" contenteditable="true" 
+                 class="note-editor-area outline-none font-sans text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[300px]"
+                 placeholder="Type exegetical insights, word studies, or notes...">
+            </div>
+        </div>
+
+        <div class="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex justify-between items-center text-xs shrink-0">
+            <span class="text-gray-400 italic">Supports image paste (PNG/JPEG)</span>
+            <button onclick="closeNoteDrawer()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition">Done</button>
         </div>
     </div>
 
-    <!-- MASTER NOTES DRAWER -->
-    <div id="masterNoteDrawer" class="builtin-drawer">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-900">
+    <!-- MASTER ALL NOTES DRAWER -->
+    <div id="masterNoteDrawer">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-gray-50 dark:bg-zinc-900">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-book-open text-amber-500"></i>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Master Exegetical Notes</h3>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Master Exegetical Notes Document</h3>
             </div>
-            <button onclick="toggleMasterNoteDrawer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeMasterNoteDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm p-1 rounded transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 flex justify-between text-xs">
-            <button onclick="importAllNotes()" class="px-3 py-1.5 bg-amber-600 text-white font-medium rounded shadow-sm">Import All Clause Notes</button>
-            <button onclick="clearMasterNotes()" class="text-red-500 font-medium">Clear</button>
+
+        <div class="px-4 py-2.5 bg-amber-50/60 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900/50 flex items-center justify-between text-xs shrink-0">
+            <button onclick="importAllNotes()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded transition shadow-sm flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Import All Notes</span>
+            </button>
+            <div class="flex items-center space-x-2">
+                <button onclick="exportMasterNotesToPDF()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Export PDF</span>
+                </button>
+                <button onclick="clearMasterNotes()" class="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded transition">
+                    Clear
+                </button>
+            </div>
         </div>
-        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar">
-            <div id="masterNoteEditor" contenteditable="true" class="note-editor-area outline-none text-sm leading-relaxed" placeholder="Click 'Import All Clause Notes' above to compile notes..."></div>
+
+        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-900">
+            <div id="masterNoteEditor" contenteditable="true" 
+                 class="note-editor-area outline-none font-sans text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[350px]"
+                 placeholder="Click 'Import All Notes' above to gather all clause notes into a consolidated document...">
+            </div>
+        </div>
+
+        <div class="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex justify-between items-center text-xs shrink-0">
+            <span class="text-gray-400 italic">Compiles notes across all clauses</span>
+            <button onclick="closeMasterNoteDrawer()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded transition">Close</button>
         </div>
     </div>
 
     <!-- SCRIPT ENGINE -->
     <script>
         let currentProjectKey = localStorage.getItem('lexflow_activeProjectKey') || 'lexflow_default';
+        let isFocusModeActive = false;
         let rightClickedBlock = null;
         let activeNoteBlock = null;
-        let isFocusModeActive = false;
-        let selectedFloatingShape = null;
+        let activeLightboxBlock = null;
+        let srgntCache = {};
         
-        const editor = document.getElementById('flowEditor');
-        const shapesLayer = document.getElementById('shapesLayer');
-        const overlay = document.getElementById('controlsOverlay');
         const projectSelect = document.getElementById('projectSelect');
-        const contextMenu = document.getElementById('contextMenu');
+        const globalSaveStatus = document.getElementById('globalSaveStatus');
+        const editor = document.getElementById('flowEditor');
+        const overlay = document.getElementById('controlsOverlay');
+        const wordCountDisplay = document.getElementById('wordCountDisplay');
+        const saveStatus = document.getElementById('saveStatus');
+        const srgntStatus = document.getElementById('srgntStatus');
         const highlightToolbar = document.getElementById('highlightToolbar');
-        const workspaceMain = document.querySelector('main');
-        const floatingMiniPalette = document.getElementById('floatingMiniPalette');
+        const contextMenu = document.getElementById('contextMenu');
+        
+        const noteDrawer = document.getElementById('exegeticalNoteDrawer');
         const clauseNoteEditor = document.getElementById('clauseNoteEditor');
+        const drawerClauseText = document.getElementById('drawerClauseText');
 
-        const otBooks = [
-            'genesis', 'gen', 'exodus', 'exod', 'leviticus', 'lev', 'numbers', 'num', 
-            'deuteronomy', 'deut', 'joshua', 'josh', 'judges', 'judg', 'ruth', '1samuel', 
-            '1sam', '2samuel', '2sam', '1kings', '1kgs', '2kings', '2kgs', '1chronicles', 
-            '1chr', '2chronicles', '2chr', 'ezra', 'ezr', 'nehemiah', 'neh', 'esther', 
-            'esth', 'job', 'psalm', 'psalms', 'ps', 'proverbs', 'prov', 'ecclesiastes', 
-            'eccl', 'song', 'isaiah', 'isa', 'jeremiah', 'jer', 'lamentations', 'lam', 
-            'ezekiel', 'ezek', 'daniel', 'dan', 'hosea', 'hos', 'joel', 'jl', 'amos', 
-            'obadiah', 'obad', 'jonah', 'jon', 'micah', 'mic', 'nahum', 'nah', 'habakkuk', 
-            'hab', 'zephaniah', 'zeph', 'haggai', 'hag', 'zechariah', 'zech', 'malachi', 'mal'
-        ];
+        const masterNoteDrawer = document.getElementById('masterNoteDrawer');
+        const masterNoteEditor = document.getElementById('masterNoteEditor');
 
-        function updatePassageContext() {
-            const refVal = document.getElementById('passageRefInput').value.trim();
-            const printTitle = document.getElementById('printDocumentTitle');
-            if (printTitle) printTitle.textContent = refVal || 'Exegetical Thought Flow Document';
-            autoAssignVersesSmartly();
-            saveActiveProjectData();
+        const defaultRelations = {
+            'Causal': { bg: '#fef3c7', text: '#92400e' },
+            'Conditional': { bg: '#d1fae5', text: '#065f46' },
+            'Result': { bg: '#e0f2fe', text: '#0369a1' },
+            'Purpose': { bg: '#f3e8ff', text: '#6b21a8' },
+            'Means': { bg: '#ccfbf1', text: '#115e59' },
+            'Temporal': { bg: '#ffe4e6', text: '#9f1239' },
+            'Adversative': { bg: '#fee2e2', text: '#991b1b' },
+            'Explanation': { bg: '#f1f5f9', text: '#334155' }
+        };
+
+        const discourseMarkerMap = {
+            'therefore': 'Result',
+            'wherefore': 'Result',
+            'so that': 'Purpose',
+            'in order that': 'Purpose',
+            'because': 'Causal',
+            'for': 'Causal',
+            'since': 'Causal',
+            'if': 'Conditional',
+            'unless': 'Conditional',
+            'but': 'Adversative',
+            'however': 'Adversative',
+            'when': 'Temporal',
+            'after': 'Temporal',
+            'while': 'Temporal'
+        };
+
+        const bookNumberMap = {
+            'genesis': 1, 'gen': 1, 'exodus': 2, 'exod': 2, 'leviticus': 3, 'lev': 3,
+            'numbers': 4, 'num': 4, 'deuteronomy': 5, 'deut': 5, 'joshua': 6, 'josh': 6,
+            'judges': 7, 'ruth': 8, '1samuel': 9, '2samuel': 10, '1kings': 11, '2kings': 12,
+            'psalm': 19, 'psalms': 19, 'ps': 19, 'proverbs': 20, 'prov': 20, 'isaiah': 23, 'isa': 23,
+            'matthew': 40, 'matt': 40, 'mt': 40,
+            'mark': 41, 'mk': 41,
+            'luke': 42, 'lk': 42,
+            'john': 43, 'jhn': 43, 'jn': 43,
+            'acts': 44, 'act': 44,
+            'romans': 45, 'rom': 45,
+            '1corinthians': 46, '1cor': 46,
+            '2corinthians': 47, '2cor': 47,
+            'galatians': 48, 'gal': 48,
+            'ephesians': 49, 'eph': 49,
+            'philippians': 50, 'php': 50,
+            'colossians': 51, 'col': 51,
+            '1thessalonians': 52, '1thess': 52,
+            '2thessalonians': 53, '2thess': 53,
+            '1timothy': 54, '1tim': 54,
+            '2timothy': 55, '2tim': 55,
+            'titus': 56, 'tit': 56,
+            'philemon': 57, 'phlm': 57,
+            'hebrews': 58, 'heb': 58,
+            'james': 59, 'jas': 59,
+            '1peter': 60, '1pet': 60,
+            '2peter': 61, '2pet': 61,
+            '1john': 62, '1jhn': 62,
+            '2john': 63, '2jhn': 63,
+            '3john': 64, '3jhn': 64,
+            'jude': 65, 'jud': 65,
+            'revelation': 66, 'rev': 66
+        };
+
+        const bookNameMap = {
+            '40': 'Matthew', '41': 'Mark', '42': 'Luke', '43': 'John', '44': 'Acts',
+            '45': 'Romans', '46': '1 Corinthians', '47': '2 Corinthians', '48': 'Galatians',
+            '49': 'Ephesians', '50': 'Philippians', '51': 'Colossians', '52': '1 Thessalonians',
+            '53': '2 Thessalonians', '54': '1 Timothy', '55': '2 Timothy', '56': 'Titus',
+            '57': 'Philemon', '58': 'Hebrews', '59': 'James', '60': '1 Peter',
+            '61': '2 Peter', '62': '1 John', '63': '2 John', '64': '3 John', '65': 'Jude', '66': 'Revelation'
+        };
+
+        function isOldTestamentPassage() {
+            const val = document.getElementById('passageRefInput').value.toLowerCase().trim();
+            const otBooks = [
+                'genesis', 'gen', 'exodus', 'exod', 'ex', 'leviticus', 'lev', 'numbers', 'num', 
+                'deuteronomy', 'deut', 'dt', 'joshua', 'josh', 'judges', 'judg', 'ruth', '1samuel', 
+                '1sam', '2samuel', '2sam', '1kings', '1kgs', '2kings', '2kgs', '1chronicles', 
+                '1chr', '2chronicles', '2chr', 'ezra', 'ezr', 'nehemiah', 'neh', 'esther', 
+                'esth', 'job', 'psalm', 'psalms', 'ps', 'proverbs', 'prov', 'ecclesiastes', 
+                'eccl', 'song', 'isaiah', 'isa', 'jeremiah', 'jer', 'lamentations', 'lam', 
+                'ezekiel', 'ezek', 'daniel', 'dan', 'hosea', 'hos', 'joel', 'jl', 'amos', 
+                'obadiah', 'obad', 'jonah', 'jon', 'micah', 'mic', 'nahum', 'nah', 'habakkuk', 
+                'hab', 'zephaniah', 'zeph', 'haggai', 'hag', 'zechariah', 'zech', 'malachi', 'mal'
+            ];
+            return otBooks.some(b => val.startsWith(b));
+        }
+
+        function openHebrewBibleHubInterlinear(verseNum) {
+            const passageVal = document.getElementById('passageRefInput').value.trim().toLowerCase();
+            const match = passageVal.match(/^([0-9]?\s*[a-zA-Z]+)\s*([0-9]+)/);
+            if (match) {
+                let book = match[1].toLowerCase().replace(/\s+/g, '');
+                const chapter = match[2];
+                if (book === 'psalm') book = 'psalms';
+                window.open(`https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`, '_blank');
+            } else {
+                window.open('https://biblehub.com/interlinear/', '_blank');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             populateProjectsMenu();
             loadSelectedProject();
-            updatePassageContext();
-
-            // Instant live-saving for clause notes
-            if (clauseNoteEditor) {
-                clauseNoteEditor.addEventListener('input', () => {
-                    if (!activeNoteBlock) return;
-                    const content = clauseNoteEditor.innerHTML.trim();
-                    if (content) {
-                        activeNoteBlock.dataset.exegeticalNotes = content;
-                    } else {
-                        activeNoteBlock.removeAttribute('data-exegetical-notes');
-                    }
-                    syncOverlayControls();
-                    saveActiveProjectData();
-                });
-            }
-
+            
             if (editor) {
-                editor.addEventListener('focus', () => {
-                    if (selectedFloatingShape) {
-                        selectedFloatingShape.classList.remove('selected');
-                        selectedFloatingShape = null;
-                    }
-                }, true);
-
                 editor.addEventListener('input', () => {
+                    cleanEditorSpans();
                     syncOverlayControls();
+                    updateWordCount();
                     saveActiveProjectData();
                 });
-                editor.addEventListener('paste', () => {
-                    setTimeout(() => autoAssignVersesSmartly(), 50);
+
+                editor.addEventListener('paste', (e) => {
+                    setTimeout(() => {
+                        autoAssignVersesFromPassageRange();
+                    }, 50);
                 });
+
                 editor.addEventListener('keydown', (e) => {
                     if (e.key === 'Tab') {
                         e.preventDefault();
                         if (e.shiftKey) { outdentLine(); } else { indentLine(); }
+                    } else if (e.key === 'Escape') {
+                        hideContextMenu();
+                        closeNoteDrawer();
+                        closeMasterNoteDrawer();
+                        closeInterlinearLightbox();
+                        closeSrgntWebModal();
                     }
                 });
+
                 editor.addEventListener('contextmenu', (e) => {
                     let node = e.target;
-                    while (node && node.parentNode !== editor && node !== editor) node = node.parentNode;
+                    while (node && node.parentNode !== editor && node !== editor) {
+                        node = node.parentNode;
+                    }
                     if (node && node !== editor) {
                         e.preventDefault();
                         rightClickedBlock = node;
                         showContextMenu(e.clientX, e.clientY);
                     }
                 });
+
                 document.addEventListener('click', (e) => {
                     if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
-                    if (!e.target.closest('.floating-shape') && !e.target.closest('button') && !e.target.closest('#floatingMiniPalette') && selectedFloatingShape) {
-                        selectedFloatingShape.classList.remove('selected');
-                        selectedFloatingShape = null;
-                    }
-                });
-
-                window.addEventListener('keydown', (e) => {
-                    if (!selectedFloatingShape) return;
-                    const activeTag = document.activeElement ? document.activeElement.tagName : '';
-                    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement === editor) return;
-
-                    const step = e.shiftKey ? 10 : 1;
-                    let left = parseFloat(selectedFloatingShape.style.left) || 0;
-                    let top = parseFloat(selectedFloatingShape.style.top) || 0;
-                    let moved = false;
-
-                    if (e.key === 'ArrowLeft') { left -= step; moved = true; }
-                    else if (e.key === 'ArrowRight') { left += step; moved = true; }
-                    else if (e.key === 'ArrowUp') { top -= step; moved = true; }
-                    else if (e.key === 'ArrowDown') { top += step; moved = true; }
-
-                    if (moved) {
-                        e.preventDefault();
-                        selectedFloatingShape.style.left = left + 'px';
-                        selectedFloatingShape.style.top = top + 'px';
-                        saveActiveProjectData();
-                    }
-
-                    if (e.key === 'Delete' || e.key === 'Backspace') {
-                        e.preventDefault();
-                        selectedFloatingShape.remove();
-                        selectedFloatingShape = null;
-                        saveActiveProjectData();
-                    }
                 });
 
                 document.addEventListener('selectionchange', handleTextSelection);
+                window.addEventListener('resize', syncOverlayControls);
+                document.querySelector('main').addEventListener('scroll', () => {
+                    syncOverlayControls();
+                    hideContextMenu();
+                });
             }
+            updatePassageContext();
         });
 
-        function toggleFloatingMiniPalette() {
-            if (floatingMiniPalette.style.display === 'flex') {
-                floatingMiniPalette.style.display = 'none';
-            } else {
-                floatingMiniPalette.style.display = 'flex';
-                toggleShapesDrawer();
+        function updatePassageContext() {
+            const val = document.getElementById('passageRefInput').value.trim();
+            if (!val) return;
+            autoAssignVersesFromPassageRange();
+        }
+
+        /* TRUE RANGE-BASED VERSE DISTRIBUTION */
+        function autoAssignVersesFromPassageRange() {
+            if (!editor) return;
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            if (blocks.length === 0) return;
+
+            const refInfo = parseCurrentRefRange();
+            const startV = refInfo.startVerse;
+            const endV = refInfo.endVerse;
+            const totalVerses = endV - startV + 1;
+
+            blocks.forEach((block, index) => {
+                let calculatedVerse = startV + Math.floor((index / blocks.length) * totalVerses);
+                if (calculatedVerse > endV) calculatedVerse = endV;
+                if (calculatedVerse < startV) calculatedVerse = startV;
+
+                // Explicitly store the calculated verse on the element
+                block.dataset.verseNum = calculatedVerse;
+            });
+
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function parseCurrentRefRange() {
+            const val = document.getElementById('passageRefInput').value.toLowerCase().replace(/\s+/g, '');
+            const match = val.match(/([0-9]?[a-z]+)([0-9]+)(?::([0-9]+)(?:-([0-9]+))?)?/);
+            if (match) {
+                const bookStr = match[1];
+                const chapNum = parseInt(match[2], 10);
+                const startV = match[3] ? parseInt(match[3], 10) : 1;
+                const endV = match[4] ? parseInt(match[4], 10) : startV;
+                const bookCode = bookNumberMap[bookStr] || 19;
+                return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
             }
+            return { book: 19, chapter: 46, startVerse: 1, endVerse: 11 };
         }
 
         function showContextMenu(x, y) {
+            if (!contextMenu) return;
             contextMenu.style.display = 'block';
-            contextMenu.style.left = x + 'px';
-            contextMenu.style.top = y + 'px';
-        }
-        function hideContextMenu() { contextMenu.style.display = 'none'; }
-
-        function ctxToggleFocusBranch() {
-            if (rightClickedBlock) {
-                rightClickedBlock.classList.toggle('focused-branch');
-                if (!isFocusModeActive) toggleFocusMode();
-                else syncOverlayControls();
-            }
-            hideContextMenu();
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+            contextMenu.style.left = ((x + menuWidth > winWidth) ? winWidth - menuWidth - 10 : x) + 'px';
+            contextMenu.style.top = ((y + menuHeight > winHeight) ? winHeight - menuHeight - 10 : y) + 'px';
         }
 
-        function ctxOpenNoteDrawer() { if (rightClickedBlock) openNoteBlock(rightClickedBlock); hideContextMenu(); }
+        function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
+        function ctxToggleAttachDown() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('attach-down'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxOpenNoteDrawer() { if (rightClickedBlock) openNoteDrawerForBlock(rightClickedBlock); hideContextMenu(); }
         function ctxStrikethroughSelection() { applyStrikethrough(); hideContextMenu(); }
         function ctxEllipsisSelection() { applyEllipsisCaret(); hideContextMenu(); }
-        function ctxIndentLine() { if (rightClickedBlock) { indentLine(); } hideContextMenu(); }
-        function ctxToggleParallelIndent() { 
+        function ctxIndentLine() { if (rightClickedBlock) { const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); rightClickedBlock.style.marginLeft = (current + 1.5) + 'rem'; syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxToggleParallelIndent() { if (rightClickedBlock) { rightClickedBlock.classList.toggle('parallel-indent'); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxOutdentLine() { 
             if (rightClickedBlock) { 
-                if (!rightClickedBlock.classList.contains('parallel-indent') && !rightClickedBlock.classList.contains('parallel-indent-1') && !rightClickedBlock.classList.contains('parallel-indent-2') && !rightClickedBlock.classList.contains('parallel-indent-3') && !rightClickedBlock.classList.contains('parallel-indent-4')) {
-                    rightClickedBlock.classList.add('parallel-indent-1');
-                } else if (rightClickedBlock.classList.contains('parallel-indent') || rightClickedBlock.classList.contains('parallel-indent-1')) {
-                    rightClickedBlock.classList.remove('parallel-indent', 'parallel-indent-1');
-                    rightClickedBlock.classList.add('parallel-indent-2');
-                } else if (rightClickedBlock.classList.contains('parallel-indent-2')) {
-                    rightClickedBlock.classList.remove('parallel-indent-2');
-                    rightClickedBlock.classList.add('parallel-indent-3');
-                } else if (rightClickedBlock.classList.contains('parallel-indent-3')) {
-                    rightClickedBlock.classList.remove('parallel-indent-3');
-                    rightClickedBlock.classList.add('parallel-indent-4');
+                if (rightClickedBlock.classList.contains('attach-down')) {
+                    rightClickedBlock.classList.remove('attach-down');
                 } else {
-                    rightClickedBlock.classList.remove('parallel-indent-4');
+                    const current = parseFloat(rightClickedBlock.style.marginLeft || '0'); 
+                    const newMargin = Math.max(0, current - 1.5); 
+                    rightClickedBlock.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : ''; 
                 }
                 syncOverlayControls(); 
                 saveActiveProjectData(); 
             } 
             hideContextMenu(); 
         }
-        function ctxOutdentLine() { if (rightClickedBlock) { outdentLine(); } hideContextMenu(); }
-        function ctxDeleteLine() { if (rightClickedBlock) { rightClickedBlock.remove(); syncOverlayControls(); saveActiveProjectData(); } hideContextMenu(); }
+        function ctxDeleteLine() { if (rightClickedBlock) { rightClickedBlock.remove(); syncOverlayControls(); updateWordCount(); saveActiveProjectData(); } hideContextMenu(); }
+
+        function openNoteDrawerForBlock(block) {
+            activeNoteBlock = block;
+            drawerClauseText.textContent = `"${block.textContent.trim() || 'Empty clause line'}"`;
+            clauseNoteEditor.innerHTML = block.dataset.exegeticalNotes || '';
+            noteDrawer.classList.add('open');
+            closeMasterNoteDrawer();
+        }
+
+        function closeNoteDrawer() {
+            if (noteDrawer) noteDrawer.classList.remove('open');
+            activeNoteBlock = null;
+        }
+
+        function saveActiveNoteToBlock() {
+            if (!activeNoteBlock) return;
+            const content = clauseNoteEditor.innerHTML.trim();
+            if (content) {
+                activeNoteBlock.dataset.exegeticalNotes = content;
+            } else {
+                activeNoteBlock.removeAttribute('data-exegetical-notes');
+            }
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function execNoteCommand(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            saveActiveNoteToBlock();
+        }
+
+        function handleNotePaste(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') === 0) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        document.execCommand('insertHTML', false, img.outerHTML);
+                        saveActiveNoteToBlock();
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    clauseNoteEditor.focus();
+                    document.execCommand('insertHTML', false, img.outerHTML);
+                    saveActiveNoteToBlock();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleMasterNoteDrawer() {
+            if (masterNoteDrawer.classList.contains('open')) closeMasterNoteDrawer();
+            else openMasterNoteDrawer();
+        }
+
+        function openMasterNoteDrawer() { masterNoteDrawer.classList.add('open'); closeNoteDrawer(); }
+        function closeMasterNoteDrawer() { if (masterNoteDrawer) masterNoteDrawer.classList.remove('open'); }
+
+        function importAllNotes() {
+            if (!editor) return;
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            let compiledHTML = `<h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #4f46e5; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Compiled Exegetical Notes</h2>`;
+            let notesFound = 0;
+
+            blocks.forEach((block, index) => {
+                const noteContent = block.dataset.exegeticalNotes;
+                if (noteContent && noteContent.trim()) {
+                    notesFound++;
+                    const clauseText = block.textContent.trim();
+                    const relation = block.dataset.relation || 'Main Clause / Subordination';
+                    let level = 0;
+                    const styleAttr = block.getAttribute('style') || '';
+                    const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                    if (marginMatch) {
+                        const val = parseFloat(marginMatch[1]);
+                        level = val >= 1 ? Math.round(val / 1.5) : 1;
+                    }
+
+                    compiledHTML += `
+                        <div style="margin-bottom: 1.25rem; padding: 0.85rem; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb;">
+                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">Clause #${index + 1} (L${level} • ${relation})</div>
+                            <blockquote style="font-family: serif; font-style: italic; color: #374151; border-left: 2px solid #818cf8; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">"${clauseText}"</blockquote>
+                            <div style="font-size: 0.95rem; color: #111827; line-height: 1.5;">${noteContent}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (notesFound === 0) compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet.</p>`;
+            masterNoteEditor.innerHTML = compiledHTML;
+            saveActiveProjectData();
+        }
+
+        function clearMasterNotes() {
+            if (confirm('Clear compiled master notes?')) { masterNoteEditor.innerHTML = ''; saveActiveProjectData(); }
+        }
+
+        /* DEDICATED CLEAN PDF EXPORT */
+        function exportCleanPDF() {
+            const printWindow = window.open('', '_blank');
+            const passageRef = document.getElementById('passageRefInput').value.trim() || 'Thought Flow Passage';
+            
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            let flowHTML = '';
+
+            blocks.forEach(block => {
+                const text = block.textContent.trim();
+                const styleAttr = block.getAttribute('style') || '';
+                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                let marginLeftRem = marginMatch ? parseFloat(marginMatch[1]) : 0;
+                
+                if (block.classList.contains('parallel-indent')) {
+                    marginLeftRem = Math.max(marginLeftRem, 5.0);
+                }
+
+                const isAttachedDown = block.classList.contains('attach-down');
+                const relation = block.dataset.relation ? ` <span style="font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">[${block.dataset.relation}]</span>` : '';
+                const verseNum = block.dataset.verseNum ? `<span style="font-size: 11px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 2px 5px; border-radius: 4px; margin-right: 6px;">v${block.dataset.verseNum}</span>` : '';
+
+                let borderLeftStyle = '';
+                if (marginLeftRem > 0 || isAttachedDown) {
+                    const styleType = isAttachedDown ? 'dashed' : 'solid';
+                    borderLeftStyle = `border-left: 2.5px ${styleType} #6366f1; padding-left: 1rem;`;
+                }
+
+                flowHTML += `
+                    <div style="margin-left: ${marginLeftRem}rem; margin-bottom: 0.8rem; position: relative; ${borderLeftStyle}">
+                        ${verseNum}${text}${relation}
+                    </div>
+                `;
+            });
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>LexFlow - ${passageRef}</title>
+                    <style>
+                        body { font-family: Georgia, serif; padding: 50px; color: #111827; line-height: 1.7; font-size: 15px; }
+                        h1 { font-family: 'Inter', sans-serif; font-size: 20px; color: #1f2937; margin-bottom: 4px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+                        .subtitle { font-family: 'Inter', sans-serif; font-size: 12px; color: #6b7280; margin-bottom: 30px; }
+                        @media print {
+                            body { padding: 20px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${passageRef} &bull; Thought Flow Analysis</h1>
+                    <div class="subtitle">Generated with LexFlow Exegetical Workspace</div>
+                    <div style="margin-top: 20px;">
+                        ${flowHTML || '<p style="font-style: italic; color: #9ca3af;">No thought flow content found.</p>'}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 300);
+        }
 
         function handleTextSelection() {
             const selection = window.getSelection();
@@ -842,8 +1154,8 @@
 
             if (rect.width > 0 && highlightToolbar) {
                 highlightToolbar.style.display = 'flex';
-                highlightToolbar.style.top = (rect.top - wrapperRect.top - 40) + 'px';
-                highlightToolbar.style.left = Math.max(10, (rect.left - wrapperRect.left)) + 'px';
+                highlightToolbar.style.top = (rect.top - wrapperRect.top - 44) + 'px';
+                highlightToolbar.style.left = Math.max(10, (rect.left - wrapperRect.left + (rect.width / 2) - 120)) + 'px';
             }
         }
 
@@ -855,7 +1167,7 @@
             mark.className = colorClass;
             try { range.surroundContents(mark); } catch (e) { document.execCommand('hiliteColor', false, '#fef08a'); }
             selection.removeAllRanges();
-            highlightToolbar.style.display = 'none';
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
         }
 
@@ -867,7 +1179,7 @@
             u.className = type === 'double' ? 'sg-ul-double' : 'sg-ul-single';
             try { range.surroundContents(u); } catch (e) { document.execCommand('underline', false, null); }
             selection.removeAllRanges();
-            highlightToolbar.style.display = 'none';
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
         }
 
@@ -879,7 +1191,7 @@
             s.className = 'sg-strike';
             try { range.surroundContents(s); } catch (e) { document.execCommand('strikeThrough', false, null); }
             selection.removeAllRanges();
-            highlightToolbar.style.display = 'none';
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
         }
 
@@ -888,109 +1200,231 @@
             if (!selection.rangeCount || selection.isCollapsed) return;
             const selectedText = selection.toString().trim();
             if (!selectedText) return;
-            navigator.clipboard.writeText(`...^${selectedText}`).then(() => {
+            const formattedSnippet = `...^${selectedText}`;
+            navigator.clipboard.writeText(formattedSnippet).then(() => {
                 const range = selection.getRangeAt(0);
                 const span = document.createElement('span');
                 span.className = 'sg-ellipsis-wrap';
+                span.title = 'Extracted phrase (copied to clipboard)';
                 span.textContent = `[...]`;
                 range.deleteContents();
                 range.insertNode(span);
                 selection.removeAllRanges();
-                highlightToolbar.style.display = 'none';
+                if (highlightToolbar) highlightToolbar.style.display = 'none';
                 saveActiveProjectData();
             });
         }
 
         function clearSelectionFormatting() {
-            document.execCommand('removeFormat', false, null);
-            highlightToolbar.style.display = 'none';
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let node = selection.anchorNode;
+            while (node && node !== editor) {
+                if (node.tagName === 'MARK' || node.tagName === 'U' || node.tagName === 'S' || node.classList.contains('sg-ellipsis-wrap')) {
+                    const parent = node.parentNode;
+                    while (node.firstChild) parent.insertBefore(node.firstChild, node);
+                    parent.removeChild(node);
+                    break;
+                }
+                node = node.parentNode;
+            }
+            selection.removeAllRanges();
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
             saveActiveProjectData();
         }
 
-        function parsePassageInput(inputStr) {
-            const cleaned = inputStr.trim() || "1 Peter 1:1";
-            const match = cleaned.match(/^([1-3]?\s*[a-z\s]+?)\s+([0-9]+):([0-9]+)/i);
-            if (match) {
-                return {
-                    book: match[1].trim(),
-                    chapter: parseInt(match[2], 10),
-                    verse: parseInt(match[3], 10)
-                };
-            }
-            return { book: "1 Peter", chapter: 1, verse: 1 };
+        function cleanEditorSpans() {
+            if (!editor) return;
+            const spans = editor.querySelectorAll('span:not(.flow-meta-group, .sg-ellipsis-wrap)');
+            spans.forEach(span => {
+                while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
+                span.remove();
+            });
         }
 
-        // Bible Hub Modal Controls
-        function openBibleHubModal() {
-            const passageRef = document.getElementById('passageRefInput').value.trim() || "1 Peter 1:1";
-            const parsed = parsePassageInput(passageRef);
-            
-            const bookSelect = document.getElementById('bhBookSelect');
-            for (let opt of bookSelect.options) {
-                if (opt.value.toLowerCase().includes(parsed.book.toLowerCase())) {
-                    bookSelect.value = opt.value;
-                    break;
+        function indentLine() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let block = selection.anchorNode;
+            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
+            if (block && block !== editor) {
+                const currentMargin = parseFloat(block.style.marginLeft || '0');
+                block.style.marginLeft = (currentMargin + 1.5) + 'rem';
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        function outdentLine() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let block = selection.anchorNode;
+            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
+            if (block && block !== editor) {
+                if (block.classList.contains('attach-down')) {
+                    block.classList.remove('attach-down');
+                } else {
+                    const currentMargin = parseFloat(block.style.marginLeft || '0');
+                    const newMargin = Math.max(0, currentMargin - 1.5);
+                    block.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
+                }
+                syncOverlayControls();
+                saveActiveProjectData();
+            }
+        }
+
+        function detectDiscourseMarker(lineText) {
+            const lower = lineText.toLowerCase();
+            for (const [marker, rel] of Object.entries(discourseMarkerMap)) {
+                if (new RegExp(`\\b${marker}\\b`, 'i').test(lower)) {
+                    return { word: marker, suggestedRelation: rel };
                 }
             }
-            document.getElementById('bhChapSelect').value = parsed.chapter;
-            document.getElementById('bhVerseSelect').value = parsed.verse;
-
-            renderBibleHubViewer();
-            document.getElementById('bibleHubPopupWindow').classList.remove('hidden');
+            return null;
         }
 
-        function closeBibleHubModal() {
-            document.getElementById('bibleHubPopupWindow').classList.add('hidden');
-        }
+        function syncOverlayControls() {
+            if (!editor || !overlay) return;
+            overlay.innerHTML = '';
 
-        function stepBhVerse(direction) {
-            const verseSelect = document.getElementById('bhVerseSelect');
-            let currentIdx = verseSelect.selectedIndex;
-            let newIdx = currentIdx + direction;
-            if (newIdx >= 0 && newIdx < verseSelect.options.length) {
-                verseSelect.selectedIndex = newIdx;
-                renderBibleHubViewer();
-            }
-        }
+            const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
+            const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
+            const refInfo = parseCurrentRefRange();
+            const isOt = isOldTestamentPassage();
+            const totalVerses = refInfo.endVerse - refInfo.startVerse + 1;
 
-        function getBibleHubUrl(book, chapter, verse) {
-            let b = book.toLowerCase().trim()
-                .replace(/\s+/g, '_')
-                .replace(/1\s*/g, '1_')
-                .replace(/2\s*/g, '2_')
-                .replace(/3\s*/g, '3_');
-            b = b.replace(/__+/g, '_');
-            return `https://biblehub.com/interlinear/${b}/${chapter}-${verse}.htm`;
-        }
+            blocks.forEach((block, index) => {
+                const text = block.textContent.trim();
+                const hasText = text.length > 0;
 
-        function renderBibleHubViewer() {
-            const book = document.getElementById('bhBookSelect').value;
-            const chapter = document.getElementById('bhChapSelect').value;
-            const verse = document.getElementById('bhVerseSelect').value;
-            const targetRefStr = `${book} ${chapter}:${verse}`;
+                let level = 0;
+                const styleAttr = block.getAttribute('style') || '';
+                const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
+                if (marginMatch) {
+                    const val = parseFloat(marginMatch[1]);
+                    level = val >= 1 ? Math.round(val / 1.5) : 1;
+                }
 
-            document.getElementById('bibleHubHeaderPassageBadge').textContent = targetRefStr;
-            const targetUrl = getBibleHubUrl(book, chapter, verse);
-            document.getElementById('bibleHubExternalLink').href = targetUrl;
-            document.getElementById('bibleHubIframe').src = targetUrl;
-        }
+                if (!hasText) {
+                    block.classList.remove('has-indent', 'attach-down', 'collapsed-active');
+                    level = 0;
+                } else {
+                    if (level > 0) block.classList.add('has-indent');
+                    else block.classList.remove('has-indent');
 
-        // CNTR Modal Controls
-        function openCntrModal() {
-            document.getElementById('cntrPopupWindow').classList.remove('hidden');
-        }
+                    // Automatically coordinate verse numbers across the passage range if missing
+                    if (!block.dataset.verseNum) {
+                        let calcV = refInfo.startVerse + Math.floor((index / Math.max(1, blocks.length)) * totalVerses);
+                        if (calcV > refInfo.endVerse) calcV = refInfo.endVerse;
+                        block.dataset.verseNum = calcV;
+                    }
 
-        function closeCntrModal() {
-            document.getElementById('cntrPopupWindow').classList.add('hidden');
-        }
+                    const rect = block.getBoundingClientRect();
+                    const topOffset = rect.top - wrapperRect.top;
 
-        // Kudos Modal Controls
-        function openKudosModal() {
-            document.getElementById('kudosPopupWindow').classList.remove('hidden');
-        }
+                    let currentRelation = block.dataset.relation || '';
+                    let customBg = block.dataset.relBg || '';
+                    let customText = block.dataset.relText || '';
 
-        function closeKudosModal() {
-            document.getElementById('kudosPopupWindow').classList.add('hidden');
+                    const group = document.createElement('div');
+                    group.className = 'flow-meta-group';
+                    group.style.top = (topOffset + 6) + 'px';
+
+                    const badge = document.createElement('span');
+                    badge.className = level === 0 ? 'flow-badge flow-badge-l0' : 'flow-badge';
+                    const isCollapsed = block.classList.contains('collapsed-active');
+                    badge.innerHTML = isCollapsed ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
+                    badge.onclick = () => {
+                        block.classList.toggle('collapsed-active');
+                        syncOverlayControls();
+                        saveActiveProjectData();
+                    };
+                    group.appendChild(badge);
+
+                    const isAttachedDown = block.classList.contains('attach-down');
+                    const discourseMatch = detectDiscourseMarker(text);
+
+                    if (discourseMatch && !currentRelation && (level > 0 || isAttachedDown)) {
+                        const sugBtn = document.createElement('button');
+                        sugBtn.className = 'discourse-suggestion-btn';
+                        sugBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Suggest: ${discourseMatch.suggestedRelation}`;
+                        sugBtn.onclick = () => {
+                            block.dataset.relation = discourseMatch.suggestedRelation;
+                            syncOverlayControls();
+                            saveActiveProjectData();
+                        };
+                        group.appendChild(sugBtn);
+                    }
+
+                    if (level > 0 || isAttachedDown) {
+                        const select = document.createElement('select');
+                        select.className = 'relation-select';
+                        if (currentRelation && defaultRelations[currentRelation]) {
+                            select.style.backgroundColor = defaultRelations[currentRelation].bg;
+                            select.style.color = defaultRelations[currentRelation].text;
+                        } else if (customBg && customText) {
+                            select.style.backgroundColor = customBg;
+                            select.style.color = customText;
+                        }
+
+                        const defaultOpt = document.createElement('option');
+                        defaultOpt.value = ''; defaultOpt.textContent = '+ Relation';
+                        select.appendChild(defaultOpt);
+
+                        Object.keys(defaultRelations).forEach(relKey => {
+                            const opt = document.createElement('option');
+                            opt.value = relKey; opt.textContent = relKey;
+                            if (relKey === currentRelation) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.onchange = () => {
+                            const val = select.value;
+                            if (!val) block.removeAttribute('data-relation');
+                            else block.dataset.relation = val;
+                            syncOverlayControls();
+                            saveActiveProjectData();
+                        };
+                        group.appendChild(select);
+                    }
+
+                    const verseBadge = document.createElement('span');
+                    verseBadge.className = 'verse-badge';
+                    verseBadge.textContent = `v${block.dataset.verseNum}`;
+                    verseBadge.onclick = () => {
+                        const newV = prompt('Enter verse number:', block.dataset.verseNum);
+                        if (newV !== null && !isNaN(newV) && newV.trim() !== '') {
+                            block.dataset.verseNum = parseInt(newV, 10);
+                            verseBadge.textContent = `v${block.dataset.verseNum}`;
+                            saveActiveProjectData();
+                            syncOverlayControls();
+                        }
+                    };
+                    group.appendChild(verseBadge);
+
+                    const isGkActive = activeLightboxBlock === block;
+                    const gkBtn = document.createElement('button');
+                    gkBtn.className = isGkActive ? 'gk-toggle-btn active' : 'gk-toggle-btn';
+                    gkBtn.innerHTML = isOt ? 'Heb' : 'Gk';
+                    gkBtn.title = isOt ? 'Open Bible Hub Hebrew Interlinear' : 'Open Greek Interlinear Lightbox Study';
+                    gkBtn.onclick = async () => {
+                        const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
+                        if (isOt) {
+                            openHebrewBibleHubInterlinear(targetVerse);
+                        }
+                    };
+
+                    const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
+                    const noteBtn = document.createElement('button');
+                    noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
+                    noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
+                    noteBtn.onclick = () => openNoteDrawerForBlock(block);
+
+                    group.appendChild(gkBtn);
+                    group.appendChild(noteBtn);
+                    overlay.appendChild(group);
+                }
+            });
         }
 
         function toggleFocusMode() {
@@ -1003,321 +1437,38 @@
             syncOverlayControls();
         }
 
-        function toggleShapesDrawer() { document.getElementById('shapesDrawer').classList.toggle('open'); }
-
-        function spawnFloatingShape(shapeType, title) {
-            const container = document.createElement('div');
-            container.className = 'floating-shape selected';
-            container.title = title;
-            container.dataset.shapeType = shapeType;
-            
-            const currentScroll = workspaceMain ? workspaceMain.scrollTop : 0;
-            container.style.left = '20px';
-            container.style.top = (currentScroll + 30) + 'px';
-            container.style.width = '40px';
-            container.style.height = '60px';
-
-            if (selectedFloatingShape) selectedFloatingShape.classList.remove('selected');
-            selectedFloatingShape = container;
-
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('width', '100%');
-            svg.setAttribute('height', '100%');
-            svg.setAttribute('viewBox', '0 0 100 100');
-            svg.setAttribute('preserveAspectRatio', 'none');
-            svg.setAttribute('fill', 'none');
-            svg.setAttribute('stroke', '#6366f1');
-            svg.setAttribute('stroke-width', '4');
-            svg.setAttribute('stroke-linecap', 'round');
-            svg.setAttribute('stroke-linejoin', 'round');
-
-            let pathData = '';
-            if (shapeType === 'elbow-tl') pathData = 'M 100 3 H 3 V 100';
-            else if (shapeType === 'elbow-tr') pathData = 'M 0 3 H 97 V 100';
-            else if (shapeType === 'elbow-bl') pathData = 'M 100 97 H 3 V 0';
-            else if (shapeType === 'spine') pathData = 'M 50 0 V 100';
-            else if (shapeType === 'line-horiz') {
-                pathData = 'M 0 50 H 100';
-                container.style.height = '20px';
-            }
-            else if (shapeType === 'arrow-down') pathData = 'M 50 0 V 75 M 30 55 L 50 85 L 70 55';
-            else if (shapeType === 'arrow-up') pathData = 'M 50 25 V 100 M 30 45 L 50 15 L 70 45';
-
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', pathData);
-            svg.appendChild(path);
-            container.appendChild(svg);
-
-            const handleTop = document.createElement('span');
-            handleTop.className = 'shape-handle handle-top';
-            const handleBottom = document.createElement('span');
-            handleBottom.className = 'shape-handle handle-bottom';
-            const handleRight = document.createElement('span');
-            handleRight.className = 'shape-handle handle-right';
-
-            container.appendChild(handleTop);
-            container.appendChild(handleBottom);
-            container.appendChild(handleRight);
-
-            setupFloatingInteractions(container, handleTop, handleBottom, handleRight);
-
-            shapesLayer.appendChild(container);
-            saveActiveProjectData();
+        function updateWordCount() {
+            if (!editor || !wordCountDisplay) return;
+            const text = editor.innerText || '';
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCountDisplay.textContent = `${words} words`;
         }
 
-        function setupFloatingInteractions(shape, hTop, hBottom, hRight) {
-            shape.addEventListener('mousedown', (e) => {
-                if (e.target.classList.contains('shape-handle')) return;
-                e.stopPropagation();
-                if (selectedFloatingShape && selectedFloatingShape !== shape) {
-                    selectedFloatingShape.classList.remove('selected');
-                }
-                shape.classList.add('selected');
-                selectedFloatingShape = shape;
-
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const startLeft = shape.offsetLeft;
-                const startTop = shape.offsetTop;
-
-                function onMouseMove(moveEvent) {
-                    shape.style.left = Math.max(0, startLeft + (moveEvent.clientX - startX)) + 'px';
-                    shape.style.top = Math.max(0, startTop + (moveEvent.clientY - startY)) + 'px';
-                }
-
-                function onMouseUp() {
-                    window.removeEventListener('mousemove', onMouseMove);
-                    window.removeEventListener('mouseup', onMouseUp);
-                    saveActiveProjectData();
-                }
-
-                window.addEventListener('mousemove', onMouseMove);
-                window.addEventListener('mouseup', onMouseUp);
-            });
-
-            let resizeType = null;
-            let startY, startH, startX, startW;
-
-            function onResizeMove(e) {
-                const dy = e.clientY - startY;
-                const dx = e.clientX - startX;
-
-                if (resizeType === 'bottom') {
-                    shape.style.height = Math.max(15, startH + dy) + 'px';
-                } else if (resizeType === 'top') {
-                    const newH = Math.max(15, startH - dy);
-                    const newTop = shape.offsetTop + dy;
-                    if (newH > 15) {
-                        shape.style.height = newH + 'px';
-                        shape.style.top = newTop + 'px';
-                    }
-                } else if (resizeType === 'right') {
-                    shape.style.width = Math.max(15, startW + dx) + 'px';
-                }
-            }
-
-            function onResizeUp() {
-                window.removeEventListener('mousemove', onResizeMove);
-                window.removeEventListener('mouseup', onResizeUp);
-                saveActiveProjectData();
-            }
-
-            hBottom.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                resizeType = 'bottom';
-                startY = e.clientY;
-                startH = shape.offsetHeight;
-                window.addEventListener('mousemove', onResizeMove);
-                window.addEventListener('mouseup', onResizeUp);
-            });
-
-            hTop.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                resizeType = 'top';
-                startY = e.clientY;
-                startH = shape.offsetHeight;
-                window.addEventListener('mousemove', onResizeMove);
-                window.addEventListener('mouseup', onResizeUp);
-            });
-
-            hRight.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                resizeType = 'right';
-                startX = e.clientX;
-                startW = shape.offsetWidth;
-                window.addEventListener('mousemove', onResizeMove);
-                window.addEventListener('mouseup', onResizeUp);
-            });
-        }
-
-        function toggleMasterNoteDrawer() { document.getElementById('masterNoteDrawer').classList.toggle('open'); }
-        function closeNoteDrawer() { document.getElementById('exegeticalNoteDrawer').classList.remove('open'); activeNoteBlock = null; }
-
-        function openNoteBlock(block) {
-            activeNoteBlock = block;
-            document.getElementById('drawerClauseText').textContent = `"${block.textContent.trim()}"`;
-            clauseNoteEditor.innerHTML = block.dataset.exegeticalNotes || '';
-            document.getElementById('exegeticalNoteDrawer').classList.add('open');
-        }
-
-        function autoAssignVersesSmartly() {
-            if (!editor) return;
-            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
-            const refVal = document.getElementById('passageRefInput').value.trim();
-            const rangeMatch = refVal.match(/:([0-9]+)\s*-\s*([0-9]+)/);
-            let startVerse = 1;
-            let endVerse = 30;
-            if (rangeMatch) {
-                startVerse = parseInt(rangeMatch[1], 10);
-                endVerse = parseInt(rangeMatch[2], 10);
-            } else {
-                const singleMatch = refVal.match(/:([0-9]+)/);
-                if (singleMatch) startVerse = endVerse = parseInt(singleMatch[1], 10);
-            }
-
-            let currentVerse = startVerse;
-            blocks.forEach((block, index) => {
-                const text = block.textContent.trim();
-                const explicitMatch = text.match(/^\[?([0-9]{1,3})\]?[\.:\s]/);
-                
-                if (explicitMatch) {
-                    currentVerse = parseInt(explicitMatch[1], 10);
-                } else if (index > 0 && currentVerse < endVerse && !block.style.marginLeft && !block.classList.contains('has-indent') && !block.classList.contains('attach-down')) {
-                    currentVerse++;
-                }
-                
-                if (currentVerse > endVerse) currentVerse = endVerse;
-                if (currentVerse < startVerse) currentVerse = startVerse;
-                
-                block.dataset.verseNum = currentVerse;
-            });
-            syncOverlayControls();
-            saveActiveProjectData();
-        }
-
-        function syncOverlayControls() {
-            if (!editor || !overlay) return;
-            overlay.innerHTML = '';
-            const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
-            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
-
-            blocks.forEach((block) => {
-                const text = block.textContent.trim();
-                if (!text) return;
-
-                const rect = block.getBoundingClientRect();
-                const topOffset = rect.top - wrapperRect.top;
-
-                const group = document.createElement('div');
-                group.className = 'flow-meta-group';
-                group.style.top = (topOffset + 6) + 'px';
-
-                // Verse Badge
-                const verseBadge = document.createElement('span');
-                verseBadge.className = 'verse-badge';
-                verseBadge.textContent = `v${block.dataset.verseNum || 1}`;
-                verseBadge.onclick = () => {
-                    const newV = prompt('Enter verse number:', block.dataset.verseNum || 1);
-                    if (newV && !isNaN(newV)) {
-                        block.dataset.verseNum = newV;
-                        verseBadge.textContent = `v${newV}`;
-                        saveActiveProjectData();
-                    }
-                };
-                group.appendChild(verseBadge);
-
-                // Notes Button with Paper/Document Icon Indicator when Notes Exist
-                const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
-                const noteBtn = document.createElement('button');
-                noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
-                noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
-                noteBtn.title = hasNotes ? 'View/Edit Exegetical Notes (Notes Taken)' : 'Add Exegetical Notes';
-                noteBtn.onclick = () => openNoteBlock(block);
-                group.appendChild(noteBtn);
-
-                overlay.appendChild(group);
-            });
-        }
-
-        function indentLine() {
+        function toggleAttachDown() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
-            let block = selection.anchorNode;
-            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
-            if (block && block !== editor) {
-                if (block.classList.contains('parallel-indent') || block.classList.contains('parallel-indent-1')) {
-                    block.classList.remove('parallel-indent', 'parallel-indent-1');
-                    block.classList.add('parallel-indent-2');
-                } else if (block.classList.contains('parallel-indent-2')) {
-                    block.classList.remove('parallel-indent-2');
-                    block.classList.add('parallel-indent-3');
-                } else if (block.classList.contains('parallel-indent-3')) {
-                    block.classList.remove('parallel-indent-3');
-                    block.classList.add('parallel-indent-4');
-                } else {
-                    const currentMargin = parseFloat(block.style.marginLeft || '0');
-                    block.style.marginLeft = (currentMargin + 1.5) + 'rem';
-                }
-                syncOverlayControls();
-                saveActiveProjectData();
-            }
-        }
-
-        function outdentLine() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            let block = selection.anchorNode;
-            while (block && block.parentNode !== editor && block !== editor) block = block.parentNode;
-            if (block && block !== editor) {
-                if (block.classList.contains('parallel-indent-4')) {
-                    block.classList.remove('parallel-indent-4');
-                    block.classList.add('parallel-indent-3');
-                } else if (block.classList.contains('parallel-indent-3')) {
-                    block.classList.remove('parallel-indent-3');
-                    block.classList.add('parallel-indent-2');
-                } else if (block.classList.contains('parallel-indent-2')) {
-                    block.classList.remove('parallel-indent-2');
-                    block.classList.add('parallel-indent-1');
-                } else if (block.classList.contains('parallel-indent') || block.classList.contains('parallel-indent-1')) {
-                    block.classList.remove('parallel-indent', 'parallel-indent-1');
-                } else {
-                    const currentMargin = parseFloat(block.style.marginLeft || '0');
-                    const newMargin = Math.max(0, currentMargin - 1.5);
-                    block.style.marginLeft = newMargin > 0 ? newMargin + 'rem' : '';
-                }
+            let node = selection.anchorNode;
+            while (node && node.parentNode !== editor && node !== editor) node = node.parentNode;
+            if (node && node !== editor) {
+                node.classList.toggle('attach-down');
                 syncOverlayControls();
                 saveActiveProjectData();
             }
         }
 
         function clearTextFlow() {
-            if (confirm("Clear canvas?")) { 
-                editor.innerHTML = ''; 
-                shapesLayer.innerHTML = ''; 
-                syncOverlayControls(); 
-                saveActiveProjectData(); 
+            if (confirm('Clear your thought flow notes?')) {
+                if (editor) editor.innerHTML = '';
+                updateWordCount(); syncOverlayControls(); saveActiveProjectData();
             }
         }
 
-        function importAllNotes() {
-            const blocks = Array.from(editor.children).filter(b => b.tagName === 'P' || b.tagName === 'DIV' || b.tagName === 'BLOCKQUOTE');
-            let compiled = `<h2>Compiled Notes</h2>`;
-            blocks.forEach((b, i) => {
-                if (b.dataset.exegeticalNotes) {
-                    compiled += `<div style="margin-bottom:1rem; padding:0.5rem; background:#f9fafb; border-left:2px solid #6366f1;"><strong>Clause #${i+1}</strong>: "${b.textContent.trim()}"<br>${b.dataset.exegeticalNotes}</div>`;
-                }
-            });
-            masterNoteEditor.innerHTML = compiled;
-            saveActiveProjectData();
-        }
-
-        function clearMasterNotes() { masterNoteEditor.innerHTML = ''; saveActiveProjectData(); }
-
-        function getProjectsCatalog() { return JSON.parse(localStorage.getItem('lexflow_catalog') || '{}'); }
+        function getProjectsCatalog() { return JSON.parse(localStorage.getItem('lexflow_catalog') || localStorage.getItem('scriptureGram_catalog') || '{}'); }
 
         function populateProjectsMenu() {
+            if (!projectSelect) return;
             const catalog = getProjectsCatalog();
-            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad (Clean Slate)</option>';
+            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad</option>';
             Object.keys(catalog).forEach(key => {
                 const opt = document.createElement('option');
                 opt.value = key; opt.textContent = catalog[key];
@@ -1327,102 +1478,124 @@
         }
 
         function saveActiveProjectData() {
-            const data = {
+            const projectData = {
                 textFlowHTML: editor.innerHTML,
-                shapesHTML: shapesLayer.innerHTML,
                 masterNotesHTML: masterNoteEditor ? masterNoteEditor.innerHTML : '',
-                passageRef: document.getElementById('passageRefInput').value,
+                passageRef: document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value : '',
                 updatedAt: Date.now()
             };
-            localStorage.setItem(currentProjectKey, JSON.stringify(data));
+            localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
+            if (globalSaveStatus) { globalSaveStatus.textContent = 'Saving...'; setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400); }
         }
 
         function loadSelectedProject() {
+            if (!projectSelect) return;
             currentProjectKey = projectSelect.value;
             localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
-            const raw = localStorage.getItem(currentProjectKey);
-            if (raw) {
-                const d = JSON.parse(raw);
-                editor.innerHTML = d.textFlowHTML || '';
-                shapesLayer.innerHTML = d.shapesHTML || '';
-                if (masterNoteEditor) masterNoteEditor.innerHTML = d.masterNotesHTML || '';
-                document.getElementById('passageRefInput').value = d.passageRef || '';
-                shapesLayer.querySelectorAll('.floating-shape').forEach(shape => {
-                    const hTop = shape.querySelector('.handle-top');
-                    const hBottom = shape.querySelector('.handle-bottom');
-                    const hRight = shape.querySelector('.handle-right');
-                    if (hTop && hBottom && hRight) setupFloatingInteractions(shape, hTop, hBottom, hRight);
-                });
+            let rawData = localStorage.getItem(currentProjectKey);
+            if (!rawData && currentProjectKey === 'lexflow_default') rawData = localStorage.getItem('scriptureGram_default');
+
+            if (rawData) {
+                try {
+                    const projectData = JSON.parse(rawData);
+                    if (editor) editor.innerHTML = projectData.textFlowHTML || '';
+                    if (masterNoteEditor) masterNoteEditor.innerHTML = projectData.masterNotesHTML || '';
+                    if (projectData.passageRef && document.getElementById('passageRefInput')) {
+                        document.getElementById('passageRefInput').value = projectData.passageRef;
+                    }
+                } catch (e) { if (editor) editor.innerHTML = rawData; }
             } else {
-                editor.innerHTML = '';
-                shapesLayer.innerHTML = '';
+                if (editor) editor.innerHTML = '';
                 if (masterNoteEditor) masterNoteEditor.innerHTML = '';
-                document.getElementById('passageRefInput').value = '';
             }
-            updatePassageContext();
+            cleanEditorSpans();
             syncOverlayControls();
+            updateWordCount();
         }
 
         function saveCurrentAsNewProject() {
-            const title = prompt('Enter new project title (e.g., 1 Peter 1:1-8):');
-            if (!title) return;
+            const title = prompt('Enter project name (e.g., "Psalm 46 Flow"):');
+            if (!title || !title.trim()) return;
             const newKey = 'lexflow_proj_' + Date.now();
             const catalog = getProjectsCatalog();
             catalog[newKey] = title.trim();
             localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
             currentProjectKey = newKey;
             localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
-            
-            editor.innerHTML = '';
-            shapesLayer.innerHTML = '';
-            if (masterNoteEditor) masterNoteEditor.innerHTML = '';
-            document.getElementById('passageRefInput').value = title.trim();
-            
             saveActiveProjectData();
             populateProjectsMenu();
-            projectSelect.value = newKey;
-            updatePassageContext();
+            if (projectSelect) projectSelect.value = newKey;
         }
 
         function deleteCurrentProject() {
             if (currentProjectKey === 'lexflow_default') {
-                if (confirm('Clear the default scratchpad?')) {
-                    editor.innerHTML = '';
-                    shapesLayer.innerHTML = '';
-                    document.getElementById('passageRefInput').value = '';
+                if (confirm('Reset default scratchpad?')) {
+                    if (editor) editor.innerHTML = '';
                     if (masterNoteEditor) masterNoteEditor.innerHTML = '';
-                    saveActiveProjectData();
-                    updatePassageContext();
+                    localStorage.removeItem('lexflow_default');
+                    localStorage.removeItem('scriptureGram_default');
+                    updateWordCount(); syncOverlayControls();
                 }
                 return;
             }
-            if (confirm(`Are you sure you want to delete this project?`)) {
+            if (confirm('Delete this project?')) {
                 localStorage.removeItem(currentProjectKey);
-                const catalog = getProjectsCatalog();
+                let catalog = getProjectsCatalog();
                 delete catalog[currentProjectKey];
                 localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
                 currentProjectKey = 'lexflow_default';
                 localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
-                populateProjectsMenu();
-                loadSelectedProject();
+                populateProjectsMenu(); loadSelectedProject();
             }
+        }
+
+        function exportAllProjects() {
+            const catalog = getProjectsCatalog();
+            const exportData = { catalog, projects: {} };
+            Object.keys(catalog).forEach(key => { exportData.projects[key] = localStorage.getItem(key); });
+            exportData.projects['lexflow_default'] = localStorage.getItem('lexflow_default');
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'lexflow-projects-backup.json'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importAllProjects(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.catalog) localStorage.setItem('lexflow_catalog', JSON.stringify(data.catalog));
+                    if (data.projects) {
+                        Object.keys(data.projects).forEach(key => {
+                            if (data.projects[key]) localStorage.setItem(key, data.projects[key]);
+                        });
+                    }
+                    populateProjectsMenu();
+                    loadSelectedProject();
+                    alert('Projects successfully imported!');
+                } catch (err) { alert('Invalid project backup file.'); }
+            };
+            reader.readAsText(file);
         }
 
         function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
             localStorage.setItem('lexflow_theme', isDark ? 'dark' : 'light');
-            document.getElementById('themeIcon').className = isDark ? "fa-solid fa-moon text-indigo-400" : "fa-solid fa-sun text-amber-500";
+            if (themeIcon) themeIcon.className = isDark ? "fa-solid fa-moon text-indigo-400" : "fa-solid fa-sun text-amber-500";
         }
 
-        if (localStorage.getItem('lexflow_theme') === 'dark') document.documentElement.classList.add('dark');
-
-        function exportCleanPDF() { 
-            if (selectedFloatingShape) {
-                selectedFloatingShape.classList.remove('selected');
-                selectedFloatingShape = null;
-            }
-            window.print(); 
+        const savedTheme = localStorage.getItem('lexflow_theme') || localStorage.getItem('scriptureGram_theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) themeIcon.className = "fa-solid fa-moon text-indigo-400";
         }
     </script>
 </body>
