@@ -35,6 +35,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        input, textarea, select, [contenteditable] {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
         html.dark body {
             background-color: #0b0f19;
             color: #f3f4f6;
@@ -64,7 +69,7 @@
             margin-bottom: 0 !important;
             padding-top: 0.35rem;
             padding-bottom: 0.35rem;
-            padding-right: 320px;
+            padding-right: 220px;
             word-break: break-word;
             line-height: 1.8;
             font-size: 1.15rem;
@@ -80,11 +85,12 @@
             content: '';
             position: absolute;
             left: 0;
-            top: -1px;
+            top: var(--sub-top, -1px);
             bottom: -1px;
             width: 2.5px;
-            background-color: #6366f1;
+            background-color: #9ca3af;
             z-index: 2;
+            pointer-events: none;
         }
 
         /* Responsive Breakpoint for Tablets/Mobile */
@@ -120,21 +126,23 @@
             position: absolute;
             left: 0.4rem;
             top: 0;
-            bottom: -0.2rem;
+            bottom: var(--attach-bottom, -0.2rem);
             width: 2px;
-            border-left: 2px dashed #6366f1;
+            border-left: 2px dashed #9ca3af;
             z-index: 5;
+            pointer-events: none;
         }
         #flowEditor .attach-down::after {
             content: '↓';
             position: absolute;
             left: 0.05rem;
-            bottom: -0.8rem;
+            bottom: calc(var(--attach-bottom, -0.2rem) - 0.6rem);
             font-size: 14px;
             font-weight: 700;
-            color: #6366f1;
+            color: #9ca3af;
             z-index: 6;
             background: transparent;
+            pointer-events: none;
         }
 
         #controlsOverlay {
@@ -157,36 +165,110 @@
             z-index: 10;
         }
 
-        .flow-badge {
+        /* Clickable Semantic Dot & Tag Beside Each Clause */
+        .clause-semantic-anchor {
+            position: absolute;
             display: inline-flex;
             align-items: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(99, 102, 241, 0.12);
-            color: #4f46e5;
-            border: 1px solid rgba(99, 102, 241, 0.25);
-            padding: 4px 7px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .flow-badge:hover { background: rgba(99, 102, 241, 0.25); }
-        html.dark .flow-badge {
-            background: rgba(99, 102, 241, 0.2);
-            color: #818cf8;
-            border-color: rgba(129, 140, 248, 0.4);
+            gap: 5px;
+            pointer-events: auto;
+            user-select: none;
+            z-index: 15;
+            transform: translateY(-50%);
         }
 
-        .flow-badge-l0 {
-            background: rgba(156, 163, 175, 0.12);
-            color: #6b7280;
-            border: 1px solid rgba(156, 163, 175, 0.25);
+        .semantic-dot-btn {
+            width: 11px;
+            height: 11px;
+            border-radius: 9999px;
+            background-color: rgba(156, 163, 175, 0.45);
+            border: 1.5px solid rgba(156, 163, 175, 0.75);
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+            flex-shrink: 0;
         }
-        html.dark .flow-badge-l0 {
-            background: rgba(156, 163, 175, 0.15);
+        .semantic-dot-btn:hover {
+            transform: scale(1.35);
+            background-color: #9ca3af;
+            box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.2);
+        }
+
+        .semantic-rel-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            cursor: pointer;
+            line-height: 1.3;
+            white-space: nowrap;
+            transition: transform 0.12s ease, opacity 0.12s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .semantic-rel-pill:hover {
+            transform: scale(1.04);
+        }
+        .semantic-rel-pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 9999px;
+            flex-shrink: 0;
+        }
+
+        /* Semantic Relationship Popover Menu */
+        #semanticMenu {
+            position: fixed;
+            display: none;
+            z-index: 350;
+            width: 280px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.18);
+            border-radius: 12px;
+            padding: 10px;
+            user-select: none;
+        }
+        html.dark #semanticMenu {
+            background: #1f2937;
+            border-color: #374151;
+            box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.5);
+        }
+        .sem-cat-row {
+            margin-bottom: 8px;
+        }
+        .sem-cat-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        html.dark .sem-cat-title {
             color: #9ca3af;
-            border-color: rgba(156, 163, 175, 0.3);
+        }
+        .sem-chip-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .sem-chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.1s ease;
+        }
+        .sem-chip:hover {
+            transform: scale(1.04);
+            filter: brightness(1.06);
         }
 
         .verse-badge {
@@ -218,64 +300,6 @@
             color: #fcd34d;
         }
 
-        .discourse-suggestion-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 7px;
-            border-radius: 9999px;
-            background: #fef3c7;
-            color: #b45309;
-            border: 1px solid #fcd34d;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .discourse-suggestion-btn:hover {
-            background: #fde68a;
-            transform: scale(1.04);
-        }
-        html.dark .discourse-suggestion-btn {
-            background: rgba(180, 83, 9, 0.4);
-            color: #fcd34d;
-            border-color: rgba(245, 158, 11, 0.5);
-        }
-
-        .gk-toggle-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 7px;
-            border-radius: 6px;
-            color: #0284c7;
-            background: rgba(224, 242, 254, 0.8);
-            border: 1px solid rgba(186, 230, 253, 1);
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .gk-toggle-btn:hover { background: #bae6fd; color: #0369a1; }
-        .gk-toggle-btn.active { background: #0284c7; color: #ffffff; border-color: #0284c7; }
-        html.dark .gk-toggle-btn { color: #38bdf8; background: rgba(12, 74, 110, 0.5); border-color: rgba(3, 105, 161, 0.6); }
-        html.dark .gk-toggle-btn:hover { background: rgba(14, 116, 144, 0.8); color: #f0f9ff; }
-        html.dark .gk-toggle-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
-
-        .relation-select {
-            font-family: 'Inter', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 9999px;
-            cursor: pointer;
-            outline: none;
-            transition: transform 0.1s;
-        }
-        .relation-select:hover { transform: scale(1.02); }
-
         .note-drawer-btn {
             display: inline-flex;
             align-items: center;
@@ -295,24 +319,6 @@
         html.dark .note-drawer-btn { color: #9ca3af; background: rgba(55, 65, 81, 0.6); border-color: rgba(75, 85, 99, 0.8); }
         html.dark .note-drawer-btn:hover { color: #818cf8; background: rgba(67, 56, 202, 0.3); border-color: rgba(99, 102, 241, 0.5); }
         html.dark .note-drawer-btn.has-notes { color: #34d399; background: rgba(6, 78, 59, 0.5); border-color: rgba(16, 185, 129, 0.4); }
-
-        .interlinear-standalone-card {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 18px !important;
-            background: #f0f9ff !important;
-            border-radius: 12px !important;
-            border: 1px solid #bae6fd !important;
-            box-sizing: border-box !important;
-            font-family: 'Inter', sans-serif !important;
-            font-size: 14px !important;
-            line-height: 1.5 !important;
-        }
-        html.dark .interlinear-standalone-card {
-            background: rgba(12, 74, 110, 0.85) !important;
-            border-color: rgba(3, 105, 161, 0.8) !important;
-            color: #f3f4f6 !important;
-        }
 
         .collapsed-active { opacity: 0.4; max-height: 1.8em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
@@ -381,7 +387,7 @@
     </style>
 </head>
 
-<body class="h-screen flex flex-col select-none overflow-hidden text-sm">
+<body class="h-screen flex flex-col overflow-hidden text-sm">
 
     <!-- Top App Header -->
     <header class="bg-white dark:bg-panelBg border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-50 transition-colors shrink-0">
@@ -411,11 +417,19 @@
         <div class="flex items-center flex-wrap gap-2">
             <div class="flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-zinc-700 space-x-2">
                 <i class="fa-solid fa-book-bookmark text-indigo-500 text-sm"></i>
-                <input type="text" id="passageRefInput" placeholder="Passage (e.g. Psalm 46:1-11)" value="Psalm 46:1-11"
+                <input type="text" id="passageRefInput" placeholder="Passage (e.g. 2 Peter 1:1-4)" value=""
                        onchange="updatePassageContext()"
-                       class="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36 sm:w-40">
-                <button onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load</button>
+                       class="select-text bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none w-36 sm:w-40">
+                <button type="button" onclick="clearPassageInput()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs px-1" title="Clear passage box">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button type="button" onclick="updatePassageContext()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded transition">Load</button>
             </div>
+
+            <button onclick="openBibleHubModal()" class="bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 transition flex items-center space-x-1.5 shadow-sm" title="Open Bible Hub Interlinear">
+                <i class="fa-solid fa-book-bible text-sky-500"></i>
+                <span class="hidden sm:inline">Bible Hub Interlinear</span>
+            </button>
 
             <button onclick="openSrgntWebModal()" class="bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 text-sky-700 dark:text-sky-300 text-xs font-semibold px-3 py-2 rounded-lg border border-sky-200 dark:border-sky-800 transition flex items-center space-x-1.5 shadow-sm" title="Open SRGNT Manuscript Collation Tool">
                 <i class="fa-solid fa-globe text-sky-500"></i>
@@ -518,7 +532,7 @@
                     <button class="px-2 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600" title="Single Underline" onclick="applyUnderline('single')">U</button>
                     <button class="px-2 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
                     <button class="px-2 py-0.5 text-xs font-bold line-through text-gray-500 hover:text-indigo-600" title="Strikethrough" onclick="applyStrikethrough()">ab</button>
-                    <button class="px-2 py-0.5 text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded" title="Ellipsis & Caret (...text^)" onclick="applyEllipsisCaret()">...^</button>
+                    <button class="px-2 py-0.5 text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded" title="Ellipsis & Caret (^text)" onclick="applyEllipsisCaret()">...^</button>
 
                     <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
                     
@@ -529,7 +543,7 @@
             <!-- Bottom Status Bar -->
             <div class="pt-4 mt-8 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400 flex justify-between items-center shrink-0">
                 <span id="wordCountDisplay">0 words</span>
-                <span class="italic hidden sm:inline">Tip: Tap or right-click any line for Ellipsis, Strikethrough, or Notes.</span>
+                <span class="italic hidden sm:inline">Tip: Click the dot beside any clause to assign a semantic relationship, or right-click for notes.</span>
             </div>
         </div>
 
@@ -543,6 +557,128 @@
             </div>
         </footer>
     </main>
+
+    <!-- SEMANTIC RELATIONSHIP POPOVER MENU -->
+    <div id="semanticMenu">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-xs font-bold text-gray-800 dark:text-gray-100">Semantic Relationship</span>
+            <button type="button" onclick="clearClauseSemanticRelation()" class="text-[11px] font-semibold text-red-500 hover:underline">Clear</button>
+        </div>
+
+        <!-- 1. Red = Distinct (purpose, result) -->
+        <div class="sem-cat-row">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #ef4444;"></span>
+                <span>Distinct (Red)</span>
+            </div>
+            <div class="sem-chip-wrap">
+                <button type="button" class="sem-chip" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="applySemanticRelation('Purpose', '#ef4444', 'rgba(239,68,68,0.16)', '#ef4444')">Purpose</button>
+                <button type="button" class="sem-chip" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="applySemanticRelation('Result', '#ef4444', 'rgba(239,68,68,0.16)', '#ef4444')">Result</button>
+                <button type="button" class="sem-chip" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="applySemanticRelation('Distinct', '#ef4444', 'rgba(239,68,68,0.16)', '#ef4444')">Distinct</button>
+            </div>
+        </div>
+
+        <!-- 2. Blue = Restatement (means/manner, affirmation, negation, elaboration) -->
+        <div class="sem-cat-row">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #3b82f6;"></span>
+                <span>Restatement (Blue)</span>
+            </div>
+            <div class="sem-chip-wrap">
+                <button type="button" class="sem-chip" style="background: rgba(59,130,246,0.16); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4);" onclick="applySemanticRelation('Means/Manner', '#3b82f6', 'rgba(59,130,246,0.16)', '#3b82f6')">Means/Manner</button>
+                <button type="button" class="sem-chip" style="background: rgba(59,130,246,0.16); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4);" onclick="applySemanticRelation('Affirmation', '#3b82f6', 'rgba(59,130,246,0.16)', '#3b82f6')">Affirmation</button>
+                <button type="button" class="sem-chip" style="background: rgba(59,130,246,0.16); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4);" onclick="applySemanticRelation('Negation', '#3b82f6', 'rgba(59,130,246,0.16)', '#3b82f6')">Negation</button>
+                <button type="button" class="sem-chip" style="background: rgba(59,130,246,0.16); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4);" onclick="applySemanticRelation('Elaboration', '#3b82f6', 'rgba(59,130,246,0.16)', '#3b82f6')">Elaboration</button>
+                <button type="button" class="sem-chip" style="background: rgba(59,130,246,0.16); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4);" onclick="applySemanticRelation('Restatement', '#3b82f6', 'rgba(59,130,246,0.16)', '#3b82f6')">Restatement</button>
+            </div>
+        </div>
+
+        <!-- 3. Beige = Apposition -->
+        <div class="sem-cat-row">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #d4b483;"></span>
+                <span>Apposition (Beige)</span>
+            </div>
+            <div class="sem-chip-wrap">
+                <button type="button" class="sem-chip" style="background: rgba(212,180,131,0.22); color: #b58d52; border: 1px solid rgba(212,180,131,0.55);" onclick="applySemanticRelation('Apposition', '#d4b483', 'rgba(212,180,131,0.22)', '#c9a66b')">Apposition</button>
+            </div>
+        </div>
+
+        <!-- 4. Green = Coordinate (series) -->
+        <div class="sem-cat-row">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #22c55e;"></span>
+                <span>Coordinate (Green)</span>
+            </div>
+            <div class="sem-chip-wrap">
+                <button type="button" class="sem-chip" style="background: rgba(34,197,94,0.16); color: #22c55e; border: 1px solid rgba(34,197,94,0.4);" onclick="applySemanticRelation('Series', '#22c55e', 'rgba(34,197,94,0.16)', '#22c55e')">Series</button>
+                <button type="button" class="sem-chip" style="background: rgba(34,197,94,0.16); color: #22c55e; border: 1px solid rgba(34,197,94,0.4);" onclick="applySemanticRelation('Coordinate', '#22c55e', 'rgba(34,197,94,0.16)', '#22c55e')">Coordinate</button>
+            </div>
+        </div>
+
+        <!-- 5. Maroon = Contrary (concessive) -->
+        <div class="sem-cat-row">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #991b1b;"></span>
+                <span>Contrary (Maroon)</span>
+            </div>
+            <div class="sem-chip-wrap">
+                <button type="button" class="sem-chip" style="background: rgba(153,27,27,0.22); color: #dc2626; border: 1px solid rgba(153,27,27,0.55);" onclick="applySemanticRelation('Concessive', '#991b1b', 'rgba(153,27,27,0.22)', '#e11d48')">Concessive</button>
+                <button type="button" class="sem-chip" style="background: rgba(153,27,27,0.22); color: #dc2626; border: 1px solid rgba(153,27,27,0.55);" onclick="applySemanticRelation('Contrary', '#991b1b', 'rgba(153,27,27,0.22)', '#e11d48')">Contrary</button>
+            </div>
+        </div>
+
+        <!-- 6. Custom = Orange (with custom color picker) -->
+        <div class="pt-2 mt-1 border-t border-gray-100 dark:border-gray-700">
+            <div class="sem-cat-title">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #f97316;"></span>
+                <span>Custom (Orange / Custom Color)</span>
+            </div>
+            <div id="savedCustomRelList" class="sem-chip-wrap mb-2"></div>
+            <div class="flex items-center space-x-1.5">
+                <input type="color" id="customRelColorInput" value="#f97316" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0 shrink-0" title="Custom Color (Default: Orange)">
+                <input type="text" id="customRelNameInput" placeholder="Custom label..." class="select-text flex-1 bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs px-2.5 py-1 rounded border border-gray-200 dark:border-zinc-700 outline-none" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCustomSemanticRelation(); }">
+                <button type="button" onclick="applyCustomSemanticRelation()" class="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded transition shrink-0">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BIBLE HUB INTERLINEAR POP-UP MODAL -->
+    <div id="bibleHubPopupWindow" class="fixed inset-0 z-[450] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-6xl h-[88vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-sky-200 dark:border-sky-800 flex flex-col relative overflow-hidden">
+            <div class="px-5 py-3 bg-sky-50 dark:bg-zinc-800 border-b border-sky-200 dark:border-zinc-700 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-book-bible text-sky-600 dark:text-sky-400"></i>
+                    <span class="font-bold text-gray-900 dark:text-white text-sm">Bible Hub Interlinear Viewer</span>
+                    <span id="bibleHubHeaderPassageBadge" class="px-2.5 py-0.5 bg-white dark:bg-zinc-900 rounded font-mono text-xs font-bold text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-zinc-700">1 Peter 1:1</span>
+                </div>
+                <button onclick="closeBibleHubModal()" class="text-gray-400 hover:text-red-500 dark:text-gray-300 text-lg font-bold px-2 py-1 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="px-5 py-2.5 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+                <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                    <span class="font-semibold text-gray-500">Passage:</span>
+                    <select id="bhBookSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none"></select>
+                    <select id="bhChapSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16"></select>
+                    <span class="font-bold">:</span>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="stepBhVerse(-1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Previous Verse"><i class="fa-solid fa-chevron-left"></i></button>
+                        <select id="bhVerseSelect" onchange="renderBibleHubViewer()" class="bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded px-2 py-1 font-medium border border-gray-200 dark:border-zinc-700 outline-none w-16"></select>
+                        <button onclick="stepBhVerse(1)" class="px-2 py-1 bg-gray-200 dark:bg-zinc-800 hover:bg-sky-600 hover:text-white rounded font-bold transition" title="Next Verse"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a id="bibleHubExternalLink" href="https://biblehub.com/interlinear/1_peter/1-1.htm" target="_blank" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded shadow-sm flex items-center space-x-1">
+                        <span>Open in New Tab</span> <i class="fa-solid fa-external-link text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="flex-1 bg-white dark:bg-zinc-950 relative overflow-hidden flex flex-col">
+                <iframe id="bibleHubIframe" src="about:blank" class="w-full flex-1 border-0" title="Bible Hub Interlinear"></iframe>
+            </div>
+        </div>
+    </div>
 
     <!-- GREEK INTERLINEAR LIGHTBOX MODAL -->
     <div id="interlinearLightbox" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
@@ -564,11 +700,11 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">SRGNT Manuscript Collation Tool</h3>
-                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference: Psalm 46:1-11</p>
+                        <p id="srgntModalSubtext" class="text-xs text-sky-600 dark:text-sky-400 font-semibold">Target Passage Reference</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a id="srgntExternalLink" href="https://greekcntr.org/collation/" target="_blank" class="text-xs text-sky-600 dark:text-sky-400 hover:underline flex items-center space-x-1 font-medium">
+                    <a id="srgntExternalLink" href="https://greekcntr.org/collation/index.html" target="_blank" class="text-xs text-sky-600 dark:text-sky-400 hover:underline flex items-center space-x-1 font-medium">
                         <span>Open in New Tab</span>
                         <i class="fa-solid fa-external-link text-[10px]"></i>
                     </a>
@@ -578,7 +714,7 @@
                 </div>
             </div>
             <div class="flex-1 w-full bg-white dark:bg-zinc-950 relative">
-                <iframe id="srgntIframe" src="about:blank" class="w-full h-full border-none" title="SRGNT Collation View"></iframe>
+                <iframe id="srgntIframe" src="https://greekcntr.org/collation/index.html" class="w-full h-full border-none" title="SRGNT Collation View"></iframe>
             </div>
         </div>
     </div>
@@ -596,7 +732,7 @@
         <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
         <div class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxEllipsisSelection()">
             <i class="fa-solid fa-ellipsis text-xs"></i>
-            <span>Ellipsis & Caret (...text^)</span>
+            <span>Ellipsis & Caret (^text)</span>
         </div>
         <div class="ctx-item text-gray-700 dark:text-gray-200" onclick="ctxStrikethroughSelection()">
             <i class="fa-solid fa-strikethrough text-xs text-gray-400"></i>
@@ -715,6 +851,7 @@
         let rightClickedBlock = null;
         let activeNoteBlock = null;
         let activeLightboxBlock = null;
+        let activeSemanticBlock = null;
         let srgntCache = {};
         
         const projectSelect = document.getElementById('projectSelect');
@@ -726,6 +863,7 @@
         const srgntStatus = document.getElementById('srgntStatus');
         const highlightToolbar = document.getElementById('highlightToolbar');
         const contextMenu = document.getElementById('contextMenu');
+        const semanticMenu = document.getElementById('semanticMenu');
         
         const noteDrawer = document.getElementById('exegeticalNoteDrawer');
         const clauseNoteEditor = document.getElementById('clauseNoteEditor');
@@ -734,33 +872,90 @@
         const masterNoteDrawer = document.getElementById('masterNoteDrawer');
         const masterNoteEditor = document.getElementById('masterNoteEditor');
 
-        const defaultRelations = {
-            'Causal': { bg: '#fef3c7', text: '#92400e' },
-            'Conditional': { bg: '#d1fae5', text: '#065f46' },
-            'Result': { bg: '#e0f2fe', text: '#0369a1' },
-            'Purpose': { bg: '#f3e8ff', text: '#6b21a8' },
-            'Means': { bg: '#ccfbf1', text: '#115e59' },
-            'Temporal': { bg: '#ffe4e6', text: '#9f1239' },
-            'Adversative': { bg: '#fee2e2', text: '#991b1b' },
-            'Explanation': { bg: '#f1f5f9', text: '#334155' }
+        const semanticPresetMap = {
+            'Purpose': { dot: '#ef4444', bg: 'rgba(239,68,68,0.16)', text: '#ef4444' },
+            'Result': { dot: '#ef4444', bg: 'rgba(239,68,68,0.16)', text: '#ef4444' },
+            'Distinct': { dot: '#ef4444', bg: 'rgba(239,68,68,0.16)', text: '#ef4444' },
+            'Means/Manner': { dot: '#3b82f6', bg: 'rgba(59,130,246,0.16)', text: '#3b82f6' },
+            'Affirmation': { dot: '#3b82f6', bg: 'rgba(59,130,246,0.16)', text: '#3b82f6' },
+            'Negation': { dot: '#3b82f6', bg: 'rgba(59,130,246,0.16)', text: '#3b82f6' },
+            'Elaboration': { dot: '#3b82f6', bg: 'rgba(59,130,246,0.16)', text: '#3b82f6' },
+            'Restatement': { dot: '#3b82f6', bg: 'rgba(59,130,246,0.16)', text: '#3b82f6' },
+            'Apposition': { dot: '#d4b483', bg: 'rgba(212,180,131,0.22)', text: '#c9a66b' },
+            'Series': { dot: '#22c55e', bg: 'rgba(34,197,94,0.16)', text: '#22c55e' },
+            'Coordinate': { dot: '#22c55e', bg: 'rgba(34,197,94,0.16)', text: '#22c55e' },
+            'Concessive': { dot: '#991b1b', bg: 'rgba(153,27,27,0.22)', text: '#e11d48' },
+            'Contrary': { dot: '#991b1b', bg: 'rgba(153,27,27,0.22)', text: '#e11d48' }
         };
 
-        const discourseMarkerMap = {
-            'therefore': 'Result',
-            'wherefore': 'Result',
-            'so that': 'Purpose',
-            'in order that': 'Purpose',
-            'because': 'Causal',
-            'for': 'Causal',
-            'since': 'Causal',
-            'if': 'Conditional',
-            'unless': 'Conditional',
-            'but': 'Adversative',
-            'however': 'Adversative',
-            'when': 'Temporal',
-            'after': 'Temporal',
-            'while': 'Temporal'
-        };
+        const bibleBooksList = [
+            { name: 'Genesis', slug: 'genesis', aliases: ['genesis', 'gen'] },
+            { name: 'Exodus', slug: 'exodus', aliases: ['exodus', 'exod', 'ex'] },
+            { name: 'Leviticus', slug: 'leviticus', aliases: ['leviticus', 'lev'] },
+            { name: 'Numbers', slug: 'numbers', aliases: ['numbers', 'num'] },
+            { name: 'Deuteronomy', slug: 'deuteronomy', aliases: ['deuteronomy', 'deut', 'dt'] },
+            { name: 'Joshua', slug: 'joshua', aliases: ['joshua', 'josh'] },
+            { name: 'Judges', slug: 'judges', aliases: ['judges', 'judg'] },
+            { name: 'Ruth', slug: 'ruth', aliases: ['ruth'] },
+            { name: '1 Samuel', slug: '1_samuel', aliases: ['1samuel', '1sam'] },
+            { name: '2 Samuel', slug: '2_samuel', aliases: ['2samuel', '2sam'] },
+            { name: '1 Kings', slug: '1_kings', aliases: ['1kings', '1kgs'] },
+            { name: '2 Kings', slug: '2_kings', aliases: ['2kings', '2kgs'] },
+            { name: '1 Chronicles', slug: '1_chronicles', aliases: ['1chronicles', '1chr'] },
+            { name: '2 Chronicles', slug: '2_chronicles', aliases: ['2chronicles', '2chr'] },
+            { name: 'Ezra', slug: 'ezra', aliases: ['ezra', 'ezr'] },
+            { name: 'Nehemiah', slug: 'nehemiah', aliases: ['nehemiah', 'neh'] },
+            { name: 'Esther', slug: 'esther', aliases: ['esther', 'esth'] },
+            { name: 'Job', slug: 'job', aliases: ['job'] },
+            { name: 'Psalms', slug: 'psalms', aliases: ['psalms', 'psalm', 'ps'] },
+            { name: 'Proverbs', slug: 'proverbs', aliases: ['proverbs', 'prov'] },
+            { name: 'Ecclesiastes', slug: 'ecclesiastes', aliases: ['ecclesiastes', 'eccl'] },
+            { name: 'Song of Solomon', slug: 'songs', aliases: ['songofsolomon', 'song', 'songs'] },
+            { name: 'Isaiah', slug: 'isaiah', aliases: ['isaiah', 'isa'] },
+            { name: 'Jeremiah', slug: 'jeremiah', aliases: ['jeremiah', 'jer'] },
+            { name: 'Lamentations', slug: 'lamentations', aliases: ['lamentations', 'lam'] },
+            { name: 'Ezekiel', slug: 'ezekiel', aliases: ['ezekiel', 'ezek'] },
+            { name: 'Daniel', slug: 'daniel', aliases: ['daniel', 'dan'] },
+            { name: 'Hosea', slug: 'hosea', aliases: ['hosea', 'hos'] },
+            { name: 'Joel', slug: 'joel', aliases: ['joel', 'jl'] },
+            { name: 'Amos', slug: 'amos', aliases: ['amos'] },
+            { name: 'Obadiah', slug: 'obadiah', aliases: ['obadiah', 'obad'] },
+            { name: 'Jonah', slug: 'jonah', aliases: ['jonah', 'jon'] },
+            { name: 'Micah', slug: 'micah', aliases: ['micah', 'mic'] },
+            { name: 'Nahum', slug: 'nahum', aliases: ['nahum', 'nah'] },
+            { name: 'Habakkuk', slug: 'habakkuk', aliases: ['habakkuk', 'hab'] },
+            { name: 'Zephaniah', slug: 'zephaniah', aliases: ['zephaniah', 'zeph'] },
+            { name: 'Haggai', slug: 'haggai', aliases: ['haggai', 'hag'] },
+            { name: 'Zechariah', slug: 'zechariah', aliases: ['zechariah', 'zech'] },
+            { name: 'Malachi', slug: 'malachi', aliases: ['malachi', 'mal'] },
+            { name: 'Matthew', slug: 'matthew', aliases: ['matthew', 'matt', 'mt'] },
+            { name: 'Mark', slug: 'mark', aliases: ['mark', 'mk'] },
+            { name: 'Luke', slug: 'luke', aliases: ['luke', 'lk'] },
+            { name: 'John', slug: 'john', aliases: ['john', 'jhn', 'jn'] },
+            { name: 'Acts', slug: 'acts', aliases: ['acts', 'act'] },
+            { name: 'Romans', slug: 'romans', aliases: ['romans', 'rom'] },
+            { name: '1 Corinthians', slug: '1_corinthians', aliases: ['1corinthians', '1cor'] },
+            { name: '2 Corinthians', slug: '2_corinthians', aliases: ['2corinthians', '2cor'] },
+            { name: 'Galatians', slug: 'galatians', aliases: ['galatians', 'gal'] },
+            { name: 'Ephesians', slug: 'ephesians', aliases: ['ephesians', 'eph'] },
+            { name: 'Philippians', slug: 'philippians', aliases: ['philippians', 'php'] },
+            { name: 'Colossians', slug: 'colossians', aliases: ['colossians', 'col'] },
+            { name: '1 Thessalonians', slug: '1_thessalonians', aliases: ['1thessalonians', '1thess'] },
+            { name: '2 Thessalonians', slug: '2_thessalonians', aliases: ['2thessalonians', '2thess'] },
+            { name: '1 Timothy', slug: '1_timothy', aliases: ['1timothy', '1tim'] },
+            { name: '2 Timothy', slug: '2_timothy', aliases: ['2timothy', '2tim'] },
+            { name: 'Titus', slug: 'titus', aliases: ['titus', 'tit'] },
+            { name: 'Philemon', slug: 'philemon', aliases: ['philemon', 'phlm'] },
+            { name: 'Hebrews', slug: 'hebrews', aliases: ['hebrews', 'heb'] },
+            { name: 'James', slug: 'james', aliases: ['james', 'jas'] },
+            { name: '1 Peter', slug: '1_peter', aliases: ['1peter', '1pet'] },
+            { name: '2 Peter', slug: '2_peter', aliases: ['2peter', '2pet'] },
+            { name: '1 John', slug: '1_john', aliases: ['1john', '1jhn'] },
+            { name: '2 John', slug: '2_john', aliases: ['2john', '2jhn'] },
+            { name: '3 John', slug: '3_john', aliases: ['3john', '3jhn'] },
+            { name: 'Jude', slug: 'jude', aliases: ['jude', 'jud'] },
+            { name: 'Revelation', slug: 'revelation', aliases: ['revelation', 'rev'] }
+        ];
 
         const bookNumberMap = {
             'genesis': 1, 'gen': 1, 'exodus': 2, 'exod': 2, 'leviticus': 3, 'lev': 3,
@@ -796,47 +991,260 @@
             'revelation': 66, 'rev': 66
         };
 
-        const bookNameMap = {
-            '40': 'Matthew', '41': 'Mark', '42': 'Luke', '43': 'John', '44': 'Acts',
-            '45': 'Romans', '46': '1 Corinthians', '47': '2 Corinthians', '48': 'Galatians',
-            '49': 'Ephesians', '50': 'Philippians', '51': 'Colossians', '52': '1 Thessalonians',
-            '53': '2 Thessalonians', '54': '1 Timothy', '55': '2 Timothy', '56': 'Titus',
-            '57': 'Philemon', '58': 'Hebrews', '59': 'James', '60': '1 Peter',
-            '61': '2 Peter', '62': '1 John', '63': '2 John', '64': '3 John', '65': 'Jude', '66': 'Revelation'
-        };
-
-        function isOldTestamentPassage() {
-            const val = document.getElementById('passageRefInput').value.toLowerCase().trim();
-            const otBooks = [
-                'genesis', 'gen', 'exodus', 'exod', 'ex', 'leviticus', 'lev', 'numbers', 'num', 
-                'deuteronomy', 'deut', 'dt', 'joshua', 'josh', 'judges', 'judg', 'ruth', '1samuel', 
-                '1sam', '2samuel', '2sam', '1kings', '1kgs', '2kings', '2kgs', '1chronicles', 
-                '1chr', '2chronicles', '2chr', 'ezra', 'ezr', 'nehemiah', 'neh', 'esther', 
-                'esth', 'job', 'psalm', 'psalms', 'ps', 'proverbs', 'prov', 'ecclesiastes', 
-                'eccl', 'song', 'isaiah', 'isa', 'jeremiah', 'jer', 'lamentations', 'lam', 
-                'ezekiel', 'ezek', 'daniel', 'dan', 'hosea', 'hos', 'joel', 'jl', 'amos', 
-                'obadiah', 'obad', 'jonah', 'jon', 'micah', 'mic', 'nahum', 'nah', 'habakkuk', 
-                'hab', 'zephaniah', 'zeph', 'haggai', 'hag', 'zechariah', 'zech', 'malachi', 'mal'
-            ];
-            return otBooks.some(b => val.startsWith(b));
+        function hexToRgba(hex, alpha) {
+            let c = (hex || '#f97316').replace('#', '');
+            if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+            const num = parseInt(c, 16);
+            return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
         }
 
-        function openHebrewBibleHubInterlinear(verseNum) {
-            const passageVal = document.getElementById('passageRefInput').value.trim().toLowerCase();
-            const match = passageVal.match(/^([0-9]?\s*[a-zA-Z]+)\s*([0-9]+)/);
+        function getSavedCustomRelations() {
+            try {
+                return JSON.parse(localStorage.getItem('lexflow_customRelations') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function renderSavedCustomRelations() {
+            const container = document.getElementById('savedCustomRelList');
+            if (!container) return;
+            container.innerHTML = '';
+            const list = getSavedCustomRelations();
+            list.forEach(item => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sem-chip';
+                const bg = hexToRgba(item.color, 0.18);
+                const border = hexToRgba(item.color, 0.45);
+                btn.style.cssText = `background: ${bg}; color: ${item.color}; border: 1px solid ${border};`;
+                btn.textContent = item.label;
+                btn.onclick = () => applySemanticRelation(item.label, item.color, bg, item.color);
+                container.appendChild(btn);
+            });
+        }
+
+        function openSemanticMenuForBlock(block, anchorEl, e) {
+            e.stopPropagation();
+            hideContextMenu();
+            activeSemanticBlock = block;
+            renderSavedCustomRelations();
+
+            const nameInput = document.getElementById('customRelNameInput');
+            const colorInput = document.getElementById('customRelColorInput');
+            if (nameInput) nameInput.value = '';
+            if (colorInput) colorInput.value = block.dataset.relDot || '#f97316';
+
+            semanticMenu.style.display = 'block';
+            const rect = anchorEl.getBoundingClientRect();
+            const menuW = semanticMenu.offsetWidth || 280;
+            const menuH = semanticMenu.offsetHeight || 310;
+
+            let left = rect.left;
+            let top = rect.bottom + 6;
+            if (left + menuW > window.innerWidth - 12) {
+                left = Math.max(12, window.innerWidth - menuW - 12);
+            }
+            if (top + menuH > window.innerHeight - 12) {
+                top = Math.max(12, rect.top - menuH - 6);
+            }
+            semanticMenu.style.left = `${left}px`;
+            semanticMenu.style.top = `${top}px`;
+        }
+
+        function hideSemanticMenu() {
+            if (semanticMenu) semanticMenu.style.display = 'none';
+            activeSemanticBlock = null;
+        }
+
+        function applySemanticRelation(label, dotColor, bgColor, textColor) {
+            if (!activeSemanticBlock) return;
+            activeSemanticBlock.dataset.relation = label;
+            activeSemanticBlock.dataset.relDot = dotColor;
+            activeSemanticBlock.dataset.relBg = bgColor;
+            activeSemanticBlock.dataset.relText = textColor;
+            hideSemanticMenu();
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function applyCustomSemanticRelation() {
+            if (!activeSemanticBlock) return;
+            const nameInput = document.getElementById('customRelNameInput');
+            const colorInput = document.getElementById('customRelColorInput');
+            const label = (nameInput.value || '').trim() || 'Custom';
+            const color = colorInput.value || '#f97316';
+            const bg = hexToRgba(color, 0.18);
+
+            const saved = getSavedCustomRelations();
+            if (!saved.some(r => r.label.toLowerCase() === label.toLowerCase())) {
+                saved.push({ label, color });
+                localStorage.setItem('lexflow_customRelations', JSON.stringify(saved.slice(-10)));
+            }
+            applySemanticRelation(label, color, bg, color);
+        }
+
+        function clearClauseSemanticRelation() {
+            if (!activeSemanticBlock) return;
+            activeSemanticBlock.removeAttribute('data-relation');
+            activeSemanticBlock.removeAttribute('data-rel-dot');
+            activeSemanticBlock.removeAttribute('data-rel-bg');
+            activeSemanticBlock.removeAttribute('data-rel-text');
+            hideSemanticMenu();
+            syncOverlayControls();
+            saveActiveProjectData();
+        }
+
+        function initBibleHubSelects() {
+            const bookSel = document.getElementById('bhBookSelect');
+            const chapSel = document.getElementById('bhChapSelect');
+            const verseSel = document.getElementById('bhVerseSelect');
+            if (bookSel && bookSel.options.length === 0) {
+                bibleBooksList.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.slug;
+                    opt.textContent = b.name;
+                    bookSel.appendChild(opt);
+                });
+            }
+            if (chapSel && chapSel.options.length === 0) {
+                for (let c = 1; c <= 150; c++) {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    chapSel.appendChild(opt);
+                }
+            }
+            if (verseSel && verseSel.options.length === 0) {
+                for (let v = 1; v <= 176; v++) {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    verseSel.appendChild(opt);
+                }
+            }
+        }
+
+        function parsePassageForBibleHub(inputStr) {
+            const cleaned = (inputStr || '1 Peter 1:1').trim();
+            const match = cleaned.match(/^([1-3]?\s*[a-zA-Z\s]+?)\s*([0-9]+)(?::([0-9]+))?/);
             if (match) {
-                let book = match[1].toLowerCase().replace(/\s+/g, '');
-                const chapter = match[2];
-                if (book === 'psalm') book = 'psalms';
-                window.open(`https://biblehub.com/interlinear/${book}/${chapter}-${verseNum}.htm`, '_blank');
-            } else {
-                window.open('https://biblehub.com/interlinear/', '_blank');
+                const rawBookKey = match[1].toLowerCase().replace(/\s+/g, '');
+                const chapter = parseInt(match[2], 10) || 1;
+                const firstVerse = match[3] ? parseInt(match[3], 10) : 1;
+                const foundBook = bibleBooksList.find(b => b.aliases.includes(rawBookKey) || b.name.toLowerCase().replace(/\s+/g, '') === rawBookKey);
+                return {
+                    slug: foundBook ? foundBook.slug : '1_peter',
+                    chapter: chapter,
+                    verse: firstVerse
+                };
+            }
+            return { slug: '1_peter', chapter: 1, verse: 1 };
+        }
+
+        function openBibleHubModal() {
+            initBibleHubSelects();
+            const passageVal = document.getElementById('passageRefInput').value;
+            const parsed = parsePassageForBibleHub(passageVal);
+            document.getElementById('bhBookSelect').value = parsed.slug;
+            document.getElementById('bhChapSelect').value = parsed.chapter;
+            document.getElementById('bhVerseSelect').value = parsed.verse;
+            renderBibleHubViewer();
+            document.getElementById('bibleHubPopupWindow').classList.remove('hidden');
+        }
+
+        function closeBibleHubModal() {
+            document.getElementById('bibleHubPopupWindow').classList.add('hidden');
+        }
+
+        function stepBhVerse(direction) {
+            const verseSelect = document.getElementById('bhVerseSelect');
+            const newIdx = verseSelect.selectedIndex + direction;
+            if (newIdx >= 0 && newIdx < verseSelect.options.length) {
+                verseSelect.selectedIndex = newIdx;
+                renderBibleHubViewer();
+            }
+        }
+
+        function renderBibleHubViewer() {
+            const bookSelect = document.getElementById('bhBookSelect');
+            const slug = bookSelect.value || '1_peter';
+            const bookName = bookSelect.options[bookSelect.selectedIndex] ? bookSelect.options[bookSelect.selectedIndex].text : '1 Peter';
+            const chapter = document.getElementById('bhChapSelect').value || 1;
+            const verse = document.getElementById('bhVerseSelect').value || 1;
+            const targetUrl = `https://biblehub.com/interlinear/${slug}/${chapter}-${verse}.htm`;
+
+            document.getElementById('bibleHubHeaderPassageBadge').textContent = `${bookName} ${chapter}:${verse}`;
+            document.getElementById('bibleHubExternalLink').href = targetUrl;
+            document.getElementById('bibleHubIframe').src = targetUrl;
+        }
+
+        function openSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            const iframe = document.getElementById('srgntIframe');
+            const extLink = document.getElementById('srgntExternalLink');
+            const subtext = document.getElementById('srgntModalSubtext');
+            const passageVal = document.getElementById('passageRefInput').value.trim() || 'Not Set';
+            const collationHomeUrl = 'https://greekcntr.org/collation/index.html';
+
+            if (subtext) subtext.textContent = `Target Passage Reference: ${passageVal}`;
+            if (extLink) extLink.href = collationHomeUrl;
+            if (iframe && iframe.src !== collationHomeUrl) {
+                iframe.src = collationHomeUrl;
+            }
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeSrgntWebModal() {
+            const modal = document.getElementById('srgntWebModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function closeInterlinearLightbox() {
+            const lb = document.getElementById('interlinearLightbox');
+            if (lb) lb.classList.add('hidden');
+            activeLightboxBlock = null;
+        }
+
+        function clearPassageInput() {
+            const passageInput = document.getElementById('passageRefInput');
+            if (passageInput) {
+                passageInput.value = '';
+                passageInput.focus();
+                saveActiveProjectData();
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            initBibleHubSelects();
             populateProjectsMenu();
             loadSelectedProject();
+
+            const passageInput = document.getElementById('passageRefInput');
+            if (passageInput) {
+                passageInput.addEventListener('input', () => {
+                    saveActiveProjectData();
+                });
+                passageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        updatePassageContext();
+                    }
+                });
+            }
+
+            if (clauseNoteEditor) {
+                clauseNoteEditor.addEventListener('input', () => {
+                    saveActiveNoteToBlock();
+                });
+                clauseNoteEditor.addEventListener('paste', handleNotePaste);
+            }
+
+            if (masterNoteEditor) {
+                masterNoteEditor.addEventListener('input', () => {
+                    saveActiveProjectData();
+                });
+            }
             
             if (editor) {
                 editor.addEventListener('input', () => {
@@ -858,10 +1266,12 @@
                         if (e.shiftKey) { outdentLine(); } else { indentLine(); }
                     } else if (e.key === 'Escape') {
                         hideContextMenu();
+                        hideSemanticMenu();
                         closeNoteDrawer();
                         closeMasterNoteDrawer();
                         closeInterlinearLightbox();
                         closeSrgntWebModal();
+                        closeBibleHubModal();
                     }
                 });
 
@@ -879,6 +1289,9 @@
 
                 document.addEventListener('click', (e) => {
                     if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
+                    if (semanticMenu && !semanticMenu.contains(e.target) && !e.target.closest('.clause-semantic-anchor')) {
+                        hideSemanticMenu();
+                    }
                 });
 
                 document.addEventListener('selectionchange', handleTextSelection);
@@ -886,6 +1299,7 @@
                 document.querySelector('main').addEventListener('scroll', () => {
                     syncOverlayControls();
                     hideContextMenu();
+                    hideSemanticMenu();
                 });
             }
             updatePassageContext();
@@ -893,8 +1307,16 @@
 
         function updatePassageContext() {
             const val = document.getElementById('passageRefInput').value.trim();
+            saveActiveProjectData();
             if (!val) return;
             autoAssignVersesFromPassageRange();
+            if (!document.getElementById('bibleHubPopupWindow').classList.contains('hidden')) {
+                const parsed = parsePassageForBibleHub(val);
+                document.getElementById('bhBookSelect').value = parsed.slug;
+                document.getElementById('bhChapSelect').value = parsed.chapter;
+                document.getElementById('bhVerseSelect').value = parsed.verse;
+                renderBibleHubViewer();
+            }
         }
 
         /* TRUE RANGE-BASED VERSE DISTRIBUTION */
@@ -913,7 +1335,6 @@
                 if (calculatedVerse > endV) calculatedVerse = endV;
                 if (calculatedVerse < startV) calculatedVerse = startV;
 
-                // Explicitly store the calculated verse on the element
                 block.dataset.verseNum = calculatedVerse;
             });
 
@@ -929,14 +1350,15 @@
                 const chapNum = parseInt(match[2], 10);
                 const startV = match[3] ? parseInt(match[3], 10) : 1;
                 const endV = match[4] ? parseInt(match[4], 10) : startV;
-                const bookCode = bookNumberMap[bookStr] || 19;
+                const bookCode = bookNumberMap[bookStr] || 60;
                 return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
             }
-            return { book: 19, chapter: 46, startVerse: 1, endVerse: 11 };
+            return { book: 60, chapter: 1, startVerse: 1, endVerse: 4 };
         }
 
         function showContextMenu(x, y) {
             if (!contextMenu) return;
+            hideSemanticMenu();
             contextMenu.style.display = 'block';
             const winWidth = window.innerWidth;
             const winHeight = window.innerHeight;
@@ -970,23 +1392,30 @@
         function ctxDeleteLine() { if (rightClickedBlock) { rightClickedBlock.remove(); syncOverlayControls(); updateWordCount(); saveActiveProjectData(); } hideContextMenu(); }
 
         function openNoteDrawerForBlock(block) {
+            if (activeNoteBlock && activeNoteBlock !== block) {
+                saveActiveNoteToBlock();
+            }
             activeNoteBlock = block;
             drawerClauseText.textContent = `"${block.textContent.trim() || 'Empty clause line'}"`;
             clauseNoteEditor.innerHTML = block.dataset.exegeticalNotes || '';
             noteDrawer.classList.add('open');
-            closeMasterNoteDrawer();
+            if (masterNoteDrawer) masterNoteDrawer.classList.remove('open');
         }
 
         function closeNoteDrawer() {
+            if (activeNoteBlock) {
+                saveActiveNoteToBlock();
+            }
             if (noteDrawer) noteDrawer.classList.remove('open');
             activeNoteBlock = null;
         }
 
         function saveActiveNoteToBlock() {
             if (!activeNoteBlock) return;
-            const content = clauseNoteEditor.innerHTML.trim();
-            if (content) {
-                activeNoteBlock.dataset.exegeticalNotes = content;
+            const textContent = clauseNoteEditor.innerText.trim();
+            const hasImages = clauseNoteEditor.querySelector('img') !== null;
+            if (textContent.length > 0 || hasImages) {
+                activeNoteBlock.dataset.exegeticalNotes = clauseNoteEditor.innerHTML.trim();
             } else {
                 activeNoteBlock.removeAttribute('data-exegetical-notes');
             }
@@ -995,6 +1424,7 @@
         }
 
         function execNoteCommand(cmd, value = null) {
+            clauseNoteEditor.focus();
             document.execCommand(cmd, false, value);
             saveActiveNoteToBlock();
         }
@@ -1037,13 +1467,24 @@
             else openMasterNoteDrawer();
         }
 
-        function openMasterNoteDrawer() { masterNoteDrawer.classList.add('open'); closeNoteDrawer(); }
-        function closeMasterNoteDrawer() { if (masterNoteDrawer) masterNoteDrawer.classList.remove('open'); }
+        function openMasterNoteDrawer() {
+            closeNoteDrawer();
+            masterNoteDrawer.classList.add('open');
+        }
+
+        function closeMasterNoteDrawer() {
+            if (masterNoteDrawer) masterNoteDrawer.classList.remove('open');
+            saveActiveProjectData();
+        }
 
         function importAllNotes() {
+            if (activeNoteBlock) {
+                saveActiveNoteToBlock();
+            }
             if (!editor) return;
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
-            let compiledHTML = `<h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #4f46e5; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Compiled Exegetical Notes</h2>`;
+            const passageRef = document.getElementById('passageRefInput').value.trim() || 'Passage';
+            let compiledHTML = `<h2 style="font-size: 1.15rem; font-weight: bold; margin-bottom: 1rem; color: #6366f1; border-bottom: 1px solid rgba(156, 163, 175, 0.3); padding-bottom: 0.5rem;">${passageRef} &bull; Compiled Exegetical Notes</h2>`;
             let notesFound = 0;
 
             blocks.forEach((block, index) => {
@@ -1052,27 +1493,46 @@
                     notesFound++;
                     const clauseText = block.textContent.trim();
                     const relation = block.dataset.relation || 'Main Clause / Subordination';
-                    let level = 0;
-                    const styleAttr = block.getAttribute('style') || '';
-                    const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
-                    if (marginMatch) {
-                        const val = parseFloat(marginMatch[1]);
-                        level = val >= 1 ? Math.round(val / 1.5) : 1;
-                    }
+                    const verseLabel = block.dataset.verseNum ? `v${block.dataset.verseNum} • ` : '';
 
                     compiledHTML += `
-                        <div style="margin-bottom: 1.25rem; padding: 0.85rem; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb;">
-                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">Clause #${index + 1} (L${level} • ${relation})</div>
-                            <blockquote style="font-family: serif; font-style: italic; color: #374151; border-left: 2px solid #818cf8; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">"${clauseText}"</blockquote>
-                            <div style="font-size: 0.95rem; color: #111827; line-height: 1.5;">${noteContent}</div>
+                        <div style="margin-bottom: 1.25rem; padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(156, 163, 175, 0.3); background: rgba(156, 163, 175, 0.08);">
+                            <div style="font-size: 0.8rem; font-weight: 600; color: #6366f1; margin-bottom: 0.25rem;">${verseLabel}Clause #${index + 1} (${relation})</div>
+                            <blockquote style="font-family: Georgia, serif; font-style: italic; opacity: 0.85; border-left: 2px solid #9ca3af; padding-left: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem;">"${clauseText}"</blockquote>
+                            <div style="font-size: 0.95rem; line-height: 1.5;">${noteContent}</div>
                         </div>
                     `;
                 }
             });
 
-            if (notesFound === 0) compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet.</p>`;
+            if (notesFound === 0) {
+                compiledHTML += `<p style="font-style: italic; color: #9ca3af; font-size: 0.95rem;">No exegetical notes found in any clauses yet. Click the pen icon on any line to add notes first.</p>`;
+            }
             masterNoteEditor.innerHTML = compiledHTML;
             saveActiveProjectData();
+        }
+
+        function exportMasterNotesToPDF() {
+            const printWindow = window.open('', '_blank');
+            const passageRef = document.getElementById('passageRefInput').value.trim() || 'Master Exegetical Notes';
+            const content = masterNoteEditor ? masterNoteEditor.innerHTML : '';
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>LexFlow Notes - ${passageRef}</title>
+                    <style>
+                        body { font-family: 'Inter', system-ui, sans-serif; padding: 45px; color: #111827; line-height: 1.6; }
+                        img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+                        @media print { body { padding: 20px; } }
+                    </style>
+                </head>
+                <body>${content || '<p style="font-style: italic; color: #9ca3af;">No compiled notes found.</p>'}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 300);
         }
 
         function clearMasterNotes() {
@@ -1088,7 +1548,8 @@
             let flowHTML = '';
 
             blocks.forEach(block => {
-                const text = block.textContent.trim();
+                const rawText = block.textContent || '';
+                const text = rawText.trim();
                 const styleAttr = block.getAttribute('style') || '';
                 const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
                 let marginLeftRem = marginMatch ? parseFloat(marginMatch[1]) : 0;
@@ -1097,14 +1558,23 @@
                     marginLeftRem = Math.max(marginLeftRem, 5.0);
                 }
 
+                const isParallel = block.classList.contains('parallel-indent') || /^(\.+|\^|…)/.test(text);
                 const isAttachedDown = block.classList.contains('attach-down');
-                const relation = block.dataset.relation ? ` <span style="font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">[${block.dataset.relation}]</span>` : '';
+                let relation = '';
+                if (block.dataset.relation) {
+                    const relName = block.dataset.relation;
+                    const preset = semanticPresetMap[relName];
+                    const dotCol = block.dataset.relDot || (preset ? preset.dot : '#f97316');
+                    const bgCol = block.dataset.relBg || (preset ? preset.bg : 'rgba(249,115,22,0.16)');
+                    const txtCol = block.dataset.relText || (preset ? preset.text : '#ea580c');
+                    relation = ` <span style="display:inline-flex; align-items:center; gap:4px; font-family:'Inter',sans-serif; font-size:10.5px; font-weight:700; color:${txtCol}; background:${bgCol}; border:1px solid ${dotCol}; padding:1px 7px; border-radius:9999px; margin-left:8px; vertical-align:middle;"><span style="width:6px; height:6px; border-radius:9999px; background:${dotCol}; display:inline-block;"></span>${relName}</span>`;
+                }
                 const verseNum = block.dataset.verseNum ? `<span style="font-size: 11px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 2px 5px; border-radius: 4px; margin-right: 6px;">v${block.dataset.verseNum}</span>` : '';
 
                 let borderLeftStyle = '';
-                if (marginLeftRem > 0 || isAttachedDown) {
+                if ((marginLeftRem > 0 || isAttachedDown) && !isParallel) {
                     const styleType = isAttachedDown ? 'dashed' : 'solid';
-                    borderLeftStyle = `border-left: 2.5px ${styleType} #6366f1; padding-left: 1rem;`;
+                    borderLeftStyle = `border-left: 2.5px ${styleType} #9ca3af; padding-left: 1rem;`;
                 }
 
                 flowHTML += `
@@ -1200,7 +1670,7 @@
             if (!selection.rangeCount || selection.isCollapsed) return;
             const selectedText = selection.toString().trim();
             if (!selectedText) return;
-            const formattedSnippet = `...^${selectedText}`;
+            const formattedSnippet = `^${selectedText}`;
             navigator.clipboard.writeText(formattedSnippet).then(() => {
                 const range = selection.getRangeAt(0);
                 const span = document.createElement('span');
@@ -1273,14 +1743,63 @@
             }
         }
 
-        function detectDiscourseMarker(lineText) {
-            const lower = lineText.toLowerCase();
-            for (const [marker, rel] of Object.entries(discourseMarkerMap)) {
-                if (new RegExp(`\\b${marker}\\b`, 'i').test(lower)) {
-                    return { word: marker, suggestedRelation: rel };
+        function getLineVisualLeft(block, hasIndentLine) {
+            const blockRect = block.getBoundingClientRect();
+            let textLeft = Infinity;
+            const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while ((node = walker.nextNode())) {
+                const val = node.nodeValue || '';
+                const match = val.match(/[^\s\u00A0\u200B]/);
+                if (match) {
+                    const range = document.createRange();
+                    range.setStart(node, match.index);
+                    range.setEnd(node, match.index + 1);
+                    const cRect = range.getBoundingClientRect();
+                    if (cRect.width > 0 || cRect.height > 0) {
+                        textLeft = cRect.left;
+                        break;
+                    }
                 }
             }
-            return null;
+            if (textLeft === Infinity) {
+                textLeft = blockRect.left;
+            }
+            return hasIndentLine ? Math.min(blockRect.left, textLeft) : textLeft;
+        }
+
+        function getLineVisualEnd(block, wrapperRect) {
+            const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            let lastNode = null;
+            let lastCharIndex = -1;
+            while ((node = walker.nextNode())) {
+                const val = node.nodeValue || '';
+                for (let i = val.length - 1; i >= 0; i--) {
+                    if (!/[\s\u00A0\u200B]/.test(val[i])) {
+                        lastNode = node;
+                        lastCharIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (lastNode && lastCharIndex !== -1) {
+                const range = document.createRange();
+                range.setStart(lastNode, lastCharIndex);
+                range.setEnd(lastNode, lastCharIndex + 1);
+                const cRect = range.getBoundingClientRect();
+                if (cRect.width > 0 || cRect.height > 0) {
+                    return {
+                        x: Math.min(wrapperRect.width - 110, (cRect.right - wrapperRect.left) + 10),
+                        y: (cRect.top - wrapperRect.top) + (cRect.height / 2)
+                    };
+                }
+            }
+            const rect = block.getBoundingClientRect();
+            return {
+                x: Math.min(wrapperRect.width - 110, (rect.left - wrapperRect.left) + 40),
+                y: (rect.top - wrapperRect.top) + (rect.height / 2)
+            };
         }
 
         function syncOverlayControls() {
@@ -1290,13 +1809,11 @@
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
             const blocks = Array.from(editor.children).filter(b => b.textContent.trim().length > 0);
             const refInfo = parseCurrentRefRange();
-            const isOt = isOldTestamentPassage();
             const totalVerses = refInfo.endVerse - refInfo.startVerse + 1;
 
-            blocks.forEach((block, index) => {
-                const text = block.textContent.trim();
-                const hasText = text.length > 0;
-
+            const blockMeta = blocks.map(block => {
+                const rawText = block.textContent || '';
+                const text = rawText.trim();
                 let level = 0;
                 const styleAttr = block.getAttribute('style') || '';
                 const marginMatch = styleAttr.match(/margin-left:\s*([0-9.]+)(rem|px|em)/);
@@ -1304,13 +1821,65 @@
                     const val = parseFloat(marginMatch[1]);
                     level = val >= 1 ? Math.round(val / 1.5) : 1;
                 }
+                const isEllipsis = /^(\.+|\^|…)/.test(text);
+                const hasLine = level > 0 && !isEllipsis && !block.classList.contains('parallel-indent');
+                const rect = block.getBoundingClientRect();
+                const visualLeft = getLineVisualLeft(block, hasLine);
+                return { block, rawText, text, level, isEllipsis, hasLine, rect, visualLeft };
+            });
+
+            blockMeta.forEach((meta, index) => {
+                const { block, text, isEllipsis, rect } = meta;
+                let { level } = meta;
+                const hasText = text.length > 0;
 
                 if (!hasText) {
                     block.classList.remove('has-indent', 'attach-down', 'collapsed-active');
+                    block.style.removeProperty('--sub-top');
+                    block.style.removeProperty('--attach-bottom');
                     level = 0;
                 } else {
-                    if (level > 0) block.classList.add('has-indent');
-                    else block.classList.remove('has-indent');
+                    if (level > 0 && !isEllipsis) {
+                        block.classList.add('has-indent');
+                        const lineX = rect.left;
+                        let connectIdx = -1;
+                        for (let p = index - 1; p >= 0; p--) {
+                            if (blockMeta[p].visualLeft <= lineX + 6) {
+                                connectIdx = p;
+                                break;
+                            }
+                        }
+                        if (connectIdx !== -1 && connectIdx < index - 1) {
+                            const pRect = blockMeta[connectIdx].rect;
+                            const topOffsetPx = (pRect.bottom - rect.top) - 1;
+                            block.style.setProperty('--sub-top', `${Math.min(-1, topOffsetPx)}px`);
+                        } else {
+                            block.style.setProperty('--sub-top', '-1px');
+                        }
+                    } else {
+                        block.classList.remove('has-indent');
+                        block.style.removeProperty('--sub-top');
+                    }
+
+                    if (block.classList.contains('attach-down')) {
+                        const lineX = rect.left;
+                        let targetBelowIdx = -1;
+                        for (let p = index + 1; p < blockMeta.length; p++) {
+                            if (blockMeta[p].visualLeft <= lineX + 6) {
+                                targetBelowIdx = p;
+                                break;
+                            }
+                        }
+                        if (targetBelowIdx !== -1 && targetBelowIdx > index + 1) {
+                            const pRect = blockMeta[targetBelowIdx].rect;
+                            const bottomOffsetPx = (rect.bottom - pRect.top) - 3;
+                            block.style.setProperty('--attach-bottom', `${Math.min(-3, bottomOffsetPx)}px`);
+                        } else {
+                            block.style.setProperty('--attach-bottom', '-0.2rem');
+                        }
+                    } else {
+                        block.style.removeProperty('--attach-bottom');
+                    }
 
                     // Automatically coordinate verse numbers across the passage range if missing
                     if (!block.dataset.verseNum) {
@@ -1319,74 +1888,44 @@
                         block.dataset.verseNum = calcV;
                     }
 
-                    const rect = block.getBoundingClientRect();
+                    // 1. Render Small Clickable Semantic Dot / Pill Beside Each Clause
+                    const endPos = getLineVisualEnd(block, wrapperRect);
+                    const semAnchor = document.createElement('div');
+                    semAnchor.className = 'clause-semantic-anchor';
+                    semAnchor.style.left = `${endPos.x}px`;
+                    semAnchor.style.top = `${endPos.y}px`;
+
+                    const currentRelation = block.dataset.relation || '';
+                    if (currentRelation) {
+                        const preset = semanticPresetMap[currentRelation];
+                        const dotCol = block.dataset.relDot || (preset ? preset.dot : '#f97316');
+                        const bgCol = block.dataset.relBg || (preset ? preset.bg : 'rgba(249,115,22,0.18)');
+                        const txtCol = block.dataset.relText || (preset ? preset.text : '#f97316');
+
+                        const pill = document.createElement('span');
+                        pill.className = 'semantic-rel-pill';
+                        pill.style.backgroundColor = bgCol;
+                        pill.style.color = txtCol;
+                        pill.style.border = `1px solid ${dotCol}`;
+                        pill.title = 'Click to change or clear semantic relationship';
+                        pill.innerHTML = `<span class="semantic-rel-pill-dot" style="background-color: ${dotCol};"></span><span>${currentRelation}</span>`;
+                        pill.onclick = (e) => openSemanticMenuForBlock(block, pill, e);
+                        semAnchor.appendChild(pill);
+                    } else {
+                        const dotBtn = document.createElement('button');
+                        dotBtn.type = 'button';
+                        dotBtn.className = 'semantic-dot-btn';
+                        dotBtn.title = 'Add semantic relationship';
+                        dotBtn.onclick = (e) => openSemanticMenuForBlock(block, dotBtn, e);
+                        semAnchor.appendChild(dotBtn);
+                    }
+                    overlay.appendChild(semAnchor);
+
+                    // 2. Render Right-Side Verse & Note Controls
                     const topOffset = rect.top - wrapperRect.top;
-
-                    let currentRelation = block.dataset.relation || '';
-                    let customBg = block.dataset.relBg || '';
-                    let customText = block.dataset.relText || '';
-
                     const group = document.createElement('div');
                     group.className = 'flow-meta-group';
                     group.style.top = (topOffset + 6) + 'px';
-
-                    const badge = document.createElement('span');
-                    badge.className = level === 0 ? 'flow-badge flow-badge-l0' : 'flow-badge';
-                    const isCollapsed = block.classList.contains('collapsed-active');
-                    badge.innerHTML = isCollapsed ? `L${level} <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>` : `L${level} <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>`;
-                    badge.onclick = () => {
-                        block.classList.toggle('collapsed-active');
-                        syncOverlayControls();
-                        saveActiveProjectData();
-                    };
-                    group.appendChild(badge);
-
-                    const isAttachedDown = block.classList.contains('attach-down');
-                    const discourseMatch = detectDiscourseMarker(text);
-
-                    if (discourseMatch && !currentRelation && (level > 0 || isAttachedDown)) {
-                        const sugBtn = document.createElement('button');
-                        sugBtn.className = 'discourse-suggestion-btn';
-                        sugBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Suggest: ${discourseMatch.suggestedRelation}`;
-                        sugBtn.onclick = () => {
-                            block.dataset.relation = discourseMatch.suggestedRelation;
-                            syncOverlayControls();
-                            saveActiveProjectData();
-                        };
-                        group.appendChild(sugBtn);
-                    }
-
-                    if (level > 0 || isAttachedDown) {
-                        const select = document.createElement('select');
-                        select.className = 'relation-select';
-                        if (currentRelation && defaultRelations[currentRelation]) {
-                            select.style.backgroundColor = defaultRelations[currentRelation].bg;
-                            select.style.color = defaultRelations[currentRelation].text;
-                        } else if (customBg && customText) {
-                            select.style.backgroundColor = customBg;
-                            select.style.color = customText;
-                        }
-
-                        const defaultOpt = document.createElement('option');
-                        defaultOpt.value = ''; defaultOpt.textContent = '+ Relation';
-                        select.appendChild(defaultOpt);
-
-                        Object.keys(defaultRelations).forEach(relKey => {
-                            const opt = document.createElement('option');
-                            opt.value = relKey; opt.textContent = relKey;
-                            if (relKey === currentRelation) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = () => {
-                            const val = select.value;
-                            if (!val) block.removeAttribute('data-relation');
-                            else block.dataset.relation = val;
-                            syncOverlayControls();
-                            saveActiveProjectData();
-                        };
-                        group.appendChild(select);
-                    }
 
                     const verseBadge = document.createElement('span');
                     verseBadge.className = 'verse-badge';
@@ -1402,25 +1941,12 @@
                     };
                     group.appendChild(verseBadge);
 
-                    const isGkActive = activeLightboxBlock === block;
-                    const gkBtn = document.createElement('button');
-                    gkBtn.className = isGkActive ? 'gk-toggle-btn active' : 'gk-toggle-btn';
-                    gkBtn.innerHTML = isOt ? 'Heb' : 'Gk';
-                    gkBtn.title = isOt ? 'Open Bible Hub Hebrew Interlinear' : 'Open Greek Interlinear Lightbox Study';
-                    gkBtn.onclick = async () => {
-                        const targetVerse = parseInt(block.dataset.verseNum, 10) || refInfo.startVerse || 1;
-                        if (isOt) {
-                            openHebrewBibleHubInterlinear(targetVerse);
-                        }
-                    };
-
                     const hasNotes = block.dataset.exegeticalNotes && block.dataset.exegeticalNotes.trim().length > 0;
                     const noteBtn = document.createElement('button');
                     noteBtn.className = hasNotes ? 'note-drawer-btn has-notes' : 'note-drawer-btn';
                     noteBtn.innerHTML = hasNotes ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-pen"></i>';
                     noteBtn.onclick = () => openNoteDrawerForBlock(block);
 
-                    group.appendChild(gkBtn);
                     group.appendChild(noteBtn);
                     overlay.appendChild(group);
                 }
@@ -1495,18 +2021,30 @@
             let rawData = localStorage.getItem(currentProjectKey);
             if (!rawData && currentProjectKey === 'lexflow_default') rawData = localStorage.getItem('scriptureGram_default');
 
+            const passageInput = document.getElementById('passageRefInput');
             if (rawData) {
                 try {
                     const projectData = JSON.parse(rawData);
                     if (editor) editor.innerHTML = projectData.textFlowHTML || '';
                     if (masterNoteEditor) masterNoteEditor.innerHTML = projectData.masterNotesHTML || '';
-                    if (projectData.passageRef && document.getElementById('passageRefInput')) {
-                        document.getElementById('passageRefInput').value = projectData.passageRef;
+                    if (passageInput) {
+                        const savedRef = (projectData.passageRef || '').trim();
+                        if (/^psalms?\s*46(:1-11)?$/i.test(savedRef)) {
+                            passageInput.value = '';
+                            projectData.passageRef = '';
+                            localStorage.setItem(currentProjectKey, JSON.stringify(projectData));
+                        } else {
+                            passageInput.value = savedRef;
+                        }
                     }
-                } catch (e) { if (editor) editor.innerHTML = rawData; }
+                } catch (e) {
+                    if (editor) editor.innerHTML = rawData;
+                    if (passageInput) passageInput.value = '';
+                }
             } else {
                 if (editor) editor.innerHTML = '';
                 if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                if (passageInput) passageInput.value = '';
             }
             cleanEditorSpans();
             syncOverlayControls();
@@ -1514,7 +2052,7 @@
         }
 
         function saveCurrentAsNewProject() {
-            const title = prompt('Enter project name (e.g., "Psalm 46 Flow"):');
+            const title = prompt('Enter project name (e.g., "2 Peter 1:1-4 Flow"):');
             if (!title || !title.trim()) return;
             const newKey = 'lexflow_proj_' + Date.now();
             const catalog = getProjectsCatalog();
@@ -1532,6 +2070,7 @@
                 if (confirm('Reset default scratchpad?')) {
                     if (editor) editor.innerHTML = '';
                     if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                    if (document.getElementById('passageRefInput')) document.getElementById('passageRefInput').value = '';
                     localStorage.removeItem('lexflow_default');
                     localStorage.removeItem('scriptureGram_default');
                     updateWordCount(); syncOverlayControls();
