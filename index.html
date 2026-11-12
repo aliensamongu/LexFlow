@@ -1726,14 +1726,17 @@
                         <option value="Particle">Particle / Article</option>
                     </select>
                     <select id="gfMood" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Mood / Form: Any</option>
+                        <option value="">Mood / Tense: Any</option>
                         <option value="Imperative">Imperative (Command)</option>
                         <option value="Participle">Participle (-ing)</option>
                         <option value="Infinitive">Infinitive (To do)</option>
                         <option value="Indicative">Indicative (Statement)</option>
                         <option value="Subjunctive">Subjunctive (Purpose/Cond)</option>
+                        <option value="Present">Present (Ongoing)</option>
+                        <option value="Aorist">Aorist (Snapshot)</option>
                         <option value="Perfect">Perfect (Completed)</option>
-                        <option value="Imperfect">Imperfect (Unfolding)</option>
+                        <option value="Imperfect">Imperfect (Past Unfolding)</option>
+                        <option value="Future">Future</option>
                     </select>
                     <select id="gfCase" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
                         <option value="">Case / State: Any</option>
@@ -2587,25 +2590,13 @@
 
         async function loadScriptureIntoWorkspace(sourceType, options = {}) {
             const targetCorpus = (sourceType === 'srgnt') ? 'srgnt' : 'emtv';
-            const isTempParallelLeftEng = Boolean(options.temporaryParallelEnglish);
+            wasOriginalLoadedBeforeParallel = (targetCorpus === 'srgnt');
 
-            // If user explicitly clicks Load SRGNT or Load EMTV while Side-by-Side is already open:
-            if (!isTempParallelLeftEng && isParallelViewActive) {
-                wasOriginalLoadedBeforeParallel = (targetCorpus === 'srgnt');
-                try { localStorage.setItem('lexflow_activeCorpus', targetCorpus); } catch (e) {}
-                if (targetCorpus === 'srgnt') {
-                    // Keep English on the left and Original on the right while Side-by-Side is on, and mark SRGNT as the active base corpus so closing Side-by-Side keeps SRGNT!
-                    updateCorpusUIButtons('srgnt');
-                    return;
-                } else {
-                    updateCorpusUIButtons('emtv');
-                    return;
-                }
-            }
-
-            if (!isTempParallelLeftEng) {
-                wasOriginalLoadedBeforeParallel = (targetCorpus === 'srgnt');
-            }
+            // Preserve current passage scroll position if switching corpus while viewing a passage
+            const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
+            const savedBookNum = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : null;
+            const savedChapNum = anchorBlk ? parseInt(anchorBlk.dataset.chapterNum || '1', 10) : null;
+            const savedVerseNum = anchorBlk ? parseInt(anchorBlk.dataset.verseNum || '1', 10) : null;
 
             const isSwitchingCorpus = (targetCorpus !== currentCorpusType);
             if (editor && editor.children.length > 50 && isSwitchingCorpus) {
@@ -2613,10 +2604,8 @@
             }
 
             currentCorpusType = targetCorpus;
-            if (!isTempParallelLeftEng) {
-                try { localStorage.setItem('lexflow_activeCorpus', currentCorpusType); } catch (e) {}
-            }
-            updateCorpusUIButtons(wasOriginalLoadedBeforeParallel ? 'srgnt' : currentCorpusType);
+            try { localStorage.setItem('lexflow_activeCorpus', currentCorpusType); } catch (e) {}
+            updateCorpusUIButtons(currentCorpusType);
 
             if (srgntStatus) {
                 srgntStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading Entire ${currentCorpusType.toUpperCase()} Text...`;
@@ -2642,6 +2631,18 @@
                     }
                 }
 
+                if (isSwitchingCorpus && savedBookNum && savedChapNum) {
+                    scrollToPassageInDocument({
+                        bookNum: savedBookNum,
+                        chapter: savedChapNum,
+                        startVerse: savedVerseNum || 1,
+                        endVerse: savedVerseNum || 1
+                    }, false);
+                }
+                if (isParallelViewActive) {
+                    currentParallelChapKey = '';
+                    await syncParallelOriginalPane(true, savedBookNum, savedChapNum, savedVerseNum);
+                }
                 if (srgntStatus) {
                     srgntStatus.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Full ${currentCorpusType.toUpperCase()} Loaded (${allVerses.length.toLocaleString()} verses)`;
                 }
@@ -6134,17 +6135,8 @@
             isParallelViewActive = (typeof forceState === 'boolean') ? forceState : !isParallelViewActive;
 
             if (isParallelViewActive) {
-                // Remember if the user had Original Language ('srgnt') loaded when turning on Side-by-Side!
-                if (currentCorpusType === 'srgnt') {
-                    wasOriginalLoadedBeforeParallel = true;
-                    await loadScriptureIntoWorkspace('emtv', {
-                        silent: true,
-                        skipPassageScroll: true,
-                        temporaryParallelEnglish: true
-                    });
-                } else {
-                    wasOriginalLoadedBeforeParallel = false;
-                }
+                // Keep the user's loaded corpus (SRGNT or EMTV) on the LEFT in #flowEditor, and open the companion language on the RIGHT in #parallelOriginalPane!
+                wasOriginalLoadedBeforeParallel = (currentCorpusType === 'srgnt');
                 if (pane) pane.classList.remove('hidden');
                 if (grid) grid.className = 'w-full grid grid-cols-1 lg:grid-cols-2 gap-6 items-start';
                 if (wpPane) {
@@ -6181,13 +6173,7 @@
                 }
                 if (hoverBox) hoverBox.style.display = 'none';
 
-                // ONLY when Original Language texts were loaded: remove the temporary left English pane and keep the Original Language text in the workspace!
-                if (wasOriginalLoadedBeforeParallel) {
-                    await loadScriptureIntoWorkspace('srgnt', {
-                        silent: true,
-                        skipPassageScroll: true
-                    });
-                }
+                // Since #flowEditor kept the user's loaded language on the left, closing Side-by-Side keeps their exact text in place with zero reload!
 
                 // Immediately re-anchor <main> after returning to 1-column width so the passage never jumps
                 restoreAnchorScrollPosition();
@@ -6206,7 +6192,8 @@
 
             const bookNum = explicitBookNum || parseInt((anchorBlk && anchorBlk.dataset.bookNum) || '40', 10);
             const chapterNum = explicitChapNum || parseInt((anchorBlk && anchorBlk.dataset.chapterNum) || '1', 10);
-            const chapKey = `${bookNum}_${chapterNum}`;
+            const isLeftOriginalMode = (currentCorpusType === 'srgnt');
+            const chapKey = `${bookNum}_${chapterNum}_${isLeftOriginalMode ? 'engRight' : 'origRight'}`;
 
             const contentEl = document.getElementById('parallelOriginalContent');
             if (!contentEl) return;
@@ -6222,20 +6209,31 @@
             const bookObj = bibleBooksList[bookNum - 1] || { name: 'Matthew', num: 40 };
             const isOt = bookNum <= 39;
             if (titleEl) titleEl.textContent = `${bookObj.name} ${chapterNum}`;
-            if (badgeEl) {
-                badgeEl.textContent = isOt ? 'WLC Hebrew OT' : 'SRGNT Greek NT';
-                badgeEl.className = isOt
-                    ? 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
-                    : 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800';
+
+            if (isLeftOriginalMode) {
+                // LEFT is Original Language (SRGNT / WLC), so RIGHT pane displays ENGLISH!
+                if (badgeEl) {
+                    badgeEl.textContent = isOt ? `${currentOtVersionSlug || 'BSB'} English OT` : 'EMTV English NT';
+                    badgeEl.className = 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800';
+                }
+                contentEl.setAttribute('dir', 'ltr');
+                contentEl.className = 'flex-1 overflow-y-auto custom-scrollbar pr-1 font-serif text-xl leading-relaxed text-gray-900 dark:text-gray-100 select-text text-left';
+            } else {
+                // LEFT is English (EMTV / BSB), so RIGHT pane displays ORIGINAL LANGUAGE!
+                if (badgeEl) {
+                    badgeEl.textContent = isOt ? 'WLC Hebrew OT' : 'SRGNT Greek NT';
+                    badgeEl.className = isOt
+                        ? 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
+                        : 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800';
+                }
+                contentEl.setAttribute('dir', isOt ? 'rtl' : 'ltr');
+                contentEl.className = isOt
+                    ? 'flex-1 overflow-y-auto custom-scrollbar pr-1 font-serif text-2xl leading-loose text-gray-900 dark:text-gray-100 select-text text-right'
+                    : 'flex-1 overflow-y-auto custom-scrollbar pr-1 font-serif text-xl leading-loose text-gray-900 dark:text-gray-100 select-text text-left';
             }
 
-            contentEl.setAttribute('dir', isOt ? 'rtl' : 'ltr');
-            contentEl.className = isOt
-                ? 'flex-1 overflow-y-auto custom-scrollbar pr-1 font-serif text-2xl leading-loose text-gray-900 dark:text-gray-100 select-text text-right'
-                : 'flex-1 overflow-y-auto custom-scrollbar pr-1 font-serif text-xl leading-loose text-gray-900 dark:text-gray-100 select-text text-left';
-
             if (chapKey !== currentParallelChapKey) {
-                contentEl.innerHTML = `<div class="p-4 text-xs text-gray-400 italic" dir="ltr"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Loading original ${isOt ? 'Hebrew (WLC)' : 'Greek (SRGNT)'} text for ${bookObj.name} ${chapterNum}...</div>`;
+                contentEl.innerHTML = `<div class="p-4 text-xs text-gray-400 italic" dir="ltr"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Loading companion text for ${bookObj.name} ${chapterNum}...</div>`;
             }
 
             let chapVerses = [];
@@ -6253,21 +6251,23 @@
 
             if (chapVerses.length === 0) {
                 currentParallelChapKey = '';
-                contentEl.innerHTML = `<div class="p-4 text-xs text-gray-400 italic" dir="ltr">Unable to load original text for ${bookObj.name} ${chapterNum}. Check internet connection.</div>`;
+                contentEl.innerHTML = `<div class="p-4 text-xs text-gray-400 italic" dir="ltr">Unable to load text for ${bookObj.name} ${chapterNum}.</div>`;
                 return;
             }
 
             currentParallelChapKey = chapKey;
-
             ensureLexiconLookupMaps();
             const shortBook = bookShortAbbrevMap[bookNum] || bookObj.name;
-            const htmlParts = [];
 
+            // Build the Original Language token spans (either visible when English is on left, or hidden metadata bank when Original is on left!)
+            const origTokenBankParts = [];
             for (let i = 0; i < chapVerses.length; i++) {
                 const v = chapVerses[i];
                 const vLabel = (i === 0) ? `${shortBook} ${chapterNum}:${v.verse}` : `${v.verse}`;
-                htmlParts.push(`<span class="parallel-verse-block" data-parallel-verse="${v.verse}">`);
-                htmlParts.push(`<span class="parallel-vnum" dir="ltr">${escapeHtmlText(vLabel)}</span> `);
+                if (!isLeftOriginalMode) {
+                    origTokenBankParts.push(`<span class="parallel-verse-block" data-parallel-verse="${v.verse}">`);
+                    origTokenBankParts.push(`<span class="parallel-vnum" dir="ltr">${escapeHtmlText(vLabel)}</span> `);
+                }
 
                 if (isOt) {
                     const vKey = `${bookNum}_${chapterNum}_${v.verse}`;
@@ -6302,10 +6302,10 @@
                         const lemmaAttr = escapeHtmlText(resolved.lemma || fw.surface);
                         const xlitAttr = escapeHtmlText(resolved.translit || '');
                         const morphAttr = escapeHtmlText(fw.morph || '');
-                        htmlParts.push(
+                        origTokenBankParts.push(
                             `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${flatWords.length}" data-surface="${escapeHtmlText(fw.surface)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)" oncontextmenu="handleOriginalTokenRightClick(event, this); return false;">${escapeHtmlText(fw.surface)}</span>`
                         );
-                        htmlParts.push(fw.hasTrailingMaqqef ? '־' : ' ');
+                        if (!isLeftOriginalMode) origTokenBankParts.push(fw.hasTrailingMaqqef ? '־' : ' ');
                     });
                 } else {
                     const srgntTokens = await getSrgntTokensForSingleVerse(bookNum, chapterNum, v.verse);
@@ -6320,17 +6320,48 @@
                         const lemmaAttr = escapeHtmlText(resolved.lemma || cleanSurf);
                         const xlitAttr = escapeHtmlText(resolved.translit || '');
                         const morphAttr = escapeHtmlText(tokHint.morph || '');
-                        htmlParts.push(
-                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${rawWords.length}" data-surface="${escapeHtmlText(rw)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)" oncontextmenu="handleOriginalTokenRightClick(event, this); return false;">${escapeHtmlText(rw)}</span> `
+                        origTokenBankParts.push(
+                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${rawWords.length}" data-surface="${escapeHtmlText(cleanSurf)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)" oncontextmenu="handleOriginalTokenRightClick(event, this); return false;">${escapeHtmlText(rw)}</span> `
                         );
                     });
                 }
 
-                htmlParts.push(`</span>`);
+                if (!isLeftOriginalMode) {
+                    origTokenBankParts.push(`</span> `);
+                }
             }
-            htmlParts.push(`<div class="h-60 pointer-events-none"></div>`);
 
-            contentEl.innerHTML = htmlParts.join('');
+            if (!isLeftOriginalMode) {
+                contentEl.innerHTML = origTokenBankParts.join('');
+            } else {
+                // LEFT is Original Language (SRGNT/WLC), so render interactive ENGLISH verses in the Right pane (#parallelOriginalContent) + hidden origTokenBank for hover lookup!
+                const allEngVerses = await getFullCorpusVerses('emtv', true);
+                const engChapVerses = allEngVerses.filter(ev => ev.bookNum === bookNum && ev.chapter === chapterNum);
+                const engHtmlParts = [];
+                engChapVerses.forEach((ev, idx) => {
+                    const vLabel = (idx === 0) ? `${shortBook} ${chapterNum}:${ev.verse}` : `${ev.verse}`;
+                    const rawWords = String(ev.text || '').split(/\s+/).filter(Boolean);
+                    const wordSpans = rawWords.map((rw, wIdx) => {
+                        const cleanW = rw.replace(/^[^a-zA-Z0-9’']+|[^a-zA-Z0-9’']+$/g, '');
+                        return `<span class="eng-parallel-token cursor-pointer rounded px-0.5 transition" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${ev.verse}" data-word-idx="${wIdx}" data-total-words="${rawWords.length}" data-word="${escapeHtmlText(cleanW)}" onmouseenter="handleRightPaneEnglishWordHover(this)" onmouseleave="clearParallelHoverHighlights()">${escapeHtmlText(rw)}</span>`;
+                    }).join(' ');
+                    engHtmlParts.push(`<span class="parallel-verse-block" data-parallel-verse="${ev.verse}"><span class="parallel-vnum" dir="ltr">${escapeHtmlText(vLabel)}</span> ${wordSpans}</span> `);
+                });
+                engHtmlParts.push(`<div id="hiddenOrigTokensBank" class="hidden">${origTokenBankParts.join('')}</div>`);
+                contentEl.innerHTML = engHtmlParts.join('');
+            }
+
+            // Precompute how many times each root/Strong's code appears in this chapter
+            currentChapterRootCounts = new Map();
+            contentEl.querySelectorAll('.orig-word-token').forEach(tok => {
+                const key = tok.dataset.strongs || tok.dataset.lemma || '';
+                if (!key) return;
+                const prev = currentChapterRootCounts.get(key) || { count: 0, verses: new Set() };
+                prev.count++;
+                prev.verses.add(parseInt(tok.dataset.verseNum || '1', 10));
+                currentChapterRootCounts.set(key, prev);
+            });
+
             alignParallelScrollToMain(explicitVerseNum);
         }
 
@@ -7663,7 +7694,132 @@
             });
             const relPos = totalChars > 1 ? Math.min(1, Math.max(0, charOffsetBefore / totalChars)) : 0.5;
 
-            highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, hoveredWord, relPos);
+            if (currentCorpusType === 'srgnt') {
+                highlightMatchingRightPaneEnglishFromLeftOriginal(hoveredWord, bookNum, chapterNum, verseNum, relPos);
+            } else {
+                highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, hoveredWord, relPos);
+            }
+        }
+
+        function highlightMatchingRightPaneEnglishFromLeftOriginal(origSurfaceWord, bookNum, chapterNum, verseNum, relativePos) {
+            const contentEl = document.getElementById('parallelOriginalContent');
+            if (!contentEl) return;
+
+            contentEl.querySelectorAll('.orig-word-active').forEach(el => el.classList.remove('orig-word-active'));
+            const bankTokens = Array.from(contentEl.querySelectorAll(`.orig-word-token[data-verse-num="${verseNum}"]`));
+            const isOt = bookNum <= 39;
+            let matchedOrigTok = null;
+            if (bankTokens.length > 0) {
+                const normTarget = isOt ? normalizeHebrewConsonants(origSurfaceWord) : normalizeGreekWord(origSurfaceWord);
+                matchedOrigTok = bankTokens.find(t => {
+                    const tSurf = t.dataset.surface || '';
+                    return isOt ? (normalizeHebrewConsonants(tSurf) === normTarget) : (normalizeGreekWord(tSurf) === normTarget);
+                }) || bankTokens[Math.min(bankTokens.length - 1, Math.max(0, Math.round(relativePos * (bankTokens.length - 1))))];
+            }
+
+            const engSpans = Array.from(contentEl.querySelectorAll(`.eng-parallel-token[data-verse-num="${verseNum}"]`));
+            if (engSpans.length === 0) {
+                if (matchedOrigTok) updateParallelHoverInfoBar('', matchedOrigTok);
+                return;
+            }
+
+            let bestEngSpan = null;
+            let bestScore = -1;
+            const glossStr = matchedOrigTok ? ((matchedOrigTok.dataset.kjvGloss || '') + ' ' + (matchedOrigTok.dataset.gloss || '')).toLowerCase() : '';
+            const strongsCode = matchedOrigTok ? (matchedOrigTok.dataset.strongs || '') : '';
+
+            engSpans.forEach((sp, idx) => {
+                const cleanW = (sp.dataset.word || '').toLowerCase().replace(/[^a-z]/g, '');
+                if (cleanW.length < 2) return;
+                const spRelPos = engSpans.length > 1 ? (idx / (engSpans.length - 1)) : 0.5;
+                const posProx = 1 - Math.abs(spRelPos - relativePos);
+                let score = 0;
+                if (strongsCode && emtvDirectStrongsBoost[cleanW] && emtvDirectStrongsBoost[cleanW].includes(strongsCode)) {
+                    score = 500 + posProx * 30;
+                } else {
+                    const terms = getEnglishSearchTerms(cleanW);
+                    for (const t of terms) {
+                        if (t.length >= 2 && new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(glossStr)) {
+                            score = Math.max(score, 120 + posProx * 25);
+                        }
+                    }
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestEngSpan = sp;
+                }
+            });
+
+            if (!bestEngSpan || bestScore <= 0) {
+                bestEngSpan = engSpans[Math.min(engSpans.length - 1, Math.max(0, Math.round(relativePos * (engSpans.length - 1))))];
+            }
+
+            if (bestEngSpan) {
+                bestEngSpan.classList.add('orig-word-active');
+                updateParallelHoverInfoBar(bestEngSpan.dataset.word || bestEngSpan.textContent, matchedOrigTok);
+            }
+        }
+
+        function handleRightPaneEnglishWordHover(engSpanEl) {
+            if (!isParallelViewActive || !engSpanEl) return;
+            if (isWordHoverFrozen(window.event) && lastHoveredEngKey) return;
+
+            const contentEl = document.getElementById('parallelOriginalContent');
+            if (contentEl) {
+                contentEl.querySelectorAll('.orig-word-active').forEach(el => el.classList.remove('orig-word-active'));
+            }
+            engSpanEl.classList.add('orig-word-active');
+
+            const engWord = engSpanEl.dataset.word || engSpanEl.textContent.trim();
+            const bookNum = parseInt(engSpanEl.dataset.bookNum || '40', 10);
+            const chapterNum = parseInt(engSpanEl.dataset.chapterNum || '1', 10);
+            const verseNum = parseInt(engSpanEl.dataset.verseNum || '1', 10);
+            const wordIdx = parseInt(engSpanEl.dataset.wordIdx || '0', 10);
+            const totalWords = Math.max(1, parseInt(engSpanEl.dataset.totalWords || '1', 10));
+            const relPos = totalWords > 1 ? (wordIdx / (totalWords - 1)) : 0.5;
+
+            // Find matching original token from the hidden bank to update the info bar & highlight the matching Greek/Hebrew word in #flowEditor on the Left!
+            highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, engWord, relPos);
+            const activeOrigTok = contentEl ? contentEl.querySelector('.orig-word-token.orig-word-active') : null;
+            if (!activeOrigTok || !editor) return;
+
+            const isOt = bookNum <= 39;
+            const targetSurf = activeOrigTok.dataset.surface || '';
+            const normTarget = isOt ? normalizeHebrewConsonants(targetSurf) : normalizeGreekWord(targetSurf);
+
+            const verseBlocks = Array.from(editor.querySelectorAll(
+                `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${verseNum}"]:not(.lex-chapter-banner)`
+            ));
+            for (const blk of verseBlocks) {
+                const walker = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT, null, false);
+                let tNode;
+                while ((tNode = walker.nextNode())) {
+                    const txt = tNode.nodeValue || '';
+                    const wRegex = /[\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F]+/g;
+                    let m;
+                    while ((m = wRegex.exec(txt)) !== null) {
+                        const candNorm = isOt ? normalizeHebrewConsonants(m[0]) : normalizeGreekWord(m[0]);
+                        if (candNorm && candNorm === normTarget) {
+                            const r = document.createRange();
+                            r.setStart(tNode, m.index);
+                            r.setEnd(tNode, m.index + m[0].length);
+                            const rects = r.getClientRects();
+                            const hoverBox = document.getElementById('englishHoverHighlightBox');
+                            const wrapper = document.getElementById('editorWrapper');
+                            if (rects.length > 0 && hoverBox && wrapper) {
+                                const wRect = wrapper.getBoundingClientRect();
+                                const rect = rects[0];
+                                hoverBox.style.display = 'block';
+                                hoverBox.style.left = `${rect.left - wRect.left - 3}px`;
+                                hoverBox.style.top = `${rect.top - wRect.top - 1}px`;
+                                hoverBox.style.width = `${rect.width + 6}px`;
+                                hoverBox.style.height = `${rect.height + 2}px`;
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
         /* =========================================================================
@@ -8559,20 +8715,25 @@
                 </div>
 
                 <div class="p-4 space-y-3 text-xs max-h-[75vh] overflow-y-auto custom-scrollbar">
-                    <!-- 1. Surface Form vs. Lexeme (Dictionary Root) Box -->
-                    <div class="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-indigo-50/70 dark:bg-zinc-800/90 border border-indigo-200/80 dark:border-zinc-700">
-                        <div>
-                            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Form (Inflected)</div>
-                            <div class="font-serif font-bold text-2xl text-gray-900 dark:text-white mt-0.5" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(surface)}</div>
-                            ${finalTranslit ? `<div class="font-mono text-[11px] text-purple-700 dark:text-purple-300 font-semibold">${escapeHtmlText(finalTranslit)}${pronStr ? ` (${escapeHtmlText(pronStr)})` : ''}</div>` : ''}
-                        </div>
-                        <div class="border-l border-indigo-200/80 dark:border-zinc-700 pl-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Lexeme (Root)</span>
-                                ${finalStrongs ? `<span class="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">${escapeHtmlText(finalStrongs)}</span>` : ''}
+                    <!-- 1. Surface Form & Lexeme (Stacked Full-Width Cards so Long Words Never Overflow!) -->
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-xl bg-gray-50/95 dark:bg-zinc-800/90 border border-gray-200/90 dark:border-zinc-700 flex items-center justify-between gap-3 overflow-hidden">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Form (Inflected in Verse)</div>
+                                <div class="font-serif font-bold text-xl sm:text-2xl text-gray-900 dark:text-white mt-0.5 break-all" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(surface)}</div>
                             </div>
-                            <div class="font-serif font-bold text-2xl text-indigo-700 dark:text-indigo-300 mt-0.5" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(finalLemma)}</div>
-                            <div class="text-[11px] text-gray-700 dark:text-gray-200 font-medium leading-snug mt-0.5">${escapeHtmlText(shortGloss || 'Original root')}</div>
+                            ${finalTranslit ? `<div class="shrink-0 text-right"><span class="px-2 py-1 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 font-mono text-xs font-bold">${escapeHtmlText(finalTranslit)}</span></div>` : ''}
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/90 dark:border-indigo-800/80 overflow-hidden space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Lexeme (Dictionary Root)</span>
+                                ${finalStrongs ? `<span class="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">${escapeHtmlText(finalStrongs)}</span>` : ''}
+                            </div>
+                            <div class="flex items-baseline flex-wrap gap-2">
+                                <span class="font-serif font-bold text-xl sm:text-2xl text-indigo-700 dark:text-indigo-300 break-all" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(finalLemma)}</span>
+                                <span class="text-xs text-gray-700 dark:text-gray-200 font-medium leading-snug">&mdash; ${escapeHtmlText(shortGloss || 'Original root')}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -11029,9 +11190,10 @@
                 const summaryParts = [pos, tense, voice, mood, caseState, gender, number, person].filter(Boolean);
                 return {
                     pos,
+                    tense,
                     mood,
                     voice,
-                    stem: voice,
+                    stem: '',
                     caseState,
                     gender,
                     number,
@@ -11221,9 +11383,10 @@
             const summaryParts = [pos, mood, voice, caseState, gender, number, person].filter(Boolean);
             return {
                 pos,
+                tense,
                 mood,
                 voice,
-                stem: voice,
+                stem: '',
                 caseState,
                 gender,
                 number,
@@ -11284,13 +11447,22 @@
             const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
             const curBookNum = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : 40;
             const scopeSel = document.getElementById('grammarScopeSelect');
-            if (scopeSel && !initialQuery && !scopeSel.dataset.userChanged) {
-                scopeSel.value = 'both';
-            }
 
             if (initialQuery) {
+                // Clear all 6 dropdowns & book filter so leftover filters (e.g. Participle) NEVER contaminate the new query!
+                ['gfPos', 'gfMood', 'gfCase', 'gfGender', 'gfNumber', 'gfVoice'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                const bookChapIn = document.getElementById('grammarBookChapFilterInput');
+                if (bookChapIn) bookChapIn.value = '';
                 const inp = document.getElementById('grammarSearchInput');
                 if (inp) inp.value = initialQuery;
+                if (scopeSel) {
+                    scopeSel.value = curBookNum <= 39 ? 'ot' : 'nt';
+                }
+            } else if (scopeSel && !scopeSel.dataset.userChanged) {
+                scopeSel.value = 'both';
             }
 
             renderGrammarSmartSuggestions(curBookNum);
@@ -11467,23 +11639,35 @@
             'infinitive': 'Infinitive', 'infinitives': 'Infinitive',
             'indicative': 'Indicative', 'indicatives': 'Indicative',
             'subjunctive': 'Subjunctive', 'subjunctives': 'Subjunctive',
-            'perfect': 'Perfect', 'imperfect': 'Imperfect', 'aorist': 'Aorist',
+            'optative': 'Optative',
+            'present': 'Present', 'imperfect': 'Imperfect', 'future': 'Future',
+            'aorist': 'Aorist', 'perfect': 'Perfect', 'pluperfect': 'Pluperfect',
             'jussive': 'Jussive', 'cohortative': 'Cohortative',
-            'nominative': 'Nominative', 'genitive': 'Genitive', 'dative': 'Dative', 'accusative': 'Accusative',
+            'nominative': 'Nominative', 'genitive': 'Genitive', 'dative': 'Dative', 'accusative': 'Accusative', 'vocative': 'Vocative',
             'construct': 'Construct', 'absolute': 'Absolute',
             'masculine': 'Masculine', 'feminine': 'Feminine', 'neuter': 'Neuter',
             'singular': 'Singular', 'plural': 'Plural', 'dual': 'Dual',
             'active': 'Active', 'passive': 'Passive', 'middle': 'Middle',
             'qal': 'Qal', 'niphal': 'Niphal', 'piel': 'Piel', 'pual': 'Pual',
-            'hiphil': 'Hiphil', 'hophal': 'Hophal', 'hithpael': 'Hithpael'
+            'hiphil': 'Hiphil', 'hophal': 'Hophal', 'hithpael': 'Hithpael', 'polel': 'Polel', 'poal': 'Poal',
+            '1st_person': '1st Person', '2nd_person': '2nd Person', '3rd_person': '3rd Person',
+            '1st': '1st Person', '2nd': '2nd Person', '3rd': '3rd Person'
         };
+
+        function normalizeGrammarCommandTokens(rawQuery) {
+            return String(rawQuery || '')
+                .trim()
+                .replace(/\b(1st|2nd|3rd)\s+person\b/gi, '$1_person')
+                .split(/[\s,;+]+/)
+                .map(s => s.trim().toLowerCase().replace(/\.$/, ''))
+                .filter(t => Boolean(t) && t !== 'person');
+        }
 
         function isPureGrammarCommandQuery(rawQuery) {
             const q = String(rawQuery || '').trim();
             if (!q) return false;
-            // If it contains any custom schema operators, it is a Schema Search!
             if (/["“”'()~&!*.\-]/.test(q)) return false;
-            const tokens = q.split(/[\s,;+]+/).map(s => s.trim().toLowerCase().replace(/\.$/, '')).filter(Boolean);
+            const tokens = normalizeGrammarCommandTokens(q);
             if (tokens.length === 0) return false;
             return tokens.every(t => Boolean(strictMorphKeywordMap[t]) || t === 'ot' || t === 'nt' || t === 'greek' || t === 'hebrew');
         }
@@ -12276,13 +12460,14 @@
                 document.getElementById('gfNumber') ? document.getElementById('gfNumber').value : ''
             ].filter(Boolean);
 
-            const requiredTags = [...dropdownTags];
+            let requiredTags = [];
             let schemaClauses = [];
             let scopeOverride = null;
 
             if (rawQuery) {
                 if (isPureGrammarCommandQuery(rawQuery)) {
-                    const tokens = rawQuery.split(/[\s,;+]+/).map(s => s.trim().toLowerCase().replace(/\.$/, '')).filter(Boolean);
+                    // Pure grammar query in the text box is authoritative — derive requiredTags strictly from it and sync dropdowns to match!
+                    const tokens = normalizeGrammarCommandTokens(rawQuery);
                     tokens.forEach(tok => {
                         if (tok === 'ot' || tok === 'hebrew') scopeOverride = 'ot';
                         else if (tok === 'nt' || tok === 'greek') scopeOverride = 'nt';
@@ -12290,7 +12475,6 @@
                             requiredTags.push(strictMorphKeywordMap[tok]);
                         }
                     });
-                    // Sync dropdowns visually
                     const syncDropdown = (id, options) => {
                         const el = document.getElementById(id);
                         if (!el) return;
@@ -12298,14 +12482,17 @@
                         el.value = hit || '';
                     };
                     syncDropdown('gfPos', ['Verb', 'Noun', 'Adjective', 'Pronoun', 'Preposition', 'Conjunction', 'Adverb', 'Particle']);
-                    syncDropdown('gfMood', ['Imperative', 'Participle', 'Infinitive', 'Indicative', 'Subjunctive', 'Perfect', 'Imperfect']);
+                    syncDropdown('gfMood', ['Imperative', 'Participle', 'Infinitive', 'Indicative', 'Subjunctive', 'Present', 'Aorist', 'Perfect', 'Imperfect', 'Future']);
                     syncDropdown('gfCase', ['Nominative', 'Genitive', 'Dative', 'Accusative', 'Construct', 'Absolute']);
                     syncDropdown('gfGender', ['Masculine', 'Feminine', 'Neuter']);
                     syncDropdown('gfNumber', ['Singular', 'Plural', 'Dual']);
                     syncDropdown('gfVoice', ['Active', 'Passive', 'Middle', 'Qal', 'Niphal', 'Piel', 'Hiphil', 'Hithpael']);
                 } else {
+                    requiredTags = [...dropdownTags];
                     schemaClauses = parseCustomSearchSchema(rawQuery);
                 }
+            } else {
+                requiredTags = [...dropdownTags];
             }
 
             const hasOrigScriptInQuery = /[\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff]/.test(rawQuery) || /\b[GH]\d+\b/i.test(rawQuery);
