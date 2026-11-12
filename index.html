@@ -1022,7 +1022,7 @@
                             <i class="fa-solid fa-bullseye text-indigo-500 w-4 text-center"></i>
                             <span id="focusModeLabel">Subordinate Focus</span>
                         </span>
-                        <span id="subFocusModeBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">On</span>
+                        <span id="subFocusModeBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">Off</span>
                     </button>
 
                     <button type="button" onclick="toggleTheme()" id="themeToggleBtn" class="glass-control w-full text-gray-700 dark:text-gray-200 text-xs font-semibold px-3.5 py-2.5 flex items-center space-x-2.5">
@@ -1107,6 +1107,14 @@
                         <button onclick="indentLine()" class="glass-control px-3 py-1.5 text-gray-700 dark:text-gray-200 font-semibold">Indent →</button>
                         <button onclick="outdentLine()" class="glass-control px-3 py-1.5 text-gray-700 dark:text-gray-200 font-semibold">← Outdent</button>
                         <button onclick="toggleAttachDown()" class="glass-control px-3 py-1.5 text-indigo-600 dark:text-indigo-300 font-semibold">↓ Attach</button>
+                        <button type="button" id="toolbarSubHoverToggleBtn" onmousedown="event.preventDefault();" onclick="toggleSubordinateHoverFocusMode()" class="glass-control px-2.5 py-1.5 text-gray-600 dark:text-gray-300 font-semibold flex items-center space-x-1.5 cursor-pointer" title="Toggle Subordinate Clause Hover Focus On or Off (Off by default)">
+                            <i class="fa-solid fa-bullseye text-indigo-500 text-[11px]"></i>
+                            <span id="toolbarSubHoverLabel">Sub-Hover: Off</span>
+                        </button>
+                        <button type="button" id="toolbarLockSubClauseBtn" onmousedown="event.preventDefault();" onclick="toggleLockSubordinateFocus()" class="glass-control px-2.5 py-1.5 text-indigo-600 dark:text-indigo-300 font-bold flex items-center space-x-1.5 cursor-pointer" title="Lock or Unlock focus on the current indented subordinate clause &amp; its siblings (Or Double-Click / Alt+Click any indented clause)">
+                            <i id="toolbarLockSubClauseIcon" class="fa-solid fa-thumbtack text-[11px]"></i>
+                            <span id="toolbarLockSubClauseLabel">Lock Clause</span>
+                        </button>
                         <button onclick="clearTextFlow()" class="glass-control px-3 py-1.5 text-red-500 hover:text-red-600 font-semibold">Clear</button>
                     </div>
                 </div>
@@ -1444,95 +1452,7 @@
 
             <!-- Body -->
             <div class="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-5 text-xs">
-                <!-- 1. Window & App Border Color Theme -->
-                <div class="glass-subpanel p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-palette text-indigo-500"></i>
-                                <span>Window &amp; App Border Color</span>
-                            </h4>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Keeps the translucent frosted glass look while tinting all window, toolbar, and popup borders.</p>
-                        </div>
-                        <span id="settingsActiveBorderHexBadge" class="px-2.5 py-1 rounded-md font-mono font-bold bg-indigo-100 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700">#3b82f6</span>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-3 pt-1">
-                        <button type="button" onclick="setAppBorderColor('#3b82f6')" data-border-swatch="#3b82f6" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #3b82f6;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Blue</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('#ef4444')" data-border-swatch="#ef4444" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #ef4444;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Red</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('#22c55e')" data-border-swatch="#22c55e" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #22c55e;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Green</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('#f97316')" data-border-swatch="#f97316" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #f97316;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Orange</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('#a855f7')" data-border-swatch="#a855f7" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #a855f7;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Purple</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('#ec4899')" data-border-swatch="#ec4899" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #ec4899;">
-                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Pink</span>
-                        </button>
-                        <button type="button" onclick="setAppBorderColor('classic')" data-border-swatch="classic" class="glass-control px-3 py-1.5 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">
-                            Classic Glass
-                        </button>
-                    </div>
-
-                    <div class="pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex items-center justify-between gap-3">
-                        <span class="font-semibold text-gray-700 dark:text-gray-200"><i class="fa-solid fa-eye-dropper text-indigo-500 mr-1.5"></i>Pick Any Custom Border Color:</span>
-                        <label class="glass-control px-3 py-1.5 flex items-center space-x-2 cursor-pointer font-bold text-indigo-700 dark:text-indigo-300">
-                            <input type="color" id="customAppBorderColorInput" value="#3b82f6" oninput="setAppBorderColor(this.value)" onchange="setAppBorderColor(this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0">
-                            <span>Choose Custom Color...</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 2. Workspace Appearance & Study Preferences -->
-                <div class="glass-subpanel p-4 space-y-3">
-                    <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center space-x-2">
-                        <i class="fa-solid fa-wand-magic-sparkles text-teal-500"></i>
-                        <span>Appearance &amp; Study Defaults</span>
-                    </h4>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button type="button" onclick="toggleTheme()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
-                            <div>
-                                <div class="font-bold text-gray-800 dark:text-gray-100">Glass Surface Mode</div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Light Glass (Default) or Dark Glass</div>
-                            </div>
-                            <span id="settingsThemeStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-amber-100 dark:bg-indigo-950 text-amber-800 dark:text-indigo-300">Light</span>
-                        </button>
-
-                        <button type="button" onclick="toggleTextFlowVisibility()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
-                            <div>
-                                <div class="font-bold text-gray-800 dark:text-gray-100">Text Flow &amp; Labels</div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Indents, subordination lines &amp; pills</div>
-                            </div>
-                            <span id="settingsTextFlowStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">Hidden</span>
-                        </button>
-
-                        <button type="button" onclick="toggleSubordinateHoverFocusMode()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
-                            <div>
-                                <div class="font-bold text-gray-800 dark:text-gray-100">Subordinate Clause Focus</div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Fade out non-sibling clauses on hover</div>
-                            </div>
-                            <span id="settingsSubFocusStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">On</span>
-                        </button>
-
-                        <button type="button" onclick="toggleHingeWordSpotlight()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
-                            <div>
-                                <div class="font-bold text-gray-800 dark:text-gray-100">Hinge-Word Guide</div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Suggest labels for For, Therefore, So that</div>
-                            </div>
-                            <span id="settingsHingeStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">On</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 3. Single Sign-In SQL Cloud Account (Access Everything from Any Computer, Browser, or OS) -->
+                <!-- 1. Single Sign-In SQL Cloud Account (Placed at Very Top of Settings for Instant Access) -->
                 <div class="glass-subpanel p-4 space-y-3 border-l-4 border-indigo-500">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
@@ -1608,6 +1528,94 @@
                     </div>
 
                     <div id="settingsSyncStatusMsg" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hidden"></div>
+                </div>
+
+                <!-- 2. Window & App Border Color Theme -->
+                <div class="glass-subpanel p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-palette text-indigo-500"></i>
+                                <span>Window &amp; App Border Color</span>
+                            </h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Keeps the translucent frosted glass look while tinting all window, toolbar, and popup borders.</p>
+                        </div>
+                        <span id="settingsActiveBorderHexBadge" class="px-2.5 py-1 rounded-md font-mono font-bold bg-indigo-100 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700">#3b82f6</span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-1">
+                        <button type="button" onclick="setAppBorderColor('#3b82f6')" data-border-swatch="#3b82f6" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #3b82f6;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Blue</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('#ef4444')" data-border-swatch="#ef4444" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #ef4444;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Red</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('#22c55e')" data-border-swatch="#22c55e" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #22c55e;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Green</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('#f97316')" data-border-swatch="#f97316" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #f97316;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Orange</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('#a855f7')" data-border-swatch="#a855f7" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #a855f7;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Purple</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('#ec4899')" data-border-swatch="#ec4899" class="px-3 py-1.5 rounded-xl font-bold text-white shadow-sm flex items-center space-x-1.5 cursor-pointer transition hover:scale-105" style="background-color: #ec4899;">
+                            <span class="w-3 h-3 rounded-full bg-white/90"></span><span>Pink</span>
+                        </button>
+                        <button type="button" onclick="setAppBorderColor('classic')" data-border-swatch="classic" class="glass-control px-3 py-1.5 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">
+                            Classic Glass
+                        </button>
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+                        <span class="font-semibold text-gray-700 dark:text-gray-200"><i class="fa-solid fa-eye-dropper text-indigo-500 mr-1.5"></i>Pick Any Custom Border Color:</span>
+                        <label class="glass-control px-3 py-1.5 flex items-center space-x-2 cursor-pointer font-bold text-indigo-700 dark:text-indigo-300">
+                            <input type="color" id="customAppBorderColorInput" value="#3b82f6" oninput="setAppBorderColor(this.value)" onchange="setAppBorderColor(this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0">
+                            <span>Choose Custom Color...</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 3. Workspace Appearance & Study Preferences -->
+                <div class="glass-subpanel p-4 space-y-3">
+                    <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-teal-500"></i>
+                        <span>Appearance &amp; Study Defaults</span>
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" onclick="toggleTheme()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
+                            <div>
+                                <div class="font-bold text-gray-800 dark:text-gray-100">Glass Surface Mode</div>
+                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Light Glass (Default) or Dark Glass</div>
+                            </div>
+                            <span id="settingsThemeStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-amber-100 dark:bg-indigo-950 text-amber-800 dark:text-indigo-300">Light</span>
+                        </button>
+
+                        <button type="button" onclick="toggleTextFlowVisibility()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
+                            <div>
+                                <div class="font-bold text-gray-800 dark:text-gray-100">Text Flow &amp; Labels</div>
+                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Indents, subordination lines &amp; pills</div>
+                            </div>
+                            <span id="settingsTextFlowStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">Hidden</span>
+                        </button>
+
+                        <button type="button" onclick="toggleSubordinateHoverFocusMode()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
+                            <div>
+                                <div class="font-bold text-gray-800 dark:text-gray-100">Subordinate Clause Focus</div>
+                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Fade out non-sibling clauses on hover</div>
+                            </div>
+                            <span id="settingsSubFocusStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">Off</span>
+                        </button>
+
+                        <button type="button" onclick="toggleHingeWordSpotlight()" class="glass-control p-3 flex items-center justify-between text-left cursor-pointer">
+                            <div>
+                                <div class="font-bold text-gray-800 dark:text-gray-100">Hinge-Word Guide</div>
+                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Suggest labels for For, Therefore, So that</div>
+                            </div>
+                            <span id="settingsHingeStateBadge" class="px-2.5 py-1 rounded-full font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">On</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1989,6 +1997,14 @@
     </div>
 
     <!-- RIGHT-CLICK CONTEXT MENU -->
+    <!-- FLOATING INLINE SUBORDINATE FOCUS LOCK / UNLOCK PILL -->
+    <div id="floatingSubFocusLockPill" class="fixed z-[260] hidden select-none">
+        <button type="button" id="floatingSubFocusLockBtn" onmousedown="event.preventDefault(); event.stopPropagation();" onclick="toggleLockSubordinateFocus()" class="px-2.5 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-lg border border-white/50 dark:border-zinc-700 flex items-center space-x-1.5 transition cursor-pointer">
+            <i id="floatingSubFocusLockIcon" class="fa-solid fa-thumbtack text-[10px]"></i>
+            <span id="floatingSubFocusLockText">Lock Focus</span>
+        </button>
+    </div>
+
     <div id="contextMenu">
         <div class="ctx-item text-purple-600 dark:text-purple-400 font-semibold" onclick="ctxLookupThayers()">
             <i class="fa-solid fa-spell-check text-xs"></i>
@@ -2002,6 +2018,10 @@
         <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()">
             <i class="fa-solid fa-arrow-down-long text-xs"></i>
             <span>Attach to Clause Below</span>
+        </div>
+        <div class="ctx-item text-amber-600 dark:text-amber-400 font-semibold" onclick="ctxLockSubordinateFocus()">
+            <i class="fa-solid fa-thumbtack text-xs"></i>
+            <span>Lock / Unlock Subordinate Focus</span>
         </div>
         <div class="ctx-item text-emerald-600 dark:text-emerald-400" onclick="ctxOpenNoteDrawer()">
             <i class="fa-solid fa-pen-to-square text-xs"></i>
@@ -8931,11 +8951,13 @@
         /* =========================================================================
            SUBORDINATE CLAUSE & SIBLINGS HOVER FOCUS MODE (WITH LOCK / UNLOCK)
            ========================================================================= */
-        let isSubordinateHoverFocusEnabled = true;
+        let isSubordinateHoverFocusEnabled = false;
         let isSubordinateFocusLocked = false;
         let currentSubFocusAnchorBlock = null;
+        let lastHoveredSubordinateCandidateBlock = null;
         let activeSubFocusTouchedNodes = [];
         let currentSubFocusGroupSet = null;
+        let subFocusClearTimer = null;
 
         function getBlockIndentLevel(block) {
             if (!block || block.classList.contains('lex-chapter-banner')) return 0;
@@ -8995,8 +9017,42 @@
             };
         }
 
+        function positionFloatingSubFocusPill(anchorBlock) {
+            const pill = document.getElementById('floatingSubFocusLockPill');
+            const btn = document.getElementById('floatingSubFocusLockBtn');
+            const icon = document.getElementById('floatingSubFocusLockIcon');
+            const txt = document.getElementById('floatingSubFocusLockText');
+            if (!pill || !anchorBlock) return;
+
+            const rect = anchorBlock.getBoundingClientRect();
+            if (rect.width === 0 && rect.height === 0) {
+                pill.classList.add('hidden');
+                return;
+            }
+
+            pill.classList.remove('hidden');
+            const topPx = Math.max(64, Math.min(window.innerHeight - 44, rect.top + 2));
+            const leftPx = Math.max(16, Math.min(window.innerWidth - 155, rect.right - 135));
+            pill.style.top = `${topPx}px`;
+            pill.style.left = `${leftPx}px`;
+
+            if (isSubordinateFocusLocked) {
+                if (btn) btn.className = 'px-3 py-1 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-lg border border-white/60 flex items-center space-x-1.5 transition cursor-pointer';
+                if (icon) icon.className = 'fa-solid fa-lock-open text-[10px]';
+                if (txt) txt.textContent = 'Unlock Focus';
+            } else {
+                if (btn) btn.className = 'px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-lg border border-white/60 flex items-center space-x-1.5 transition cursor-pointer';
+                if (icon) icon.className = 'fa-solid fa-thumbtack text-[10px]';
+                if (txt) txt.textContent = 'Lock Focus';
+            }
+        }
+
         function applySubordinateSiblingFocusForBlock(block) {
             if (!editor) return;
+            if (subFocusClearTimer) {
+                clearTimeout(subFocusClearTimer);
+                subFocusClearTimer = null;
+            }
             const group = computeSubordinateSiblingGroup(block);
             if (!group || group.siblingBlocks.length === 0) {
                 if (!isSubordinateFocusLocked) {
@@ -9014,6 +9070,7 @@
             }
 
             currentSubFocusAnchorBlock = block;
+            lastHoveredSubordinateCandidateBlock = block;
             const focusedSet = new Set(group.siblingBlocks);
             currentSubFocusGroupSet = focusedSet;
 
@@ -9054,11 +9111,18 @@
                 walkDown = walkDown.nextElementSibling;
             }
 
+            positionFloatingSubFocusPill(block);
             updateSubordinateFocusBannerUI(true);
         }
 
         function clearSubordinateFocusClasses() {
-            // Fast O(1) no-op if nothing is currently focused!
+            if (subFocusClearTimer) {
+                clearTimeout(subFocusClearTimer);
+                subFocusClearTimer = null;
+            }
+            const pill = document.getElementById('floatingSubFocusLockPill');
+            if (pill && !isSubordinateFocusLocked) pill.classList.add('hidden');
+
             if (!currentSubFocusAnchorBlock && activeSubFocusTouchedNodes.length === 0) return;
             for (let i = 0; i < activeSubFocusTouchedNodes.length; i++) {
                 activeSubFocusTouchedNodes[i].classList.remove('sub-sibling-focused', 'sub-parent-context', 'sub-local-dimmed');
@@ -9075,6 +9139,21 @@
             const lockBtnIcon = document.getElementById('subFocusLockBtnIcon');
             const lockBtnLabel = document.getElementById('subFocusLockBtnLabel');
             const lockBtn = document.getElementById('subFocusLockToggleBtn');
+
+            const tbLockBtn = document.getElementById('toolbarLockSubClauseBtn');
+            const tbLockIcon = document.getElementById('toolbarLockSubClauseIcon');
+            const tbLockLabel = document.getElementById('toolbarLockSubClauseLabel');
+
+            if (isSubordinateFocusLocked) {
+                if (tbLockBtn) tbLockBtn.className = 'glass-control px-2.5 py-1.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-400 font-bold flex items-center space-x-1.5 cursor-pointer';
+                if (tbLockIcon) tbLockIcon.className = 'fa-solid fa-lock-open text-[11px] text-amber-600';
+                if (tbLockLabel) tbLockLabel.textContent = 'Unlock Clause';
+            } else {
+                if (tbLockBtn) tbLockBtn.className = 'glass-control px-2.5 py-1.5 text-indigo-600 dark:text-indigo-300 font-bold flex items-center space-x-1.5 cursor-pointer';
+                if (tbLockIcon) tbLockIcon.className = 'fa-solid fa-thumbtack text-[11px]';
+                if (tbLockLabel) tbLockLabel.textContent = 'Lock Clause';
+            }
+
             if (!banner) return;
 
             if (!isActive && !isSubordinateFocusLocked) {
@@ -9084,42 +9163,70 @@
             if (banner.classList.contains('hidden')) banner.classList.remove('hidden');
             if (isSubordinateFocusLocked) {
                 if (bannerText) {
-                    bannerText.innerHTML = '<strong>Subordinate Focus Locked</strong> &bull; Everything else stays faded so you can study or edit these subordinate clauses (Press <strong>Esc</strong> or click <strong>Unlock</strong> to exit)';
+                    bannerText.innerHTML = '<strong>Subordinate Focus Locked</strong> &bull; Studying this subordinate clause group in isolation (Click <strong>Unlock Focus</strong>, <strong>Double-Click</strong> clause, or press <strong>Esc</strong> to exit)';
                 }
                 if (lockBtnIcon) lockBtnIcon.className = 'fa-solid fa-lock-open text-[10px]';
                 if (lockBtnLabel) lockBtnLabel.textContent = 'Unlock Focus';
                 if (lockBtn) lockBtn.className = 'px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition shadow-sm flex items-center space-x-1.5 cursor-pointer';
             } else {
                 if (bannerText) {
-                    bannerText.innerHTML = '<strong>Subordinate Clause Focus</strong> &bull; Highlighting subordinate clause &amp; all its siblings (<strong>Alt+Click</strong> or <strong>Double-Click</strong> clause, or click <strong>Lock Focus</strong> to lock)';
+                    bannerText.innerHTML = '<strong>Subordinate Clause Focus</strong> &bull; Click the floating <strong>Lock Focus</strong> pill (or hold <strong>Shift/Cmd</strong>, <strong>Double-Click</strong>, or <strong>Alt+Click</strong> clause) to lock';
                 }
-                if (lockBtnIcon) lockBtnIcon.className = 'fa-solid fa-lock text-[10px]';
+                if (lockBtnIcon) lockBtnIcon.className = 'fa-solid fa-thumbtack text-[10px]';
                 if (lockBtnLabel) lockBtnLabel.textContent = 'Lock Focus';
                 if (lockBtn) lockBtn.className = 'px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition shadow-sm flex items-center space-x-1.5 cursor-pointer';
             }
         }
 
         function handleSubordinateClauseHoverMove(e) {
-            if (!isSubordinateHoverFocusEnabled || isSubordinateFocusLocked || !editor) return;
+            if (!editor) return;
+
+            // Track which indented clause the mouse is over even if hover-mode is Off, so clicking "Lock Clause" or Shift-hover knows which clause you're on
             let node = e.target;
             while (node && node.parentNode !== editor && node !== editor) {
                 node = node.parentNode;
             }
+            if (node && node !== editor && !node.classList.contains('lex-chapter-banner') && getBlockIndentLevel(node) > 0) {
+                lastHoveredSubordinateCandidateBlock = node;
+            }
+
+            if (!isSubordinateHoverFocusEnabled || isSubordinateFocusLocked) return;
+
+            // If user holds Shift or Cmd/Ctrl while a subordinate clause is focused, freeze the subordinate focus so they can move the mouse anywhere to click Lock Focus!
+            if (isWordHoverFrozen(e) && currentSubFocusAnchorBlock) return;
+
             if (!node || node === editor || node.classList.contains('lex-chapter-banner')) {
-                if (currentSubFocusAnchorBlock) clearSubordinateFocusClasses();
+                if (currentSubFocusAnchorBlock && !subFocusClearTimer) {
+                    subFocusClearTimer = setTimeout(() => {
+                        if (!isSubordinateFocusLocked) clearSubordinateFocusClasses();
+                    }, 320);
+                }
                 return;
             }
-            if (node === currentSubFocusAnchorBlock) return;
+            if (node === currentSubFocusAnchorBlock) {
+                if (subFocusClearTimer) {
+                    clearTimeout(subFocusClearTimer);
+                    subFocusClearTimer = null;
+                }
+                return;
+            }
             const level = getBlockIndentLevel(node);
             if (level > 0) {
-                // If hovering another sibling in the exact same subordinate group at the same level, no DOM work needed!
+                if (subFocusClearTimer) {
+                    clearTimeout(subFocusClearTimer);
+                    subFocusClearTimer = null;
+                }
                 if (currentSubFocusGroupSet && currentSubFocusGroupSet.has(node) && currentSubFocusAnchorBlock && getBlockIndentLevel(currentSubFocusAnchorBlock) === level) {
                     currentSubFocusAnchorBlock = node;
+                    positionFloatingSubFocusPill(node);
                     return;
                 }
                 applySubordinateSiblingFocusForBlock(node);
-            } else if (currentSubFocusAnchorBlock) {
-                clearSubordinateFocusClasses();
+            } else if (currentSubFocusAnchorBlock && !subFocusClearTimer) {
+                // Brief 320ms grace period so moving mouse toward the floating "Lock Focus" pill or banner doesn't immediately drop focus!
+                subFocusClearTimer = setTimeout(() => {
+                    if (!isSubordinateFocusLocked) clearSubordinateFocusClasses();
+                }, 320);
             }
         }
 
@@ -9129,10 +9236,42 @@
                 clearSubordinateFocusClasses();
                 return;
             }
-            const targetBlk = explicitBlock || currentSubFocusAnchorBlock || getActiveClauseBlock() || lastSelectedBlock;
+            // Find target indented subordinate block (from explicitBlock, active hover, cursor selection, right-clicked block, or last hovered indented block)
+            let targetBlk = explicitBlock || currentSubFocusAnchorBlock || getActiveClauseBlock() || rightClickedBlock || lastSelectedBlock || lastHoveredSubordinateCandidateBlock;
+            if (!targetBlk || getBlockIndentLevel(targetBlk) <= 0) {
+                // If the cursor's current block isn't indented, check if lastHoveredSubordinateCandidateBlock is indented
+                if (lastHoveredSubordinateCandidateBlock && getBlockIndentLevel(lastHoveredSubordinateCandidateBlock) > 0) {
+                    targetBlk = lastHoveredSubordinateCandidateBlock;
+                }
+            }
             if (targetBlk && getBlockIndentLevel(targetBlk) > 0) {
                 isSubordinateFocusLocked = true;
                 applySubordinateSiblingFocusForBlock(targetBlk);
+            } else {
+                // Let the user know how to pick a subordinate clause to lock
+                const banner = document.getElementById('focusBanner');
+                const bannerText = document.getElementById('subFocusBannerText');
+                if (banner && bannerText) {
+                    banner.classList.remove('hidden');
+                    bannerText.innerHTML = '<strong>Tip:</strong> First indent a subordinate clause (with <strong>Indent &rarr;</strong> or <strong>Tab</strong>) and click inside it (or <strong>Double-Click</strong> / <strong>Alt+Click</strong> any indented clause) to lock focus on it!';
+                    setTimeout(() => {
+                        if (!isSubordinateFocusLocked && !currentSubFocusAnchorBlock) banner.classList.add('hidden');
+                    }, 4500);
+                }
+            }
+        }
+
+        function ctxLockSubordinateFocus() {
+            hideContextMenu();
+            if (rightClickedBlock && getBlockIndentLevel(rightClickedBlock) > 0) {
+                if (isSubordinateFocusLocked && currentSubFocusAnchorBlock === rightClickedBlock) {
+                    unlockAndClearSubordinateFocus();
+                } else {
+                    isSubordinateFocusLocked = false;
+                    toggleLockSubordinateFocus(rightClickedBlock);
+                }
+            } else {
+                toggleLockSubordinateFocus();
             }
         }
 
@@ -9141,8 +9280,7 @@
             clearSubordinateFocusClasses();
         }
 
-        function toggleSubordinateHoverFocusMode() {
-            isSubordinateHoverFocusEnabled = !isSubordinateHoverFocusEnabled;
+        function syncSubordinateHoverUI() {
             const badge = document.getElementById('subFocusModeBadge');
             if (badge) {
                 badge.textContent = isSubordinateHoverFocusEnabled ? 'On' : 'Off';
@@ -9150,9 +9288,27 @@
                     ? 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
                     : 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-400';
             }
-            if (!isSubordinateHoverFocusEnabled) {
-                unlockAndClearSubordinateFocus();
+            const tbLabel = document.getElementById('toolbarSubHoverLabel');
+            const tbBtn = document.getElementById('toolbarSubHoverToggleBtn');
+            if (tbLabel) {
+                tbLabel.textContent = isSubordinateHoverFocusEnabled ? 'Sub-Hover: On' : 'Sub-Hover: Off';
             }
+            if (tbBtn) {
+                tbBtn.className = isSubordinateHoverFocusEnabled
+                    ? 'glass-control px-2.5 py-1.5 text-indigo-700 dark:text-indigo-300 border-indigo-400 font-bold flex items-center space-x-1.5 cursor-pointer'
+                    : 'glass-control px-2.5 py-1.5 text-gray-600 dark:text-gray-300 font-semibold flex items-center space-x-1.5 cursor-pointer';
+            }
+            updateSettingsModalBadges();
+        }
+
+        function toggleSubordinateHoverFocusMode() {
+            isSubordinateHoverFocusEnabled = !isSubordinateHoverFocusEnabled;
+            try { localStorage.setItem('lexflow_sub_focus_v2', String(isSubordinateHoverFocusEnabled)); } catch (e) {}
+            syncSubordinateHoverUI();
+            if (!isSubordinateHoverFocusEnabled && !isSubordinateFocusLocked) {
+                clearSubordinateFocusClasses();
+            }
+            saveUniversalProfileState();
         }
 
         function toggleFocusMode() {
@@ -9333,16 +9489,12 @@
                         : 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-400';
                 }
             }
-            if (typeof s.isSubordinateHoverFocusEnabled === 'boolean') {
-                isSubordinateHoverFocusEnabled = s.isSubordinateHoverFocusEnabled;
-                const sfBadge = document.getElementById('subFocusModeBadge');
-                if (sfBadge) {
-                    sfBadge.textContent = isSubordinateHoverFocusEnabled ? 'On' : 'Off';
-                    sfBadge.className = isSubordinateHoverFocusEnabled
-                        ? 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
-                        : 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-400';
-                }
+            if (localStorage.getItem('lexflow_sub_focus_v2') !== null) {
+                isSubordinateHoverFocusEnabled = localStorage.getItem('lexflow_sub_focus_v2') === 'true';
+            } else {
+                isSubordinateHoverFocusEnabled = false;
             }
+            if (typeof syncSubordinateHoverUI === 'function') syncSubordinateHoverUI();
             if (Array.isArray(s.customRelations)) {
                 try { localStorage.setItem('lexflow_customRelations', JSON.stringify(s.customRelations)); } catch (e) {}
             }
@@ -13103,6 +13255,20 @@
                 ? savedBundle.settings.isTextFlowHidden
                 : (localStorage.getItem('lexflow_text_flow_hidden') !== null ? localStorage.getItem('lexflow_text_flow_hidden') === 'true' : true);
             toggleTextFlowVisibility(!tfHiddenPref, false);
+
+            // 3b. Subordinate Hover Focus OFF by default unless user explicitly turned it on via lexflow_sub_focus_v2
+            isSubordinateHoverFocusEnabled = localStorage.getItem('lexflow_sub_focus_v2') === 'true';
+            if (typeof syncSubordinateHoverUI === 'function') syncSubordinateHoverUI();
+
+            const floatPill = document.getElementById('floatingSubFocusLockPill');
+            if (floatPill) {
+                floatPill.addEventListener('mouseenter', () => {
+                    if (subFocusClearTimer) {
+                        clearTimeout(subFocusClearTimer);
+                        subFocusClearTimer = null;
+                    }
+                });
+            }
 
             // 4. Initialize SQLite Relational Database (sql.js) & Single Sign-In Account Sync
             setTimeout(() => {
