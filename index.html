@@ -960,6 +960,14 @@
                         <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
                     </button>
 
+                    <button type="button" onclick="openGrammarCompanionModal()" class="glass-control w-full text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-3.5 py-2.5 flex items-center justify-between" title="Open Built-In Greek &amp; Hebrew Grammar Companion (Layperson Essentials + Deep Exegetical Syntax)">
+                        <span class="flex items-center space-x-2.5">
+                            <i class="fa-solid fa-graduation-cap text-indigo-500 w-4 text-center"></i>
+                            <span>Grammar Guide (OT/NT)</span>
+                        </span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">In-App</span>
+                    </button>
+
                     <button type="button" id="sidebarParallelBtn" onclick="toggleParallelOriginalPane()" class="glass-control w-full text-blue-700 dark:text-blue-300 text-xs font-semibold px-3.5 py-2.5 flex items-center justify-between" title="Toggle Side-by-Side English & Original Language Interlinear Hover View">
                         <span class="flex items-center space-x-2.5">
                             <i class="fa-solid fa-columns text-blue-500 w-4 text-center"></i>
@@ -1034,6 +1042,14 @@
                         <span class="flex items-center space-x-2.5">
                             <i class="fa-solid fa-gear text-indigo-500 w-4 text-center"></i>
                             <span>Settings &amp; Themes</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
+                    </button>
+
+                    <button type="button" onclick="openKudosCreditsModal()" class="glass-control w-full text-rose-700 dark:text-rose-300 text-xs font-semibold px-3.5 py-2.5 flex items-center justify-between" title="Kudos &amp; Open Biblical Scholarship Credits (SRGNT, unfoldingWord, OpenScriptures, MorphGNT, Lexicons &amp; Grammars)">
+                        <span class="flex items-center space-x-2.5">
+                            <i class="fa-solid fa-heart text-rose-500 w-4 text-center"></i>
+                            <span>Kudos &amp; Credits</span>
                         </span>
                         <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
                     </button>
@@ -1620,8 +1636,14 @@
             </div>
 
             <!-- Footer -->
-            <div class="px-6 py-3 bg-gray-50/90 dark:bg-zinc-900/90 border-t border-gray-200/80 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0">
-                <span class="text-gray-500 dark:text-gray-400"><i class="fa-solid fa-shield-halved text-emerald-500 mr-1"></i>All changes save automatically in real time</span>
+            <div class="px-6 py-3 bg-gray-50/90 dark:bg-zinc-900/90 border-t border-gray-200/80 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+                <div class="flex items-center flex-wrap gap-2">
+                    <span class="text-gray-500 dark:text-gray-400"><i class="fa-solid fa-shield-halved text-emerald-500 mr-1"></i>Auto-saved in real time</span>
+                    <button type="button" onclick="closeSettingsModal(); openKudosCreditsModal();" class="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-600 hover:text-white text-rose-700 dark:text-rose-300 font-bold border border-rose-200 dark:border-rose-800 transition cursor-pointer flex items-center space-x-1">
+                        <i class="fa-solid fa-heart text-[10px]"></i>
+                        <span>Kudos &amp; Resource Credits</span>
+                    </button>
+                </div>
                 <button type="button" onclick="closeSettingsModal()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition cursor-pointer">Done</button>
             </div>
         </div>
@@ -1641,7 +1663,15 @@
                         <span class="text-[11px] text-gray-500 dark:text-gray-400 hidden md:inline">&bull; Supports <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">god 3-love</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">god (love, hope, peace)</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">~ god sees</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">&amp;love</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">lov*</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">god ! love-peace</code> &amp; Grammar</span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" onclick="openGrammarCompanionModal()" class="px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 text-[11px] font-bold hover:bg-indigo-600 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Open Built-In Greek &amp; Hebrew Grammar Guide (Layperson + Deep Syntax)">
+                        <i class="fa-solid fa-graduation-cap text-[10px]"></i>
+                        <span>In-App Grammar Guide</span>
+                    </button>
+                    <button type="button" onclick="openKudosCreditsModal()" class="px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700 text-[11px] font-bold hover:bg-rose-600 hover:text-white transition cursor-pointer flex items-center space-x-1" title="View Kudos &amp; Open Biblical Scholarship Credits">
+                        <i class="fa-solid fa-heart text-[10px]"></i>
+                        <span>Kudos</span>
+                    </button>
                     <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.toggle('hidden')" class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[11px] font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Show/Hide Custom Search Schema Guide">
                         <i class="fa-solid fa-circle-question text-[10px]"></i>
                         <span>Schema Syntax Guide</span>
@@ -2006,6 +2036,205 @@
             <i id="floatingSubFocusLockIcon" class="fa-solid fa-thumbtack text-[10px]"></i>
             <span id="floatingSubFocusLockText">Lock Focus</span>
         </button>
+    </div>
+
+    <!-- BUILT-IN GREEK & HEBREW GRAMMAR COMPANION MODAL (LAYPERSON ESSENTIALS + DEEP EXEGETICAL SYNTAX) -->
+    <div id="grammarCompanionModal" class="fixed inset-0 z-[565] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 hidden">
+        <div class="glass-panel w-full max-w-6xl h-[92vh] flex flex-col relative overflow-hidden">
+            <!-- Header -->
+            <div class="px-5 py-3 bg-gradient-to-r from-indigo-50/95 via-white/95 to-teal-50/95 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-indigo-200/80 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-sm">
+                        <i class="fa-solid fa-graduation-cap text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center flex-wrap gap-2">
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">In-App Greek &amp; Hebrew Grammar Companion</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">Layperson Simple + Deep Syntax</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">Everything stays inside LexFlow for instant study &bull; Powered by unfoldingWord&reg; UGG &amp; UHG (CC BY-SA 4.0) with optional external links (&nearr;)</p>
+                    </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-2">
+                    <button type="button" onclick="openKudosCreditsModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-600 hover:text-white text-rose-700 dark:text-rose-300 text-xs font-bold border border-rose-200 dark:border-rose-800 transition cursor-pointer flex items-center space-x-1.5">
+                        <i class="fa-solid fa-heart text-xs"></i>
+                        <span>Kudos &amp; Credits</span>
+                    </button>
+                    <button type="button" onclick="closeGrammarCompanionModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-0.5 rounded transition cursor-pointer" title="Close Grammar Guide (Esc)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter & Search Controls Bar -->
+            <div class="px-5 py-2.5 bg-white/90 dark:bg-zinc-900/95 border-b border-gray-200/80 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+                <div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" id="gcLangTabAll" onclick="setGrammarCompanionLangFilter('all')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition cursor-pointer">All (Greek &amp; Hebrew)</button>
+                    <button type="button" id="gcLangTabGreek" onclick="setGrammarCompanionLangFilter('greek')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-indigo-600 hover:text-white transition cursor-pointer">Greek (NT &bull; UGG)</button>
+                    <button type="button" id="gcLangTabHebrew" onclick="setGrammarCompanionLangFilter('hebrew')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-teal-600 hover:text-white transition cursor-pointer">Hebrew (OT &bull; UHG)</button>
+                </div>
+
+                <div class="flex items-center flex-wrap gap-2 flex-1 max-w-xl justify-end">
+                    <div class="relative flex-1 min-w-[180px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                        <input type="text" id="grammarCompanionSearchInput" oninput="renderGrammarCompanionCards()" placeholder="Filter grammar topics (e.g. Participle, Genitive, Aorist, Hiphil, Construct, Imperfect)..." class="select-text w-full pl-8 pr-7 py-1.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 text-xs outline-none focus:border-indigo-500">
+                    </div>
+                    <select id="grammarCompanionDepthSelect" onchange="renderGrammarCompanionCards()" class="glass-control px-2.5 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer">
+                        <option value="both" selected>View: Simple + Deep Syntax</option>
+                        <option value="simple">View: Layperson Simple Only</option>
+                        <option value="deep">View: Deep Exegetical Syntax</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Topic Cards Container -->
+            <div id="grammarCompanionCardsContainer" class="flex-1 p-5 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50/70 dark:bg-zinc-900/70">
+            </div>
+        </div>
+    </div>
+
+    <!-- KUDOS & OPEN BIBLICAL SCHOLARSHIP CREDITS MODAL -->
+    <div id="kudosCreditsModal" class="fixed inset-0 z-[575] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="glass-panel w-full max-w-4xl max-h-[90vh] flex flex-col relative overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-rose-50/95 via-white/95 to-indigo-50/95 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-rose-200/80 dark:border-zinc-700 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-rose-600 p-2 rounded-xl text-white shadow-sm">
+                        <i class="fa-solid fa-heart text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white">Kudos &amp; Open Biblical Scholarship Credits</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-300">Grateful acknowledgment to the scholars, open-license ministries, and online tools that make LexFlow possible</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeKudosCreditsModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-1 rounded transition cursor-pointer" title="Close Kudos (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4 text-xs">
+                <div class="p-3.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-gray-800 dark:text-gray-200 leading-relaxed">
+                    <strong>Everything stays inside LexFlow</strong> for a seamless study experience, built on the shoulders of generous biblical scholars and open-licensed projects. Use any of the external arrow links (<strong>&nearr;</strong>) below if you ever wish to explore their home websites directly.
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <!-- 1. SRGNT & CNTR -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-indigo-600">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">SRGNT &amp; Center for New Testament Restoration (CNTR)</h4>
+                                <div class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Dr. Alan Bunning &bull; CC BY 4.0</div>
+                            </div>
+                            <a href="https://greekcntr.org" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold hover:bg-indigo-600 hover:text-white transition shrink-0" title="Explore CNTR / SRGNT online">CNTR &nearr;</a>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            The <strong>Statistical Restoration Greek New Testament (SRGNT)</strong> (also the Bunning Heuristic Prototype underlying the <em>unfoldingWord&reg; Greek New Testament</em>) provides the open-licensed Greek text, lexical lemmas, and Enhanced Strong&rsquo;s tagging at the core of LexFlow.
+                        </p>
+                    </div>
+
+                    <!-- 2. unfoldingWord UGG, UHG, UGNT & UHB -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-teal-600">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">unfoldingWord&reg; Greek (UGG) &amp; Hebrew (UHG) Grammars</h4>
+                                <div class="text-[11px] font-semibold text-teal-600 dark:text-teal-400">unfoldingWord &amp; Door43 Community &bull; CC BY-SA 4.0</div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <a href="https://ugg.readthedocs.io/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-bold hover:bg-teal-600 hover:text-white transition" title="Explore unfoldingWord Greek Grammar">UGG &nearr;</a>
+                                <a href="https://uhg.readthedocs.io/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-bold hover:bg-teal-600 hover:text-white transition" title="Explore unfoldingWord Hebrew Grammar">UHG &nearr;</a>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Open-licensed reference grammars built around the exact morphological categories of the UGNT/SRGNT and OpenScriptures Hebrew Bible. Original works available via <a href="https://unfoldingword.org/for-translators/content/" target="_blank" rel="noopener noreferrer" class="underline text-teal-600 dark:text-teal-400">unfoldingWord.org &nearr;</a>.
+                        </p>
+                    </div>
+
+                    <!-- 3. OpenScriptures Hebrew Bible (OSHB / MorphHB) & WLC -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-emerald-600">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">OpenScriptures Hebrew Bible (MorphHB) &amp; WLC</h4>
+                                <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">OpenScriptures &amp; Groves Center &bull; CC BY 4.0 / Public Domain</div>
+                            </div>
+                            <a href="https://hb.openscriptures.org/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-600 hover:text-white transition shrink-0">OSHB &nearr;</a>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Provides the Westminster Leningrad Codex (WLC) Hebrew Old Testament text with word-level morphological parsing codes (<code>morphhb</code>) and Strong&rsquo;s Hebrew &amp; Greek dictionary datasets.
+                        </p>
+                    </div>
+
+                    <!-- 4. MorphGNT / SBLGNT -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-purple-600">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">MorphGNT &amp; SBL Greek New Testament</h4>
+                                <div class="text-[11px] font-semibold text-purple-600 dark:text-purple-400">James Tauber, Dr. Michael W. Holmes, SBL &amp; Logos &bull; CC BY-SA</div>
+                            </div>
+                            <a href="https://morphgnt.org/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-bold hover:bg-purple-600 hover:text-white transition shrink-0">MorphGNT &nearr;</a>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Provides the full-canon Greek New Testament morphological parsing database (part of speech, person, tense, voice, mood, case, number, gender, and lemmas).
+                        </p>
+                    </div>
+
+                    <!-- 5. EMTV & Berean Standard Bible (BSB) -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-sky-600">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">EMTV New Testament &amp; Berean Standard Bible (BSB)</h4>
+                                <div class="text-[11px] font-semibold text-sky-600 dark:text-sky-400">Paul Esposito (EMTV) &amp; Berean.bible (BSB Public Domain)</div>
+                            </div>
+                            <a href="https://berean.bible/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 font-bold hover:bg-sky-600 hover:text-white transition shrink-0">BSB &nearr;</a>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Provides the clear, literal modern English translations for the New Testament (English Majority Text Version) and Old Testament (Berean Standard Bible, plus WEB, ESV, NASB &amp; NET comparisons via Bolls.life).
+                        </p>
+                    </div>
+
+                    <!-- 6. Thayer's & Brown-Driver-Briggs (BDB) Lexicons -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-amber-500">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">Thayer&rsquo;s Greek &amp; Brown-Driver-Briggs (BDB) Hebrew Lexicons</h4>
+                                <div class="text-[11px] font-semibold text-amber-700 dark:text-amber-400">J.H. Thayer, F. Brown, S.R. Driver, C.A. Briggs &amp; J. Strong</div>
+                            </div>
+                            <a href="https://biblehub.com/interlinear/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold hover:bg-amber-600 hover:text-white transition shrink-0">Bible Hub &nearr;</a>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Classic lexical authorities providing root derivations, semantic ranges, and contextual usage across the Hebrew Old Testament and Greek New Testament.
+                        </p>
+                    </div>
+
+                    <!-- 7. Online Grammar & Layperson Pedagogy Trailblazers -->
+                    <div class="glass-subpanel p-4 space-y-2 border-l-4 border-rose-500 md:col-span-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">Online Biblical Grammar &amp; Layperson Pedagogy Resources</h4>
+                                <div class="text-[11px] font-semibold text-rose-600 dark:text-rose-400">Accessible Greek &amp; Hebrew Teaching for Laypeople, Students &amp; Pastors</div>
+                            </div>
+                            <div class="flex items-center flex-wrap gap-1.5">
+                                <a href="https://www.billmounce.com/biblestudygreek/class" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">Bill Mounce &nearr;</a>
+                                <a href="https://www.ntgreek.org/learn_nt_greek/grkindex.htm" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">NTGreek.org &nearr;</a>
+                                <a href="https://freehebrew.online/resources/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">Aleph with Beth &nearr;</a>
+                                <a href="https://freegreek.online/resources/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">Alpha with Angela &nearr;</a>
+                                <a href="https://dailydoseofgreek.com/frequently-asked-questions/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">Daily Dose Greek &nearr;</a>
+                                <a href="https://dailydoseofhebrew.com/about/meet-mark/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-700 dark:text-gray-200 font-bold transition">Daily Dose Hebrew &nearr;</a>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Special kudos to <strong>Dr. Bill Mounce</strong> (<em>Greek for the Rest of Us</em> &amp; Phrasing methodology), <strong>Corey Keating</strong> (<em>NTGreek.org</em> syntax flowcharts), <strong>Beth &amp; Andrew Case</strong> (<em>Aleph with Beth</em>) and <strong>Angela</strong> (<em>Alpha with Angela</em>), and <strong>Dr. Rob Plummer &amp; Dr. Mark Futato</strong> (<em>Daily Dose of Greek &amp; Hebrew</em>) for pioneering accessible original-language instruction.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 bg-gray-50/90 dark:bg-zinc-900/90 border-t border-gray-200/80 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0">
+                <span class="text-gray-500 dark:text-gray-400">Soli Deo Gloria &bull; Built to make the original Hebrew &amp; Greek Scriptures accessible to everyone</span>
+                <button type="button" onclick="closeKudosCreditsModal()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition cursor-pointer">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- ORIGINAL LANGUAGE ONLY (HEBREW & GREEK) RIGHT-CLICK LEXEME & PARSING POPOVER -->
@@ -8683,12 +8912,36 @@
                    </div>`
                 : '';
 
-            // Plain-English breakdown of each parsing tag
+            // Build both Simple (Layperson) AND Deep (In-App Syntax & Exegesis) breakdowns for each parsing tag!
             const summaryParts = finalMorphSummary.split(',').map(s => s.trim()).filter(Boolean);
             const plainNotesHtml = summaryParts
                 .filter(p => plainEnglishGrammarExplanations && plainEnglishGrammarExplanations[p])
                 .map(p => `<div class="text-[11px] text-gray-700 dark:text-gray-300"><strong class="text-amber-700 dark:text-amber-300">${escapeHtmlText(p)}:</strong> ${escapeHtmlText(plainEnglishGrammarExplanations[p])}</div>`)
                 .join('');
+
+            const matchedDeepEntries = summaryParts
+                .map(p => (typeof deepExegeticalGrammarLibrary !== 'undefined') ? deepExegeticalGrammarLibrary.find(d => d.tag === p && (isOt ? d.lang !== 'greek' : d.lang !== 'hebrew')) : null)
+                .filter(Boolean);
+
+            const deepNotesHtml = matchedDeepEntries.length > 0
+                ? matchedDeepEntries.map(d => {
+                    const extHref = isOt ? (d.uhgUrl || d.extraUrl) : (d.uggUrl || d.extraUrl);
+                    const extLabel = isOt ? (d.uhgUrl ? 'UHG' : (d.extraLabel || 'More')) : (d.uggUrl ? 'UGG' : (d.extraLabel || 'More'));
+                    return `
+                        <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200/80 dark:border-zinc-700 space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-indigo-700 dark:text-indigo-300">${escapeHtmlText(d.title)}</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" onclick="hideOriginalWordParsePopover(); openGrammarCompanionModal('${escapeHtmlText(d.tag)}', '${isOt ? 'hebrew' : 'greek'}');" class="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold hover:bg-indigo-600 hover:text-white cursor-pointer" title="Open full topic inside LexFlow Grammar Companion">In-App Guide</button>
+                                    ${extHref ? `<a href="${extHref}" target="_blank" rel="noopener noreferrer" class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-600 dark:text-gray-300 text-[9px] font-bold" title="Explore outside on ${escapeHtmlText(extLabel)}">${escapeHtmlText(extLabel)} &nearr;</a>` : ''}
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-gray-700 dark:text-gray-300 leading-snug">${escapeHtmlText(d.deep)}</p>
+                            <div class="text-[10px] font-semibold text-amber-800 dark:text-amber-300 pt-0.5">${escapeHtmlText(d.question)}</div>
+                        </div>
+                    `;
+                }).join('')
+                : `<div class="text-[11px] text-gray-600 dark:text-gray-300">${plainNotesHtml}</div>`;
 
             const safeSurf = surface.replace(/'/g, "\\'");
             const safeTrans = finalTranslit.replace(/'/g, "\\'");
@@ -8748,7 +9001,24 @@
                         </div>
                         ${slotGridHtml}
                         ${prefixInsight ? `<div class="px-2.5 py-1.5 rounded-lg bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>${escapeHtmlText(prefixInsight)}</div>` : ''}
-                        ${plainNotesHtml ? `<div class="p-2.5 rounded-xl bg-gray-50/90 dark:bg-zinc-800/60 border border-gray-200/70 dark:border-zinc-700/70 space-y-1">${plainNotesHtml}</div>` : ''}
+                        <div class="pt-1 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1">
+                                    <button type="button" id="rcTabSimpleBtn" onclick="switchRightClickPopoverGrammarTab('simple')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold shadow-sm cursor-pointer">Simple (Layperson)</button>
+                                    <button type="button" id="rcTabDeepBtn" onclick="switchRightClickPopoverGrammarTab('deep')" class="px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-[10px] font-bold cursor-pointer">Go Deeper (In-App Syntax)</button>
+                                </div>
+                                <button type="button" onclick="hideOriginalWordParsePopover(); openGrammarCompanionModal('${escapeHtmlText(morphInfo.mood || morphInfo.stem || morphInfo.pos || '')}', '${isOt ? 'hebrew' : 'greek'}');" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center space-x-1" title="Open Built-In Greek &amp; Hebrew Grammar Companion">
+                                    <i class="fa-solid fa-graduation-cap text-[9px]"></i>
+                                    <span>Full Grammar Guide</span>
+                                </button>
+                            </div>
+                            <div id="rcPopoverSimpleGrammarBox" class="p-2.5 rounded-xl bg-gray-50/90 dark:bg-zinc-800/60 border border-gray-200/70 dark:border-zinc-700/70 space-y-1">
+                                ${plainNotesHtml}
+                            </div>
+                            <div id="rcPopoverDeepGrammarBox" class="hidden space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                                ${deepNotesHtml}
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 3. Quick Actions Footer -->
@@ -12831,6 +13101,495 @@
         }
 
         let detachedSearchHitsBrowserWin = null;
+
+        // =========================================================================
+        // IN-APP GREEK & HEBREW GRAMMAR COMPANION (SIMPLE LAYPERSON + DEEP SYNTAX)
+        // =========================================================================
+        const deepExegeticalGrammarLibrary = [
+            {
+                tag: 'Participle',
+                lang: 'both',
+                title: 'Participle (Greek & Hebrew Verbal Adjective)',
+                simple: 'A "-ing" or "having been..." verbal word that connects a supporting action to the main verb or describes a person/thing.',
+                deep: 'In Greek (NT), participles are the master connectors of thought flow: (1) Adverbial Participles tell you WHEN (Temporal: "while/after doing"), HOW (Means: "by doing"), WHY (Cause: "because he did" or Purpose: "in order to do"), or ALTHOUGH (Concession) the main verb happens.Present participles usually show simultaneous/ongoing action ("while doing"), while Aorist participles often show antecedent or summary action ("having done"). (2) Adjectival/Substantival Participles with the article ("the one believing" = ὁ πιστεύων) identify a person by their defining characteristic. In Hebrew (OT), active/passive participles depict unbroken, continuous action or a person\'s vocation ("the Lord sitting [יֹשֵׁב] on the throne").',
+                question: 'Ask: Is this participle describing a noun ("the one who...") or explaining HOW/WHEN/WHY the main verb happens?',
+                exampleRef: '1 Peter 1:8',
+                exampleDesc: '"whom having not seen (ἰδόντες, Aorist Participle) you love, in whom now not seeing (ὁρῶντες, Present Participle) yet believing (πιστεύοντες) you rejoice..."',
+                searchCmd: 'Participle',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/verb_participle.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/participle_active.html',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/participles.htm',
+                extraLabel: 'NTGreek Participles'
+            },
+            {
+                tag: 'Imperative',
+                lang: 'both',
+                title: 'Imperative Mood (Commands, Appeals & Prayers)',
+                simple: 'A direct command, urgent appeal, exhortation, or prayer directed to someone ("Do this!", "Listen!", "Be holy!").',
+                deep: 'In Greek, the tense of an Imperative reveals the author\'s aspectual framing: an Aorist Imperative calls for decisive, whole-action obedience or urgency ("Put on the armor once for all", "Repent!"), whereas a Present Imperative commands ongoing lifestyle practice or continuing an action ("Keep on asking", "Continue walking in love"). In Hebrew, the Imperative (2nd person) partners with the Cohortative (1st person "Let us...") and Jussive (3rd person "Let him/may it be...") to form the volitional command system.',
+                question: 'Ask: Is the author calling for a decisive turning point (Aorist Imperative) or an ongoing daily habit (Present Imperative)?',
+                exampleRef: '1 Peter 1:13',
+                exampleDesc: '"set your hope fully (ἐλπίσατε, Aorist Imperative) on the grace being brought to you..."',
+                searchCmd: 'Imperative',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/mood_imperative.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/verb_imperative.html',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Verbs'
+            },
+            {
+                tag: 'Indicative',
+                lang: 'both',
+                title: 'Indicative Mood (Assertions of Reality & Fact)',
+                simple: 'The mood of certainty and declaration—presents an action as an actual fact or reality from the speaker\'s viewpoint.',
+                deep: 'In Greek, the Indicative is the only mood that grammaticalizes absolute time (past, present, future) alongside verbal aspect. In biblical theology, the "Indicatives of Grace" (what God HAS done in Christ) always form the foundation for the "Imperatives of Response" (how believers are called to live).',
+                question: 'Ask: What foundational truth or work of God is being declared here before any command is given?',
+                exampleRef: 'Hebrews 1:2',
+                exampleDesc: '"In these last days He spoke (ἐλάλησεν, Aorist Active Indicative) to us in His Son..."',
+                searchCmd: 'Indicative',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/mood_indicative.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/stable/verb.html',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/verbs-mood.htm',
+                extraLabel: 'NTGreek Moods'
+            },
+            {
+                tag: 'Subjunctive',
+                lang: 'both',
+                title: 'Subjunctive Mood (Purpose, Condition & Exhortation)',
+                simple: 'Expresses purpose ("in order that / so that"), probable conditions ("if"), or shared exhortation ("let us...").',
+                deep: 'The Greek Subjunctive moves from actualized fact into the realm of projection, intention, and contingency: (1) Purpose Clauses with ἵνα or ὅπως ("so that you may..."), (2) Hortatory Subjunctive (1st person plural: "Let us draw near!"), (3) Emphatic Negation of the future with οὐ μή ("shall never perish!"), and (4) Third-Class Conditional ("if + subjunctive" = open/probable condition).',
+                question: 'Ask: Does this Subjunctive express God\'s purpose (ἵνα = "so that"), a "Let us..." exhortation, or an "if" condition?',
+                exampleRef: '1 John 1:9',
+                exampleDesc: '"If we confess (ὁμολογῶμεν, Present Subjunctive) our sins, He is faithful and just that He may forgive (ἀφῇ, Aorist Subjunctive)..."',
+                searchCmd: 'Subjunctive',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/mood_subjunctive.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/verb_cohortative.html',
+                extraUrl: 'https://www.ntgreek.org/pdf/subjunctive_uses.pdf',
+                extraLabel: 'NTGreek Subjunctive PDF'
+            },
+            {
+                tag: 'Infinitive',
+                lang: 'both',
+                title: 'Infinitive (Verbal Noun — "To Do")',
+                simple: 'A verbal noun ("to do / in order to do") that frequently expresses purpose, result, time, or completes a verb.',
+                deep: 'In Greek, an Infinitive with τοῦ or εἰς τό/πρὸς τό often marks Purpose ("in order to...") or Result ("so as to..."); with ἐν τῷ it marks Contemporaneous Time ("while doing..."), and with μετὰ τό it marks Subsequent Time ("after doing..."). In Hebrew, the Infinitive Construct (often with prefix לְ "to") expresses purpose/time, while the Infinitive Absolute placed right before its own verb intensely emphasizes certainty ("You shall surely die!" — מוֹת תָּמוּת).',
+                question: 'Ask: Does this infinitive explain the goal/purpose ("in order to") or time ("when/while") of the action?',
+                exampleRef: 'Hebrews 1:6',
+                exampleDesc: '"And let all the angels of God worship (προσκυνήσάτωσαν) Him..."',
+                searchCmd: 'Infinitive',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/verb_infinitive.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/infinitive_construct.html',
+                extraUrl: 'https://www.ntgreek.org/pdf/infinitive_uses.pdf',
+                extraLabel: 'NTGreek Infinitive Chart'
+            },
+            {
+                tag: 'Present',
+                lang: 'greek',
+                title: 'Present Tense-Form (Imperfective / Unfolding Aspect)',
+                simple: 'Portrays an action from the inside as ongoing, unfolding in real time, continuous, or habitual.',
+                deep: 'In Koine Greek verbal aspect, the Present tense-form is "internal/imperfective"—like watching a live video stream rather than a single snapshot. Depending on context, it can be Progressive ("is happening right now"), Customary/Iterative ("regularly happens"), Conative ("attempting/starting to do"), or Historical Present (vividly narrating a past event as if unfolding before your eyes, e.g., λέγει "he says!").',
+                question: 'Ask: Why did the author zoom in to show this action as an ongoing process or vivid scene?',
+                exampleRef: 'Hebrews 1:7',
+                exampleDesc: '"And of the angels He says (λέγει, Present Active Indicative)..."',
+                searchCmd: 'Verb, Present',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/tense_present.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/verbs-tense.htm',
+                extraLabel: 'NTGreek Tenses'
+            },
+            {
+                tag: 'Aorist',
+                lang: 'greek',
+                title: 'Aorist Tense-Form (Perfective / Summary Snapshot Aspect)',
+                simple: 'Portrays an action as a complete whole or summary "snapshot" without focusing on its internal duration.',
+                deep: 'A common myth is that Aorist always means "once-for-all instant action." In modern Greek linguistics, the Aorist is the "default/summary (perfective) aspect"—like looking at a whole parade from a helicopter rather than standing on the street. In the Indicative it usually refers to past events (Constative/Summary, Ingressive "began to", or Culminative "completed").',
+                question: 'Ask: Is this Aorist summarizing a whole event as a completed fact or marking the decisive start of an action?',
+                exampleRef: 'Hebrews 1:2',
+                exampleDesc: '"God spoke (ἐλάλησεν, Aorist) to us in His Son, whom He appointed (ἔθηκεν, Aorist) heir..."',
+                searchCmd: 'Verb, Aorist',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/tense_aorist.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/verbs-tense.htm',
+                extraLabel: 'NTGreek Aorist'
+            },
+            {
+                tag: 'Perfect',
+                lang: 'both',
+                title: 'Perfect Tense / Conjugation (Completed Action with Continuing State)',
+                simple: 'Greek: A past action whose results remain in force right now ("has been done and still stands"). Hebrew: Completed/whole action.',
+                deep: 'In Greek, the Perfect tense is heavily frontgrounded—it combines a completed action with an ongoing state of affairs resulting from it (e.g., γέγραπται "It stands written!"; τετέλεσται "It has been finished and remains accomplished!"). In Biblical Hebrew, the Qatal (Perfect) conjugation views an action as complete, whole, or stative.',
+                question: 'Ask: What lasting present reality or status continues today because this action was completed in the past?',
+                exampleRef: 'Hebrews 1:4',
+                exampleDesc: '"by so much as He has inherited (κεκληρονόμηκεν, Perfect Active Indicative) a more excellent name..."',
+                searchCmd: 'Perfect',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/tense_perfect.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/verb_perfect.html',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/verbs-tense.htm',
+                extraLabel: 'NTGreek Perfect'
+            },
+            {
+                tag: 'Imperfect',
+                lang: 'both',
+                title: 'Imperfect Tense / Conjugation (Unfolding Action)',
+                simple: 'Greek: Continuous or repeated action in past time ("was doing / kept on doing"). Hebrew (Yiqtol): Unfolding, future, or habitual action.',
+                deep: 'In Greek, the Imperfect puts you inside a past scene as it was unfolding ("was teaching", "kept asking", or "began to..."). In Hebrew, the Yiqtol (Imperfect) portrays incomplete, unfolding, future, modal ("may/should"), or habitual action, while the Wayyiqtol (waw-consecutive imperfect) drives the main storyline forward ("And God said...").',
+                question: 'Ask: What ongoing background action or repeated habit in the past is being painted here?',
+                exampleRef: 'Genesis 1:3',
+                exampleDesc: '"And God said (וַיֹּאמֶר, Qal Imperfect consecutive): Let there be (יְהִי, Jussive/Imperfect) light..."',
+                searchCmd: 'Imperfect',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/tense_imperfect.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/verb_imperfect.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-15/',
+                extraLabel: 'Daily Dose Hebrew'
+            },
+            {
+                tag: 'Genitive',
+                lang: 'greek',
+                title: 'Genitive Case ("Of / From" — Description, Possession & Source)',
+                simple: 'The case of "of" or "from"—narrows down, defines, shows possession, origin, or relationship between two nouns.',
+                deep: 'When you see a Greek Genitive ("the love of God" = ἡ ἀγάπη τοῦ θεοῦ), always ask which Genitive nuance fits the context: (1) Possessive ("belonging to"), (2) Subjective Genitive ("God loves us"), (3) Objective Genitive ("our love for God"), (4) Genitive of Source/Origin ("righteousness that comes from God"), (5) Attributive/Descriptive ("glorious power"), or (6) Genitive Absolute (a noun + participle in the genitive forming a background time/circumstance clause).',
+                question: 'Ask: In "X of Y", does Y possess X, produce X (Subjective), receive X (Objective), or describe the quality of X?',
+                exampleRef: '2 Peter 1:1',
+                exampleDesc: '"in the righteousness of our God and Savior (τοῦ θεοῦ ἡμῶν καὶ σωτῆρος, Genitive)..."',
+                searchCmd: 'Genitive',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/case_genitive.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.ntgreek.org/pdf/genitive_case.pdf',
+                extraLabel: 'NTGreek Genitive Sheet'
+            },
+            {
+                tag: 'Dative',
+                lang: 'greek',
+                title: 'Dative Case ("To / For / In / By" — Interest, Sphere & Instrument)',
+                simple: 'Shows who benefits ("to/for"), where something takes place ("in"), or the means used ("by/with").',
+                deep: 'The Greek Dative combines three rich functions: (1) Indirect Object / Personal Interest ("spoke TO us", "for your benefit"), (2) Locative / Sphere ("walking IN the Spirit", "in Christ"), and (3) Instrumental / Means ("saved BY grace", "by His powerful word" = τῷ ῥήματι τῆς δυνάμεως αὐτοῦ in Heb 1:3).',
+                question: 'Ask: Does this Dative point to the recipient ("to"), the sphere/location ("in"), or the instrument/means ("by/with")?',
+                exampleRef: 'Hebrews 1:3',
+                exampleDesc: '"upholding all things by the word (τῷ ῥήματι, Dative of Means/Instrument) of His power..."',
+                searchCmd: 'Dative',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/case_dative.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Cases'
+            },
+            {
+                tag: 'Nominative',
+                lang: 'greek',
+                title: 'Nominative Case (Subject & Identity)',
+                simple: 'Identifies the subject doing the action, or renames/describes the subject after "is/was" (Predicate Nominative).',
+                deep: 'In Greek, word order is flexible—the Nominative ending (not just coming first in the sentence!) tells you who is performing the verb. When two Nominatives appear with a linking verb like εἰμί (e.g., John 1:1 καὶ θεὸς ἦν ὁ λόγος), the noun with the article (ὁ λόγος) is the Subject ("the Word") and the anarthrous Nominative placed up front for emphasis (θεός) describes His nature ("was God").',
+                question: 'Ask: Is this Nominative the subject driving the verb, or a Predicate Nominative defining who/what the subject is?',
+                exampleRef: '2 Peter 1:1',
+                exampleDesc: '"Simon Peter, a servant and apostle (δοῦλος καὶ ἀπόστολος, Nominative)..."',
+                searchCmd: 'Nominative',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/case_nominative.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Nominative'
+            },
+            {
+                tag: 'Accusative',
+                lang: 'greek',
+                title: 'Accusative Case (Direct Object & Extent)',
+                simple: 'Identifies the direct object that directly receives the verb\'s action, or the extent of time/space.',
+                deep: 'The Accusative limits or receives the impact of a transitive verb. It also serves as the "Subject of an Infinitive" (where an accusative noun performs the infinitive action) or marks Extent of Time/Space ("for forty days").',
+                question: 'Ask: What person or thing is directly receiving the action of the verb?',
+                exampleRef: 'Hebrews 1:2',
+                exampleDesc: '"through whom also He made the ages/universe (τοὺς αἰῶνας, Accusative Direct Object)."',
+                searchCmd: 'Accusative',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/case_accusative.html',
+                uhgUrl: '',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Cases'
+            },
+            {
+                tag: 'Active',
+                lang: 'both',
+                title: 'Active Voice (Subject Performs the Action)',
+                simple: 'The grammatical subject directly performs or produces the action of the verb.',
+                deep: 'Active voice highlights personal agency and responsibility when applied to human subjects, or sovereign initiative when applied to God (e.g., "God created", "God spoke", "He appointed").',
+                question: 'Ask: Who is the active agent initiating this action?',
+                exampleRef: 'Hebrews 1:2',
+                exampleDesc: '"whom He appointed (ἔθηκεν, Aorist Active) heir of all things..."',
+                searchCmd: 'Active',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/voice_active.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_qal.html',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Middle',
+                lang: 'greek',
+                title: 'Middle Voice (Subject-Affected, Personal Involvement or Deponent)',
+                simple: 'The subject performs the action with special personal involvement, for their own interest, or upon themselves.',
+                deep: 'In Greek, the Middle voice signals that the subject is deeply intertwined with the action ("for himself/itself", e.g. Heb 1:3 δι’ ἑαυτοῦ καθαρισμὸν ποιησάμενος — "having made purification for sins [Middle Participle]"). Many Greek verbs are "middle-only / deponent" because their meaning naturally involves the subject\'s inner life, movement, or speech (e.g., ἔρχομαι "come", ἀποκρίνομαι "answer").',
+                question: 'Ask: Does the Middle voice emphasize the subject\'s personal investment in the action ("for Himself")?',
+                exampleRef: 'Hebrews 1:3',
+                exampleDesc: '"having made (ποιησάμενος, Aorist Middle Participle) purification for sins..."',
+                searchCmd: 'Middle',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/voice_middle.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_hithpael.html',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Passive',
+                lang: 'both',
+                title: 'Passive Voice (Subject Receives the Action & "Divine Passive")',
+                simple: 'The subject is acted upon ("was built", "be multiplied", "have been saved").',
+                deep: 'In both Old and New Testaments, a Passive verb without an explicit agent is frequently a "Theological / Divine Passive"—a reverent way of indicating that God Himself is the unseen agent performing the work (e.g., "Grace and peace be multiplied [πληθυνθείη] to you" = may God multiply grace and peace to you!).',
+                question: 'Ask: Who is the implied agent performing this passive action—is it a "Divine Passive" pointing to God\'s work?',
+                exampleRef: '2 Peter 1:2',
+                exampleDesc: '"Grace and peace be multiplied (πληθυνθείη, Aorist Passive Optative) to you..."',
+                searchCmd: 'Passive',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/voice_passive.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_niphal.html',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Qal',
+                lang: 'hebrew',
+                title: 'Qal Stem (Simple / Grundstamm Hebrew Verb Stem)',
+                simple: 'The foundational, unaugmented Hebrew verb stem (~70% of all OT verbs), expressing simple action or state.',
+                deep: 'In the Hebrew Binyanim (verb building-blocks), Qal ("light/simple") is the base root before adding intensive (Piel) or causative (Hiphil) prefixes/doubling. For example, בָּרָא (bara, Qal Perfect in Gen 1:1) is used in the Qal stem exclusively with God as its subject ("created").',
+                question: 'Ask: What is the core, foundational action of this three-letter Hebrew root?',
+                exampleRef: 'Genesis 1:1',
+                exampleDesc: '"In the beginning God created (בָּרָא, Qal Perfect 3ms) the heavens and the earth."',
+                searchCmd: 'Qal',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_qal.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-11/',
+                extraLabel: 'Daily Dose Qal'
+            },
+            {
+                tag: 'Piel',
+                lang: 'hebrew',
+                title: 'Piel Stem (Intensive, Factitive or Repeated Action)',
+                simple: 'Intensifies a Hebrew verb root—showing thoroughness, repeated energy, or bringing about a state.',
+                deep: 'Marked by doubling the middle root letter (dagesh forte), the Piel stem either (1) turns a stative Qal root into an active "factitive" verb (e.g., Qal קָדַשׁ "be holy" -> Piel קִדֵּשׁ "make/declare holy, sanctify"), or (2) expresses intensive, eager, or repeated action (e.g., מְרַחֶפֶת in Gen 1:2, "was hovering/fluttering" over the waters).',
+                question: 'Ask: How does the Piel stem intensify this root or show someone actively bringing a state into reality?',
+                exampleRef: 'Genesis 1:2',
+                exampleDesc: '"And the Spirit of God was hovering (מְרַחֶפֶת, Piel Participle fs) over the face of the waters."',
+                searchCmd: 'Piel',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_piel.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-28/',
+                extraLabel: 'Daily Dose Piel'
+            },
+            {
+                tag: 'Hiphil',
+                lang: 'hebrew',
+                title: 'Hiphil Stem (Causative Hebrew Verb Stem)',
+                simple: 'Expresses CAUSATION—"to cause someone/something to do or become X" (e.g., "cause to divide", "cause to shine").',
+                deep: 'Recognizable by its הִ (hi-) prefix and י (yod) vowel, the Hiphil is one of the richest theological stems in the Old Testament: Qal בּוֹא ("come") becomes Hiphil הֵבִיא ("bring"); Qal יָשַׁע ("be delivered") becomes Hiphil הוֹשִׁיעַ ("save / bring salvation"); Qal זָכַר ("remember") becomes Hiphil הִזְכִּיר ("cause to remember / proclaim").',
+                question: 'Ask: Who is causing this action or state to happen to someone else?',
+                exampleRef: 'Genesis 1:4',
+                exampleDesc: '"And God caused a separation / divided (וַיַּבְדֵּל, Hiphil Imperfect) between the light and the darkness."',
+                searchCmd: 'Hiphil',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_hiphil.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-35/',
+                extraLabel: 'Daily Dose Hiphil'
+            },
+            {
+                tag: 'Niphal',
+                lang: 'hebrew',
+                title: 'Niphal Stem (Passive, Reflexive or Tolerative Hebrew Stem)',
+                simple: 'The passive or reflexive counterpart of the Qal stem ("be done", "show oneself", "be seen").',
+                deep: 'Marked by a נִ (ni-) prefix, Niphal functions as (1) Simple Passive ("was created", "be blessed"), (2) Reflexive ("hid himself"), or (3) Tolerative ("let oneself be found/entreated", as when God lets Himself be found by those who seek Him).',
+                question: 'Ask: Is the subject being acted upon (Passive) or acting upon/revealing itself (Reflexive)?',
+                exampleRef: 'Genesis 1:9',
+                exampleDesc: '"Let the waters be gathered (יִקָּווּ, Niphal Imperfect) and let the dry land appear (תֵּרָאֶה, Niphal)."',
+                searchCmd: 'Niphal',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_niphal.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-22/',
+                extraLabel: 'Daily Dose Niphal'
+            },
+            {
+                tag: 'Construct',
+                lang: 'hebrew',
+                title: 'Construct State (סְמִיכוּת — Hebrew Bound "Of" Chain)',
+                simple: 'Binds a Hebrew noun directly to the next noun to mean "X of Y" (e.g., "Spirit of God", "face of the deep").',
+                deep: 'Instead of using a separate word for "of", Biblical Hebrew places the first noun in the "Construct State" (often shortening its vowels or changing feminine -ah to -at) and binds it tightly to the following "Absolute" noun. The entire Construct Chain functions as a single unit, and if the final noun is definite (has "the" or is a proper name like God), the whole chain becomes definite ("THE Spirit of God" = רוּחַ אֱלֹהִים)!',
+                question: 'Ask: What following noun is this Construct word bound to ("... of ___")?',
+                exampleRef: 'Genesis 1:2',
+                exampleDesc: '"over the face of (פְּנֵי, Construct Plural) the waters... Spirit of (רוּחַ, Construct) God."',
+                searchCmd: 'Construct',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/state_construct.html',
+                extraUrl: 'https://freehebrew.online/resources/',
+                extraLabel: 'Aleph with Beth Guides'
+            },
+            {
+                tag: 'Absolute',
+                lang: 'hebrew',
+                title: 'Absolute State (Independent Hebrew Noun / Participle)',
+                simple: 'The normal, unbound dictionary state of a Hebrew noun (or final anchor noun at the end of a Construct "of" chain).',
+                deep: 'An Absolute noun stands on its own grammatically or serves as the anchor (genitive) noun that completes a preceding Construct chain. When an Infinitive Absolute appears alongside a finite verb of the same root, it adds emphatic certainty ("surely / indeed").',
+                question: 'Ask: Does this Absolute noun stand alone, or does it complete a preceding Construct ("of") chain?',
+                exampleRef: 'Genesis 1:1',
+                exampleDesc: '"In the beginning God (אֱלֹהִים, Noun Masculine Plural Absolute) created..."',
+                searchCmd: 'Absolute',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/state_absolute.html',
+                extraUrl: '',
+                extraLabel: ''
+            }
+        ];
+
+        let activeGrammarCompanionLang = 'all';
+
+        function openGrammarCompanionModal(filterQuery = '', langFilter = 'all') {
+            const modal = document.getElementById('grammarCompanionModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            activeGrammarCompanionLang = langFilter || 'all';
+            const inp = document.getElementById('grammarCompanionSearchInput');
+            if (inp) inp.value = filterQuery || '';
+            updateGrammarCompanionLangTabStyles();
+            renderGrammarCompanionCards();
+        }
+
+        function closeGrammarCompanionModal() {
+            const modal = document.getElementById('grammarCompanionModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openKudosCreditsModal() {
+            const modal = document.getElementById('kudosCreditsModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeKudosCreditsModal() {
+            const modal = document.getElementById('kudosCreditsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setGrammarCompanionLangFilter(langVal) {
+            activeGrammarCompanionLang = langVal || 'all';
+            updateGrammarCompanionLangTabStyles();
+            renderGrammarCompanionCards();
+        }
+
+        function updateGrammarCompanionLangTabStyles() {
+            const map = {
+                'all': document.getElementById('gcLangTabAll'),
+                'greek': document.getElementById('gcLangTabGreek'),
+                'hebrew': document.getElementById('gcLangTabHebrew')
+            };
+            Object.keys(map).forEach(k => {
+                const btn = map[k];
+                if (!btn) return;
+                if (k === activeGrammarCompanionLang) {
+                    btn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-sm transition cursor-pointer';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-indigo-600 hover:text-white transition cursor-pointer';
+                }
+            });
+        }
+
+        function renderGrammarCompanionCards() {
+            const container = document.getElementById('grammarCompanionCardsContainer');
+            if (!container) return;
+
+            const query = (document.getElementById('grammarCompanionSearchInput') ? document.getElementById('grammarCompanionSearchInput').value : '').trim().toLowerCase();
+            const depthMode = document.getElementById('grammarCompanionDepthSelect') ? document.getElementById('grammarCompanionDepthSelect').value : 'both';
+
+            const filtered = deepExegeticalGrammarLibrary.filter(item => {
+                if (activeGrammarCompanionLang === 'greek' && item.lang === 'hebrew') return false;
+                if (activeGrammarCompanionLang === 'hebrew' && item.lang === 'greek') return false;
+                if (query) {
+                    const hay = `${item.tag} ${item.title} ${item.simple} ${item.deep} ${item.exampleDesc}`.toLowerCase();
+                    const terms = query.split(/[\s,]+/).filter(Boolean);
+                    return terms.some(t => hay.includes(t));
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-2 p-8 text-center text-gray-500 dark:text-gray-400 text-xs bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-gray-200 dark:border-zinc-700">No matching grammar topics found for "${escapeHtmlText(query)}". Try clearing the filter above!</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const langBadge = item.lang === 'hebrew'
+                    ? `<span class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-mono text-[10px] font-bold">Hebrew (OT &bull; UHG)</span>`
+                    : (item.lang === 'greek'
+                        ? `<span class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 font-mono text-[10px] font-bold">Greek (NT &bull; UGG)</span>`
+                        : `<span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-mono text-[10px] font-bold">Greek &amp; Hebrew</span>`);
+
+                const extLinks = [];
+                if (item.uggUrl) extLinks.push(`<a href="${item.uggUrl}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition" title="Explore topic on unfoldingWord Greek Grammar (outside link)">UGG &nearr;</a>`);
+                if (item.uhgUrl) extLinks.push(`<a href="${item.uhgUrl}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition" title="Explore topic on unfoldingWord Hebrew Grammar (outside link)">UHG &nearr;</a>`);
+                if (item.extraUrl) extLinks.push(`<a href="${item.extraUrl}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 hover:bg-amber-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition" title="Explore external grammar guide">${escapeHtmlText(item.extraLabel || 'More')} &nearr;</a>`);
+
+                const safeCmd = item.searchCmd.replace(/'/g, "\\'");
+
+                return `
+                    <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm flex flex-col justify-between space-y-3">
+                        <div class="space-y-2.5">
+                            <div class="flex items-start justify-between gap-2 pb-2 border-b border-gray-100 dark:border-zinc-700">
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-900 dark:text-white">${escapeHtmlText(item.title)}</h4>
+                                </div>
+                                ${langBadge}
+                            </div>
+
+                            ${depthMode !== 'deep' ? `
+                                <div class="p-2.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/70 text-xs">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-0.5"><i class="fa-solid fa-seedling mr-1"></i>Layperson Summary (In Plain English)</div>
+                                    <div class="text-gray-800 dark:text-gray-100 font-medium leading-relaxed">${escapeHtmlText(item.simple)}</div>
+                                </div>
+                            ` : ''}
+
+                            ${depthMode !== 'simple' ? `
+                                <div class="p-3 rounded-xl bg-indigo-50/60 dark:bg-zinc-900/80 border border-indigo-200/70 dark:border-zinc-700 text-xs space-y-2">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400"><i class="fa-solid fa-microscope mr-1"></i>Deep Exegetical Syntax &amp; Usage</div>
+                                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed">${escapeHtmlText(item.deep)}</p>
+                                    <div class="p-2 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200">
+                                        <strong>Key Study Question:</strong> ${escapeHtmlText(item.question)}
+                                    </div>
+                                    <div class="text-[11px] text-gray-600 dark:text-gray-400 italic">
+                                        <strong>Scripture Example (${escapeHtmlText(item.exampleRef)}):</strong> ${escapeHtmlText(item.exampleDesc)}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-100 dark:border-zinc-700/70 flex flex-wrap items-center justify-between gap-2">
+                            <button type="button" onclick="closeGrammarCompanionModal(); openGrammarSearchModal('${safeCmd}');" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition cursor-pointer flex items-center space-x-1.5">
+                                <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                                <span>Search "${escapeHtmlText(item.tag)}" in LexFlow</span>
+                            </button>
+                            <div class="flex items-center flex-wrap gap-1">
+                                ${extLinks.join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function switchRightClickPopoverGrammarTab(mode) {
+            const simpleBox = document.getElementById('rcPopoverSimpleGrammarBox');
+            const deepBox = document.getElementById('rcPopoverDeepGrammarBox');
+            const btnSimple = document.getElementById('rcTabSimpleBtn');
+            const btnDeep = document.getElementById('rcTabDeepBtn');
+            if (!simpleBox || !deepBox) return;
+
+            if (mode === 'deep') {
+                simpleBox.classList.add('hidden');
+                deepBox.classList.remove('hidden');
+                if (btnDeep) btnDeep.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold shadow-sm cursor-pointer';
+                if (btnSimple) btnSimple.className = 'px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-[10px] font-bold cursor-pointer';
+            } else {
+                deepBox.classList.add('hidden');
+                simpleBox.classList.remove('hidden');
+                if (btnSimple) btnSimple.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold shadow-sm cursor-pointer';
+                if (btnDeep) btnDeep.className = 'px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-[10px] font-bold cursor-pointer';
+            }
+        }
 
         const plainEnglishGrammarExplanations = {
             'Verb': 'Action or state of being',
