@@ -1186,7 +1186,7 @@
                         <span id="parallelPaneChapterTitle" class="font-bold text-sm text-gray-900 dark:text-white">Original Language Parallel</span>
                         <span id="parallelPaneCorpusBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">WLC / SRGNT</span>
                     </div>
-                    <span class="text-[11px] text-gray-500 dark:text-gray-400 italic">Hover word to match &bull; <strong>Hold Shift or Cmd/Ctrl</strong> to freeze word &bull; Click word for Lexicon</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400 italic">Hover to match &bull; <strong>Right-Click</strong> Hebrew/Greek word for <strong>Lexeme &amp; Parsing</strong> &bull; Hold Shift/Cmd to freeze</span>
                 </div>
                 <!-- Live Hover Word Alignment Bar -->
                 <div id="parallelHoverInfoBar" class="mb-3 px-3.5 py-2 rounded-lg bg-blue-50/80 dark:bg-zinc-900/90 border border-blue-200/70 dark:border-zinc-700 text-xs flex items-center justify-between gap-2 min-h-[36px] shrink-0">
@@ -2005,6 +2005,11 @@
         </button>
     </div>
 
+    <!-- ORIGINAL LANGUAGE ONLY (HEBREW & GREEK) RIGHT-CLICK LEXEME & PARSING POPOVER -->
+    <div id="origWordParseMenu" class="fixed z-[580] hidden w-[370px] sm:w-[410px] rounded-2xl bg-white/98 dark:bg-zinc-900/98 border-2 shadow-2xl backdrop-blur-xl overflow-hidden select-text" style="border-color: var(--app-border-solid, #6366f1);">
+        <div id="origWordParseMenuContent"></div>
+    </div>
+
     <div id="contextMenu">
         <div class="ctx-item text-purple-600 dark:text-purple-400 font-semibold" onclick="ctxLookupThayers()">
             <i class="fa-solid fa-spell-check text-xs"></i>
@@ -2415,7 +2420,8 @@
             localStorage.setItem('lexflow_ot_version', 'BSB');
         }
 
-        function updateCorpusUIButtons() {
+        function updateCorpusUIButtons(displayCorpusOverride = null) {
+            const effectiveCorpus = displayCorpusOverride || (wasOriginalLoadedBeforeParallel ? 'srgnt' : currentCorpusType);
             const btnSrgnt = document.getElementById('btnLoadSrgnt');
             const btnEmtv = document.getElementById('btnLoadEmtv');
             const badge = document.getElementById('activeCorpusBadge');
@@ -2424,7 +2430,7 @@
                 otSel.value = currentOtVersionSlug;
             }
             if (btnSrgnt && btnEmtv) {
-                if (currentCorpusType === 'srgnt') {
+                if (effectiveCorpus === 'srgnt') {
                     btnSrgnt.className = 'text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1 rounded transition shadow-sm ring-2 ring-indigo-400';
                     btnEmtv.className = 'text-xs bg-sky-600/80 hover:bg-sky-700 text-white font-semibold px-2.5 py-1 rounded transition shadow-sm opacity-80';
                 } else {
@@ -2433,10 +2439,10 @@
                 }
             }
             if (badge) {
-                badge.textContent = currentCorpusType === 'srgnt'
+                badge.textContent = effectiveCorpus === 'srgnt'
                     ? 'Full WLC (Hebrew OT) + SRGNT (Greek NT)'
                     : `Full ${currentOtVersionSlug} OT + EMTV (66 Books)`;
-                badge.className = currentCorpusType === 'srgnt'
+                badge.className = effectiveCorpus === 'srgnt'
                     ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
                     : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800';
             }
@@ -2577,17 +2583,40 @@
             if (persistNow && typeof saveUniversalProfileState === 'function') saveUniversalProfileState();
         }
 
+        let wasOriginalLoadedBeforeParallel = false;
+
         async function loadScriptureIntoWorkspace(sourceType, options = {}) {
             const targetCorpus = (sourceType === 'srgnt') ? 'srgnt' : 'emtv';
-            const isSwitchingCorpus = (targetCorpus !== currentCorpusType);
+            const isTempParallelLeftEng = Boolean(options.temporaryParallelEnglish);
 
+            // If user explicitly clicks Load SRGNT or Load EMTV while Side-by-Side is already open:
+            if (!isTempParallelLeftEng && isParallelViewActive) {
+                wasOriginalLoadedBeforeParallel = (targetCorpus === 'srgnt');
+                try { localStorage.setItem('lexflow_activeCorpus', targetCorpus); } catch (e) {}
+                if (targetCorpus === 'srgnt') {
+                    // Keep English on the left and Original on the right while Side-by-Side is on, and mark SRGNT as the active base corpus so closing Side-by-Side keeps SRGNT!
+                    updateCorpusUIButtons('srgnt');
+                    return;
+                } else {
+                    updateCorpusUIButtons('emtv');
+                    return;
+                }
+            }
+
+            if (!isTempParallelLeftEng) {
+                wasOriginalLoadedBeforeParallel = (targetCorpus === 'srgnt');
+            }
+
+            const isSwitchingCorpus = (targetCorpus !== currentCorpusType);
             if (editor && editor.children.length > 50 && isSwitchingCorpus) {
                 captureModifiedChaptersFromDOM(currentCorpusType);
             }
 
             currentCorpusType = targetCorpus;
-            try { localStorage.setItem('lexflow_activeCorpus', currentCorpusType); } catch (e) {}
-            updateCorpusUIButtons();
+            if (!isTempParallelLeftEng) {
+                try { localStorage.setItem('lexflow_activeCorpus', currentCorpusType); } catch (e) {}
+            }
+            updateCorpusUIButtons(wasOriginalLoadedBeforeParallel ? 'srgnt' : currentCorpusType);
 
             if (srgntStatus) {
                 srgntStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading Entire ${currentCorpusType.toUpperCase()} Text...`;
@@ -6105,9 +6134,16 @@
             isParallelViewActive = (typeof forceState === 'boolean') ? forceState : !isParallelViewActive;
 
             if (isParallelViewActive) {
-                // Ensure the left pane is showing English so left=English and right=Original (Hebrew/Greek)
-                if (currentCorpusType !== 'emtv') {
-                    await loadScriptureIntoWorkspace('emtv', { silent: true, skipPassageScroll: true });
+                // Remember if the user had Original Language ('srgnt') loaded when turning on Side-by-Side!
+                if (currentCorpusType === 'srgnt') {
+                    wasOriginalLoadedBeforeParallel = true;
+                    await loadScriptureIntoWorkspace('emtv', {
+                        silent: true,
+                        skipPassageScroll: true,
+                        temporaryParallelEnglish: true
+                    });
+                } else {
+                    wasOriginalLoadedBeforeParallel = false;
                 }
                 if (pane) pane.classList.remove('hidden');
                 if (grid) grid.className = 'w-full grid grid-cols-1 lg:grid-cols-2 gap-6 items-start';
@@ -6145,7 +6181,15 @@
                 }
                 if (hoverBox) hoverBox.style.display = 'none';
 
-                // Immediately re-anchor <main> after returning to 1-column width
+                // ONLY when Original Language texts were loaded: remove the temporary left English pane and keep the Original Language text in the workspace!
+                if (wasOriginalLoadedBeforeParallel) {
+                    await loadScriptureIntoWorkspace('srgnt', {
+                        silent: true,
+                        skipPassageScroll: true
+                    });
+                }
+
+                // Immediately re-anchor <main> after returning to 1-column width so the passage never jumps
                 restoreAnchorScrollPosition();
                 requestAnimationFrame(() => {
                     restoreAnchorScrollPosition();
@@ -6259,7 +6303,7 @@
                         const xlitAttr = escapeHtmlText(resolved.translit || '');
                         const morphAttr = escapeHtmlText(fw.morph || '');
                         htmlParts.push(
-                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${flatWords.length}" data-surface="${escapeHtmlText(fw.surface)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)">${escapeHtmlText(fw.surface)}</span>`
+                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${flatWords.length}" data-surface="${escapeHtmlText(fw.surface)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)" oncontextmenu="handleOriginalTokenRightClick(event, this); return false;">${escapeHtmlText(fw.surface)}</span>`
                         );
                         htmlParts.push(fw.hasTrailingMaqqef ? '־' : ' ');
                     });
@@ -6277,7 +6321,7 @@
                         const xlitAttr = escapeHtmlText(resolved.translit || '');
                         const morphAttr = escapeHtmlText(tokHint.morph || '');
                         htmlParts.push(
-                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${rawWords.length}" data-surface="${escapeHtmlText(rw)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)">${escapeHtmlText(rw)}</span> `
+                            `<span class="orig-word-token" data-book-num="${bookNum}" data-chapter-num="${chapterNum}" data-verse-num="${v.verse}" data-word-idx="${wIdx}" data-total-words="${rawWords.length}" data-surface="${escapeHtmlText(rw)}" data-strongs="${strongAttr}" data-lemma="${lemmaAttr}" data-translit="${xlitAttr}" data-kjv-gloss="${kjvGlossAttr}" data-gloss="${glossAttr}" data-morph="${morphAttr}" onmouseenter="handleOriginalTokenHover(this)" onmouseleave="clearParallelHoverHighlights()" onclick="handleOriginalTokenClick(this)" oncontextmenu="handleOriginalTokenRightClick(event, this); return false;">${escapeHtmlText(rw)}</span> `
                         );
                     });
                 }
@@ -8041,6 +8085,16 @@
                 });
 
                 editor.addEventListener('contextmenu', (e) => {
+                    // Check first if the user right-clicked on a Hebrew or Greek word!
+                    const origHit = detectOriginalLanguageWordAtEvent(e);
+                    if (origHit) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        hideContextMenu();
+                        openOriginalWordParsePopover(e.clientX, e.clientY, origHit);
+                        return;
+                    }
+                    hideOriginalWordParsePopover();
                     let node = e.target;
                     while (node && node.parentNode !== editor && node !== editor) {
                         node = node.parentNode;
@@ -8055,7 +8109,24 @@
                     }
                 });
 
+                document.addEventListener('contextmenu', (e) => {
+                    if (e.target && e.target.closest && e.target.closest('#origWordParseMenu')) return;
+                    if (editor && editor.contains(e.target)) return; // handled by editor contextmenu listener
+                    const origHit = detectOriginalLanguageWordAtEvent(e);
+                    if (origHit) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        hideContextMenu();
+                        openOriginalWordParsePopover(e.clientX, e.clientY, origHit);
+                    } else {
+                        hideOriginalWordParsePopover();
+                    }
+                });
+
                 document.addEventListener('click', (e) => {
+                    if (e.target && e.target.closest && !e.target.closest('#origWordParseMenu')) {
+                        hideOriginalWordParsePopover();
+                    }
                     if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
                     if (semanticMenu && !semanticMenu.contains(e.target) && !e.target.closest('.clause-semantic-anchor')) {
                         hideSemanticMenu();
@@ -8197,6 +8268,359 @@
                 return { book: bookCode, chapter: chapNum, startVerse: startV, endVerse: endV };
             }
             return { book: 40, chapter: 1, startVerse: 1, endVerse: 25 };
+        }
+
+        // =========================================================================
+        // ORIGINAL LANGUAGE ONLY (HEBREW & GREEK) RIGHT-CLICK LEXEME & PARSING POPOVER
+        // =========================================================================
+        function isOriginalLanguageScriptWord(wordStr) {
+            if (!wordStr) return false;
+            // Matches Greek (0370-03FF, 1F00-1FFF) or Hebrew (0590-05FF, FB1D-FB4F)
+            return /[\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F]/.test(wordStr);
+        }
+
+        function handleOriginalTokenRightClick(e, tokenEl) {
+            if (!tokenEl) return false;
+            e.preventDefault();
+            e.stopPropagation();
+            hideContextMenu();
+
+            const bookNum = parseInt(tokenEl.dataset.bookNum || '40', 10);
+            const chapterNum = parseInt(tokenEl.dataset.chapterNum || '1', 10);
+            const verseNum = parseInt(tokenEl.dataset.verseNum || '1', 10);
+            const wordIdx = parseInt(tokenEl.dataset.wordIdx || '0', 10);
+            const isOt = bookNum <= 39;
+
+            openOriginalWordParsePopover(e.clientX, e.clientY, {
+                surface: tokenEl.dataset.surface || tokenEl.textContent.trim(),
+                lemma: tokenEl.dataset.lemma || '',
+                strongs: tokenEl.dataset.strongs || '',
+                translit: tokenEl.dataset.translit || '',
+                morph: tokenEl.dataset.morph || '',
+                bookNum,
+                chapterNum,
+                verseNum,
+                wordIdx,
+                isOt
+            });
+            return false;
+        }
+
+        function detectOriginalLanguageWordAtEvent(e) {
+            if (!e) return null;
+
+            // 1. Check if right-clicked directly on an .orig-word-token
+            const tokEl = e.target && e.target.closest ? e.target.closest('.orig-word-token') : null;
+            if (tokEl) {
+                const bookNum = parseInt(tokEl.dataset.bookNum || '40', 10);
+                return {
+                    surface: tokEl.dataset.surface || tokEl.textContent.trim(),
+                    lemma: tokEl.dataset.lemma || '',
+                    strongs: tokEl.dataset.strongs || '',
+                    translit: tokEl.dataset.translit || '',
+                    morph: tokEl.dataset.morph || '',
+                    bookNum,
+                    chapterNum: parseInt(tokEl.dataset.chapterNum || '1', 10),
+                    verseNum: parseInt(tokEl.dataset.verseNum || '1', 10),
+                    wordIdx: parseInt(tokEl.dataset.wordIdx || '0', 10),
+                    isOt: bookNum <= 39
+                };
+            }
+
+            // 2. Check if right-clicked on a Search Hit token chip ([data-token-json])
+            const chipEl = e.target && e.target.closest ? e.target.closest('[data-token-json]') : null;
+            if (chipEl && chipEl.dataset.tokenJson) {
+                try {
+                    const mt = JSON.parse(decodeURIComponent(chipEl.dataset.tokenJson));
+                    if (mt && isOriginalLanguageScriptWord(mt.surface)) {
+                        return {
+                            surface: mt.surface,
+                            lemma: mt.lemma || '',
+                            strongs: mt.strongs || '',
+                            translit: mt.translit || '',
+                            morph: mt.morph || '',
+                            morphSummaryPreset: mt.morphSummary || '',
+                            isOt: Boolean(mt.isOt)
+                        };
+                    }
+                } catch (err) {}
+            }
+
+            // 3. Extract the exact word under the mouse cursor using caretRangeFromPoint / caretPositionFromPoint
+            let range = null;
+            if (document.caretRangeFromPoint) {
+                range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            } else if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                if (pos && pos.offsetNode) {
+                    range = document.createRange();
+                    range.setStart(pos.offsetNode, pos.offset);
+                    range.setEnd(pos.offsetNode, pos.offset);
+                }
+            }
+
+            let extractedWord = '';
+            let contextNode = e.target;
+
+            if (range && range.startContainer && range.startContainer.nodeType === 3) {
+                const textNode = range.startContainer;
+                contextNode = textNode.parentNode;
+                const text = textNode.nodeValue || '';
+                const offset = range.startOffset;
+                const isOrigOrWordChar = (ch) => /[\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4Fa-zA-Z0-9’']/.test(ch || '');
+                let start = offset;
+                let end = offset;
+                if (start > 0 && !isOrigOrWordChar(text[start]) && isOrigOrWordChar(text[start - 1])) {
+                    start--;
+                }
+                if (isOrigOrWordChar(text[start])) {
+                    while (start > 0 && isOrigOrWordChar(text[start - 1])) start--;
+                    while (end < text.length && isOrigOrWordChar(text[end])) end++;
+                    extractedWord = text.slice(start, end).trim();
+                }
+            }
+
+            if (!extractedWord) {
+                const sel = window.getSelection ? window.getSelection().toString().trim() : '';
+                if (sel && sel.split(/\s+/).length === 1) {
+                    extractedWord = sel;
+                }
+            }
+
+            // Strictly trigger ONLY if the word under the right-click is Hebrew or Greek!
+            if (!extractedWord || !isOriginalLanguageScriptWord(extractedWord)) {
+                return null;
+            }
+
+            const isHebrew = /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(extractedWord);
+            let bookNum = isHebrew ? 1 : 40;
+            let chapterNum = 1;
+            let verseNum = 1;
+
+            const blk = contextNode && contextNode.closest ? contextNode.closest('[data-book-num]') : null;
+            if (blk) {
+                bookNum = parseInt(blk.dataset.bookNum || (isHebrew ? '1' : '40'), 10);
+                chapterNum = parseInt(blk.dataset.chapterNum || '1', 10);
+                verseNum = parseInt(blk.dataset.verseNum || '1', 10);
+            }
+
+            return {
+                surface: extractedWord.replace(/^[,.;··—\[\]־]+|[,.;··—\[\]־]+$/g, ''),
+                lemma: '',
+                strongs: '',
+                translit: '',
+                morph: '',
+                bookNum,
+                chapterNum,
+                verseNum,
+                isOt: isHebrew
+            };
+        }
+
+        function hideOriginalWordParsePopover() {
+            const menu = document.getElementById('origWordParseMenu');
+            if (menu) menu.classList.add('hidden');
+        }
+
+        async function openOriginalWordParsePopover(clientX, clientY, wordInfo) {
+            const menu = document.getElementById('origWordParseMenu');
+            const content = document.getElementById('origWordParseMenuContent');
+            if (!menu || !content || !wordInfo || !wordInfo.surface) return;
+
+            ensureLexiconLookupMaps();
+            const isOt = Boolean(wordInfo.isOt);
+            const surface = wordInfo.surface;
+            let lemma = wordInfo.lemma || '';
+            let strongs = wordInfo.strongs || '';
+            let translit = wordInfo.translit || '';
+            let morphCode = wordInfo.morph || '';
+
+            // If morphCode or lemma is missing and we have book/chapter/verse, check the verse's WLC or MorphGNT token cache!
+            if ((!morphCode || !lemma || !strongs) && wordInfo.bookNum && wordInfo.chapterNum && wordInfo.verseNum) {
+                const vKey = `${wordInfo.bookNum}_${wordInfo.chapterNum}_${wordInfo.verseNum}`;
+                if (isOt) {
+                    if (!scriptureDataCache.wlcVerseTokensMap || !scriptureDataCache.wlcVerseTokensMap.has(vKey)) {
+                        try { await fetchHebrewChapterFast(wordInfo.bookNum, wordInfo.chapterNum); } catch (e) {}
+                    }
+                    const wlcToks = (scriptureDataCache.wlcVerseTokensMap && scriptureDataCache.wlcVerseTokensMap.has(vKey))
+                        ? scriptureDataCache.wlcVerseTokensMap.get(vKey)
+                        : [];
+                    if (wlcToks.length > 0) {
+                        const normTarget = normalizeHebrewConsonants(surface);
+                        const matchTok = (typeof wordInfo.wordIdx === 'number' && wlcToks[wordInfo.wordIdx])
+                            ? wlcToks[wordInfo.wordIdx]
+                            : wlcToks.find(t => t.surface === surface || normalizeHebrewConsonants(t.surface) === normTarget);
+                        if (matchTok) {
+                            if (!strongs && matchTok.strongs) strongs = matchTok.strongs;
+                            if (!morphCode && matchTok.morph) morphCode = matchTok.morph;
+                        }
+                    }
+                } else {
+                    const srgntToks = await getSrgntTokensForSingleVerse(wordInfo.bookNum, wordInfo.chapterNum, wordInfo.verseNum);
+                    if (srgntToks && srgntToks.length > 0) {
+                        const normTarget = normalizeGreekWord(surface);
+                        const matchTok = (typeof wordInfo.wordIdx === 'number' && srgntToks[wordInfo.wordIdx])
+                            ? srgntToks[wordInfo.wordIdx]
+                            : srgntToks.find(t => normalizeGreekWord(t.surface) === normTarget);
+                        if (matchTok) {
+                            if (!lemma && matchTok.lemma) lemma = matchTok.lemma;
+                            if (!strongs && matchTok.strongs) strongs = matchTok.strongs;
+                            if (!morphCode && matchTok.morph) morphCode = matchTok.morph;
+                        }
+                    }
+                }
+            }
+
+            // Analyze full morphology and lexical root
+            const morphInfo = analyzeTokenMorphology({
+                surface,
+                lemma,
+                strongs,
+                morph: morphCode
+            }, isOt);
+
+            const resolved = morphInfo.resolved || {};
+            const finalLemma = lemma || resolved.lemma || surface;
+            const finalStrongs = strongs || resolved.strongs || '';
+            const finalTranslit = translit || resolved.translit || '';
+            const finalMorphSummary = wordInfo.morphSummaryPreset || morphInfo.summary || (isOt ? 'Hebrew Word' : 'Greek Word');
+
+            let rawLexEntry = null;
+            if (finalStrongs) {
+                if (isOt && typeof strongsHebrewDictionary !== 'undefined') {
+                    rawLexEntry = strongsHebrewDictionary[finalStrongs];
+                } else if (!isOt && typeof strongsGreekDictionary !== 'undefined') {
+                    rawLexEntry = strongsGreekDictionary[finalStrongs];
+                }
+            }
+
+            const pronStr = rawLexEntry ? (rawLexEntry.pron || '') : '';
+            const strongsDef = rawLexEntry ? (rawLexEntry.strongs_def || '') : (resolved.gloss || '');
+            const kjvDef = rawLexEntry ? ((rawLexEntry.kjv_def || '').replace(/^:\s*--+/, '').trim()) : '';
+            const derivation = rawLexEntry ? (rawLexEntry.derivation || '') : '';
+            const shortGloss = (kjvDef || strongsDef || resolved.gloss || '').split(';').slice(0, 3).join('; ').slice(0, 140);
+
+            // Build slot-by-slot parsing rows
+            const slotRows = [];
+            if (morphInfo.pos) slotRows.push({ label: 'Part of Speech', val: morphInfo.pos });
+            if (morphInfo.stem) slotRows.push({ label: 'Hebrew Stem (Binyan)', val: morphInfo.stem });
+            if (morphInfo.tense) slotRows.push({ label: 'Tense / Aspect', val: morphInfo.tense });
+            if (morphInfo.voice) slotRows.push({ label: 'Voice', val: morphInfo.voice });
+            if (morphInfo.mood) slotRows.push({ label: 'Mood / Conjugation', val: morphInfo.mood });
+            if (morphInfo.caseState) slotRows.push({ label: isOt ? 'State' : 'Case', val: morphInfo.caseState });
+            if (morphInfo.person) slotRows.push({ label: 'Person', val: morphInfo.person });
+            if (morphInfo.gender) slotRows.push({ label: 'Gender', val: morphInfo.gender });
+            if (morphInfo.number) slotRows.push({ label: 'Number', val: morphInfo.number });
+
+            const prefixInsight = typeof buildGrammarInsightForToken === 'function'
+                ? buildGrammarInsightForToken(surface, finalLemma, isOt)
+                : '';
+
+            const slotGridHtml = slotRows.length > 0
+                ? `<div class="grid grid-cols-2 gap-1.5 pt-1">
+                    ${slotRows.map(sr => `
+                        <div class="px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-zinc-800/90 border border-gray-200/80 dark:border-zinc-700">
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">${escapeHtmlText(sr.label)}</div>
+                            <div class="text-xs font-bold text-gray-900 dark:text-white">${escapeHtmlText(sr.val)}</div>
+                        </div>
+                    `).join('')}
+                   </div>`
+                : '';
+
+            // Plain-English breakdown of each parsing tag
+            const summaryParts = finalMorphSummary.split(',').map(s => s.trim()).filter(Boolean);
+            const plainNotesHtml = summaryParts
+                .filter(p => plainEnglishGrammarExplanations && plainEnglishGrammarExplanations[p])
+                .map(p => `<div class="text-[11px] text-gray-700 dark:text-gray-300"><strong class="text-amber-700 dark:text-amber-300">${escapeHtmlText(p)}:</strong> ${escapeHtmlText(plainEnglishGrammarExplanations[p])}</div>`)
+                .join('');
+
+            const safeSurf = surface.replace(/'/g, "\\'");
+            const safeTrans = finalTranslit.replace(/'/g, "\\'");
+            const safeLexCode = (finalStrongs || finalLemma || surface).replace(/'/g, "\\'");
+            const safeExactMorph = finalMorphSummary.replace(/'/g, "\\'");
+            const copyPayload = `${surface} (Lexeme: ${finalLemma}${finalStrongs ? ', ' + finalStrongs : ''}) — ${finalMorphSummary}${shortGloss ? ' — ' + shortGloss : ''}`.replace(/'/g, "\\'");
+
+            content.innerHTML = `
+                <!-- Header -->
+                <div class="px-4 py-2.5 bg-gradient-to-r ${isOt ? 'from-teal-600 to-emerald-600' : 'from-indigo-600 to-blue-600'} text-white flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 rounded bg-white/20 font-mono text-[10px] font-bold uppercase tracking-wider">${isOt ? 'Hebrew (OT)' : 'Greek (NT)'}</span>
+                        <span class="text-xs font-bold">Lexeme &amp; Morphological Parsing</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button type="button" onclick="pronounceOriginalWord('${safeSurf}', '${safeTrans}', ${isOt})" class="px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition cursor-pointer flex items-center space-x-1" title="Pronounce Word">
+                            <i class="fa-solid fa-volume-high text-[9px]"></i>
+                            <span>Pronounce</span>
+                        </button>
+                        <button type="button" onclick="hideOriginalWordParsePopover()" class="text-white/80 hover:text-white px-1.5 py-0.5 text-sm font-bold cursor-pointer" title="Close (Esc)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 space-y-3 text-xs max-h-[75vh] overflow-y-auto custom-scrollbar">
+                    <!-- 1. Surface Form vs. Lexeme (Dictionary Root) Box -->
+                    <div class="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-indigo-50/70 dark:bg-zinc-800/90 border border-indigo-200/80 dark:border-zinc-700">
+                        <div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Form (Inflected)</div>
+                            <div class="font-serif font-bold text-2xl text-gray-900 dark:text-white mt-0.5" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(surface)}</div>
+                            ${finalTranslit ? `<div class="font-mono text-[11px] text-purple-700 dark:text-purple-300 font-semibold">${escapeHtmlText(finalTranslit)}${pronStr ? ` (${escapeHtmlText(pronStr)})` : ''}</div>` : ''}
+                        </div>
+                        <div class="border-l border-indigo-200/80 dark:border-zinc-700 pl-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Lexeme (Root)</span>
+                                ${finalStrongs ? `<span class="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">${escapeHtmlText(finalStrongs)}</span>` : ''}
+                            </div>
+                            <div class="font-serif font-bold text-2xl text-indigo-700 dark:text-indigo-300 mt-0.5" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(finalLemma)}</div>
+                            <div class="text-[11px] text-gray-700 dark:text-gray-200 font-medium leading-snug mt-0.5">${escapeHtmlText(shortGloss || 'Original root')}</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Full Morphological Parsing Breakdown -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"><i class="fa-solid fa-diagram-project mr-1"></i>Morphological Parsing</span>
+                            ${morphCode ? `<span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 font-mono text-[10px] text-gray-600 dark:text-gray-400" title="Raw Morphological Tag Code">Code: ${escapeHtmlText(morphCode)}</span>` : ''}
+                        </div>
+                        <div class="px-3 py-2 rounded-xl bg-amber-100/90 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 font-bold text-xs text-amber-900 dark:text-amber-200">
+                            ${escapeHtmlText(finalMorphSummary)}
+                        </div>
+                        ${slotGridHtml}
+                        ${prefixInsight ? `<div class="px-2.5 py-1.5 rounded-lg bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>${escapeHtmlText(prefixInsight)}</div>` : ''}
+                        ${plainNotesHtml ? `<div class="p-2.5 rounded-xl bg-gray-50/90 dark:bg-zinc-800/60 border border-gray-200/70 dark:border-zinc-700/70 space-y-1">${plainNotesHtml}</div>` : ''}
+                    </div>
+
+                    <!-- 3. Quick Actions Footer -->
+                    <div class="pt-2 border-t border-gray-200/80 dark:border-zinc-700/80 grid grid-cols-2 gap-1.5">
+                        <button type="button" onclick="hideOriginalWordParsePopover(); ${isOt ? `openBdbModal('${safeLexCode}')` : `openThayersModal('${safeLexCode}')`};" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition cursor-pointer flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-book-open text-[10px]"></i>
+                            <span>Open ${isOt ? 'BDB' : 'Thayer\'s'} Lexicon</span>
+                        </button>
+                        <button type="button" onclick="hideOriginalWordParsePopover(); openGrammarSearchModal('${safeExactMorph}');" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition cursor-pointer flex items-center justify-center space-x-1" title="Find all words with this exact parsing">
+                            <i class="fa-solid fa-filter text-[10px]"></i>
+                            <span>Search Exact Parsing</span>
+                        </button>
+                        <button type="button" onclick="hideOriginalWordParsePopover(); openGrammarSearchModal('${ (finalStrongs || finalLemma).replace(/'/g, "\\'") }');" class="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold transition cursor-pointer flex items-center justify-center space-x-1" title="Find all occurrences of this Lexeme across Scripture">
+                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                            <span>Search This Lexeme</span>
+                        </button>
+                        <button type="button" onclick="navigator.clipboard.writeText('${copyPayload}'); this.innerHTML='<i class=\'fa-solid fa-check text-emerald-500\'></i><span>Copied!</span>';" class="px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-200 text-[11px] font-bold transition cursor-pointer flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-copy text-[10px]"></i>
+                            <span>Copy Lexeme &amp; Parse</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            menu.classList.remove('hidden');
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            const menuW = menu.offsetWidth || 390;
+            const menuH = menu.offsetHeight || 380;
+            const leftPx = Math.max(10, Math.min(winW - menuW - 12, clientX + 6));
+            const topPx = Math.max(10, Math.min(winH - menuH - 12, clientY + 6));
+            menu.style.left = `${leftPx}px`;
+            menu.style.top = `${topPx}px`;
         }
 
         function showContextMenu(x, y) {
