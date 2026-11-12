@@ -968,6 +968,14 @@
                         <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">In-App</span>
                     </button>
 
+                    <button type="button" onclick="openVisualAnalyticsStudioFromCurrentSearch(false)" class="glass-control w-full text-teal-700 dark:text-teal-300 text-xs font-semibold px-3.5 py-2.5 flex items-center justify-between" title="Compare &amp; Visualize Search Findings (Bar Charts, Pie/Donut, Chapter Trends, Heatmaps &amp; Tables)">
+                        <span class="flex items-center space-x-2.5">
+                            <i class="fa-solid fa-chart-pie text-teal-500 w-4 text-center"></i>
+                            <span>Visual Analytics Studio</span>
+                        </span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300">Charts</span>
+                    </button>
+
                     <button type="button" id="sidebarParallelBtn" onclick="toggleParallelOriginalPane()" class="glass-control w-full text-blue-700 dark:text-blue-300 text-xs font-semibold px-3.5 py-2.5 flex items-center justify-between" title="Toggle Side-by-Side English & Original Language Interlinear Hover View">
                         <span class="flex items-center space-x-2.5">
                             <i class="fa-solid fa-columns text-blue-500 w-4 text-center"></i>
@@ -2036,6 +2044,145 @@
             <i id="floatingSubFocusLockIcon" class="fa-solid fa-thumbtack text-[10px]"></i>
             <span id="floatingSubFocusLockText">Lock Focus</span>
         </button>
+    </div>
+
+    <!-- VISUAL ANALYTICS & COMPARATIVE FINDINGS STUDIO MODAL (CHART AT VERY TOP + MENU DROPDOWNS FOR ALL GRAMMAR NUANCES + RESIZABLE POP-OUT) -->
+    <div id="visualAnalyticsModal" class="fixed inset-0 z-[570] bg-black/60 backdrop-blur-sm flex items-center justify-center p-1.5 sm:p-3 hidden">
+        <div id="visualAnalyticsDialogPanel" class="glass-panel flex flex-col relative overflow-hidden" style="width: 96vw; max-width: 1460px; height: 95vh; min-width: 640px; min-height: 460px; resize: both;">
+            <!-- Compact Top Menu Bar: Chart Type Menu + Quick Category Breakdown Dropdown + Axis/Metric Menus + Pop-Out Resizable Window -->
+            <div class="px-4 py-2.5 bg-gradient-to-r from-slate-50/95 via-white/95 to-teal-50/90 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-indigo-200/80 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center flex-wrap gap-2">
+                    <div class="p-1.5 rounded-xl text-white shadow-sm" style="background: linear-gradient(135deg, #5b6abf, #3d9982);">
+                        <i class="fa-solid fa-chart-pie text-xs"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">Visual Analytics</h3>
+
+                    <!-- 5 Visual Mode Switcher Tabs -->
+                    <div class="flex items-center flex-wrap gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl border border-gray-200 dark:border-zinc-700">
+                        <button type="button" id="vizTabBtn_bar" onclick="setVisualAnalyticsChartMode('bar')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1">
+                            <i class="fa-solid fa-chart-column text-[10px]"></i><span>Bar Chart</span>
+                        </button>
+                        <button type="button" id="vizTabBtn_pie" onclick="setVisualAnalyticsChartMode('pie')" class="px-2.5 py-1 rounded-lg text-gray-600 dark:text-gray-400 font-bold text-[11px] transition cursor-pointer flex items-center space-x-1">
+                            <i class="fa-solid fa-chart-pie text-[10px]"></i><span>Pie &amp; Donut</span>
+                        </button>
+                        <button type="button" id="vizTabBtn_line" onclick="setVisualAnalyticsChartMode('line')" class="px-2.5 py-1 rounded-lg text-gray-600 dark:text-gray-400 font-bold text-[11px] transition cursor-pointer flex items-center space-x-1">
+                            <i class="fa-solid fa-chart-line text-[10px]"></i><span>Trend Line</span>
+                        </button>
+                        <button type="button" id="vizTabBtn_heatmap" onclick="setVisualAnalyticsChartMode('heatmap')" class="px-2.5 py-1 rounded-lg text-gray-600 dark:text-gray-400 font-bold text-[11px] transition cursor-pointer flex items-center space-x-1">
+                            <i class="fa-solid fa-table-cells text-[10px]"></i><span>Heatmap</span>
+                        </button>
+                        <button type="button" id="vizTabBtn_table" onclick="setVisualAnalyticsChartMode('table')" class="px-2.5 py-1 rounded-lg text-gray-600 dark:text-gray-400 font-bold text-[11px] transition cursor-pointer flex items-center space-x-1">
+                            <i class="fa-solid fa-table text-[10px]"></i><span>Data Table</span>
+                        </button>
+                    </div>
+
+                    <!-- Multi-Select Nuance & Comparison Dropdown Menu (Check Any 1, 2, or More Nuances to View or Compare!) -->
+                    <div id="analyticsMultiNuanceDropdownWrap" class="relative">
+                        <button type="button" onclick="toggleAnalyticsNuancePickerMenu(event)" class="glass-control px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white transition cursor-pointer flex items-center space-x-1.5" title="Choose any 1, 2, or more grammatical nuances (Tense, Mood, Voice/Stem, Case, Gender, Number, Person, POS) to view or compare together">
+                            <i class="fa-solid fa-list-check text-xs"></i>
+                            <span id="analyticsNuanceMenuBtnLabel">Choose &amp; Compare Nuances &#9662;</span>
+                        </button>
+
+                        <!-- Multi-Column Checkbox Dropdown Panel -->
+                        <div id="analyticsNuancePickerPopover" onclick="event.stopPropagation()" class="hidden fixed sm:absolute left-2 sm:left-0 mt-2 w-[94vw] sm:w-[760px] max-w-[95vw] z-[590] p-4 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-indigo-400 dark:border-indigo-600 shadow-2xl space-y-3 text-xs">
+                            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-200 dark:border-zinc-700">
+                                <div>
+                                    <div class="font-bold text-gray-900 dark:text-white text-xs">Select Any 1, 2, or More Grammatical Nuances</div>
+                                    <div class="text-[11px] text-gray-500 dark:text-gray-400">Check multiple items to compare them side-by-side (or combine checked items into a single exact-form series)</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select id="nuanceMenuGlobalScopeSelect" onchange="applyGlobalScopeToAllAnalyticsSeries(this.value)" class="glass-control px-2 py-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer" title="Scope for selected comparisons">
+                                    </select>
+                                    <button type="button" onclick="clearAllNuancePickerCheckboxes()" class="px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-600 dark:text-gray-300 text-[11px] font-bold cursor-pointer">Clear All</button>
+                                    <button type="button" onclick="closeAnalyticsNuancePickerMenu()" class="text-gray-400 hover:text-red-500 font-bold text-sm px-1 cursor-pointer">&times;</button>
+                                </div>
+                            </div>
+
+                            <!-- How Checked Items Should Be Applied -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-indigo-50/80 dark:bg-zinc-800/90 border border-indigo-200/80 dark:border-zinc-700">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="text-[11px] font-bold text-indigo-900 dark:text-indigo-300">When checking multiple boxes:</span>
+                                    <label class="inline-flex items-center space-x-1.5 cursor-pointer font-bold text-[11px] text-gray-800 dark:text-gray-100">
+                                        <input type="radio" name="nuanceCheckBehavior" value="compare_each" checked onchange="onNuanceCheckboxChange()" class="accent-indigo-600">
+                                        <span>Compare Each Checked Item Side-by-Side (Separate Bars/Slices)</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1.5 cursor-pointer font-bold text-[11px] text-gray-800 dark:text-gray-100">
+                                        <input type="radio" name="nuanceCheckBehavior" value="combine_exact" onchange="onNuanceCheckboxChange()" class="accent-teal-600">
+                                        <span>Combine Checked into 1 Exact Form (e.g. Verb + Present + Imperative)</span>
+                                    </label>
+                                </div>
+                                <button type="button" onclick="addCheckedNuancesAsNewCombinedSeries()" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold shadow-sm transition cursor-pointer shrink-0">
+                                    + Add Checked as New Series
+                                </button>
+                            </div>
+
+                            <!-- 4-Column Categorized Checkboxes Grid -->
+                            <div id="analyticsNuanceCheckboxesGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[52vh] overflow-y-auto custom-scrollbar pr-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <select id="analyticsAxisGroupingSelect" onchange="renderVisualAnalyticsOutput()" class="glass-control px-2 py-1 text-[11px] font-bold text-gray-800 dark:text-gray-200 outline-none cursor-pointer" title="Group breakdown by Book or by Chapter">
+                        <option value="auto" selected>Breakdown: Auto</option>
+                        <option value="chapter">By Chapter</option>
+                        <option value="book">By Book</option>
+                    </select>
+                    <select id="analyticsMetricModeSelect" onchange="renderVisualAnalyticsOutput()" class="glass-control px-2 py-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 outline-none cursor-pointer" title="Compare raw hit counts or normalized density per 100 verses">
+                        <option value="count" selected>Metric: Total Hits</option>
+                        <option value="density">Metric: Density / 100v</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" onclick="detachVisualAnalyticsToBrowserWindow()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5" title="Open the entire Visual Analytics Studio in a standalone resizable browser window">
+                        <i class="fa-solid fa-up-right-from-square text-xs"></i>
+                        <span>Pop Out Resizable Window &nearr;</span>
+                    </button>
+                    <button type="button" onclick="insertAnalyticsTableIntoMasterNotes()" class="px-2.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1" title="Save comparative breakdown table to Master Notes">
+                        <i class="fa-solid fa-file-pen text-[10px]"></i>
+                        <span class="hidden sm:inline">Save to Notes</span>
+                    </button>
+                    <button type="button" onclick="exportAnalyticsFindingsCsv()" class="px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 text-[11px] font-bold border border-gray-300 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1" title="Export CSV">
+                        <i class="fa-solid fa-download text-[10px]"></i>
+                        <span class="hidden sm:inline">CSV</span>
+                    </button>
+                    <button type="button" onclick="closeVisualAnalyticsModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-0.5 rounded transition cursor-pointer" title="Close Visual Studio (Esc)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Scrollable Body: 1. VISUAL CHART RIGHT AT VERY TOP -> 2. GRAMMAR NUANCE DROPDOWN MENU BUILDER (VIEW 1 OR COMPARE MANY) -> 3. VERSE DRILL-DOWN -->
+            <div class="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-4 bg-gray-50/70 dark:bg-zinc-900/70">
+                <!-- 1. TOP VISUAL CHART & KPI CONTAINER (Always Right at the Very Top!) -->
+                <div id="visualAnalyticsMainCanvas" class="space-y-4"></div>
+
+                <!-- 2. GRAMMAR NUANCE DROPDOWN MENU BUILDER (View Any Single Tense/Mood/Voice/Case/Gender/Number/Word or Compare Multiple Together!) -->
+                <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-3 text-xs">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-zinc-700">
+                        <div>
+                            <span class="font-bold text-xs text-gray-900 dark:text-white"><i class="fa-solid fa-sliders text-indigo-500 mr-1.5"></i>Grammar Nuance &amp; Search Series Menu</span>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400 ml-2">Pick any combination of Part of Speech, Tense, Mood, Voice/Stem, Case/State, Gender, Number, Person, or Word/Schema &bull; View just 1 series or click <strong>+ Add Series to Compare</strong></span>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-1.5">
+                            <button type="button" onclick="addAnalyticsComparisonSeries()" class="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>+ Add Series to Compare</span>
+                            </button>
+                            <button type="button" onclick="resetAnalyticsToSingleSeries()" class="px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-[11px] font-semibold border border-gray-300 dark:border-zinc-700 transition cursor-pointer">
+                                Single Series Only
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Series Rows with Full Nuance Dropdown Menus -->
+                    <div id="analyticsSeriesBuilderRows" class="space-y-2.5"></div>
+                </div>
+
+                <!-- 3. VERSE BREAKDOWN DRILL-DOWN CONTAINER -->
+                <div id="visualAnalyticsDrilldownContainer"></div>
+            </div>
+        </div>
     </div>
 
     <!-- BUILT-IN GREEK & HEBREW GRAMMAR COMPANION MODAL (LAYPERSON ESSENTIALS + DEEP EXEGETICAL SYNTAX) -->
@@ -8509,6 +8656,9 @@
                 });
 
                 document.addEventListener('click', (e) => {
+                    if (e.target && e.target.closest && !e.target.closest('#analyticsMultiNuanceDropdownWrap')) {
+                        if (typeof closeAnalyticsNuancePickerMenu === 'function') closeAnalyticsNuancePickerMenu();
+                    }
                     if (e.target && e.target.closest && !e.target.closest('#origWordParseMenu')) {
                         hideOriginalWordParsePopover();
                     }
@@ -13588,6 +13738,1565 @@
             }
         ];
 
+        // =========================================================================
+        // VISUAL ANALYTICS & COMPARATIVE FINDINGS STUDIO ENGINE
+        // (Soft-Muted Editorial Palette — Colorful, Harmonious, Never Blinding!)
+        // =========================================================================
+        const editorialChartPalette = [
+            { hex: '#5b6abf', lightBg: 'rgba(91, 106, 191, 0.14)', border: '#4a58a8', name: 'Slate Indigo' },
+            { hex: '#d97757', lightBg: 'rgba(217, 119, 87, 0.14)', border: '#c26142', name: 'Warm Terracotta' },
+            { hex: '#3d9982', lightBg: 'rgba(61, 153, 130, 0.14)', border: '#2e7d69', name: 'Sage Teal' },
+            { hex: '#d49b3b', lightBg: 'rgba(212, 155, 59, 0.14)', border: '#b88228', name: 'Muted Gold' },
+            { hex: '#8b6bb1', lightBg: 'rgba(139, 107, 177, 0.14)', border: '#735399', name: 'Dusty Plum' },
+            { hex: '#4a90a4', lightBg: 'rgba(74, 144, 164, 0.14)', border: '#387688', name: 'Ocean Slate' },
+            { hex: '#c26d85', lightBg: 'rgba(194, 109, 133, 0.14)', border: '#a8556c', name: 'Rose Clay' },
+            { hex: '#6b9e58', lightBg: 'rgba(107, 158, 88, 0.14)', border: '#548243', name: 'Olive Moss' }
+        ];
+
+        const biblicalScopeGroups = {
+            'james': { label: 'James (Ch. 1–5)', books: [59] },
+            'paul': { label: "Paul's Epistles (Rom–Phlm, 13 Books)", books: [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57] },
+            'paul_major': { label: 'Paul & James (Rom, Gal, Eph, Phil, Col, Jas)', books: [45, 48, 49, 50, 51, 59] },
+            'ephesians': { label: 'Ephesians (Ch. 1–6)', books: [49] },
+            'romans_james': { label: 'Romans & James', books: [45, 59] },
+            'general_epistles': { label: 'General Epistles (Heb–Jude, 8 Books)', books: [58, 59, 60, 61, 62, 63, 64, 65] },
+            'gospels_acts': { label: 'Gospels & Acts (Matt–Acts)', books: [40, 41, 42, 43, 44] },
+            'johannine': { label: 'Johannine Writings (John, 1–3 Jn, Rev)', books: [43, 62, 63, 64, 66] },
+            'torah': { label: 'Pentateuch / Torah (Gen–Deut)', books: [1, 2, 3, 4, 5] },
+            'gen_isa': { label: 'Genesis & Isaiah', books: [1, 23] },
+            'nt': { label: 'New Testament (All 27 Books: Matt–Rev)', books: Array.from({ length: 27 }, (_, i) => 40 + i) },
+            'ot': { label: 'Old Testament (All 39 Books: Gen–Mal)', books: Array.from({ length: 39 }, (_, i) => 1 + i) },
+            'both': { label: 'Entire Bible (All 66 Books: Gen–Rev)', books: Array.from({ length: 66 }, (_, i) => 1 + i) },
+            'current_book': { label: 'Current Workspace Book', books: [] }
+        };
+
+        let activeAnalyticsChartMode = 'bar';
+        let analyticsSeriesConfigs = [
+            { id: 's1', label: 'Imperative (New Testament)', query: 'Imperative', scopeKey: 'nt' }
+        ];
+        let computedAnalyticsSeriesResults = [];
+        let activeDrilldownBucketKey = null;
+
+        function getScopeBookNumbers(scopeKey) {
+            if (!scopeKey) return Array.from({ length: 27 }, (_, i) => 40 + i);
+            if (biblicalScopeGroups[scopeKey] && biblicalScopeGroups[scopeKey].books.length > 0) {
+                return biblicalScopeGroups[scopeKey].books;
+            }
+            if (scopeKey === 'current_book') {
+                const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
+                const curB = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : 40;
+                return [curB];
+            }
+            if (scopeKey.startsWith('book_')) {
+                const bNum = parseInt(scopeKey.replace('book_', ''), 10);
+                if (bNum >= 1 && bNum <= 66) return [bNum];
+            }
+            return Array.from({ length: 27 }, (_, i) => 40 + i);
+        }
+
+        function getShortScopeName(scopeKey) {
+            if (!scopeKey) return 'NT';
+            if (scopeKey === 'nt') return 'Entire NT';
+            if (scopeKey === 'ot') return 'Entire OT';
+            if (scopeKey === 'both') return 'All 66 Books';
+            if (scopeKey === 'paul') return "Paul's Writings";
+            if (scopeKey === 'general_epistles') return 'General Epistles';
+            if (scopeKey === 'gospels_acts') return 'Gospels & Acts';
+            if (scopeKey === 'johannine') return 'Johannine';
+            if (scopeKey === 'torah') return 'Pentateuch';
+            if (scopeKey.startsWith('book_')) {
+                const bNum = parseInt(scopeKey.slice(5), 10);
+                return bibleBooksList[bNum - 1] ? bibleBooksList[bNum - 1].name : scopeKey;
+            }
+            if (biblicalScopeGroups[scopeKey]) {
+                return biblicalScopeGroups[scopeKey].label.split('(')[0].replace(/^(Book:|Corpus:|Comparison:|Scope:)\s*/i, '').trim();
+            }
+            return scopeKey;
+        }
+
+        function buildScopeOptionsHtml(selectedKey) {
+            const groupEntries = [
+                ['nt', 'Scope: Entire New Testament (All 27 Books)'],
+                ['ot', 'Scope: Entire Old Testament (All 39 Books)'],
+                ['both', 'Scope: Entire Bible (All 66 Books: OT & NT)'],
+                ['current_book', 'Scope: Current Workspace Book'],
+                ['paul', "Corpus: Paul's Epistles (Rom–Phlm, 13 Books)"],
+                ['general_epistles', 'Corpus: General Epistles (Hebrews–Jude, 8 Books)'],
+                ['gospels_acts', 'Corpus: Gospels & Acts (Matt–Acts, 5 Books)'],
+                ['johannine', 'Corpus: Johannine Writings (John, 1–3 Jn, Rev)'],
+                ['torah', 'Corpus: Pentateuch / Torah (Gen–Deut, 5 Books)'],
+                ['paul_major', 'Group: James + Key Pauline Letters (Rom, Gal, Eph, Phil, Col, Jas)'],
+                ['romans_james', 'Group: Romans & James'],
+                ['gen_isa', 'Group: Genesis & Isaiah (OT)']
+            ];
+
+            let html = groupEntries.map(([k, lbl]) =>
+                `<option value="${k}" ${selectedKey === k ? 'selected' : ''}>${escapeHtmlText(lbl)}</option>`
+            ).join('');
+
+            html += `<optgroup label="Individual Bible Books (All 66 Books)">`;
+            bibleBooksList.forEach(b => {
+                const bk = `book_${b.num}`;
+                html += `<option value="${bk}" ${selectedKey === bk ? 'selected' : ''}>Book: ${escapeHtmlText(b.name)}</option>`;
+            });
+            html += `</optgroup>`;
+            return html;
+        }
+
+        // Parse a series query string into individual nuance slots so the dropdown menus always reflect the active query!
+        function decomposeSeriesQueryIntoNuanceSlots(rawQuery) {
+            const slots = {
+                pos: '',
+                tense: '',
+                mood: '',
+                voice: '',
+                caseState: '',
+                gender: '',
+                number: '',
+                person: '',
+                wordText: ''
+            };
+            const q = String(rawQuery || '').trim();
+            if (!q) return slots;
+
+            if (isPureGrammarCommandQuery(q)) {
+                const tags = [];
+                normalizeGrammarCommandTokens(q).forEach(tok => {
+                    if (strictMorphKeywordMap[tok]) tags.push(strictMorphKeywordMap[tok]);
+                });
+                const pick = (opts) => opts.find(o => tags.includes(o)) || '';
+                slots.pos = pick(['Verb', 'Noun', 'Adjective', 'Pronoun', 'Preposition', 'Conjunction', 'Adverb', 'Particle', 'Article']);
+                slots.tense = pick(['Present', 'Aorist', 'Perfect', 'Imperfect', 'Future', 'Pluperfect']);
+                slots.mood = pick(['Indicative', 'Imperative', 'Subjunctive', 'Optative', 'Infinitive', 'Participle', 'Jussive', 'Cohortative']);
+                slots.voice = pick(['Active', 'Middle', 'Passive', 'Qal', 'Niphal', 'Piel', 'Pual', 'Hiphil', 'Hophal', 'Hithpael', 'Polel', 'Poal']);
+                slots.caseState = pick(['Nominative', 'Genitive', 'Dative', 'Accusative', 'Vocative', 'Construct', 'Absolute']);
+                slots.gender = pick(['Masculine', 'Feminine', 'Neuter']);
+                slots.number = pick(['Singular', 'Plural', 'Dual']);
+                slots.person = pick(['1st Person', '2nd Person', '3rd Person']);
+            } else {
+                slots.wordText = q;
+            }
+            return slots;
+        }
+
+        function buildDropdownHtml(optionsList, currentVal, onChangeJs) {
+            return `<select onchange="${onChangeJs}" class="glass-control px-2 py-1 text-[11px] font-semibold ${currentVal ? 'text-indigo-700 dark:text-indigo-300 border-indigo-400 font-bold' : 'text-gray-700 dark:text-gray-300'} outline-none cursor-pointer">` +
+                optionsList.map(([val, label]) => `<option value="${escapeHtmlText(val)}" ${currentVal === val ? 'selected' : ''}>${escapeHtmlText(label)}</option>`).join('') +
+                `</select>`;
+        }
+
+        function renderAnalyticsSeriesBuilderRows() {
+            const container = document.getElementById('analyticsSeriesBuilderRows');
+            if (!container) return;
+
+            const posOptions = [
+                ['', 'Part of Speech: Any'],
+                ['Verb', 'POS: Verb'],
+                ['Noun', 'POS: Noun'],
+                ['Adjective', 'POS: Adjective'],
+                ['Pronoun', 'POS: Pronoun'],
+                ['Preposition', 'POS: Preposition'],
+                ['Conjunction', 'POS: Conjunction'],
+                ['Adverb', 'POS: Adverb'],
+                ['Particle', 'POS: Particle / Article']
+            ];
+            const tenseOptions = [
+                ['', 'Tense / Aspect: Any'],
+                ['Present', 'Tense: Present'],
+                ['Aorist', 'Tense: Aorist'],
+                ['Perfect', 'Tense: Perfect'],
+                ['Imperfect', 'Tense: Imperfect'],
+                ['Future', 'Tense: Future']
+            ];
+            const moodOptions = [
+                ['', 'Mood / Form: Any'],
+                ['Indicative', 'Mood: Indicative'],
+                ['Imperative', 'Mood: Imperative'],
+                ['Subjunctive', 'Mood: Subjunctive'],
+                ['Optative', 'Mood: Optative'],
+                ['Infinitive', 'Form: Infinitive'],
+                ['Participle', 'Form: Participle'],
+                ['Cohortative', 'Hebrew: Cohortative'],
+                ['Jussive', 'Hebrew: Jussive']
+            ];
+            const voiceOptions = [
+                ['', 'Voice / Stem: Any'],
+                ['Active', 'Voice: Active'],
+                ['Middle', 'Voice: Middle'],
+                ['Passive', 'Voice: Passive'],
+                ['Qal', 'Stem: Qal (Simple)'],
+                ['Niphal', 'Stem: Niphal (Passive/Refl)'],
+                ['Piel', 'Stem: Piel (Intensive)'],
+                ['Pual', 'Stem: Pual (Intensive Pass)'],
+                ['Hiphil', 'Stem: Hiphil (Causative)'],
+                ['Hophal', 'Stem: Hophal (Causative Pass)'],
+                ['Hithpael', 'Stem: Hithpael (Reflexive)']
+            ];
+            const caseOptions = [
+                ['', 'Case / State: Any'],
+                ['Nominative', 'Case: Nominative'],
+                ['Genitive', 'Case: Genitive'],
+                ['Dative', 'Case: Dative'],
+                ['Accusative', 'Case: Accusative'],
+                ['Vocative', 'Case: Vocative'],
+                ['Construct', 'State: Construct (Hebrew)'],
+                ['Absolute', 'State: Absolute (Hebrew)']
+            ];
+            const genderOptions = [
+                ['', 'Gender: Any'],
+                ['Masculine', 'Gender: Masculine'],
+                ['Feminine', 'Gender: Feminine'],
+                ['Neuter', 'Gender: Neuter']
+            ];
+            const numberOptions = [
+                ['', 'Number: Any'],
+                ['Singular', 'Number: Singular'],
+                ['Plural', 'Number: Plural'],
+                ['Dual', 'Number: Dual']
+            ];
+            const personOptions = [
+                ['', 'Person: Any'],
+                ['1st Person', 'Person: 1st Person'],
+                ['2nd Person', 'Person: 2nd Person'],
+                ['3rd Person', 'Person: 3rd Person']
+            ];
+
+            container.innerHTML = analyticsSeriesConfigs.map((sc, idx) => {
+                const col = editorialChartPalette[idx % editorialChartPalette.length];
+                const slots = decomposeSeriesQueryIntoNuanceSlots(sc.query);
+
+                return `
+                    <div class="p-3 rounded-xl bg-gray-50/95 dark:bg-zinc-900/90 border-2 space-y-2" style="border-color: ${col.hex};">
+                        <!-- Top Row of Series Card: Badge + Scope Dropdown + Custom Word/Query Box + Remove Button -->
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center flex-wrap gap-2 flex-1">
+                                <span class="px-2 py-0.5 rounded-md text-white font-bold text-[11px] flex items-center space-x-1 shrink-0" style="background-color: ${col.hex};">
+                                    <span>Series ${String.fromCharCode(65 + idx)}</span>
+                                </span>
+                                <select onchange="updateAnalyticsSeriesScope(${idx}, this.value)" class="glass-control px-2.5 py-1 text-[11px] font-bold text-gray-800 dark:text-gray-100 outline-none cursor-pointer">
+                                    ${buildScopeOptionsHtml(sc.scopeKey)}
+                                </select>
+                                <div class="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 shrink-0">Active Filter / Word:</span>
+                                    <input type="text" value="${escapeHtmlText(sc.query)}" onchange="updateAnalyticsSeriesRawQuery(${idx}, this.value)" onkeydown="if(event.key==='Enter') updateAnalyticsSeriesRawQuery(${idx}, this.value);" placeholder="Pick from dropdown menus below OR type any word/schema (e.g. faith*, god 3-lov*, λόγος)..." class="select-text flex-1 px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 text-[11px] font-mono font-bold text-indigo-700 dark:text-indigo-300 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="clearAnalyticsSeriesNuanceSlots(${idx})" class="px-2 py-0.5 rounded text-[10px] font-semibold text-gray-500 hover:text-indigo-600 cursor-pointer" title="Reset dropdowns on this series">Clear Slots</button>
+                                ${analyticsSeriesConfigs.length > 1 ? `
+                                    <button type="button" onclick="removeAnalyticsComparisonSeries(${idx})" class="text-gray-400 hover:text-red-500 px-1.5 py-0.5 text-xs font-bold cursor-pointer" title="Remove Series">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Bottom Row of Series Card: 8 Nuance Dropdown Menus (POS, Tense, Mood, Voice/Stem, Case/State, Gender, Number, Person) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5">
+                            ${buildDropdownHtml(posOptions, slots.pos, `updateAnalyticsSeriesNuanceSlot(${idx}, 'pos', this.value)`)}
+                            ${buildDropdownHtml(tenseOptions, slots.tense, `updateAnalyticsSeriesNuanceSlot(${idx}, 'tense', this.value)`)}
+                            ${buildDropdownHtml(moodOptions, slots.mood, `updateAnalyticsSeriesNuanceSlot(${idx}, 'mood', this.value)`)}
+                            ${buildDropdownHtml(voiceOptions, slots.voice, `updateAnalyticsSeriesNuanceSlot(${idx}, 'voice', this.value)`)}
+                            ${buildDropdownHtml(caseOptions, slots.caseState, `updateAnalyticsSeriesNuanceSlot(${idx}, 'caseState', this.value)`)}
+                            ${buildDropdownHtml(genderOptions, slots.gender, `updateAnalyticsSeriesNuanceSlot(${idx}, 'gender', this.value)`)}
+                            ${buildDropdownHtml(numberOptions, slots.number, `updateAnalyticsSeriesNuanceSlot(${idx}, 'number', this.value)`)}
+                            ${buildDropdownHtml(personOptions, slots.person, `updateAnalyticsSeriesNuanceSlot(${idx}, 'person', this.value)`)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function refreshSeriesLabelFromQueryAndScope(seriesObj) {
+            const shortScope = getShortScopeName(seriesObj.scopeKey);
+            const q = (seriesObj.query || 'All').trim();
+            seriesObj.label = `${q} (${shortScope})`;
+        }
+
+        function updateAnalyticsSeriesNuanceSlot(idx, slotName, newVal) {
+            const sc = analyticsSeriesConfigs[idx];
+            if (!sc) return;
+            const slots = decomposeSeriesQueryIntoNuanceSlots(sc.query);
+            slots[slotName] = newVal;
+
+            const assembled = [
+                slots.pos,
+                slots.tense,
+                slots.mood,
+                slots.voice,
+                slots.caseState,
+                slots.gender,
+                slots.number,
+                slots.person
+            ].filter(Boolean);
+
+            sc.query = assembled.length > 0 ? assembled.join(', ') : (slots.wordText || 'Verb');
+            refreshSeriesLabelFromQueryAndScope(sc);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function clearAnalyticsSeriesNuanceSlots(idx) {
+            const sc = analyticsSeriesConfigs[idx];
+            if (!sc) return;
+            sc.query = 'Verb';
+            refreshSeriesLabelFromQueryAndScope(sc);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function updateAnalyticsSeriesRawQuery(idx, rawVal) {
+            const sc = analyticsSeriesConfigs[idx];
+            if (!sc) return;
+            sc.query = String(rawVal || '').trim() || 'Verb';
+            refreshSeriesLabelFromQueryAndScope(sc);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function updateAnalyticsSeriesScope(idx, scopeVal) {
+            const sc = analyticsSeriesConfigs[idx];
+            if (!sc) return;
+            sc.scopeKey = scopeVal;
+            refreshSeriesLabelFromQueryAndScope(sc);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function addAnalyticsComparisonSeries() {
+            if (analyticsSeriesConfigs.length >= 7) return;
+            const baseScope = analyticsSeriesConfigs[0] ? analyticsSeriesConfigs[0].scopeKey : 'nt';
+            const sampleDefaults = ['Indicative', 'Participle', 'Subjunctive', 'Infinitive', 'Present', 'Aorist', 'Perfect'];
+            const usedQueries = new Set(analyticsSeriesConfigs.map(s => s.query));
+            const nextQ = sampleDefaults.find(d => !usedQueries.has(d)) || 'Indicative';
+            const newSeries = {
+                id: 's' + Date.now(),
+                label: '',
+                query: nextQ,
+                scopeKey: baseScope
+            };
+            refreshSeriesLabelFromQueryAndScope(newSeries);
+            analyticsSeriesConfigs.push(newSeries);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function resetAnalyticsToSingleSeries() {
+            if (analyticsSeriesConfigs.length > 1) {
+                analyticsSeriesConfigs = [analyticsSeriesConfigs[0]];
+                updateNuanceMenuButtonSummary();
+                renderAnalyticsSeriesBuilderRows();
+                executeVisualAnalyticsComparison();
+            }
+        }
+
+        function removeAnalyticsComparisonSeries(idx) {
+            if (analyticsSeriesConfigs.length <= 1) return;
+            analyticsSeriesConfigs.splice(idx, 1);
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        const nuancePickerCategories = [
+            {
+                title: 'Mood / Form',
+                items: ['Indicative', 'Imperative', 'Subjunctive', 'Optative', 'Infinitive', 'Participle', 'Cohortative', 'Jussive']
+            },
+            {
+                title: 'Tense / Aspect',
+                items: ['Present', 'Aorist', 'Perfect', 'Imperfect', 'Future']
+            },
+            {
+                title: 'Voice & Hebrew Stem',
+                items: ['Active', 'Middle', 'Passive', 'Qal', 'Niphal', 'Piel', 'Pual', 'Hiphil', 'Hophal', 'Hithpael']
+            },
+            {
+                title: 'Part of Speech',
+                items: ['Verb', 'Noun', 'Adjective', 'Pronoun', 'Preposition', 'Conjunction', 'Adverb', 'Particle']
+            },
+            {
+                title: 'Case & Hebrew State',
+                items: ['Nominative', 'Genitive', 'Dative', 'Accusative', 'Vocative', 'Construct', 'Absolute']
+            },
+            {
+                title: 'Gender',
+                items: ['Masculine', 'Feminine', 'Neuter']
+            },
+            {
+                title: 'Number',
+                items: ['Singular', 'Plural', 'Dual']
+            },
+            {
+                title: 'Person',
+                items: ['1st Person', '2nd Person', '3rd Person']
+            }
+        ];
+
+        function renderNuancePickerCheckboxes() {
+            const grid = document.getElementById('analyticsNuanceCheckboxesGrid');
+            const scopeSel = document.getElementById('nuanceMenuGlobalScopeSelect');
+            if (!grid) return;
+
+            const currentScope = analyticsSeriesConfigs[0] ? analyticsSeriesConfigs[0].scopeKey : 'nt';
+            if (scopeSel) {
+                scopeSel.innerHTML = buildScopeOptionsHtml(currentScope);
+            }
+
+            // Determine currently active single-tag queries across analyticsSeriesConfigs
+            const activeQueriesSet = new Set(analyticsSeriesConfigs.map(s => s.query.trim()));
+            const firstSeriesSlots = analyticsSeriesConfigs[0] ? decomposeSeriesQueryIntoNuanceSlots(analyticsSeriesConfigs[0].query) : {};
+            const slotVals = new Set(Object.values(firstSeriesSlots).filter(Boolean));
+
+            grid.innerHTML = nuancePickerCategories.map(cat => `
+                <div class="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-800/80 border border-gray-200/80 dark:border-zinc-700 space-y-1.5">
+                    <div class="font-bold text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-gray-200 dark:border-zinc-700 pb-1">${escapeHtmlText(cat.title)}</div>
+                    <div class="space-y-1">
+                        ${cat.items.map(item => {
+                            const isChecked = activeQueriesSet.has(item) || (analyticsSeriesConfigs.length === 1 && slotVals.has(item));
+                            return `
+                                <label class="flex items-center space-x-2 text-[11px] font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer select-none">
+                                    <input type="checkbox" class="nuance-picker-cb accent-indigo-600 rounded cursor-pointer" value="${escapeHtmlText(item)}" ${isChecked ? 'checked' : ''} onchange="onNuanceCheckboxChange()">
+                                    <span>${escapeHtmlText(item)}</span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            updateNuanceMenuButtonSummary();
+        }
+
+        function updateNuanceMenuButtonSummary() {
+            const btnLabel = document.getElementById('analyticsNuanceMenuBtnLabel');
+            if (!btnLabel) return;
+            const count = analyticsSeriesConfigs.length;
+            if (count === 1) {
+                btnLabel.innerHTML = `Nuances: <strong>${escapeHtmlText(analyticsSeriesConfigs[0].query)}</strong> &#9662;`;
+            } else {
+                btnLabel.innerHTML = `Comparing <strong>${count} Nuances / Series</strong> &#9662;`;
+            }
+        }
+
+        function toggleAnalyticsNuancePickerMenu(e) {
+            if (e) e.stopPropagation();
+            const pop = document.getElementById('analyticsNuancePickerPopover');
+            if (!pop) return;
+            if (pop.classList.contains('hidden')) {
+                renderNuancePickerCheckboxes();
+                pop.classList.remove('hidden');
+            } else {
+                pop.classList.add('hidden');
+            }
+        }
+
+        function closeAnalyticsNuancePickerMenu() {
+            const pop = document.getElementById('analyticsNuancePickerPopover');
+            if (pop) pop.classList.add('hidden');
+        }
+
+        function getCheckedNuanceValues() {
+            return Array.from(document.querySelectorAll('.nuance-picker-cb:checked')).map(cb => cb.value);
+        }
+
+        function onNuanceCheckboxChange() {
+            const checked = getCheckedNuanceValues();
+            if (checked.length === 0) return;
+
+            const modeRadio = document.querySelector('input[name="nuanceCheckBehavior"]:checked');
+            const mode = modeRadio ? modeRadio.value : 'compare_each';
+            const scopeSel = document.getElementById('nuanceMenuGlobalScopeSelect');
+            const baseScope = (scopeSel && scopeSel.value) ? scopeSel.value : (analyticsSeriesConfigs[0] ? analyticsSeriesConfigs[0].scopeKey : 'nt');
+
+            if (mode === 'combine_exact') {
+                // Combine all checked checkboxes into a single exact-form series (e.g. Verb, Present, Imperative)
+                const combinedQ = checked.join(', ');
+                const sObj = {
+                    id: 'comb_' + Date.now(),
+                    label: '',
+                    query: combinedQ,
+                    scopeKey: baseScope
+                };
+                refreshSeriesLabelFromQueryAndScope(sObj);
+                analyticsSeriesConfigs = [sObj];
+            } else {
+                // Compare each checked item side-by-side as its own series!
+                analyticsSeriesConfigs = checked.slice(0, 8).map((qTerm, idx) => {
+                    const sObj = {
+                        id: 'chk_' + idx + '_' + Date.now(),
+                        label: '',
+                        query: qTerm,
+                        scopeKey: baseScope
+                    };
+                    refreshSeriesLabelFromQueryAndScope(sObj);
+                    return sObj;
+                });
+            }
+
+            updateNuanceMenuButtonSummary();
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function addCheckedNuancesAsNewCombinedSeries() {
+            const checked = getCheckedNuanceValues();
+            if (checked.length === 0) return;
+            const scopeSel = document.getElementById('nuanceMenuGlobalScopeSelect');
+            const baseScope = (scopeSel && scopeSel.value) ? scopeSel.value : (analyticsSeriesConfigs[0] ? analyticsSeriesConfigs[0].scopeKey : 'nt');
+            const combinedQ = checked.join(', ');
+            const sObj = {
+                id: 'comb_' + Date.now(),
+                label: '',
+                query: combinedQ,
+                scopeKey: baseScope
+            };
+            refreshSeriesLabelFromQueryAndScope(sObj);
+            if (analyticsSeriesConfigs.length >= 8) analyticsSeriesConfigs.shift();
+            analyticsSeriesConfigs.push(sObj);
+            updateNuanceMenuButtonSummary();
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function clearAllNuancePickerCheckboxes() {
+            document.querySelectorAll('.nuance-picker-cb').forEach(cb => { cb.checked = false; });
+        }
+
+        function applyGlobalScopeToAllAnalyticsSeries(newScopeKey) {
+            if (!newScopeKey) return;
+            analyticsSeriesConfigs.forEach(sc => {
+                sc.scopeKey = newScopeKey;
+                refreshSeriesLabelFromQueryAndScope(sc);
+            });
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function openVisualAnalyticsStudioFromCurrentSearch(useCurrentSearch = true) {
+            const modal = document.getElementById('visualAnalyticsModal');
+            if (modal) modal.classList.remove('hidden');
+
+            setTimeout(() => { if (typeof updateNuanceMenuButtonSummary === 'function') updateNuanceMenuButtonSummary(); }, 20);
+
+            if (useCurrentSearch) {
+                const rawQuery = (document.getElementById('grammarSearchInput') ? document.getElementById('grammarSearchInput').value : '').trim();
+                const scopeSel = document.getElementById('grammarScopeSelect');
+                const scopeVal = scopeSel ? scopeSel.value : 'nt';
+                const bookChapRaw = document.getElementById('grammarBookChapFilterInput') ? document.getElementById('grammarBookChapFilterInput').value.trim() : '';
+                const parsedBC = parseBookChapterFilterInput(bookChapRaw);
+
+                const activeQ = rawQuery || ([...lastGrammarSearchRequiredTags].join(', ')) || 'Imperative';
+                let targetScopeKey = 'nt';
+                if (parsedBC && parsedBC.bookNum) {
+                    targetScopeKey = `book_${parsedBC.bookNum}`;
+                } else if (scopeVal === 'book' || scopeVal === 'chapter') {
+                    const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
+                    const curB = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : 40;
+                    targetScopeKey = `book_${curB}`;
+                } else if (scopeVal === 'nt' || scopeVal === 'ot' || scopeVal === 'both') {
+                    targetScopeKey = scopeVal;
+                }
+
+                // Show JUST what the user searched by default (1 series) — they can add or compare any other nuance via the dropdowns or "+ Add Series to Compare"!
+                const s1 = { id: 's1', label: '', query: activeQ, scopeKey: targetScopeKey };
+                refreshSeriesLabelFromQueryAndScope(s1);
+                analyticsSeriesConfigs = [s1];
+            }
+
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function pinCurrentSearchToAnalyticsComparison() {
+            const rawQuery = (document.getElementById('grammarSearchInput') ? document.getElementById('grammarSearchInput').value : '').trim();
+            const activeQ = rawQuery || ([...lastGrammarSearchRequiredTags].join(', ')) || 'Imperative';
+            const scopeSel = document.getElementById('grammarScopeSelect');
+            const scopeVal = scopeSel ? scopeSel.value : 'nt';
+            const bookChapRaw = document.getElementById('grammarBookChapFilterInput') ? document.getElementById('grammarBookChapFilterInput').value.trim() : '';
+            const parsedBC = parseBookChapterFilterInput(bookChapRaw);
+            let targetScopeKey = 'nt';
+            if (parsedBC && parsedBC.bookNum) {
+                targetScopeKey = `book_${parsedBC.bookNum}`;
+            } else if (scopeVal === 'book' || scopeVal === 'chapter') {
+                const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
+                const curB = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : 40;
+                targetScopeKey = `book_${curB}`;
+            } else if (scopeVal === 'nt' || scopeVal === 'ot' || scopeVal === 'both') {
+                targetScopeKey = scopeVal;
+            }
+
+            if (analyticsSeriesConfigs.length >= 7) {
+                analyticsSeriesConfigs.shift();
+            }
+            const pinned = {
+                id: 's' + Date.now(),
+                label: '',
+                query: activeQ,
+                scopeKey: targetScopeKey
+            };
+            refreshSeriesLabelFromQueryAndScope(pinned);
+            analyticsSeriesConfigs.push(pinned);
+
+            const modal = document.getElementById('visualAnalyticsModal');
+            if (modal) modal.classList.remove('hidden');
+            renderAnalyticsSeriesBuilderRows();
+            executeVisualAnalyticsComparison();
+        }
+
+        function closeVisualAnalyticsModal() {
+            const modal = document.getElementById('visualAnalyticsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setVisualAnalyticsChartMode(mode) {
+            activeAnalyticsChartMode = mode || 'bar';
+            ['bar', 'pie', 'line', 'heatmap', 'table'].forEach(m => {
+                const btn = document.getElementById(`vizTabBtn_${m}`);
+                if (!btn) return;
+                if (m === activeAnalyticsChartMode) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1';
+                } else {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-gray-600 dark:text-gray-400 font-bold text-[11px] transition cursor-pointer flex items-center space-x-1';
+                }
+            });
+            renderVisualAnalyticsOutput();
+        }
+
+        async function evaluateSingleAnalyticsSeries(seriesConfig) {
+            const rawQ = String(seriesConfig.query || '').trim();
+            const bookNums = getScopeBookNumbers(seriesConfig.scopeKey);
+            const isGrammar = isPureGrammarCommandQuery(rawQ);
+            const reqTags = [];
+            let schemaAst = [];
+
+            if (isGrammar) {
+                normalizeGrammarCommandTokens(rawQ).forEach(tok => {
+                    if (strictMorphKeywordMap[tok] && !reqTags.includes(strictMorphKeywordMap[tok])) {
+                        reqTags.push(strictMorphKeywordMap[tok]);
+                    }
+                });
+            } else {
+                schemaAst = parseCustomSearchSchema(rawQ);
+            }
+
+            const hasOrigChars = /[\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff]/.test(rawQ) || /\b[GH]\d+\b/i.test(rawQ);
+            const allEngCorpusVerses = await getFullCorpusVerses('emtv', true);
+            const hits = [];
+            const verseTotalsByBook = new Map();
+            const verseTotalsByChap = new Map();
+
+            // Count total verses per book & chapter in scope for normalized density calculations
+            allEngCorpusVerses.forEach(ev => {
+                if (!bookNums.includes(ev.bookNum)) return;
+                verseTotalsByBook.set(ev.bookNum, (verseTotalsByBook.get(ev.bookNum) || 0) + 1);
+                const ck = `${ev.bookNum}_${ev.chapter}`;
+                verseTotalsByChap.set(ck, (verseTotalsByChap.get(ck) || 0) + 1);
+            });
+
+            if (!isGrammar && !hasOrigChars && schemaAst.length > 0) {
+                // Fast English Schema evaluation across selected books
+                const scopeVerses = allEngCorpusVerses.filter(ev => bookNums.includes(ev.bookNum));
+                scopeVerses.forEach(ev => {
+                    const engToks = tokenizeSchemaUnitText(ev.text);
+                    const res = evaluateSchemaClausesOnTokens(schemaAst, engToks);
+                    if (res.matched) {
+                        const matchedWords = res.matchedIndices.map(i => engToks[i].raw.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '')).filter(Boolean);
+                        hits.push({
+                            bookNum: ev.bookNum,
+                            bookName: ev.bookName,
+                            chapter: ev.chapter,
+                            verse: ev.verse,
+                            matchCount: Math.max(1, matchedWords.length),
+                            sampleWords: matchedWords.slice(0, 3),
+                            text: ev.text
+                        });
+                    }
+                });
+            } else {
+                // Original Language Morphology or Greek/Hebrew Schema evaluation across selected books
+                const otBookNums = bookNums.filter(b => b <= 39);
+                const ntBookNums = bookNums.filter(b => b >= 40);
+                const [otLoaded, ntLoaded] = await Promise.all([
+                    Promise.all(otBookNums.map(b => fetchHebrewBookVerses(b))),
+                    Promise.all(ntBookNums.map(b => fetchGreekNtBookVerses(b)))
+                ]);
+                const versesToScan = [];
+                otLoaded.forEach(bv => { if (Array.isArray(bv)) bv.forEach(v => versesToScan.push({ ...v, isOt: true })); });
+                ntLoaded.forEach(bv => { if (Array.isArray(bv)) bv.forEach(v => versesToScan.push({ ...v, isOt: false })); });
+
+                for (let i = 0; i < versesToScan.length; i++) {
+                    const v = versesToScan[i];
+                    const vKey = `${v.bookNum}_${v.chapter}_${v.verse}`;
+                    let rawToks = [];
+                    if (v.isOt) {
+                        rawToks = (scriptureDataCache.wlcVerseTokensMap && scriptureDataCache.wlcVerseTokensMap.has(vKey))
+                            ? scriptureDataCache.wlcVerseTokensMap.get(vKey)
+                            : [];
+                    } else {
+                        rawToks = (scriptureDataCache.srgntVerseTokensMap && scriptureDataCache.srgntVerseTokensMap.has(vKey))
+                            ? scriptureDataCache.srgntVerseTokensMap.get(vKey)
+                            : [];
+                    }
+                    if (!rawToks || rawToks.length === 0) continue;
+
+                    const matchedTokSurfaces = [];
+                    rawToks.forEach(rt => {
+                        const mInfo = analyzeTokenMorphology(rt, v.isOt);
+                        if (isGrammar) {
+                            for (const rtTag of reqTags) {
+                                if (!mInfo.tags.includes(rtTag)) return;
+                            }
+                            matchedTokSurfaces.push(`${rt.surface} (${mInfo.resolved.lemma || rt.surface})`);
+                        } else {
+                            const tokObj = {
+                                norm: normalizeSchemaToken(rt.surface),
+                                normLemma: normalizeSchemaToken(mInfo.resolved.lemma || rt.surface),
+                                strongs: mInfo.resolved.strongs || rt.strongs || '',
+                                translit: mInfo.resolved.translit || ''
+                            };
+                            if (schemaAst.every(c => evaluateSingleClauseOnTokens(c, [tokObj]).matched)) {
+                                matchedTokSurfaces.push(`${rt.surface}`);
+                            }
+                        }
+                    });
+
+                    if (matchedTokSurfaces.length > 0) {
+                        hits.push({
+                            bookNum: v.bookNum,
+                            bookName: v.bookName,
+                            chapter: v.chapter,
+                            verse: v.verse,
+                            matchCount: matchedTokSurfaces.length,
+                            sampleWords: matchedTokSurfaces.slice(0, 3),
+                            text: v.text
+                        });
+                    }
+                }
+            }
+
+            return {
+                config: seriesConfig,
+                bookNums,
+                hits,
+                verseTotalsByBook,
+                verseTotalsByChap
+            };
+        }
+
+        async function executeVisualAnalyticsComparison() {
+            const canvas = document.getElementById('visualAnalyticsMainCanvas');
+            if (!canvas) return;
+
+            canvas.innerHTML = `<div class="p-10 text-center text-xs text-gray-500 dark:text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-500"></i>Computing comparative findings &amp; building visual charts...</div>`;
+            ensureLexiconLookupMaps();
+
+            computedAnalyticsSeriesResults = [];
+            for (let i = 0; i < analyticsSeriesConfigs.length; i++) {
+                const sc = analyticsSeriesConfigs[i];
+                const colObj = editorialChartPalette[i % editorialChartPalette.length];
+                const res = await evaluateSingleAnalyticsSeries(sc);
+                computedAnalyticsSeriesResults.push({
+                    ...res,
+                    colorObj: colObj,
+                    seriesIdx: i
+                });
+            }
+
+            activeDrilldownBucketKey = null;
+            renderVisualAnalyticsOutput();
+        }
+
+        function computeUnifiedAnalyticsBuckets() {
+            const groupModeSel = document.getElementById('analyticsAxisGroupingSelect');
+            const rawGroupMode = groupModeSel ? groupModeSel.value : 'auto';
+            const metricModeSel = document.getElementById('analyticsMetricModeSelect');
+            const metricMode = metricModeSel ? metricModeSel.value : 'count';
+
+            // Collect union of all books across all active series
+            const unionBooksSet = new Set();
+            computedAnalyticsSeriesResults.forEach(sr => {
+                sr.bookNums.forEach(b => unionBooksSet.add(b));
+            });
+            const unionBooks = Array.from(unionBooksSet).sort((a, b) => a - b);
+
+            const groupByChapter = (rawGroupMode === 'chapter') || (rawGroupMode === 'auto' && unionBooks.length <= 2);
+
+            const bucketsMap = new Map();
+            const allEngVerses = (scriptureDataCache.fullVerses && scriptureDataCache.fullVerses.emtv) ? scriptureDataCache.fullVerses.emtv : [];
+
+            if (groupByChapter) {
+                allEngVerses.forEach(ev => {
+                    if (!unionBooksSet.has(ev.bookNum)) return;
+                    const bKey = `${ev.bookNum}_${ev.chapter}`;
+                    if (!bucketsMap.has(bKey)) {
+                        const shortB = bookShortAbbrevMap[ev.bookNum] || ev.bookName;
+                        bucketsMap.set(bKey, {
+                            key: bKey,
+                            label: unionBooks.length === 1 ? `${ev.bookName} ${ev.chapter}` : `${shortB} ${ev.chapter}`,
+                            shortLabel: unionBooks.length === 1 ? `Ch. ${ev.chapter}` : `${shortB} ${ev.chapter}`,
+                            bookNum: ev.bookNum,
+                            chapter: ev.chapter,
+                            totalVerses: 0,
+                            seriesValues: computedAnalyticsSeriesResults.map(() => ({ rawCount: 0, verseCount: 0, density: 0, hits: [] }))
+                        });
+                    }
+                    bucketsMap.get(bKey).totalVerses++;
+                });
+            } else {
+                unionBooks.forEach(bNum => {
+                    const bObj = bibleBooksList[bNum - 1] || { name: 'Book ' + bNum, num: bNum };
+                    const bKey = `book_${bNum}`;
+                    const vCount = allEngVerses.filter(ev => ev.bookNum === bNum).length || 100;
+                    bucketsMap.set(bKey, {
+                        key: bKey,
+                        label: bObj.name,
+                        shortLabel: bookShortAbbrevMap[bNum] || bObj.name,
+                        bookNum: bNum,
+                        chapter: null,
+                        totalVerses: vCount,
+                        seriesValues: computedAnalyticsSeriesResults.map(() => ({ rawCount: 0, verseCount: 0, density: 0, hits: [] }))
+                    });
+                });
+            }
+
+            computedAnalyticsSeriesResults.forEach((sr, sIdx) => {
+                sr.hits.forEach(hit => {
+                    const bKey = groupByChapter ? `${hit.bookNum}_${hit.chapter}` : `book_${hit.bookNum}`;
+                    const bucket = bucketsMap.get(bKey);
+                    if (!bucket) return;
+                    const sv = bucket.seriesValues[sIdx];
+                    sv.rawCount += hit.matchCount;
+                    sv.verseCount += 1;
+                    sv.hits.push(hit);
+                });
+            });
+
+            const buckets = Array.from(bucketsMap.values());
+            buckets.forEach(b => {
+                b.seriesValues.forEach(sv => {
+                    sv.density = b.totalVerses > 0 ? Number(((sv.rawCount / b.totalVerses) * 100).toFixed(1)) : 0;
+                    sv.displayVal = metricMode === 'density' ? sv.density : sv.rawCount;
+                });
+            });
+
+            return { buckets, groupByChapter, metricMode };
+        }
+
+        function drillDownAnalyticsBucket(bucketKey) {
+            activeDrilldownBucketKey = (activeDrilldownBucketKey === bucketKey) ? null : bucketKey;
+            renderVisualAnalyticsOutput();
+            const drillEl = document.getElementById('analyticsBucketDrilldownCard');
+            if (drillEl) drillEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        let detachedAnalyticsBrowserWin = null;
+
+        function renderVisualAnalyticsOutput() {
+            const canvas = document.getElementById('visualAnalyticsMainCanvas');
+            const drillContainer = document.getElementById('visualAnalyticsDrilldownContainer');
+            if (!canvas || computedAnalyticsSeriesResults.length === 0) return;
+
+            const { buckets, groupByChapter, metricMode } = computeUnifiedAnalyticsBuckets();
+            const unitSuffix = metricMode === 'density' ? ' per 100 verses' : ' occurrences';
+
+            // 1. Build Selected Visual Mode FIRST (Right at the Very Top of the Window!)
+            let visualBodyHtml = '';
+            if (activeAnalyticsChartMode === 'bar') {
+                visualBodyHtml = buildEditorialBarChartHtml(buckets, metricMode, unitSuffix);
+            } else if (activeAnalyticsChartMode === 'pie') {
+                const seriesTotalsTmp = computedAnalyticsSeriesResults.map(sr => ({
+                    label: sr.config.label,
+                    totalOccurrences: sr.hits.reduce((acc, h) => acc + h.matchCount, 0),
+                    colorObj: sr.colorObj
+                }));
+                visualBodyHtml = buildEditorialPieDonutHtml(buckets, seriesTotalsTmp, metricMode);
+            } else if (activeAnalyticsChartMode === 'line') {
+                visualBodyHtml = buildEditorialTrendLineSvgHtml(buckets, metricMode, unitSuffix);
+            } else if (activeAnalyticsChartMode === 'heatmap') {
+                visualBodyHtml = buildEditorialHeatmapGridHtml(buckets, metricMode);
+            } else {
+                visualBodyHtml = buildEditorialComparativeTableHtml(buckets, [], metricMode);
+            }
+
+            // 2. Build Compact KPI Summary Strip Below the Main Chart
+            const seriesTotals = computedAnalyticsSeriesResults.map((sr, sIdx) => {
+                const totalOccurrences = sr.hits.reduce((acc, h) => acc + h.matchCount, 0);
+                const totalMatchedVerses = sr.hits.length;
+                let scopeTotalVerses = 0;
+                sr.bookNums.forEach(bNum => {
+                    scopeTotalVerses += (sr.verseTotalsByBook.get(bNum) || 0);
+                });
+                const overallDensity = scopeTotalVerses > 0 ? ((totalOccurrences / scopeTotalVerses) * 100).toFixed(1) : '0.0';
+                return {
+                    label: sr.config.label,
+                    query: sr.config.query,
+                    colorObj: sr.colorObj,
+                    totalOccurrences,
+                    totalMatchedVerses,
+                    scopeTotalVerses,
+                    overallDensity
+                };
+            });
+
+            const grandTotalOccurrences = seriesTotals.reduce((acc, st) => acc + st.totalOccurrences, 0);
+
+            const kpiCardsHtml = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, seriesTotals.length + 1)} gap-3">
+                    ${seriesTotals.map((st, idx) => {
+                        const pctShare = grandTotalOccurrences > 0 ? Math.round((st.totalOccurrences / grandTotalOccurrences) * 100) : 0;
+                        return `
+                            <div class="p-3 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border-l-4 shadow-sm space-y-0.5" style="border-left-color: ${st.colorObj.hex};">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-gray-700 dark:text-gray-200 truncate">${escapeHtmlText(st.label)}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="background: ${st.colorObj.lightBg}; color: ${st.colorObj.hex};">${pctShare}% share</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <span class="text-xl font-extrabold text-gray-900 dark:text-white">${st.totalOccurrences.toLocaleString()}</span>
+                                    <span class="text-[11px] text-gray-500 dark:text-gray-400">hits in <strong>${st.totalMatchedVerses.toLocaleString()}</strong> verses &bull; <strong>${st.overallDensity}</strong>/100v</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                    ${seriesTotals.length >= 2 ? `
+                        <div class="p-3 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-teal-50/90 dark:from-zinc-800 dark:to-zinc-800/90 border border-indigo-200/80 dark:border-zinc-700 shadow-sm flex flex-col justify-center">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300"><i class="fa-solid fa-scale-balanced mr-1"></i>Comparative Ratio</div>
+                            <div class="text-xs font-bold text-gray-900 dark:text-white leading-snug mt-0.5">
+                                ${seriesTotals[0].totalOccurrences > 0 && seriesTotals[1].totalOccurrences > 0
+                                    ? `<strong>${escapeHtmlText(seriesTotals[0].label)}</strong> vs. <strong>${escapeHtmlText(seriesTotals[1].label)}</strong>: <strong>1 : ${(seriesTotals[1].totalOccurrences / seriesTotals[0].totalOccurrences).toFixed(2)}</strong> (${Math.round((seriesTotals[0].totalOccurrences / (seriesTotals[0].totalOccurrences + seriesTotals[1].totalOccurrences)) * 100)}% vs. ${Math.round((seriesTotals[1].totalOccurrences / (seriesTotals[0].totalOccurrences + seriesTotals[1].totalOccurrences)) * 100)}%)`
+                                    : `Comparing across ${buckets.length} ${groupByChapter ? 'chapters' : 'books'}.`}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            // Put the Visual Chart FIRST at the very top, and KPI cards right underneath!
+            canvas.innerHTML = visualBodyHtml + kpiCardsHtml;
+
+            // 3. Render Drill-down verses below the Series Builder card
+            if (drillContainer) {
+                const targetBucket = activeDrilldownBucketKey
+                    ? buckets.find(b => b.key === activeDrilldownBucketKey)
+                    : (buckets.find(b => b.seriesValues.some(sv => sv.rawCount > 0)) || null);
+                drillContainer.innerHTML = targetBucket ? buildBucketDrilldownVersesHtml(targetBucket) : '';
+            }
+
+            if (detachedAnalyticsBrowserWin && !detachedAnalyticsBrowserWin.closed) {
+                populateDetachedAnalyticsBrowserWindow();
+            }
+        }
+
+        function buildEditorialBarChartHtml(buckets, metricMode, unitSuffix) {
+            let maxVal = 1;
+            buckets.forEach(b => {
+                b.seriesValues.forEach(sv => {
+                    if (sv.displayVal > maxVal) maxVal = sv.displayVal;
+                });
+            });
+
+            const legendHtml = computedAnalyticsSeriesResults.map(sr => `
+                <div class="flex items-center space-x-1.5 text-xs">
+                    <span class="w-3.5 h-3.5 rounded-sm inline-block" style="background-color: ${sr.colorObj.hex};"></span>
+                    <span class="font-bold text-gray-700 dark:text-gray-200">${escapeHtmlText(sr.config.label)}</span>
+                </div>
+            `).join('');
+
+            const rowsHtml = buckets.map(b => {
+                const isSelected = activeDrilldownBucketKey === b.key;
+                const barsForBucket = b.seriesValues.map((sv, sIdx) => {
+                    const col = computedAnalyticsSeriesResults[sIdx].colorObj;
+                    const widthPct = sv.displayVal > 0 ? Math.max(3, Math.round((sv.displayVal / maxVal) * 100)) : 0;
+                    const valText = metricMode === 'density' ? `${sv.displayVal} / 100v (${sv.rawCount})` : `${sv.rawCount}`;
+                    return `
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 h-5 bg-gray-100 dark:bg-zinc-900 rounded-lg overflow-hidden relative">
+                                <div class="h-full rounded-lg transition-all duration-300" style="width: ${widthPct}%; background: linear-gradient(90deg, ${col.hex}dd, ${col.hex});"></div>
+                            </div>
+                            <span class="w-28 text-right font-mono text-xs font-bold text-gray-800 dark:text-gray-100 shrink-0">${valText}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div onclick="drillDownAnalyticsBucket('${b.key}')" class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-400/40' : 'border-gray-200/80 dark:border-zinc-700'} hover:border-indigo-400 transition cursor-pointer grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                        <div class="sm:col-span-3 flex items-center justify-between sm:block">
+                            <div class="font-bold text-xs text-gray-900 dark:text-white">${escapeHtmlText(b.label)}</div>
+                            <div class="text-[10px] text-gray-400">${b.totalVerses} verses</div>
+                        </div>
+                        <div class="sm:col-span-9 space-y-1.5">
+                            ${barsForBucket}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-zinc-700">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900 dark:text-white">Side-by-Side Comparative Bar Chart (${escapeHtmlText(unitSuffix.trim())})</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Placed right at the top for full-view scanning &bull; Click any bar row to inspect its matched verses</p>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-3">${legendHtml}</div>
+                    </div>
+                    <div class="space-y-2">
+                        ${rowsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildSvgDonutHtml(slices, centerTitle, centerSub) {
+            const total = slices.reduce((acc, s) => acc + s.value, 0);
+            if (total <= 0) {
+                return `<div class="p-6 text-center text-xs text-gray-400">No occurrences in this view.</div>`;
+            }
+            const radius = 68;
+            const circumference = 2 * Math.PI * radius;
+            let accumPct = 0;
+
+            const circlesHtml = slices.map(s => {
+                const pct = s.value / total;
+                const dash = pct * circumference;
+                const offset = -accumPct * circumference;
+                accumPct += pct;
+                return `<circle r="${radius}" cx="95" cy="95" fill="transparent" stroke="${s.color}" stroke-width="28" stroke-dasharray="${dash.toFixed(2)} ${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"></circle>`;
+            }).join('');
+
+            const legendItemsHtml = slices.map(s => {
+                const pct = Math.round((s.value / total) * 100);
+                return `
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-gray-100 dark:border-zinc-700/60 text-xs">
+                        <div class="flex items-center space-x-2 truncate">
+                            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${s.color};"></span>
+                            <span class="font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtmlText(s.label)}</span>
+                        </div>
+                        <span class="font-mono font-bold text-gray-700 dark:text-gray-300 shrink-0">${s.value.toLocaleString()} (${pct}%)</span>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="flex flex-col sm:flex-row items-center gap-5">
+                    <div class="relative w-[190px] h-[190px] shrink-0 flex items-center justify-center">
+                        <svg width="190" height="190" viewBox="0 0 190 190" class="-rotate-90">
+                            ${circlesHtml}
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-4">
+                            <span class="text-xl font-extrabold text-gray-900 dark:text-white">${total.toLocaleString()}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">${escapeHtmlText(centerSub)}</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                        <div class="text-xs font-bold text-gray-900 dark:text-white mb-1">${escapeHtmlText(centerTitle)}</div>
+                        ${legendItemsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildEditorialPieDonutHtml(buckets, seriesTotals, metricMode) {
+            const seriesSlices = seriesTotals.map(st => ({
+                label: st.label,
+                value: st.totalOccurrences,
+                color: st.colorObj.hex
+            }));
+
+            const bucketSlices = buckets
+                .map((b, idx) => ({
+                    label: b.label,
+                    value: b.seriesValues.reduce((acc, sv) => acc + sv.rawCount, 0),
+                    color: editorialChartPalette[idx % editorialChartPalette.length].hex
+                }))
+                .filter(s => s.value > 0)
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 8);
+
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm">
+                        ${buildSvgDonutHtml(seriesSlices, 'Proportional Share by Search Series', 'Total Hits')}
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm">
+                        ${buildSvgDonutHtml(bucketSlices, 'Distribution Across Top Books / Chapters', 'Combined Hits')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildEditorialTrendLineSvgHtml(buckets, metricMode, unitSuffix) {
+            if (buckets.length === 0) return '';
+            const width = 860;
+            const height = 270;
+            const padLeft = 48;
+            const padRight = 28;
+            const padTop = 24;
+            const padBottom = 46;
+            const plotW = width - padLeft - padRight;
+            const plotH = height - padTop - padBottom;
+
+            let maxVal = 1;
+            buckets.forEach(b => {
+                b.seriesValues.forEach(sv => {
+                    if (sv.displayVal > maxVal) maxVal = sv.displayVal;
+                });
+            });
+
+            const xForIdx = (i) => buckets.length === 1 ? (padLeft + plotW / 2) : (padLeft + (i / (buckets.length - 1)) * plotW);
+            const yForVal = (v) => padTop + plotH - ((v / maxVal) * plotH);
+
+            // Horizontal grid lines
+            const gridLines = [0, 0.25, 0.5, 0.75, 1].map(frac => {
+                const y = padTop + plotH * (1 - frac);
+                const labelVal = metricMode === 'density' ? (maxVal * frac).toFixed(1) : Math.round(maxVal * frac);
+                return `
+                    <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="4 4" />
+                    <text x="${padLeft - 8}" y="${y + 4}" text-anchor="end" font-size="10" fill="currentColor" opacity="0.6">${labelVal}</text>
+                `;
+            }).join('');
+
+            // X-axis labels
+            const step = Math.max(1, Math.ceil(buckets.length / 12));
+            const xLabels = buckets.map((b, i) => {
+                if (i % step !== 0 && i !== buckets.length - 1) return '';
+                const x = xForIdx(i);
+                return `<text x="${x}" y="${height - 14}" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" opacity="0.75">${escapeHtmlText(b.shortLabel)}</text>`;
+            }).join('');
+
+            // Polylines & dots for each series
+            const seriesPaths = computedAnalyticsSeriesResults.map((sr, sIdx) => {
+                const col = sr.colorObj.hex;
+                const pts = buckets.map((b, i) => `${xForIdx(i).toFixed(1)},${yForVal(b.seriesValues[sIdx].displayVal).toFixed(1)}`);
+                const areaPts = `${xForIdx(0).toFixed(1)},${padTop + plotH} ` + pts.join(' ') + ` ${xForIdx(buckets.length - 1).toFixed(1)},${padTop + plotH}`;
+                const circles = buckets.map((b, i) => {
+                    const cx = xForIdx(i).toFixed(1);
+                    const cy = yForVal(b.seriesValues[sIdx].displayVal).toFixed(1);
+                    const val = b.seriesValues[sIdx].displayVal;
+                    return `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${col}" stroke="#ffffff" stroke-width="1.5" class="cursor-pointer" onclick="drillDownAnalyticsBucket('${b.key}')"><title>${escapeHtmlText(b.label)} — ${escapeHtmlText(sr.config.label)}: ${val}</title></circle>`;
+                }).join('');
+
+                return `
+                    <polygon points="${areaPts}" fill="${col}" fill-opacity="0.12" />
+                    <polyline fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${pts.join(' ')}" />
+                    ${circles}
+                `;
+            }).join('');
+
+            const legendHtml = computedAnalyticsSeriesResults.map(sr => `
+                <div class="flex items-center space-x-1.5 text-xs">
+                    <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${sr.colorObj.hex};"></span>
+                    <span class="font-bold text-gray-700 dark:text-gray-200">${escapeHtmlText(sr.config.label)}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-3 text-gray-800 dark:text-gray-100">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-zinc-700">
+                        <div>
+                            <h4 class="font-bold text-sm">Chapter / Book Progression Trend Wave (${escapeHtmlText(unitSuffix.trim())})</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Tracks how each grammatical form or word rises and falls across the flow of the text (click any point to inspect verses)</p>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-3">${legendHtml}</div>
+                    </div>
+                    <div class="w-full overflow-x-auto">
+                        <svg viewBox="0 0 ${width} ${height}" class="w-full h-auto min-w-[540px]">
+                            ${gridLines}
+                            ${seriesPaths}
+                            ${xLabels}
+                        </svg>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildEditorialHeatmapGridHtml(buckets, metricMode) {
+            let maxVal = 1;
+            buckets.forEach(b => {
+                b.seriesValues.forEach(sv => {
+                    if (sv.displayVal > maxVal) maxVal = sv.displayVal;
+                });
+            });
+
+            const seriesRowsHtml = computedAnalyticsSeriesResults.map((sr, sIdx) => {
+                const col = sr.colorObj.hex;
+                const cellsHtml = buckets.map(b => {
+                    const sv = b.seriesValues[sIdx];
+                    const intensity = sv.displayVal > 0 ? Math.max(0.16, Math.min(0.92, sv.displayVal / maxVal)) : 0.05;
+                    const bgStyle = sv.displayVal > 0
+                        ? `background-color: ${col}; opacity: ${(0.25 + intensity * 0.75).toFixed(2)}; color: #ffffff;`
+                        : `background-color: rgba(156, 163, 175, 0.12);`;
+                    return `
+                        <button type="button" onclick="drillDownAnalyticsBucket('${b.key}')" class="p-2.5 rounded-xl border border-gray-200/60 dark:border-zinc-700/60 flex flex-col items-center justify-center transition hover:scale-105 cursor-pointer" style="${bgStyle}" title="${escapeHtmlText(b.label)} — ${escapeHtmlText(sr.config.label)}: ${sv.rawCount} hits (${sv.density} per 100v)">
+                            <span class="text-[10px] font-bold opacity-90">${escapeHtmlText(b.shortLabel)}</span>
+                            <span class="font-mono text-sm font-extrabold mt-0.5">${sv.displayVal}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-sm inline-block" style="background-color: ${col};"></span>
+                            <span class="font-bold text-xs text-gray-900 dark:text-white">${escapeHtmlText(sr.config.label)}</span>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                            ${cellsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-4">
+                    <div>
+                        <h4 class="font-bold text-sm text-gray-900 dark:text-white">Concentration Heatmap Grid</h4>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">Deeper editorial shading indicates higher concentration of matches (click any tile to view verses below)</p>
+                    </div>
+                    <div class="space-y-4">${seriesRowsHtml}</div>
+                </div>
+            `;
+        }
+
+        function buildEditorialComparativeTableHtml(buckets, seriesTotals, metricMode) {
+            const headersHtml = computedAnalyticsSeriesResults.map(sr => `
+                <th class="px-3 py-2 text-right font-bold" style="color: ${sr.colorObj.hex};">${escapeHtmlText(sr.config.label)} (Hits)</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-500 dark:text-gray-400">Density / 100v</th>
+            `).join('');
+
+            const rowsHtml = buckets.map(b => {
+                const rowSum = b.seriesValues.reduce((acc, sv) => acc + sv.rawCount, 0);
+                const cols = b.seriesValues.map(sv => `
+                    <td class="px-3 py-2 text-right font-mono font-bold text-gray-900 dark:text-white">${sv.rawCount}</td>
+                    <td class="px-3 py-2 text-right font-mono text-gray-500 dark:text-gray-400">${sv.density}</td>
+                `).join('');
+                const ratioCell = (b.seriesValues.length >= 2 && rowSum > 0)
+                    ? `${Math.round((b.seriesValues[0].rawCount / rowSum) * 100)}% / ${Math.round((b.seriesValues[1].rawCount / rowSum) * 100)}%`
+                    : `${rowSum}`;
+
+                return `
+                    <tr onclick="drillDownAnalyticsBucket('${b.key}')" class="border-b border-gray-100 dark:border-zinc-700/70 hover:bg-indigo-50/50 dark:hover:bg-zinc-700/40 cursor-pointer transition">
+                        <td class="px-3 py-2 font-bold text-gray-900 dark:text-white">${escapeHtmlText(b.label)}</td>
+                        <td class="px-3 py-2 text-right font-mono text-gray-500">${b.totalVerses}</td>
+                        ${cols}
+                        <td class="px-3 py-2 text-right font-mono font-bold text-indigo-600 dark:text-indigo-300">${ratioCell}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-3 overflow-x-auto">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-sm text-gray-900 dark:text-white">Comparative Findings Data Table</h4>
+                        <span class="text-[11px] text-gray-500">Click any row to inspect the matching verses below</span>
+                    </div>
+                    <table class="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200 dark:border-zinc-700 text-[11px] uppercase tracking-wider">
+                                <th class="px-3 py-2">Book / Chapter</th>
+                                <th class="px-3 py-2 text-right">Total Verses</th>
+                                ${headersHtml}
+                                <th class="px-3 py-2 text-right">${computedAnalyticsSeriesResults.length >= 2 ? 'A / B Share' : 'Total'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function buildBucketDrilldownVersesHtml(bucket) {
+            const seriesCards = bucket.seriesValues.map((sv, sIdx) => {
+                const sr = computedAnalyticsSeriesResults[sIdx];
+                const col = sr.colorObj;
+                const verseItems = sv.hits.slice(0, 18).map(h => `
+                    <div class="p-2 rounded-lg bg-gray-50 dark:bg-zinc-900/90 border border-gray-200/70 dark:border-zinc-700 flex items-start justify-between gap-2 text-xs">
+                        <div class="space-y-0.5">
+                            <div>
+                                <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">${escapeHtmlText(h.bookName)} ${h.chapter}:${h.verse}</span>
+                                <span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style="background: ${col.lightBg}; color: ${col.hex};">${escapeHtmlText(h.sampleWords.join(', '))}</span>
+                            </div>
+                            <div class="font-serif text-gray-700 dark:text-gray-300 line-clamp-2">${escapeHtmlText(h.text)}</div>
+                        </div>
+                        <button type="button" onclick="closeVisualAnalyticsModal(); scrollToPassageInDocument({bookNum:${h.bookNum},chapter:${h.chapter},startVerse:${h.verse},endVerse:${h.verse}}, true);" class="px-2 py-1 rounded bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 text-[10px] font-bold shrink-0 cursor-pointer">
+                            Go &rarr;
+                        </button>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between pb-1 border-b-2" style="border-color: ${col.hex};">
+                            <span class="font-bold text-xs" style="color: ${col.hex};">${escapeHtmlText(sr.config.label)} in ${escapeHtmlText(bucket.label)}</span>
+                            <span class="font-mono text-xs font-bold text-gray-700 dark:text-gray-300">${sv.rawCount} hits (${sv.verseCount} verses)</span>
+                        </div>
+                        <div class="space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                            ${verseItems || '<div class="text-xs text-gray-400 italic py-2">0 hits in this section.</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div id="analyticsBucketDrilldownCard" class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border-2 border-indigo-200 dark:border-zinc-700 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                            <i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>Verse Breakdown for ${escapeHtmlText(bucket.label)}
+                        </h4>
+                        <span class="text-[11px] text-gray-500">Click any book/chapter bar or row above to switch section</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-${Math.min(3, bucket.seriesValues.length)} gap-4">
+                        ${seriesCards}
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportAnalyticsFindingsCsv() {
+            const { buckets } = computeUnifiedAnalyticsBuckets();
+            if (!buckets || buckets.length === 0) return;
+
+            const headers = ['Book/Chapter', 'Total Verses'];
+            computedAnalyticsSeriesResults.forEach(sr => {
+                headers.push(`"${sr.config.label.replace(/"/g, '""')} (Hits)"`);
+                headers.push(`"${sr.config.label.replace(/"/g, '""')} (Density per 100v)"`);
+            });
+            const lines = [headers.join(',')];
+
+            buckets.forEach(b => {
+                const row = [`"${b.label.replace(/"/g, '""')}"`, b.totalVerses];
+                b.seriesValues.forEach(sv => {
+                    row.push(sv.rawCount);
+                    row.push(sv.density);
+                });
+                lines.push(row.join(','));
+            });
+
+            const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lexflow-comparative-findings.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function insertAnalyticsTableIntoMasterNotes() {
+            const { buckets } = computeUnifiedAnalyticsBuckets();
+            if (!buckets || buckets.length === 0 || !masterNoteEditor) return;
+
+            const title = computedAnalyticsSeriesResults.map(sr => sr.config.label).join(' vs. ');
+            const rowsHtml = buckets.map(b => {
+                const vals = b.seriesValues.map(sv => `${sv.rawCount} (${sv.density}/100v)`).join(' | ');
+                return `<li><strong>${escapeHtmlText(b.label)}:</strong> ${vals}</li>`;
+            }).join('');
+
+            const noteBlockHtml = `<div style="margin-top:12px;padding:10px;border-left:3px solid #5b6abf;background:rgba(91,106,191,0.08);"><strong>Comparative Study: ${escapeHtmlText(title)}</strong><ul>${rowsHtml}</ul></div>`;
+            masterNoteEditor.innerHTML += noteBlockHtml;
+            saveActiveProjectData();
+            closeVisualAnalyticsModal();
+            const drawer = document.getElementById('masterNoteDrawer');
+            if (drawer && drawer.classList.contains('translate-x-full')) {
+                toggleMasterNoteDrawer();
+            }
+        }
+
+        function detachVisualAnalyticsToBrowserWindow() {
+            const win = window.open('', 'LexFlowVisualAnalyticsWindow', 'width=1240,height=880,resizable=yes,scrollbars=yes');
+            if (!win) return;
+            detachedAnalyticsBrowserWin = win;
+            populateDetachedAnalyticsBrowserWindow();
+            win.focus();
+        }
+
+        function populateDetachedAnalyticsBrowserWindow() {
+            if (!detachedAnalyticsBrowserWin || detachedAnalyticsBrowserWin.closed) return;
+            const win = detachedAnalyticsBrowserWin;
+            const isDark = document.documentElement.classList.contains('dark');
+            const borderCol = (currentAppBorderColor && currentAppBorderColor !== 'classic') ? currentAppBorderColor : '#5b6abf';
+
+            const canvasEl = document.getElementById('visualAnalyticsMainCanvas');
+            const seriesBuilderEl = document.getElementById('analyticsSeriesBuilderRows');
+            const drillEl = document.getElementById('visualAnalyticsDrilldownContainer');
+            const chartAndKpiHtml = canvasEl ? canvasEl.innerHTML : '';
+            const seriesBuilderHtml = seriesBuilderEl ? seriesBuilderEl.innerHTML : '';
+            const drilldownHtml = drillEl ? drillEl.innerHTML : '';
+
+            const catVal = document.getElementById('analyticsCategoryQuickMenu') ? document.getElementById('analyticsCategoryQuickMenu').value : 'custom';
+            const groupVal = document.getElementById('analyticsAxisGroupingSelect') ? document.getElementById('analyticsAxisGroupingSelect').value : 'auto';
+            const metricVal = document.getElementById('analyticsMetricModeSelect') ? document.getElementById('analyticsMetricModeSelect').value : 'count';
+
+            const htmlDoc = `<!DOCTYPE html>
+<html class="${isDark ? 'dark' : ''}">
+<head>
+    <meta charset="UTF-8">
+    <title>LexFlow Visual Analytics &amp; Comparative Findings Studio</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    <\/script>
+    <style>
+        body {
+            margin: 0;
+            padding: 18px 22px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: ${isDark ? '#18181b' : '#f8fafc'};
+            color: ${isDark ? '#f4f4f5' : '#111827'};
+        }
+        .studio-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            padding: 12px 18px;
+            border-radius: 16px;
+            background: ${isDark ? 'rgba(24,24,27,0.96)' : 'rgba(255,255,255,0.97)'};
+            border: 2px solid ${borderCol};
+            margin-bottom: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            backdrop-filter: blur(12px);
+        }
+        .glass-control {
+            border-radius: 8px;
+            border: 1px solid ${isDark ? '#3f3f46' : '#d1d5db'};
+            background: ${isDark ? '#27272a' : '#ffffff'};
+        }
+    </style>
+</head>
+<body>
+    <div class="studio-topbar flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center flex-wrap gap-2">
+            <strong class="text-sm font-bold">LexFlow Visual Analytics</strong>
+            <div class="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl border border-gray-200 dark:border-zinc-700 text-xs">
+                <button onclick="window.setChartMode('bar')" class="px-2.5 py-1 rounded-lg font-bold cursor-pointer ${activeAnalyticsChartMode === 'bar' ? 'bg-indigo-600 text-white' : ''}">Bar Chart</button>
+                <button onclick="window.setChartMode('pie')" class="px-2.5 py-1 rounded-lg font-bold cursor-pointer ${activeAnalyticsChartMode === 'pie' ? 'bg-indigo-600 text-white' : ''}">Pie &amp; Donut</button>
+                <button onclick="window.setChartMode('line')" class="px-2.5 py-1 rounded-lg font-bold cursor-pointer ${activeAnalyticsChartMode === 'line' ? 'bg-indigo-600 text-white' : ''}">Trend Line</button>
+                <button onclick="window.setChartMode('heatmap')" class="px-2.5 py-1 rounded-lg font-bold cursor-pointer ${activeAnalyticsChartMode === 'heatmap' ? 'bg-indigo-600 text-white' : ''}">Heatmap</button>
+                <button onclick="window.setChartMode('table')" class="px-2.5 py-1 rounded-lg font-bold cursor-pointer ${activeAnalyticsChartMode === 'table' ? 'bg-indigo-600 text-white' : ''}">Data Table</button>
+            </div>
+
+            <div style="position:relative;display:inline-block;">
+                <button onclick="const el=document.getElementById('popoutNuanceMenu'); el.style.display=el.style.display==='none'?'block':'none';" class="glass-control px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer">
+                    <i class="fa-solid fa-list-check mr-1"></i>Choose &amp; Compare Nuances (${analyticsSeriesConfigs.length} Active) &#9662;
+                </button>
+                <div id="popoutNuanceMenu" style="display:none;position:absolute;left:0;top:110%;width:720px;max-width:92vw;z-index:80;padding:14px;border-radius:16px;background:${isDark ? '#18181b' : '#ffffff'};border:2px solid #6366f1;box-shadow:0 10px 30px rgba(0,0,0,0.22);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid ${isDark ? '#3f3f46' : '#e5e7eb'};">
+                        <strong class="text-xs">Check Any 1, 2, or More Nuances to Compare Side-by-Side</strong>
+                        <button onclick="document.getElementById('popoutNuanceMenu').style.display='none'" class="text-xs font-bold text-red-500 cursor-pointer">&times; Close</button>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                        ${nuancePickerCategories.map(cat => {
+                            const activeSet = new Set(analyticsSeriesConfigs.map(s => s.query.trim()));
+                            return `<div class="p-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 space-y-1">
+                                <div class="font-bold text-[10px] uppercase text-indigo-600 dark:text-indigo-400 border-b border-gray-200 dark:border-zinc-700 pb-0.5">${escapeHtmlText(cat.title)}</div>
+                                ${cat.items.map(item => `
+                                    <label class="flex items-center space-x-1.5 text-[11px] cursor-pointer">
+                                        <input type="checkbox" class="pop-nuance-cb accent-indigo-600 cursor-pointer" value="${escapeHtmlText(item)}" ${activeSet.has(item) ? 'checked' : ''} onchange="window.onPopoutNuanceCheckChange()">
+                                        <span>${escapeHtmlText(item)}</span>
+                                    </label>
+                                `).join('')}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <select onchange="window.setGrouping(this.value)" class="glass-control px-2.5 py-1 text-xs font-bold cursor-pointer">
+                <option value="auto" ${groupVal === 'auto' ? 'selected' : ''}>Breakdown: Auto</option>
+                <option value="chapter" ${groupVal === 'chapter' ? 'selected' : ''}>By Chapter</option>
+                <option value="book" ${groupVal === 'book' ? 'selected' : ''}>By Book</option>
+            </select>
+            <select onchange="window.setMetric(this.value)" class="glass-control px-2.5 py-1 text-xs font-bold text-teal-700 dark:text-teal-300 cursor-pointer">
+                <option value="count" ${metricVal === 'count' ? 'selected' : ''}>Metric: Total Hits</option>
+                <option value="density" ${metricVal === 'density' ? 'selected' : ''}>Metric: Density / 100v</option>
+            </select>
+        </div>
+        <div class="flex items-center flex-wrap gap-1.5 text-xs">
+            <button onclick="window.addAnalyticsComparisonSeries()" class="px-3 py-1 rounded-lg bg-teal-600 text-white font-bold cursor-pointer">+ Add Series to Compare</button>
+            <button onclick="window.resetAnalyticsToSingleSeries()" class="px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-zinc-700 font-bold cursor-pointer">Single Series Only</button>
+            <button onclick="window.exportCsv()" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold cursor-pointer">Export CSV</button>
+        </div>
+    </div>
+
+    <!-- 1. CHART & KPI SUMMARY RIGHT AT THE VERY TOP -->
+    <div id="popoutVizCanvas" class="space-y-4">${chartAndKpiHtml}</div>
+
+    <!-- 2. GRAMMAR NUANCE DROPDOWN MENU BUILDER -->
+    <div id="popoutSeriesMenuSection" class="mt-4 p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 space-y-2.5">
+        <div class="text-xs font-bold">Grammar Nuance &amp; Search Series Menu (Pick any Tense, Mood, Voice/Stem, Case, Gender, Number, Person, or Scope)</div>
+        <div id="popoutSeriesBuilder" class="space-y-2.5">${seriesBuilderHtml}</div>
+    </div>
+
+    <!-- 3. VERSE DRILL-DOWN BELOW -->
+    <div id="popoutVizDrilldown" class="mt-4">${drilldownHtml}</div>
+</body>
+</html>`;
+
+            win.document.open();
+            win.document.write(htmlDoc);
+            win.document.close();
+
+            // Attach all interactive callbacks to the popout window so every dropdown menu works live inside the Pop-Out Window!
+            win.setChartMode = (m) => { setVisualAnalyticsChartMode(m); };
+            win.setGrouping = (g) => {
+                const el = document.getElementById('analyticsAxisGroupingSelect');
+                if (el) el.value = g;
+                renderVisualAnalyticsOutput();
+            };
+            win.setMetric = (mt) => {
+                const el = document.getElementById('analyticsMetricModeSelect');
+                if (el) el.value = mt;
+                renderVisualAnalyticsOutput();
+            };
+            win.applyAnalyticsCategoryMenuSelection = (cv) => {
+                const el = document.getElementById('analyticsCategoryQuickMenu');
+                if (el) el.value = cv;
+                applyAnalyticsCategoryMenuSelection(cv);
+            };
+            win.updateAnalyticsSeriesNuanceSlot = (idx, slotName, newVal) => {
+                updateAnalyticsSeriesNuanceSlot(idx, slotName, newVal);
+            };
+            win.updateAnalyticsSeriesRawQuery = (idx, rawVal) => {
+                updateAnalyticsSeriesRawQuery(idx, rawVal);
+            };
+            win.updateAnalyticsSeriesScope = (idx, scopeVal) => {
+                updateAnalyticsSeriesScope(idx, scopeVal);
+            };
+            win.clearAnalyticsSeriesNuanceSlots = (idx) => {
+                clearAnalyticsSeriesNuanceSlots(idx);
+            };
+            win.onPopoutNuanceCheckChange = () => {
+                const checked = Array.from(win.document.querySelectorAll('.pop-nuance-cb:checked')).map(cb => cb.value);
+                if (checked.length === 0) return;
+                const baseScope = analyticsSeriesConfigs[0] ? analyticsSeriesConfigs[0].scopeKey : 'nt';
+                analyticsSeriesConfigs = checked.slice(0, 8).map((qTerm, idx) => {
+                    const sObj = { id: 'pchk_' + idx + '_' + Date.now(), label: '', query: qTerm, scopeKey: baseScope };
+                    refreshSeriesLabelFromQueryAndScope(sObj);
+                    return sObj;
+                });
+                updateNuanceMenuButtonSummary();
+                renderAnalyticsSeriesBuilderRows();
+                executeVisualAnalyticsComparison();
+            };
+            win.addAnalyticsComparisonSeries = () => {
+                addAnalyticsComparisonSeries();
+            };
+            win.resetAnalyticsToSingleSeries = () => {
+                resetAnalyticsToSingleSeries();
+            };
+            win.removeAnalyticsComparisonSeries = (idx) => {
+                removeAnalyticsComparisonSeries(idx);
+            };
+            win.exportCsv = () => { exportAnalyticsFindingsCsv(); };
+            win.drillDownAnalyticsBucket = (bKey) => { drillDownAnalyticsBucket(bKey); };
+            win.closeVisualAnalyticsModal = () => {};
+            win.scrollToPassageInDocument = (refObj, highlight) => {
+                closeVisualAnalyticsModal();
+                scrollToPassageInDocument(refObj, highlight);
+            };
+        }
+
         let activeGrammarCompanionLang = 'all';
 
         function openGrammarCompanionModal(filterQuery = '', langFilter = 'all') {
@@ -14121,16 +15830,33 @@
 
             const separateWinActionBtns = !isSeparateModalView
                 ? `<div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" onclick="openVisualAnalyticsStudioFromCurrentSearch(true)" class="px-3 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5" title="Visualize these search findings as Bar Charts, Pie/Donut Charts, Trends, or Comparative Tables">
+                        <i class="fa-solid fa-chart-pie text-[10px]"></i>
+                        <span>Visualize &amp; Compare</span>
+                    </button>
+                    <button type="button" onclick="pinCurrentSearchToAnalyticsComparison()" class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 text-[11px] font-bold border border-emerald-200 dark:border-emerald-800 transition cursor-pointer flex items-center space-x-1" title="Add this search as a new comparison series in the Visual Analytics Studio">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Pin to Compare</span>
+                    </button>
                     <button type="button" onclick="openGrammarResultsPopupModal()" class="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5" title="Open hits in a dedicated full-height Separate Window">
                         <i class="fa-solid fa-window-restore text-[10px]"></i>
-                        <span>Open in Separate Window</span>
+                        <span>Separate Window</span>
                     </button>
                     <button type="button" onclick="detachGrammarResultsToBrowserWindow()" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-zinc-900 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 text-[11px] font-bold border border-indigo-200 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1" title="Pop out hits into a movable standalone browser window">
                         <i class="fa-solid fa-up-right-from-square text-[10px]"></i>
                         <span>Pop Out &nearr;</span>
                     </button>
                    </div>`
-                : `<span class="text-[11px] text-gray-500 dark:text-gray-400 italic">Click any word/grammar chip below to expand its full Lexicon &amp; Grammar Guide</span>`;
+                : `<div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" onclick="openVisualAnalyticsStudioFromCurrentSearch(true)" class="px-3 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                        <i class="fa-solid fa-chart-pie text-[10px]"></i>
+                        <span>Visualize &amp; Compare Findings</span>
+                    </button>
+                    <button type="button" onclick="pinCurrentSearchToAnalyticsComparison()" class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 text-[11px] font-bold border border-emerald-200 dark:border-emerald-800 transition cursor-pointer flex items-center space-x-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Pin Series to Compare</span>
+                    </button>
+                   </div>`;
 
             const summaryBar = document.createElement('div');
             summaryBar.className = 'flex flex-col gap-1.5 px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-indigo-200/80 dark:border-zinc-700 text-xs shadow-sm sticky top-0 z-10';
