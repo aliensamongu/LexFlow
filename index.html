@@ -13107,6 +13107,156 @@
         // =========================================================================
         const deepExegeticalGrammarLibrary = [
             {
+                tag: 'Adverb',
+                lang: 'both',
+                title: 'Adverb (Manner, Time, Place, Degree & Emphasis)',
+                simple: 'Modifies a verb, adjective, or clause by answering HOW (manner), WHEN (time), WHERE (place), or TO WHAT EXTENT (degree).',
+                deep: 'In Greek (NT), many adverbs of manner are formed by adding -ως to an adjective stem (such as Hebrews 1:1 Πολυμερῶς καὶ πολυτρόπως — "in many portions and in many ways", placed at the very start of the book for rhetorical emphasis and alliteration!). Greek & Hebrew adverbs also include temporal markers (πάλαι "long ago", νῦν "now", עַתָּה "now"), spatial markers, and emphatic/negative adverbs (οὐ, μή, לֹא, אַל, מְאֹד "very/exceedingly").',
+                question: 'Ask: Does this adverb highlight HOW the action was done (manner), WHEN it happened (time), or its intensity (degree)?',
+                exampleRef: 'Hebrews 1:1',
+                exampleDesc: '"In many portions (Πολυμερῶς, Adverb) and in many ways (πολυτρόπως, Adverb) long ago (πάλαι, Adverb) God spoke..."',
+                searchCmd: 'Adverb',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/adverb.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/adverb.html',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/grkindex.htm',
+                extraLabel: 'NTGreek Guide'
+            },
+            {
+                tag: 'Verb',
+                lang: 'both',
+                title: 'Verb (Action, State, Aspect & Stem System)',
+                simple: 'The engine of the sentence—expresses an action, occurrence, or state of being.',
+                deep: 'Biblical Greek and Hebrew verbs pack rich theological and narrative nuance into a single word: Greek verbs encode Aspect (Present unfolding, Aorist summary snapshot, Perfect completed with continuing results), Voice (Active, Middle, Passive), and Mood (Indicative, Imperative, Subjunctive, Optative, Infinitive, Participle). Hebrew verbs encode Stem/Binyan (Qal simple, Niphal passive/reflexive, Piel intensive, Hiphil causative, Hithpael reflexive) and Conjugation (Perfect/Qatal, Imperfect/Yiqtol, Imperative, Participle, Infinitive).',
+                question: 'Ask: Is this a main finite verb driving the sentence forward, or a supporting participle/infinitive?',
+                exampleRef: 'Genesis 1:1 / Hebrews 1:2',
+                exampleDesc: '"God created (בָּרָא, Hebrew Verb)... God spoke (ἐλάλησεν, Greek Verb) to us in His Son."',
+                searchCmd: 'Verb',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/verb.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/stable/verb.html',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Verbs'
+            },
+            {
+                tag: 'Noun',
+                lang: 'both',
+                title: 'Noun (Person, Place, Thing, Concept & Case/State Role)',
+                simple: 'Names a person, place, object, or theological concept (e.g., God, Spirit, grace, faith, covenant).',
+                deep: 'In Greek, a noun\'s case ending (Nominative subject, Genitive "of/from", Dative "to/in/by", Accusative object, Vocative address) tells you its exact role in the sentence regardless of word order. In Hebrew, nouns have Gender (Masculine/Feminine), Number (Singular, Plural, or Dual for natural pairs like heavens/eyes/hands), and State (Absolute independent vs. Construct bound "of").',
+                question: 'Ask: What grammatical role does this noun play in the clause (Subject, Direct Object, Possessor/Source, or Instrument)?',
+                exampleRef: 'Hebrews 1:1',
+                exampleDesc: '"God (ὁ θεός, Nominative Subject) spoke to the fathers (τοῖς πατράσιν, Dative Indirect Object) in the prophets (τοῖς προφήταις)."',
+                searchCmd: 'Noun',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/noun.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/noun.html',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Nouns'
+            },
+            {
+                tag: 'Adjective',
+                lang: 'both',
+                title: 'Adjective (Attributive, Predicate & Substantival Modifiers)',
+                simple: 'Describes a quality or attribute of a noun ("holy", "faithful", "good", "precious") or stands in as a noun ("the holy ones").',
+                deep: 'In both Greek and Hebrew, adjectives operate in three classic positions: (1) Attributive (with the article, directly modifying a noun: "the good shepherd"), (2) Predicate (without the article, making a statement with an implied "is": "God is faithful" / "Blessed is the man"), and (3) Substantival (standing alone with an article as a noun: "the righteous", "the saints" = οἱ ἅγιοι).',
+                question: 'Ask: Is this adjective describing a noun, making a statement ("X is Y"), or functioning as a noun itself ("the ___ ones")?',
+                exampleRef: '2 Peter 1:1',
+                exampleDesc: '"to those who have received a faith of equal standing / equally precious (ἰσότιμον, Adjective)..."',
+                searchCmd: 'Adjective',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/adjective.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/adjective.html',
+                extraUrl: 'https://www.ntgreek.org/learn_nt_greek/grkindex.htm',
+                extraLabel: 'NTGreek Adjectives'
+            },
+            {
+                tag: 'Pronoun',
+                lang: 'both',
+                title: 'Pronoun (Personal, Relative, Demonstrative & Reflexive)',
+                simple: 'Stands in for a noun ("He", "you", "us", "whom", "this", "Himself") to track participants across clauses.',
+                deep: 'Tracking pronoun antecedents is vital for Thought Flow analysis! Since Greek & Hebrew verbs already contain their own subject pronoun inside the verb ending, an explicit nominative pronoun (ἐγώ "I", σύ "you", αὐτός "He Himself", הוּא "He") is added specifically for contrast, focus, or emphasis ("I myself", "You alone"). Relative pronouns (ὅς, ἥ, ὅ / אֲשֶׁר "who/which/through whom") introduce subordinate clauses that unpack a person\'s work (like Hebrews 1:2–3 "through whom... who being...").',
+                question: 'Ask: Who is the exact antecedent this pronoun refers back to, and is it added for special emphasis?',
+                exampleRef: 'Hebrews 1:2',
+                exampleDesc: '"spoken to us (ἡμῖν, Personal Pronoun) in His Son, whom (ὅν, Relative Pronoun) He appointed heir, through whom (δι’ οὗ)..."',
+                searchCmd: 'Pronoun',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/pronoun.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/pronoun.html',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Preposition',
+                lang: 'both',
+                title: 'Preposition (Relational Markers of Sphere, Agency & Direction)',
+                simple: 'Shows how a noun relates to the action in space, time, sphere, agency, or means ("in", "through", "unto", "from").',
+                deep: 'In Greek, a preposition\'s meaning shifts with the case of its object: e.g., διά + Genitive means "through" (intermediate agency: δι’ οὗ "through whom He made the universe"), whereas διά + Accusative means "because of / on account of". ἐν ("in/by") marks sphere or instrument; εἰς ("into/unto") marks direction or goal. In Hebrew, the three inseparable prepositions בְּ ("in/by/with"), לְ ("to/for"), and כְּ ("like/as"), along with מִן ("from/more than") and עַל ("upon/over"), anchor clause relationships.',
+                question: 'Ask: Does this prepositional phrase show sphere ("in Christ"), agency ("through whom"), source ("from"), or goal ("unto")?',
+                exampleRef: 'Hebrews 1:1–2',
+                exampleDesc: '"spoke in (ἐν) the prophets... in (ἐν) a Son... through (διά + Genitive) whom He made the universe."',
+                searchCmd: 'Preposition',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/preposition.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/preposition.html',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Prepositions'
+            },
+            {
+                tag: 'Conjunction',
+                lang: 'both',
+                title: 'Conjunction (Logical Hinge-Words & Discourse Connectors)',
+                simple: 'Connects words, phrases, or clauses and signals the logical flow of thought ("and", "but", "for", "therefore", "so that").',
+                deep: 'Conjunctions are the road signs of biblical argument! Coordinating conjunctions link parallel ideas (καί / וְ "and/even", δέ "but/and/now", ἀλλά "strong contrast: but rather"), while inferential/grounding conjunctions reveal the author\'s logic: γάρ / כִּי ("for / because" — giving the reason/ground), οὖν / διό ("therefore" — drawing the conclusion), ὅτι ("that / because"), and ἵνα ("in order that" — purpose/result).',
+                question: 'Ask: What logical relationship does this hinge-word establish between the clause before it and the clause after it?',
+                exampleRef: 'Hebrews 1:4–5',
+                exampleDesc: '"For (γάρ, Explanatory Ground) to which of the angels did He ever say..."',
+                searchCmd: 'Conjunction',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/conjunction.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/conjunction.html',
+                extraUrl: 'https://www.billmounce.com/biblestudygreek/class',
+                extraLabel: 'Mounce Phrasing'
+            },
+            {
+                tag: 'Particle',
+                lang: 'both',
+                title: 'Particle & Definite Article (Definiteness, Object Markers & Nuance)',
+                simple: 'Includes the Definite Article ("the") and small grammatical markers that signal definiteness, direct objects, or emphasis.',
+                deep: 'In Greek, the article (ὁ, ἡ, τό) is a pointer: its presence identifies a specific, known person or concept ("the God", "the faith"), while its intentional absence (anarthrous) often highlights quality, nature, or character (e.g., ἐν υἱῷ in Heb 1:2 — "in one who is Son!"). When a single article governs two singular personal nouns joined by καί (Granville Sharp\'s Rule, e.g., 2 Pet 1:1 τοῦ θεοῦ ἡμῶν καὶ σωτῆρος Ἰησοῦ Χριστοῦ), both titles refer to the exact same Person ("our God and Savior, Jesus Christ"). In Hebrew, Particle includes the article הַ ("the") and the untranslated direct-object marker אֵת.',
+                question: 'Ask: Does the presence or absence of the article highlight a specific identity ("the") or character/quality?',
+                exampleRef: '2 Peter 1:1 / Genesis 1:1',
+                exampleDesc: '"of our God and Savior (τοῦ θεοῦ ἡμῶν καὶ σωτῆρος)... אֵת הַשָּׁמַיִם (Direct Object Marker + Article)."',
+                searchCmd: 'Particle',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/determiner_article.html',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/definiteness.html',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Future',
+                lang: 'greek',
+                title: 'Future Tense-Form (Expectation, Promise & Imperatival Commands)',
+                simple: 'Points to an action that will take place in the future ("will be", "shall come") or states a solemn command ("You shall...").',
+                deep: 'In the New Testament, the Future tense expresses (1) Predictive Future (eschatological promise and certainty guaranteed by God\'s character, e.g. Heb 1:5 "I will be [ἔσομαι] to Him a Father"), or (2) Imperatival Future (especially in Old Testament citations like "You shall love the Lord your God").',
+                question: 'Ask: Is this Future tense declaring a guaranteed divine promise or issuing a covenant command?',
+                exampleRef: 'Hebrews 1:5',
+                exampleDesc: '"I will be (ἔσομαι, Future Middle Indicative) to Him a Father, and He will be (ἔσται) to Me a Son."',
+                searchCmd: 'Verb, Future',
+                uggUrl: 'https://ugg.readthedocs.io/en/latest/tense_future.html',
+                uhgUrl: '',
+                extraUrl: '',
+                extraLabel: ''
+            },
+            {
+                tag: 'Hithpael',
+                lang: 'hebrew',
+                title: 'Hithpael Stem (Reflexive, Reciprocal or Iterative Hebrew Stem)',
+                simple: 'Hebrew verb stem where the subject acts upon itself ("sanctify oneself", "walk to and fro") or mutually ("converse").',
+                deep: 'Recognizable by its הִתְ (hit-) prefix, the Hithpael expresses reflexive action (e.g., הִתְקַדֵּשׁ "consecrate/sanctify oneself"), iterative movement (e.g., מִתְהַלֵּךְ in Gen 3:8, God "walking back and forth" in the garden), or intercessory prayer (הִתְפַּלֵּל "pray").',
+                question: 'Ask: How is the subject acting upon itself or engaging in a mutual/ongoing relationship?',
+                exampleRef: 'Genesis 5:24',
+                exampleDesc: '"And Enoch walked (וַיִּתְהַלֵּךְ, Hithpael Imperfect) with God..."',
+                searchCmd: 'Hithpael',
+                uggUrl: '',
+                uhgUrl: 'https://uhg.readthedocs.io/en/latest/stem_hithpael.html',
+                extraUrl: 'https://dailydoseofhebrew.com/learn/learn-39/',
+                extraLabel: 'Daily Dose Hithpael'
+            },
+            {
                 tag: 'Participle',
                 lang: 'both',
                 title: 'Participle (Greek & Hebrew Verbal Adjective)',
@@ -13496,16 +13646,41 @@
             const query = (document.getElementById('grammarCompanionSearchInput') ? document.getElementById('grammarCompanionSearchInput').value : '').trim().toLowerCase();
             const depthMode = document.getElementById('grammarCompanionDepthSelect') ? document.getElementById('grammarCompanionDepthSelect').value : 'both';
 
-            const filtered = deepExegeticalGrammarLibrary.filter(item => {
+            const langFiltered = deepExegeticalGrammarLibrary.filter(item => {
                 if (activeGrammarCompanionLang === 'greek' && item.lang === 'hebrew') return false;
                 if (activeGrammarCompanionLang === 'hebrew' && item.lang === 'greek') return false;
-                if (query) {
-                    const hay = `${item.tag} ${item.title} ${item.simple} ${item.deep} ${item.exampleDesc}`.toLowerCase();
-                    const terms = query.split(/[\s,]+/).filter(Boolean);
-                    return terms.some(t => hay.includes(t));
-                }
                 return true;
             });
+
+            let filtered = langFiltered;
+            if (query) {
+                const rawTerms = query.split(/[\s,]+/).map(t => t.trim().toLowerCase()).filter(t => t.length >= 2 && t !== 'person');
+                // 1. First check if any topic's tag or title directly matches the query terms (using word boundaries so "adverb" matches "Adverb", NOT "adverbial"!)
+                const tagOrTitleMatches = langFiltered.filter(item => {
+                    const tagLow = item.tag.toLowerCase();
+                    const titleLow = item.title.toLowerCase();
+                    return rawTerms.some(t => {
+                        if (tagLow === t) return true;
+                        const wb = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                        return wb.test(tagLow) || wb.test(titleLow);
+                    });
+                });
+
+                if (tagOrTitleMatches.length > 0) {
+                    // Sort so exact tag match comes first!
+                    filtered = tagOrTitleMatches.sort((a, b) => {
+                        const aExact = rawTerms.includes(a.tag.toLowerCase()) ? 1 : 0;
+                        const bExact = rawTerms.includes(b.tag.toLowerCase()) ? 1 : 0;
+                        return bExact - aExact;
+                    });
+                } else {
+                    // 2. Fallback to full-text search across simple/deep descriptions if the user typed a free-text phrase (like "snapshot" or "causative")
+                    filtered = langFiltered.filter(item => {
+                        const hay = `${item.tag} ${item.title} ${item.simple} ${item.deep} ${item.exampleDesc}`.toLowerCase();
+                        return rawTerms.some(t => hay.includes(t));
+                    });
+                }
+            }
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="col-span-2 p-8 text-center text-gray-500 dark:text-gray-400 text-xs bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-gray-200 dark:border-zinc-700">No matching grammar topics found for "${escapeHtmlText(query)}". Try clearing the filter above!</div>`;
