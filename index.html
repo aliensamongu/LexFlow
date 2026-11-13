@@ -1648,9 +1648,9 @@
         </div>
     </div>
 
-    <!-- OT & NT GRAMMAR, PARTS OF SPEECH & EXACT MORPHOLOGICAL FORM SEARCH MODAL -->
-    <div id="grammarSearchModal" class="fixed inset-0 z-[480] bg-black/55 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
-        <div class="glass-panel w-full max-w-6xl h-[92vh] flex flex-col relative overflow-hidden">
+    <!-- BIG DRAG-AND-DROP CONSTRUCT & GRAMMAR SEARCH STUDIO MODAL -->
+    <div id="grammarSearchModal" class="fixed inset-0 z-[480] bg-black/60 backdrop-blur-sm flex items-center justify-center p-1 sm:p-2 hidden">
+        <div class="glass-panel w-[98vw] max-w-[1720px] h-[96vh] flex flex-col relative overflow-hidden">
             <!-- Compact Modal Header -->
             <div class="px-5 py-2.5 bg-gradient-to-r from-indigo-50/95 via-white/90 to-teal-50/90 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-indigo-200/80 dark:border-zinc-700 flex items-center justify-between shrink-0">
                 <div class="flex items-center space-x-2.5">
@@ -1962,127 +1962,165 @@
                     </div>
                 </div>
 
-                <!-- Exact Form Dropdown Builder Row -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }">
-                    <select id="gfPos" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Part of Speech: Any</option>
-                        <option value="Verb">Verb</option>
-                        <option value="Noun">Noun</option>
-                        <option value="Adjective">Adjective</option>
-                        <option value="Pronoun">Pronoun</option>
-                        <option value="Preposition">Preposition</option>
-                        <option value="Conjunction">Conjunction</option>
-                        <option value="Adverb">Adverb</option>
-                        <option value="Particle">Particle / Article</option>
-                    </select>
-                    <select id="gfMood" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Mood / Tense: Any</option>
-                        <option value="Imperative">Imperative (Command)</option>
-                        <option value="Participle">Participle (-ing)</option>
-                        <option value="Infinitive">Infinitive (To do)</option>
-                        <option value="Indicative">Indicative (Statement)</option>
-                        <option value="Subjunctive">Subjunctive (Purpose/Cond)</option>
-                        <option value="Present">Present (Ongoing)</option>
-                        <option value="Aorist">Aorist (Snapshot)</option>
-                        <option value="Perfect">Perfect (Completed)</option>
-                        <option value="Imperfect">Imperfect (Past Unfolding)</option>
-                        <option value="Future">Future</option>
-                    </select>
-                    <select id="gfCase" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Case / State: Any</option>
-                        <option value="Nominative">Nominative (Subject)</option>
-                        <option value="Genitive">Genitive (Of / Possessive)</option>
-                        <option value="Dative">Dative (To / In / By)</option>
-                        <option value="Accusative">Accusative (Object)</option>
-                        <option value="Construct">Construct (Hebrew "of")</option>
-                        <option value="Absolute">Absolute (Hebrew)</option>
-                    </select>
-                    <select id="gfGender" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Gender: Any</option>
-                        <option value="Masculine">Masculine</option>
-                        <option value="Feminine">Feminine</option>
-                        <option value="Neuter">Neuter</option>
-                    </select>
-                    <select id="gfNumber" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Number: Any</option>
-                        <option value="Singular">Singular</option>
-                        <option value="Plural">Plural</option>
-                        <option value="Dual">Dual</option>
-                    </select>
-                    <select id="gfVoice" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
-                        <option value="">Voice / Stem: Any</option>
-                        <option value="Active">Active / Qal</option>
-                        <option value="Passive">Passive / Niphal</option>
-                        <option value="Middle">Middle</option>
-                        <option value="Piel">Piel (Intensive)</option>
-                        <option value="Hiphil">Hiphil (Causative)</option>
-                        <option value="Hithpael">Hithpael (Reflexive)</option>
-                    </select>
+                <!-- Hidden legacy selects so existing code references stay valid -->
+                <div class="hidden">
+                    <select id="gfPos"><option value=""></option></select>
+                    <select id="gfMood"><option value=""></option></select>
+                    <select id="gfCase"><option value=""></option></select>
+                    <select id="gfGender"><option value=""></option></select>
+                    <select id="gfNumber"><option value=""></option></select>
+                    <select id="gfVoice"><option value=""></option></select>
                 </div>
 
-                <!-- Collapsible Accordance-Style Syntactic Role & Word Chain Builder (String Subject + Verb + Object or Multi-Word Grammar Forms!) -->
-                <div id="syntacticChainBuilderPanel" class="hidden p-3.5 rounded-xl bg-gradient-to-r from-indigo-50/95 via-white/95 to-teal-50/90 dark:from-zinc-800/95 dark:via-zinc-900 dark:to-zinc-800/95 border-2 border-indigo-300 dark:border-indigo-700 text-xs space-y-3 shadow-sm">
-                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-indigo-200/80 dark:border-zinc-700">
+                <!-- =========================================================================
+                     DRAG-AND-DROP SEARCH BUILDER WORKSPACE (ELEMENTS PALETTE + SEARCH WINDOW CANVAS)
+                     ========================================================================= -->
+                <div id="dragDropSearchWorkspaceWrap" class="grid grid-cols-1 lg:grid-cols-12 gap-3 pt-1">
+                    <!-- LEFT COLUMN (4 cols): DRAGGABLE ELEMENTS PALETTE -->
+                    <div class="lg:col-span-4 xl:col-span-3 p-3.5 rounded-2xl bg-slate-100/90 dark:bg-zinc-800/90 border border-gray-300/80 dark:border-zinc-700 flex flex-col justify-between space-y-2.5 shadow-inner">
                         <div>
-                            <div class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center space-x-2">
-                                <i class="fa-solid fa-link text-indigo-600 dark:text-indigo-400"></i>
-                                <span>Syntactic Word &amp; Role Chain Builder (Accordance-Style Construct Search)</span>
+                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-gray-300/70 dark:border-zinc-700">
+                                <span class="font-extrabold text-sm text-gray-900 dark:text-white tracking-tight flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-shapes text-indigo-600 dark:text-indigo-400"></i>
+                                    <span>Elements</span>
+                                </span>
+                                <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">Drag to Search Window (or click)</span>
                             </div>
-                            <p class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
-                                String 2, 3, or more words &amp; grammatical roles together (e.g., <strong>"God" as Subject + "love" as Verb + "world" as Direct Object</strong>) &bull; Syncs live with the search bar above, then click <strong>Search</strong> or press <strong>Enter</strong>!
-                            </p>
+                            <!-- 2-Column Grid of Rounded Element Blocks (Exact Match to Screenshot Diagram!) -->
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Word')" onclick="dropElementIntoSearchCanvas('Word')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add a Word (lexeme) in English, Greek, Hebrew, or Transliteration">
+                                    <i class="fa-solid fa-font text-[10px] opacity-75"></i>
+                                    <span>Word (lexeme)</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Adverb')" onclick="dropElementIntoSearchCanvas('Adverb')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add an Adverb element">
+                                    <span>Adverb</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Noun')" onclick="dropElementIntoSearchCanvas('Noun')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add a Noun element (with Subject/Object/Case/Gender/Number sub-categories)">
+                                    <span>Noun</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Preposition')" onclick="dropElementIntoSearchCanvas('Preposition')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add a Preposition element">
+                                    <span>Preposition</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Verb')" onclick="dropElementIntoSearchCanvas('Verb')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add a Verb element (with Voice/Stem, Tense, Mood, Person, Number sub-categories)">
+                                    <span>Verb</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Conjunction')" onclick="dropElementIntoSearchCanvas('Conjunction')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add a Conjunction element">
+                                    <span>Conjunction</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Adjective')" onclick="dropElementIntoSearchCanvas('Adjective')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add an Adjective element">
+                                    <span>Adjective</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Exclamation')" onclick="dropElementIntoSearchCanvas('Exclamation')"
+                                     class="px-3 py-2.5 rounded-2xl bg-gray-200/95 dark:bg-zinc-700/90 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-gray-100 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center space-x-1.5"
+                                     title="Drag or click to add an Exclamation / Interjection element (e.g. Behold! ἰδού / הִנֵּה, Woe! οὐαί / הוֹי, Amen!)">
+                                    <span>Exclamation</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Pronoun')" onclick="dropElementIntoSearchCanvas('Pronoun')"
+                                     class="px-3 py-2 rounded-2xl bg-gray-200/80 dark:bg-zinc-700/75 hover:bg-indigo-600 hover:text-white text-gray-800 dark:text-gray-200 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center"
+                                     title="Drag or click to add a Pronoun element">
+                                    <span>Pronoun</span>
+                                </div>
+                                <div draggable="true" ondragstart="onDragStartSearchElement(event, 'Participle')" onclick="dropElementIntoSearchCanvas('Participle')"
+                                     class="px-3 py-2 rounded-2xl bg-gray-200/80 dark:bg-zinc-700/75 hover:bg-indigo-600 hover:text-white text-gray-800 dark:text-gray-200 font-bold text-center shadow-sm border border-gray-300 dark:border-zinc-600 transition cursor-grab active:cursor-grabbing select-none flex items-center justify-center"
+                                     title="Drag or click to add a Participle (-ing verbal adjective) element">
+                                    <span>Participle</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" onclick="addSyntacticChainSlot()" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1">
-                                <i class="fa-solid fa-plus text-[10px]"></i>
-                                <span>+ Add Word / Role Slot</span>
-                            </button>
-                            <button type="button" onclick="resetSyntacticChainSlots()" class="px-2 py-1 rounded-lg bg-gray-200/80 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-700 dark:text-gray-300 font-semibold text-[11px] transition cursor-pointer">
-                                Reset Slots
-                            </button>
-                            <button type="button" onclick="toggleSyntacticChainBuilderPanel(false)" class="text-gray-400 hover:text-red-500 font-bold text-sm px-1 cursor-pointer">&times;</button>
+                        <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1 border-t border-gray-300/60 dark:border-zinc-700">
+                            <i class="fa-solid fa-hand-pointer text-indigo-500 mr-1"></i><strong>Drag</strong> any element into the <strong>Search Window</strong> on the right (or click it) — a pop-up menu will open to pick sub-categories &amp; English/Original words!
                         </div>
                     </div>
 
-                    <!-- 1-Click Construct Templates (Populates the Builder & Search Box — Click Search or Enter When Ready!) -->
-                    <div class="flex items-center flex-wrap gap-1.5 text-[11px]">
-                        <span class="font-bold text-indigo-900 dark:text-indigo-300 mr-0.5"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Try Construct Examples:</span>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: 'love', role: '', pos: 'Verb', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/90 text-indigo-800 dark:text-indigo-200 font-bold border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white transition cursor-pointer" title="Find 'God' as Subject (Nominative) + 'love' as Verb">
-                            'God' [Subject] + 'love' [Verb]
-                        </button>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'love', role: '', pos: 'Verb', mood: '', voice: '' }, { connector: 'AND', word: 'world', role: 'Object', pos: '', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/90 text-teal-800 dark:text-teal-200 font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white transition cursor-pointer" title="Find 'love' as Verb + 'world' as Direct Object (Accusative)">
-                            'love' [Verb] + 'world' [Object]
-                        </button>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: 'love', role: '', pos: 'Verb', mood: '', voice: '' }, { connector: 'AND', word: 'world', role: 'Object', pos: '', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/90 text-purple-800 dark:text-purple-200 font-bold border border-purple-300 dark:border-purple-700 hover:bg-purple-600 hover:text-white transition cursor-pointer" title="Find 'God' [Subject] + 'love' [Verb] + 'world' [Object] (e.g. John 3:16)">
-                            'God' [Subject] + 'love' [Verb] + 'world' [Object]
-                        </button>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'jesus', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: '*', role: '', pos: 'Verb', mood: 'Imperative', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 font-bold border border-rose-300 dark:border-rose-700 hover:bg-rose-600 hover:text-white transition cursor-pointer" title="Find 'Jesus' as Subject + any Imperative Command Verb">
-                            'Jesus' [Subject] + Any [Imperative]
-                        </button>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: '*', role: 'Subject', pos: '', mood: 'Participle', voice: '' }, { connector: 'BEFORE', word: '*', role: '', pos: 'Verb', mood: 'Imperative', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/90 text-amber-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-700 hover:bg-amber-600 hover:text-white transition cursor-pointer" title="Greek Attendant Circumstance / Command: Nominative Participle followed by an Imperative Verb">
-                            [Nominative Participle] &rarr; [Imperative Verb]
-                        </button>
-                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: '*', role: '', pos: 'Verb', mood: '', voice: 'Hiphil' } ], 'ot')" class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200 font-bold border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-600 hover:text-white transition cursor-pointer" title="Hebrew OT: 'God' as Subject + any Hiphil Causative Verb">
-                            OT: 'God' [Subject] + [Hiphil Verb]
-                        </button>
-                    </div>
-
-                    <!-- Dynamic Chained Slot Cards Container -->
-                    <div id="syntacticChainSlotsContainer" class="space-y-2" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }">
-                    </div>
-
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-200/60 dark:border-zinc-700 text-[11px]">
-                        <div class="text-gray-600 dark:text-gray-300">
-                            <strong>Tip:</strong> You can also type chained tags directly in the search box using <code class="font-mono font-bold text-indigo-700 dark:text-indigo-300">word@[Role, Grammar]</code> (e.g. <code class="font-mono font-bold text-indigo-700 dark:text-indigo-300">god@[Subject] love@[Verb] world@[Object]</code>).
+                    <!-- RIGHT COLUMN (8-9 cols): DRAG-AND-DROP SEARCH WINDOW CANVAS -->
+                    <div id="dragDropSearchCanvasBox"
+                         ondragover="onDragOverSearchCanvas(event)"
+                         ondragleave="onDragLeaveSearchCanvas(event)"
+                         ondrop="onDropSearchCanvas(event)"
+                         class="lg:col-span-8 xl:col-span-9 p-4 rounded-2xl bg-white dark:bg-zinc-900/95 border-2 border-dashed border-indigo-300 dark:border-indigo-700 flex flex-col justify-between min-h-[210px] relative transition">
+                        <!-- Top Bar of Search Window Drop Zone -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-gray-200/80 dark:border-zinc-800">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-0.5 rounded-md bg-gray-900 dark:bg-indigo-600 text-white font-bold text-xs shadow-sm">Search Window</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Drop elements here to chain parts of speech &amp; sub-categories &bull; Click any dropped block to edit its sub-categories</span>
+                            </div>
+                            <div class="flex items-center flex-wrap gap-1.5 text-[11px]">
+                                <span class="font-bold text-indigo-700 dark:text-indigo-300 mr-0.5">Quick Load:</span>
+                                <button type="button" onclick="loadDragDropPreset([ { elemType: 'Noun', wordsList: ['god'], subTags: ['Subject'] }, { connector: 'AND', elemType: 'Verb', wordsList: ['love'], subTags: [] } ], 'nt')" class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700 font-bold cursor-pointer">Noun ('God' • Subject) + Verb ('love')</button>
+                                <button type="button" onclick="loadDragDropPreset([ { elemType: 'Verb', wordsList: ['love'], subTags: [] }, { connector: 'AND', elemType: 'Noun', wordsList: ['world'], subTags: ['Object'] } ], 'nt')" class="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-zinc-700 font-bold cursor-pointer">Verb ('love') + Noun ('world' • Object)</button>
+                                <button type="button" onclick="clearDragDropSearchCanvas()" class="px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-600 dark:text-gray-300 font-bold cursor-pointer" title="Clear all dropped elements">Clear Canvas</button>
+                            </div>
                         </div>
-                        <button type="button" onclick="executeGrammarMorphSearch(false)" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1.5">
-                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
-                            <span>Run Chained Search (or Press Enter)</span>
-                        </button>
+
+                        <!-- Visual Diagram Area: Renders [ Element ] -> vertical stem | -> [ Sub category ] Columns -->
+                        <div id="dragDropVisualDiagramNodes" class="flex-1 py-4 px-2 flex items-start flex-wrap gap-4 overflow-x-auto custom-scrollbar">
+                        </div>
+
+                        <!-- Bottom Status Bar inside Search Window Drop Zone -->
+                        <div class="pt-2 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <div class="text-gray-500 dark:text-gray-400">
+                                <i class="fa-solid fa-language text-teal-600 mr-1"></i>Use <strong>English words</strong> (e.g. <em>God, love, world</em>), <strong>Greek/Hebrew</strong>, or <strong>Transliteration</strong> in any element — sub-categories automatically search the original language morphology!
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="executeGrammarMorphSearch(false)" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                                    <span>Run Search (or Press Enter)</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Search View Switcher Tabs: Current Search vs. Last 5 Searches + Chain Builder Toggle -->
+                <!-- SUB-CATEGORY POP-UP MENU MODAL (Appears Automatically When an Element is Dragged/Clicked into the Search Window!) -->
+                <div id="elementSubCategoryPopupModal" class="hidden fixed inset-0 z-[520] bg-black/50 backdrop-blur-xs flex items-center justify-center p-3">
+                    <div class="glass-panel w-full max-w-3xl max-h-[86vh] flex flex-col rounded-2xl border-2 border-indigo-400 dark:border-indigo-600 shadow-2xl overflow-hidden bg-white dark:bg-zinc-900">
+                        <div class="px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-teal-600 text-white flex items-center justify-between shrink-0">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="px-3 py-1 rounded-xl bg-white/20 font-extrabold text-sm" id="subCatPopupElementBadge">Noun</span>
+                                <div>
+                                    <h4 class="font-bold text-sm" id="subCatPopupTitle">Select Sub-Categories &amp; Word Filter</h4>
+                                    <p class="text-[11px] text-indigo-100">Type an English or Original word (optional) and check any sub-categories (Voice, Tense, Mood, Case/Role, Gender, Number)</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="closeElementSubCategoryPopup()" class="text-white/80 hover:text-white text-lg font-bold px-2 cursor-pointer">&times;</button>
+                        </div>
+
+                        <div class="flex-1 p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs" id="subCatPopupBody">
+                        </div>
+
+                        <div class="px-5 py-3 bg-gray-50 dark:bg-zinc-800/90 border-t border-gray-200 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                            <button type="button" onclick="removeCurrentEditingCanvasNode()" class="px-3 py-1.5 rounded-xl bg-red-50 dark:bg-red-950/70 hover:bg-red-600 hover:text-white text-red-600 dark:text-red-300 font-bold text-xs border border-red-200 dark:border-red-800 transition cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                <span>Remove Element</span>
+                            </button>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="clearCurrentEditingNodeSubCategories()" class="px-3 py-1.5 rounded-xl bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 font-bold text-xs transition cursor-pointer">
+                                    Clear Sub-Categories
+                                </button>
+                                <button type="button" onclick="closeElementSubCategoryPopup()" class="px-5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-check text-[10px]"></i>
+                                    <span>Apply Sub-Categories</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search View Switcher Tabs: Current Search vs. Last 5 Searches + Collapse/Expand Drag-and-Drop Builder -->
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-200/60 dark:border-zinc-800 text-xs">
                     <div class="flex items-center flex-wrap gap-1.5">
                         <button type="button" id="grammarSearchTabBtn_current" onclick="switchGrammarSearchTab('current')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1.5">
@@ -2093,12 +2131,12 @@
                             <i class="fa-solid fa-clock-rotate-left text-[10px] text-indigo-500"></i>
                             <span id="lastFiveSearchesTabLabel">Last 5 Searches (0)</span>
                         </button>
-                        <button type="button" id="toggleChainBuilderBtn" onclick="toggleSyntacticChainBuilderPanel()" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 hover:bg-teal-600 hover:text-white font-bold text-[11px] border border-teal-300 dark:border-teal-700 transition cursor-pointer flex items-center space-x-1.5" title="String multiple words &amp; grammatical roles together (e.g. 'God' as Subject + 'love' as Verb + 'world' as Object)">
-                            <i class="fa-solid fa-link text-[10px]"></i>
-                            <span>Chain Words &amp; Roles (Subject + Verb + Object)</span>
+                        <button type="button" id="toggleDragDropWorkspaceBtn" onclick="toggleDragDropWorkspaceVisibility()" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 hover:bg-teal-600 hover:text-white font-bold text-[11px] border border-teal-300 dark:border-teal-700 transition cursor-pointer flex items-center space-x-1.5" title="Show or hide the Drag-and-Drop Elements &amp; Search Window area to give more room to results">
+                            <i class="fa-solid fa-up-down-left-right text-[10px]"></i>
+                            <span id="toggleDragDropWorkspaceBtnLabel">Hide Drag &amp; Drop Builder</span>
                         </button>
                     </div>
-                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden md:inline">Build your query or chain &bull; Searches only when you click <strong>Search</strong> or press <strong>Enter</strong></span>
+                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden md:inline">Drag elements into the Search Window &bull; Searches only when you click <strong>Search</strong> or press <strong>Enter</strong></span>
                 </div>
             </div>
 
@@ -4136,7 +4174,23 @@
                 });
             }
 
-            scriptureDataCache.srgntVerseTokensMap = tokensByVerseKey;
+            if (!scriptureDataCache.srgntVerseTokensMap) {
+                scriptureDataCache.srgntVerseTokensMap = tokensByVerseKey;
+            } else {
+                // Merge Strong's codes into existing MorphGNT tokens without overwriting MorphGNT morph codes or lemmas!
+                tokensByVerseKey.forEach((tsvToks, vk) => {
+                    const existing = scriptureDataCache.srgntVerseTokensMap.get(vk);
+                    if (!existing || existing.length === 0) {
+                        scriptureDataCache.srgntVerseTokensMap.set(vk, tsvToks);
+                    } else {
+                        existing.forEach((exTok, idx) => {
+                            if (!exTok.strongs && tsvToks[idx] && tsvToks[idx].strongs) {
+                                exTok.strongs = tsvToks[idx].strongs;
+                            }
+                        });
+                    }
+                });
+            }
 
             const results = [];
             verseWordsMap.forEach((words, vKey) => {
@@ -4204,14 +4258,19 @@
                 if (!verseWordsMap.has(vKey)) {
                     verseWordsMap.set(vKey, []);
                     verseMetaMap.set(vKey, { bookNum, chapter: chap, verse });
+                    const prevToks = tokensMap.get(vKey) || [];
+                    verseMetaMap.get(vKey).prevStrongs = prevToks.map(pt => pt.strongs || '');
                     tokensMap.set(vKey, []);
                 }
+                const curArr = tokensMap.get(vKey);
+                const prevStrongsArr = verseMetaMap.get(vKey).prevStrongs || [];
+                const inheritedStrongs = prevStrongsArr[curArr.length] || '';
                 verseWordsMap.get(vKey).push(wordWithPunct);
-                tokensMap.get(vKey).push({
+                curArr.push({
                     surface: wordClean || wordWithPunct,
                     displaySurface: wordWithPunct,
                     lemma: lemmaClean || wordClean,
-                    strongs: '',
+                    strongs: inheritedStrongs,
                     morph: `${posCode}:${parseCode}`
                 });
             }
@@ -4235,7 +4294,11 @@
             if (bookNum < 40 || bookNum > 66) return [];
             if (!scriptureDataCache.srgntByBook) scriptureDataCache.srgntByBook = {};
             if (scriptureDataCache.srgntByBook[bookNum] && scriptureDataCache.srgntByBook[bookNum].length > 0) {
-                return scriptureDataCache.srgntByBook[bookNum];
+                const sampleVk = `${bookNum}_1_1`;
+                const sampleToks = scriptureDataCache.srgntVerseTokensMap ? scriptureDataCache.srgntVerseTokensMap.get(sampleVk) : null;
+                if (sampleToks && sampleToks.length > 0 && sampleToks[0].morph) {
+                    return scriptureDataCache.srgntByBook[bookNum];
+                }
             }
 
             const cacheKey = `morphgnt_book_v1_${bookNum}`;
@@ -4243,7 +4306,16 @@
             if (cached && cached.verses && cached.verses.length > 0) {
                 const tokensMap = scriptureDataCache.srgntVerseTokensMap || new Map();
                 if (cached.tokens) {
-                    Object.keys(cached.tokens).forEach(k => tokensMap.set(k, cached.tokens[k]));
+                    Object.keys(cached.tokens).forEach(k => {
+                        const prev = tokensMap.get(k) || [];
+                        const morphArr = cached.tokens[k] || [];
+                        morphArr.forEach((mt, idx) => {
+                            if (!mt.strongs && prev[idx] && prev[idx].strongs) {
+                                mt.strongs = prev[idx].strongs;
+                            }
+                        });
+                        tokensMap.set(k, morphArr);
+                    });
                 }
                 scriptureDataCache.srgntVerseTokensMap = tokensMap;
                 scriptureDataCache.srgntByBook[bookNum] = cached.verses;
@@ -12228,7 +12300,7 @@
                 tags.add(number);
             } else {
                 // Determine if Lemma is Verb, Noun, Adjective, or Adverb
-                const isVerbLemma = normLem.endsWith('ω') || normLem.endsWith('ομαι') || normLem.endsWith('εομαι') || normLem.endsWith('αομαι') || normLem.endsWith('ωμαι') || normLem.endsWith('μι') || normLem.endsWith('αμαι') || /^to\s+[a-z]/i.test(gLower);
+                const isVerbLemma = normLem.endsWith('ω') || normLem.endsWith('ομαι') || normLem.endsWith('εομαι') || normLem.endsWith('αομαι') || normLem.endsWith('ωμαι') || normLem.endsWith('μι') || normLem.endsWith('αμαι') || /\bto\s+[a-z]/i.test(gLower) || /(ησεν|ασεν|εσεν|ωσεν|ησαν|ασαν|εσαν|ωσαν|ηκα|ακα|εκα|ωκα|ηκεν|ακεν|εκεν|ωκεν|ομεν|ετε|ουσιν|ουσι|ομαι|εται|ονται|θην|θης|θη|θησαν)$/.test(normSurf);
 
                 // Check Participle Endings (Exact Case, Gender, Number, Voice!)
                 const ptcpPatterns = [
@@ -12628,6 +12700,10 @@
             lastGrammarSearchRequiredTags = [];
             lastGrammarSearchWordFilters = [];
             activeGrammarBookFilter = 'all';
+            dragDropCanvasNodes = [];
+            renderDragDropVisualDiagram();
+            const popModal = document.getElementById('elementSubCategoryPopupModal');
+            if (popModal) popModal.classList.add('hidden');
 
             const container = document.getElementById('grammarSearchResultsContainer');
             if (container) {
@@ -12642,8 +12718,8 @@
                             Type a word or custom schema query above, pick any combination of <strong>Part of Speech, Mood/Tense, Case/State, Gender, Number, or Voice/Stem</strong>, and click <strong>Search</strong>.
                         </p>
                         <div class="flex items-center justify-center flex-wrap gap-2 pt-1">
-                            <button type="button" onclick="toggleSyntacticChainBuilderPanel(true)" class="px-3 py-1.5 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 text-xs font-bold hover:bg-teal-600 hover:text-white transition cursor-pointer">
-                                <i class="fa-solid fa-link mr-1"></i>Chain Words &amp; Roles (e.g. Subject + Verb + Object)
+                            <button type="button" onclick="toggleDragDropWorkspaceVisibility(true); loadDragDropPreset([ { elemType: 'Noun', wordsList: ['god'], subTags: ['Subject'] }, { connector: 'AND', elemType: 'Verb', wordsList: ['love'], subTags: [] } ], 'nt');" class="px-3 py-1.5 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 text-xs font-bold hover:bg-teal-600 hover:text-white transition cursor-pointer">
+                                <i class="fa-solid fa-shapes mr-1"></i>Load Example Drag &amp; Drop Chain (Noun + Verb)
                             </button>
                             <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer">
                                 <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>View Example Searches &amp; Schema Guide
@@ -12682,6 +12758,7 @@
                 }
                 executeGrammarMorphSearch(false);
             } else {
+                toggleDragDropWorkspaceVisibility(true);
                 clearActiveGrammarSearchFieldsAndResults();
             }
         }
@@ -13332,10 +13409,810 @@
             'hear': { strongs: ['G191', 'H8085'], lemmas: ['ακουω', 'שמע'], glossStems: ['hear', 'heard', 'hearken', 'listen'] },
             'walk': { strongs: ['G4043', 'H1980', 'H3212'], lemmas: ['περιπατεω', 'הלך'], glossStems: ['walk', 'walked'] },
             'keep': { strongs: ['G5083', 'G5442', 'H8104'], lemmas: ['τηρεω', 'φυλασσω', 'שמר'], glossStems: ['keep', 'kept', 'guard', 'observe'] },
-            'abide': { strongs: ['G3306', 'H3427'], lemmas: ['μενω', 'ישב'], glossStems: ['abide', 'remain', 'dwell', 'continue'] }
+            'abide': { strongs: ['G3306', 'H3427'], lemmas: ['μενω', 'ישב'], glossStems: ['abide', 'remain', 'dwell', 'continue'] },
+            'behold': { strongs: ['G2400', 'G2396', 'H2009', 'H2005', 'H7200'], lemmas: ['ιδου', 'ιδε', 'הנה', 'הן'], glossStems: ['behold', 'lo', 'see', 'look'] },
+            'woe': { strongs: ['G3759', 'H1945', 'H188', 'H337'], lemmas: ['ουαι', 'הוי', 'אוי'], glossStems: ['woe', 'alas'] },
+            'amen': { strongs: ['G281', 'H543'], lemmas: ['αμην', 'אמן'], glossStems: ['amen', 'truly', 'verily', 'so be it'] },
+            'hallelujah': { strongs: ['G239', 'H1984'], lemmas: ['αλληλουια', 'הלל'], glossStems: ['hallelujah', 'alleluia', 'praise'] }
         };
 
+        // =========================================================================
+        // DRAG-AND-DROP SEARCH WINDOW & SUB-CATEGORY POP-UP MENU ENGINE
+        // =========================================================================
+        let dragDropCanvasNodes = [];
+        let activeEditingCanvasNodeIdx = -1;
+        let currentDraggedElementType = '';
+
+        const elementSubCategoryCatalog = {
+            'Word': {
+                title: 'Word (Lexeme) — English, Greek, Hebrew, or Transliteration',
+                defaultPosTag: '',
+                groups: [
+                    {
+                        groupTitle: 'Syntactic Role in Clause (Original Language Role)',
+                        items: [
+                            { tag: 'Subject', label: 'Subject (Doer — Gk. Nominative / Heb. Subject)' },
+                            { tag: 'Object', label: 'Direct Object (Receiver — Gk. Accusative / Heb. אֵת)' },
+                            { tag: 'IndirectObject', label: 'Indirect Object (To/For — Gk. Dative / Heb. לְ)' },
+                            { tag: 'Possessive', label: 'Possessive / Source (Of — Gk. Genitive / Construct)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Part of Speech',
+                        items: [
+                            { tag: 'Noun', label: 'Noun' },
+                            { tag: 'Verb', label: 'Verb' },
+                            { tag: 'Adjective', label: 'Adjective' },
+                            { tag: 'Adverb', label: 'Adverb' },
+                            { tag: 'Pronoun', label: 'Pronoun' },
+                            { tag: 'Preposition', label: 'Preposition' },
+                            { tag: 'Conjunction', label: 'Conjunction' },
+                            { tag: 'Exclamation', label: 'Exclamation / Interjection' },
+                            { tag: 'Participle', label: 'Participle (-ing)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Verb Voice / Hebrew Stem (Binyan)',
+                        items: [
+                            { tag: 'Active', label: 'Active Voice' },
+                            { tag: 'Middle', label: 'Middle Voice' },
+                            { tag: 'Passive', label: 'Passive Voice' },
+                            { tag: 'Qal', label: 'Hebrew Qal (Simple)' },
+                            { tag: 'Niphal', label: 'Hebrew Niphal (Passive)' },
+                            { tag: 'Piel', label: 'Hebrew Piel (Intensive)' },
+                            { tag: 'Hiphil', label: 'Hebrew Hiphil (Causative)' },
+                            { tag: 'Hithpael', label: 'Hebrew Hithpael (Reflexive)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Verb Tense / Aspect & Mood',
+                        items: [
+                            { tag: 'Present', label: 'Present' },
+                            { tag: 'Aorist', label: 'Aorist' },
+                            { tag: 'Imperfect', label: 'Imperfect' },
+                            { tag: 'Perfect', label: 'Perfect' },
+                            { tag: 'Future', label: 'Future' },
+                            { tag: 'Indicative', label: 'Indicative (Statement)' },
+                            { tag: 'Imperative', label: 'Imperative (Command)' },
+                            { tag: 'Subjunctive', label: 'Subjunctive (Purpose/Cond)' },
+                            { tag: 'Infinitive', label: 'Infinitive (To do)' },
+                            { tag: 'Participle', label: 'Participle (-ing)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Case / State, Gender & Number',
+                        items: [
+                            { tag: 'Nominative', label: 'Nominative Case' },
+                            { tag: 'Accusative', label: 'Accusative Case' },
+                            { tag: 'Genitive', label: 'Genitive Case' },
+                            { tag: 'Dative', label: 'Dative Case' },
+                            { tag: 'Construct', label: 'Hebrew Construct State' },
+                            { tag: 'Absolute', label: 'Hebrew Absolute State' },
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' }
+                        ]
+                    }
+                ]
+            },
+            'Noun': {
+                title: 'Noun Sub-Categories (Role, Case/State, Gender, Number)',
+                defaultPosTag: 'Noun',
+                groups: [
+                    {
+                        groupTitle: 'Syntactic Role in Sentence',
+                        items: [
+                            { tag: 'Subject', label: 'Subject (Doer — Greek Nominative / Hebrew Subject)' },
+                            { tag: 'Object', label: 'Direct Object (Receiver — Greek Accusative / Hebrew אֵת)' },
+                            { tag: 'IndirectObject', label: 'Indirect Object (Recipient — Greek Dative / Hebrew לְ)' },
+                            { tag: 'Possessive', label: 'Possessive / Source ("Of" — Greek Genitive / Hebrew Construct)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Case (Greek NT) & State (Hebrew OT)',
+                        items: [
+                            { tag: 'Nominative', label: 'Nominative (Subject Case)' },
+                            { tag: 'Accusative', label: 'Accusative (Direct Object Case)' },
+                            { tag: 'Genitive', label: 'Genitive (Possessive / "Of" Case)' },
+                            { tag: 'Dative', label: 'Dative ("To / In / By" Case)' },
+                            { tag: 'Vocative', label: 'Vocative (Direct Address)' },
+                            { tag: 'Construct', label: 'Hebrew Construct State ("Bound / Of")' },
+                            { tag: 'Absolute', label: 'Hebrew Absolute State' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Gender & Number',
+                        items: [
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' },
+                            { tag: 'Dual', label: 'Dual (Hebrew Pairs)' }
+                        ]
+                    }
+                ]
+            },
+            'Verb': {
+                title: 'Verb Sub-Categories (Voice/Stem, Tense/Aspect, Mood, Person, Number)',
+                defaultPosTag: 'Verb',
+                groups: [
+                    {
+                        groupTitle: 'Voice (Greek NT) & Stem / Binyan (Hebrew OT)',
+                        items: [
+                            { tag: 'Active', label: 'Active Voice (Subject performs action)' },
+                            { tag: 'Middle', label: 'Middle Voice (Self-interest / Reflexive)' },
+                            { tag: 'Passive', label: 'Passive Voice (Subject receives action)' },
+                            { tag: 'Qal', label: 'Hebrew Qal (Simple Active)' },
+                            { tag: 'Niphal', label: 'Hebrew Niphal (Simple Passive / Reflexive)' },
+                            { tag: 'Piel', label: 'Hebrew Piel (Intensive Active)' },
+                            { tag: 'Pual', label: 'Hebrew Pual (Intensive Passive)' },
+                            { tag: 'Hiphil', label: 'Hebrew Hiphil (Causative Active)' },
+                            { tag: 'Hophal', label: 'Hebrew Hophal (Causative Passive)' },
+                            { tag: 'Hithpael', label: 'Hebrew Hithpael (Reflexive / Reciprocal)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Tense / Aspect (Greek & Hebrew Conjugations)',
+                        items: [
+                            { tag: 'Present', label: 'Present (Ongoing / Unfolding Action)' },
+                            { tag: 'Aorist', label: 'Aorist (Summary Snapshot Action)' },
+                            { tag: 'Imperfect', label: 'Imperfect (Unfolding Past / Hebrew Yiqtol)' },
+                            { tag: 'Perfect', label: 'Perfect (Completed with Ongoing Result / Hebrew Qatal)' },
+                            { tag: 'Future', label: 'Future (Expectation)' },
+                            { tag: 'Pluperfect', label: 'Pluperfect (Past Completed)' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Mood',
+                        items: [
+                            { tag: 'Indicative', label: 'Indicative (Statement of Fact / Reality)' },
+                            { tag: 'Imperative', label: 'Imperative (Direct Command)' },
+                            { tag: 'Subjunctive', label: 'Subjunctive (Purpose / Condition / Hortatory)' },
+                            { tag: 'Optative', label: 'Optative (Wish / Prayer)' },
+                            { tag: 'Infinitive', label: 'Infinitive (Verbal Noun — "To do")' },
+                            { tag: 'Participle', label: 'Participle (Verbal Adjective — "-ing")' },
+                            { tag: 'Jussive', label: 'Hebrew Jussive (3rd Person Volitional)' },
+                            { tag: 'Cohortative', label: 'Hebrew Cohortative (1st Person "Let us...")' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Person, Number & Gender',
+                        items: [
+                            { tag: '1st Person', label: '1st Person (I / We)' },
+                            { tag: '2nd Person', label: '2nd Person (You)' },
+                            { tag: '3rd Person', label: '3rd Person (He / She / It / They)' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' },
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' }
+                        ]
+                    }
+                ]
+            },
+            'Adjective': {
+                title: 'Adjective Sub-Categories (Case/State, Gender, Number, Role)',
+                defaultPosTag: 'Adjective',
+                groups: [
+                    {
+                        groupTitle: 'Case / State & Syntactic Role',
+                        items: [
+                            { tag: 'Nominative', label: 'Nominative (Subject / Predicate Adjective)' },
+                            { tag: 'Accusative', label: 'Accusative (Direct Object Modifier)' },
+                            { tag: 'Genitive', label: 'Genitive (Possessive / "Of" Modifier)' },
+                            { tag: 'Dative', label: 'Dative (Indirect Object Modifier)' },
+                            { tag: 'Construct', label: 'Hebrew Construct State' },
+                            { tag: 'Absolute', label: 'Hebrew Absolute State' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Gender & Number',
+                        items: [
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' }
+                        ]
+                    }
+                ]
+            },
+            'Adverb': {
+                title: 'Adverb Sub-Categories (Manner, Time, Negation, Place & Degree)',
+                defaultPosTag: 'Adverb',
+                groups: [
+                    {
+                        groupTitle: 'Common Biblical Adverb Types (Click to pre-fill or filter)',
+                        items: [
+                            { tag: 'Adverb', label: 'All Adverbs (Manner, Time, Place, Degree)' }
+                        ]
+                    }
+                ],
+                quickWords: [
+                    { word: 'now', label: 'Now (νῦν / עַתָּה)' },
+                    { word: 'not', label: 'Not / Negation (οὐ / μή / לֹא)' },
+                    { word: 'truly', label: 'Truly / Verily (ἀμήν / ἀληθῶς)' },
+                    { word: 'very', label: 'Very / Exceedingly (λίαν / מְאֹד)' },
+                    { word: 'always', label: 'Always (πάντοτε / תָּמִיד)' },
+                    { word: 'quickly', label: 'Quickly / Soon (ταχύ / מַהֵר)' }
+                ]
+            },
+            'Preposition': {
+                title: 'Preposition Sub-Categories (Spatial, Temporal, Instrumental & Case)',
+                defaultPosTag: 'Preposition',
+                groups: [
+                    {
+                        groupTitle: 'Preposition Grammatical Features',
+                        items: [
+                            { tag: 'Preposition', label: 'All Prepositions (Greek & Hebrew)' },
+                            { tag: 'IndirectObject', label: 'Prepositional / Indirect Object Role' }
+                        ]
+                    }
+                ],
+                quickWords: [
+                    { word: 'in', label: 'In / By (ἐν / בְּ)' },
+                    { word: 'into', label: 'Into / Unto (εἰς / אֶל)' },
+                    { word: 'from', label: 'From / Out of (ἐκ / ἀπό / מִן)' },
+                    { word: 'through', label: 'Through / Because of (διά)' },
+                    { word: 'to', label: 'To / For (πρός / לְ)' },
+                    { word: 'with', label: 'With (σύν / μετά / עִם)' },
+                    { word: 'upon', label: 'Upon / Over (ἐπί / עַל)' },
+                    { word: 'according', label: 'According to / Against (κατά)' }
+                ]
+            },
+            'Conjunction': {
+                title: 'Conjunction Sub-Categories (Coordinating, Causal, Purpose, Conditional)',
+                defaultPosTag: 'Conjunction',
+                groups: [
+                    {
+                        groupTitle: 'Conjunction Grammatical Features',
+                        items: [
+                            { tag: 'Conjunction', label: 'All Conjunctions (Logical Connectors)' }
+                        ]
+                    }
+                ],
+                quickWords: [
+                    { word: 'for', label: 'Causal: For / Because (γάρ / ὅτι / כִּי)' },
+                    { word: 'therefore', label: 'Inferential: Therefore (οὖν / διό / לָכֵן)' },
+                    { word: 'but', label: 'Adversative: But / Yet (δέ / ἀλλά)' },
+                    { word: 'that', label: 'Purpose / Content: That / So that (ἵνα / ὅτι)' },
+                    { word: 'if', label: 'Conditional: If (εἰ / ἐάν / אִם)' },
+                    { word: 'and', label: 'Coordinating: And (καί / וְ)' }
+                ]
+            },
+            'Exclamation': {
+                title: 'Exclamation / Interjection Sub-Categories (Behold!, Woe!, Amen!, O!)',
+                defaultPosTag: 'Exclamation',
+                groups: [
+                    {
+                        groupTitle: 'Exclamation & Interjection Sub-Categories',
+                        items: [
+                            { tag: 'Exclamation', label: 'All Exclamations & Interjections (Greek & Hebrew)' },
+                            { tag: 'Particle', label: 'Emphatic / Attention Particle' }
+                        ]
+                    }
+                ],
+                quickWords: [
+                    { word: 'behold', label: 'Behold! / Look! (ἰδού G2400 / הִנֵּה H2009)' },
+                    { word: 'woe', label: 'Woe! / Alas! (οὐαί G3759 / הוֹי H1945)' },
+                    { word: 'amen', label: 'Amen! / Truly! (ἀμήν G281 / אָמֵן H543)' },
+                    { word: 'hallelujah', label: 'Hallelujah! (ἀλληλούϊα G239 / הַלְלוּ־יָהּ)' }
+                ]
+            },
+            'Pronoun': {
+                title: 'Pronoun Sub-Categories (Role, Case, Person, Gender, Number)',
+                defaultPosTag: 'Pronoun',
+                groups: [
+                    {
+                        groupTitle: 'Syntactic Role & Case',
+                        items: [
+                            { tag: 'Subject', label: 'Subject (Nominative Pronoun — I, He, You, Who)' },
+                            { tag: 'Object', label: 'Direct Object (Accusative Pronoun — Me, Him, Whom)' },
+                            { tag: 'Possessive', label: 'Possessive (Genitive Pronoun — My, His, Our, Whose)' },
+                            { tag: 'IndirectObject', label: 'Indirect Object (Dative Pronoun — To Me, To Him)' },
+                            { tag: 'Nominative', label: 'Nominative' },
+                            { tag: 'Accusative', label: 'Accusative' },
+                            { tag: 'Genitive', label: 'Genitive' },
+                            { tag: 'Dative', label: 'Dative' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Person, Gender & Number',
+                        items: [
+                            { tag: '1st Person', label: '1st Person (I / We)' },
+                            { tag: '2nd Person', label: '2nd Person (You)' },
+                            { tag: '3rd Person', label: '3rd Person (He / She / It / They)' },
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' }
+                        ]
+                    }
+                ]
+            },
+            'Participle': {
+                title: 'Participle Sub-Categories (Tense/Aspect, Voice/Stem, Case/Role, Gender, Number)',
+                defaultPosTag: 'Participle',
+                groups: [
+                    {
+                        groupTitle: 'Tense / Aspect & Voice / Stem',
+                        items: [
+                            { tag: 'Present', label: 'Present Participle (Simultaneous / Ongoing "-ing")' },
+                            { tag: 'Aorist', label: 'Aorist Participle (Antecedent / Summary "having done")' },
+                            { tag: 'Perfect', label: 'Perfect Participle (Completed State)' },
+                            { tag: 'Active', label: 'Active Voice' },
+                            { tag: 'Middle', label: 'Middle Voice' },
+                            { tag: 'Passive', label: 'Passive Voice' },
+                            { tag: 'Qal', label: 'Hebrew Qal Participle' },
+                            { tag: 'Niphal', label: 'Hebrew Niphal Participle' },
+                            { tag: 'Piel', label: 'Hebrew Piel Participle' },
+                            { tag: 'Hiphil', label: 'Hebrew Hiphil Participle' }
+                        ]
+                    },
+                    {
+                        groupTitle: 'Case / Syntactic Role, Gender & Number',
+                        items: [
+                            { tag: 'Subject', label: 'Subject / Nominative Participle' },
+                            { tag: 'Object', label: 'Object / Accusative Participle' },
+                            { tag: 'Possessive', label: 'Genitive Participle (Genitive Absolute / Modifier)' },
+                            { tag: 'IndirectObject', label: 'Dative Participle' },
+                            { tag: 'Masculine', label: 'Masculine' },
+                            { tag: 'Feminine', label: 'Feminine' },
+                            { tag: 'Neuter', label: 'Neuter' },
+                            { tag: 'Singular', label: 'Singular' },
+                            { tag: 'Plural', label: 'Plural' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        function toggleDragDropWorkspaceVisibility(forceShow) {
+            const wrap = document.getElementById('dragDropSearchWorkspaceWrap');
+            const lbl = document.getElementById('toggleDragDropWorkspaceBtnLabel');
+            if (!wrap) return;
+            const willHide = typeof forceShow === 'boolean' ? !forceShow : !wrap.classList.contains('hidden');
+            wrap.classList.toggle('hidden', willHide);
+            if (lbl) {
+                lbl.textContent = willHide ? 'Show Drag & Drop Builder' : 'Hide Drag & Drop Builder';
+            }
+        }
+
+        function onDragStartSearchElement(ev, elemType) {
+            currentDraggedElementType = elemType;
+            if (ev.dataTransfer) {
+                ev.dataTransfer.setData('text/plain', elemType);
+                ev.dataTransfer.effectAllowed = 'copy';
+            }
+        }
+
+        function onDragOverSearchCanvas(ev) {
+            ev.preventDefault();
+            if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'copy';
+            const box = document.getElementById('dragDropSearchCanvasBox');
+            if (box) box.classList.add('ring-4', 'ring-indigo-400/50', 'bg-indigo-50/40');
+        }
+
+        function onDragLeaveSearchCanvas(ev) {
+            const box = document.getElementById('dragDropSearchCanvasBox');
+            if (box) box.classList.remove('ring-4', 'ring-indigo-400/50', 'bg-indigo-50/40');
+        }
+
+        function onDropSearchCanvas(ev) {
+            ev.preventDefault();
+            const box = document.getElementById('dragDropSearchCanvasBox');
+            if (box) box.classList.remove('ring-4', 'ring-indigo-400/50', 'bg-indigo-50/40');
+            const elemType = (ev.dataTransfer && ev.dataTransfer.getData('text/plain')) || currentDraggedElementType || 'Word';
+            dropElementIntoSearchCanvas(elemType, true);
+        }
+
+        function dropElementIntoSearchCanvas(elemType, openPopupImmediately = true) {
+            const meta = elementSubCategoryCatalog[elemType] || elementSubCategoryCatalog['Word'];
+            const initialSubTags = meta.defaultPosTag ? [meta.defaultPosTag] : [];
+            const newNode = {
+                elemType: elemType,
+                connector: 'AND',
+                wordsList: [],
+                currentWordInput: '',
+                subTags: initialSubTags
+            };
+            dragDropCanvasNodes.push(newNode);
+            const newIdx = dragDropCanvasNodes.length - 1;
+            lastFocusedChainSlotIdx = newIdx;
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+            if (openPopupImmediately) {
+                openElementSubCategoryPopup(newIdx);
+            }
+        }
+
+        function renderDragDropVisualDiagram() {
+            const container = document.getElementById('dragDropVisualDiagramNodes');
+            if (!container) return;
+
+            if (dragDropCanvasNodes.length === 0) {
+                container.innerHTML = `
+                    <div class="w-full py-7 text-center text-gray-400 dark:text-gray-500 border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl my-auto">
+                        <div class="text-sm font-bold text-gray-600 dark:text-gray-300 mb-1">
+                            <i class="fa-solid fa-arrows-up-down-left-right text-indigo-500 mr-1.5"></i>Drag &amp; Drop Any Element Here (e.g. <strong>Noun</strong>, <strong>Verb</strong>, <strong>Word (lexeme)</strong>)
+                        </div>
+                        <div class="text-xs">
+                            As soon as you drop an element into this Search Window, a pop-up menu will open so you can choose its <strong>Sub-Categories</strong> (Voice, Tense, Mood, Subject/Object Role, Case) and optional <strong>English or Original Word</strong>.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const connectorCycleLabels = {
+                'AND': '+ AND (Any Order)',
+                'BEFORE': '→ IN ORDER',
+                'PROX_3': '↔ ≤ 3 WORDS',
+                'PROX_5': '↔ ≤ 5 WORDS'
+            };
+
+            container.innerHTML = dragDropCanvasNodes.map((node, idx) => {
+                const displayType = node.elemType === 'Word' ? 'Word (lexeme)' : node.elemType;
+                // Sub-category pills excluding the base POS tag if other sub-categories are selected
+                const visibleSubTags = node.subTags.filter(t => t !== node.elemType);
+                const hasWords = node.wordsList && node.wordsList.length > 0;
+
+                const subCatPillsHtml = [];
+                if (hasWords) {
+                    subCatPillsHtml.push(`
+                        <div onclick="openElementSubCategoryPopup(${idx})" class="px-3.5 py-2 rounded-2xl bg-indigo-100 dark:bg-indigo-950/90 hover:bg-indigo-600 hover:text-white text-indigo-900 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700 font-bold text-xs shadow-sm transition cursor-pointer text-center min-w-[130px]" title="Click to edit word(s) or sub-categories">
+                            <i class="fa-solid fa-quote-left text-[9px] opacity-60 mr-1"></i>${escapeHtmlText(node.wordsList.join(' OR '))}
+                        </div>
+                    `);
+                }
+                if (visibleSubTags.length > 0) {
+                    visibleSubTags.forEach(st => {
+                        subCatPillsHtml.push(`
+                            <div onclick="openElementSubCategoryPopup(${idx})" class="px-3.5 py-2 rounded-2xl bg-gray-200/95 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-zinc-600 font-bold text-xs shadow-sm transition cursor-pointer text-center min-w-[130px]" title="Click to edit sub-categories">
+                                ${escapeHtmlText(st)}
+                            </div>
+                        `);
+                    });
+                }
+                if (subCatPillsHtml.length === 0) {
+                    subCatPillsHtml.push(`
+                        <div onclick="openElementSubCategoryPopup(${idx})" class="px-3.5 py-2.5 rounded-2xl bg-gray-200/90 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-zinc-600 font-bold text-xs shadow-sm transition cursor-pointer text-center min-w-[130px]" title="Click to select sub-categories">
+                            Sub category <i class="fa-solid fa-caret-down ml-1 text-[10px]"></i>
+                        </div>
+                    `);
+                } else {
+                    subCatPillsHtml.push(`
+                        <button type="button" onclick="openElementSubCategoryPopup(${idx})" class="px-2.5 py-1 rounded-xl bg-gray-100 dark:bg-zinc-800/90 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700 font-bold text-[10px] transition cursor-pointer">
+                            + Edit / Add Sub-Category
+                        </button>
+                    `);
+                }
+
+                const connectorBetweenCols = idx > 0 ? `
+                    <div class="flex flex-col items-center justify-center self-center pt-2">
+                        <button type="button" onclick="cycleDragDropNodeConnector(${idx})" class="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700 font-bold text-[10px] transition cursor-pointer shadow-xs" title="Click to toggle word order link (Any Order -> In Order -> Within 3 Words -> Within 5 Words)">
+                            ${escapeHtmlText(connectorCycleLabels[node.connector] || '+ AND')}
+                        </button>
+                    </div>
+                ` : '';
+
+                return `
+                    ${connectorBetweenCols}
+                    <!-- Visual Tree Column Matching User Diagram: [ Top Element Pill ] -> | Vertical Line -> [ Sub category ] -->
+                    <div class="flex flex-col items-center min-w-[145px] group relative">
+                        <!-- Top Parent Element Block -->
+                        <div class="relative flex items-center justify-center w-full">
+                            <button type="button" onclick="openElementSubCategoryPopup(${idx})"
+                                    class="w-full px-4 py-2.5 rounded-2xl bg-gray-300/95 dark:bg-zinc-700 hover:bg-indigo-600 hover:text-white text-gray-900 dark:text-white font-extrabold text-xs shadow-sm border border-gray-400/70 dark:border-zinc-500 transition cursor-pointer text-center">
+                                ${escapeHtmlText(displayType)}
+                            </button>
+                            <button type="button" onclick="removeDragDropCanvasNode(${idx})"
+                                    class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold shadow flex items-center justify-center cursor-pointer"
+                                    title="Remove this element">
+                                &times;
+                            </button>
+                        </div>
+
+                        <!-- Vertical Stem Line (|) Connecting Element to Sub-Category Box Below -->
+                        <div class="w-0.5 h-5 bg-gray-400 dark:bg-zinc-500"></div>
+
+                        <!-- Hanging Sub-Category Stack Connected by Vertical Lines -->
+                        <div class="flex flex-col items-center space-y-1.5 w-full">
+                            ${subCatPillsHtml.map((pillHtml, pIdx) => `
+                                ${pIdx > 0 ? '<div class="w-0.5 h-2.5 bg-gray-300 dark:bg-zinc-600"></div>' : ''}
+                                ${pillHtml}
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function cycleDragDropNodeConnector(idx) {
+            const node = dragDropCanvasNodes[idx];
+            if (!node) return;
+            const order = ['AND', 'BEFORE', 'PROX_3', 'PROX_5'];
+            const cur = order.indexOf(node.connector || 'AND');
+            node.connector = order[(cur + 1) % order.length];
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function removeDragDropCanvasNode(idx) {
+            dragDropCanvasNodes.splice(idx, 1);
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function clearDragDropSearchCanvas() {
+            dragDropCanvasNodes = [];
+            renderDragDropVisualDiagram();
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) inp.value = '';
+        }
+
+        function loadDragDropPreset(presetNodes, targetScope) {
+            dragDropCanvasNodes = presetNodes.map((n, i) => {
+                const meta = elementSubCategoryCatalog[n.elemType] || elementSubCategoryCatalog['Word'];
+                const baseTags = meta.defaultPosTag ? [meta.defaultPosTag] : [];
+                const combinedTags = Array.from(new Set([...baseTags, ...(n.subTags || [])]));
+                return {
+                    elemType: n.elemType || 'Word',
+                    connector: i === 0 ? 'AND' : (n.connector || 'AND'),
+                    wordsList: Array.isArray(n.wordsList) ? [...n.wordsList] : [],
+                    currentWordInput: '',
+                    subTags: combinedTags
+                };
+            });
+            if (targetScope) {
+                const scopeSel = document.getElementById('grammarScopeSelect');
+                if (scopeSel) {
+                    scopeSel.value = targetScope;
+                    scopeSel.dataset.userChanged = 'true';
+                }
+            }
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function syncDragDropCanvasToSearchInput() {
+            const inp = document.getElementById('grammarSearchInput');
+            if (!inp) return;
+            if (dragDropCanvasNodes.length === 0) {
+                return;
+            }
+            const parts = [];
+            dragDropCanvasNodes.forEach((node, idx) => {
+                const words = (node.wordsList || []).filter(Boolean);
+                let wordExpr = '*';
+                if (words.length === 1) wordExpr = words[0];
+                else if (words.length > 1) wordExpr = `(${words.join(', ')})`;
+
+                const tags = Array.from(new Set((node.subTags || []).filter(Boolean)));
+                const tokenExpr = tags.length > 0
+                    ? `${wordExpr}@[${tags.join(', ')}]`
+                    : wordExpr;
+
+                if (idx > 0) {
+                    if (node.connector === 'BEFORE') {
+                        parts.push('->');
+                        parts.push(tokenExpr);
+                    } else if (node.connector === 'PROX_3') {
+                        parts.push(`3-${tokenExpr}`);
+                    } else if (node.connector === 'PROX_5') {
+                        parts.push(`5-${tokenExpr}`);
+                    } else {
+                        parts.push(tokenExpr);
+                    }
+                } else {
+                    parts.push(tokenExpr);
+                }
+            });
+            inp.value = parts.join(' ');
+        }
+
+        function openElementSubCategoryPopup(nodeIdx) {
+            const node = dragDropCanvasNodes[nodeIdx];
+            if (!node) return;
+            activeEditingCanvasNodeIdx = nodeIdx;
+            lastFocusedChainSlotIdx = nodeIdx;
+
+            const modal = document.getElementById('elementSubCategoryPopupModal');
+            const badge = document.getElementById('subCatPopupElementBadge');
+            const title = document.getElementById('subCatPopupTitle');
+            const body = document.getElementById('subCatPopupBody');
+            if (!modal || !body) return;
+
+            const meta = elementSubCategoryCatalog[node.elemType] || elementSubCategoryCatalog['Word'];
+            if (badge) badge.textContent = node.elemType === 'Word' ? 'Word (lexeme)' : node.elemType;
+            if (title) title.textContent = meta.title;
+
+            renderElementSubCategoryPopupBody();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                const wordIn = document.getElementById('popupElementWordInput');
+                if (wordIn) wordIn.focus();
+            }, 40);
+        }
+
+        function renderElementSubCategoryPopupBody() {
+            const body = document.getElementById('subCatPopupBody');
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!body || !node) return;
+
+            const meta = elementSubCategoryCatalog[node.elemType] || elementSubCategoryCatalog['Word'];
+            const wordPillsHtml = (node.wordsList && node.wordsList.length > 0)
+                ? node.wordsList.map((w, wIdx) => `
+                    <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-indigo-600 text-white font-bold text-xs shadow-xs">
+                        <span>${escapeHtmlText(w)}</span>
+                        <button type="button" onclick="removeWordFromEditingCanvasNode(${wIdx})" class="hover:text-red-200 font-bold cursor-pointer">&times;</button>
+                    </span>
+                `).join('<span class="text-[10px] font-bold text-gray-400">OR</span>')
+                : `<span class="text-xs italic text-gray-400">Any ${escapeHtmlText(node.elemType)} word (leave blank to match all, or type an English / Greek / Hebrew word above)</span>`;
+
+            const quickWordsHtml = (meta.quickWords && meta.quickWords.length > 0) ? `
+                <div class="flex items-center flex-wrap gap-1.5 pt-1">
+                    <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300">Quick Biblical ${escapeHtmlText(node.elemType)}s:</span>
+                    ${meta.quickWords.map(qw => `
+                        <button type="button" onclick="addWordToEditingCanvasNode('${escapeHtmlText(qw.word)}')" class="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-semibold text-[11px] transition cursor-pointer">
+                            + ${escapeHtmlText(qw.label)}
+                        </button>
+                    `).join('')}
+                </div>
+            ` : '';
+
+            const groupsHtml = (meta.groups || []).map(grp => `
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 space-y-2">
+                    <div class="font-bold text-xs text-gray-800 dark:text-gray-100">${escapeHtmlText(grp.groupTitle)}</div>
+                    <div class="flex flex-wrap gap-2">
+                        ${grp.items.map(item => {
+                            const isSelected = node.subTags.includes(item.tag);
+                            return `
+                                <button type="button" onclick="toggleSubCategoryTagOnEditingNode('${item.tag}')"
+                                        class="px-3 py-1.5 rounded-xl font-bold text-xs border transition cursor-pointer flex items-center space-x-1.5 ${isSelected ? 'bg-teal-600 text-white border-teal-600 shadow-sm' : 'bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-zinc-700 hover:border-teal-500'}">
+                                    <i class="fa-solid ${isSelected ? 'fa-square-check' : 'fa-square'} text-[11px]"></i>
+                                    <span>${escapeHtmlText(item.label)}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            body.innerHTML = `
+                <!-- 1. Word / Lexeme Filter (English -> Original Language Bridge, Greek/Hebrew, or Transliteration) -->
+                <div class="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-zinc-800/90 border border-indigo-200 dark:border-zinc-700 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-xs text-indigo-950 dark:text-indigo-200">
+                            <i class="fa-solid fa-language text-indigo-600 mr-1"></i>Word / Lexeme for this ${escapeHtmlText(node.elemType)} (Use English to search Original Languages, or type Greek/Hebrew/Transliteration):
+                        </label>
+                        <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">Optional</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="popupElementWordInput"
+                               placeholder="Type English word (e.g. God, love, world, behold), Greek/Hebrew, or transliteration (theos, agapao, elohim)..."
+                               onkeydown="if(event.key === 'Enter'){ event.preventDefault(); commitTypedWordInPopup(); }"
+                               oninput="onPopupWordLiveInput(this.value)"
+                               class="select-text glass-control flex-1 px-3 py-2 text-xs font-bold text-gray-900 dark:text-white outline-none">
+                        <button type="button" onclick="commitTypedWordInPopup()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1 shrink-0" title="Add word to this element (you can add multiple words!)">
+                            <i class="fa-solid fa-plus text-[10px]"></i>
+                            <span>+ Add Word</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-1.5 pt-0.5" id="popupElementActiveWordsWrap">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mr-1">Active Word(s):</span>
+                        ${wordPillsHtml}
+                    </div>
+                    ${quickWordsHtml}
+                </div>
+
+                <!-- 2. Sub-Categories for this Part of Speech -->
+                <div class="space-y-2.5">
+                    ${groupsHtml}
+                </div>
+            `;
+        }
+
+        function onPopupWordLiveInput(val) {
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!node) return;
+            node.currentWordInput = val;
+        }
+
+        function commitTypedWordInPopup() {
+            const inp = document.getElementById('popupElementWordInput');
+            if (!inp) return;
+            const val = inp.value.trim();
+            if (!val) {
+                closeElementSubCategoryPopup();
+                return;
+            }
+            addWordToEditingCanvasNode(val);
+            inp.value = '';
+            node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (node) node.currentWordInput = '';
+        }
+
+        function addWordToEditingCanvasNode(wordStr) {
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!node) return;
+            const clean = (wordStr || '').trim();
+            if (clean && clean !== '*' && !node.wordsList.includes(clean)) {
+                node.wordsList.push(clean);
+            }
+            node.currentWordInput = '';
+            renderElementSubCategoryPopupBody();
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function removeWordFromEditingCanvasNode(wIdx) {
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!node) return;
+            node.wordsList.splice(wIdx, 1);
+            renderElementSubCategoryPopupBody();
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function toggleSubCategoryTagOnEditingNode(tagStr) {
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!node) return;
+            const idx = node.subTags.indexOf(tagStr);
+            if (idx >= 0) {
+                node.subTags.splice(idx, 1);
+            } else {
+                node.subTags.push(tagStr);
+            }
+            renderElementSubCategoryPopupBody();
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function clearCurrentEditingNodeSubCategories() {
+            const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+            if (!node) return;
+            const meta = elementSubCategoryCatalog[node.elemType] || elementSubCategoryCatalog['Word'];
+            node.subTags = meta.defaultPosTag ? [meta.defaultPosTag] : [];
+            node.wordsList = [];
+            node.currentWordInput = '';
+            renderElementSubCategoryPopupBody();
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
+        function removeCurrentEditingCanvasNode() {
+            if (activeEditingCanvasNodeIdx >= 0 && activeEditingCanvasNodeIdx < dragDropCanvasNodes.length) {
+                dragDropCanvasNodes.splice(activeEditingCanvasNodeIdx, 1);
+            }
+            closeElementSubCategoryPopup(true);
+        }
+
+        function closeElementSubCategoryPopup(skipPendingWordCommit = false) {
+            if (!skipPendingWordCommit && activeEditingCanvasNodeIdx >= 0 && dragDropCanvasNodes[activeEditingCanvasNodeIdx]) {
+                const inp = document.getElementById('popupElementWordInput');
+                const pending = inp ? inp.value.trim() : '';
+                if (pending && pending !== '*') {
+                    const node = dragDropCanvasNodes[activeEditingCanvasNodeIdx];
+                    if (!node.wordsList.includes(pending)) {
+                        node.wordsList.push(pending);
+                    }
+                    node.currentWordInput = '';
+                }
+            }
+            const modal = document.getElementById('elementSubCategoryPopupModal');
+            if (modal) modal.classList.add('hidden');
+            activeEditingCanvasNodeIdx = -1;
+            renderDragDropVisualDiagram();
+            syncDragDropCanvasToSearchInput();
+        }
+
         const constructRoleAndTagAliasMap = {
+            'exclamation': 'Exclamation', 'exclamations': 'Exclamation', 'interjection': 'Exclamation',
             'subject': 'Subject', 'subj': 'Subject', 'doer': 'Subject',
             'object': 'Object', 'obj': 'Object', 'direct_object': 'Object', 'directobject': 'Object', 'receiver': 'Object',
             'indirect_object': 'IndirectObject', 'indirectobject': 'IndirectObject', 'iobj': 'IndirectObject', 'recipient': 'IndirectObject',
@@ -13347,7 +14224,7 @@
             'preposition': 'Preposition', 'prepositions': 'Preposition', 'prep': 'Preposition',
             'conjunction': 'Conjunction', 'conjunctions': 'Conjunction', 'conj': 'Conjunction',
             'adverb': 'Adverb', 'adverbs': 'Adverb', 'adv': 'Adverb',
-            'particle': 'Particle', 'particles': 'Particle', 'article': 'Article', 'art': 'Article',
+            'particle': 'Particle', 'particles': 'Particle', 'article': 'Article', 'exclamation': 'Exclamation', 'exclamations': 'Exclamation', 'interjection': 'Exclamation', 'art': 'Article',
             'imperative': 'Imperative', 'imperatives': 'Imperative', 'impv': 'Imperative', 'command': 'Imperative',
             'participle': 'Participle', 'participles': 'Participle', 'ptcp': 'Participle',
             'infinitive': 'Infinitive', 'infinitives': 'Infinitive', 'inf': 'Infinitive',
@@ -13457,8 +14334,28 @@
             return slots;
         }
 
+        const greekExclamationLemmas = new Set(['ιδου', 'ιδε', 'ουαι', 'αμην', 'ω', 'εα', 'ουα', 'αλληλουια', 'μακαριοσ']);
+        const greekExclamationStrongs = new Set(['G2400', 'G2396', 'G3759', 'G281', 'G5599', 'G1436', 'G3758', 'G239']);
+        const hebrewExclamationLemmas = new Set(['הנה', 'הן', 'הוי', 'אוי', 'אהה', 'חלילה', 'נא', 'אמן', 'בי']);
+        const hebrewExclamationStrongs = new Set(['H2009', 'H2005', 'H1945', 'H188', 'H162', 'H2486', 'H4994', 'H543', 'H994']);
+
         function enrichVerseTokensWithSyntacticRoles(analyzedTokens, isOt) {
             if (!Array.isArray(analyzedTokens) || analyzedTokens.length === 0) return;
+            analyzedTokens.forEach(tok => {
+                if (!Array.isArray(tok.tags)) tok.tags = [];
+                const sCode = (tok.strongs || '').toUpperCase();
+                const nLem = tok.normLemma || tok.norm || '';
+                const gLow = (tok.gloss || '').toLowerCase();
+                if (!isOt) {
+                    if (greekExclamationStrongs.has(sCode) || greekExclamationLemmas.has(nLem) || /\b(behold|woe|alas|amen|lo)\b/.test(gLow)) {
+                        if (!tok.tags.includes('Exclamation')) tok.tags.push('Exclamation');
+                    }
+                } else {
+                    if (hebrewExclamationStrongs.has(sCode) || hebrewExclamationLemmas.has(nLem) || /\b(behold|woe|alas|amen|lo|oh)\b/.test(gLow)) {
+                        if (!tok.tags.includes('Exclamation')) tok.tags.push('Exclamation');
+                    }
+                }
+            });
 
             if (!isOt) {
                 // Greek NT: Map morphological Cases directly to syntactic roles
@@ -14920,6 +15817,9 @@
                     hitCount: results.length,
                     bookCount: fastBookSet.size
                 });
+                if (dragDropCanvasNodes.length > 0) {
+                    toggleDragDropWorkspaceVisibility(false);
+                }
                 renderGrammarSearchResults(results, requiredTags, lastGrammarSearchWordFilters);
                 if (openInSeparateWindow) {
                     openGrammarResultsPopupModal();
@@ -15167,6 +16067,9 @@
                 hitCount: results.length,
                 bookCount: morphBookSet.size
             });
+            if (dragDropCanvasNodes.length > 0) {
+                toggleDragDropWorkspaceVisibility(false);
+            }
             renderGrammarSearchResults(results, requiredTags, filterLabels);
             if (openInSeparateWindow) {
                 openGrammarResultsPopupModal();
@@ -17764,6 +18667,10 @@
 
             const separateWinActionBtns = !isSeparateModalView
                 ? `<div class="flex items-center flex-wrap gap-1.5">
+                    <button type="button" onclick="toggleDragDropWorkspaceVisibility(true)" class="px-3 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-950 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 text-[11px] font-bold border border-indigo-300 dark:border-indigo-700 transition cursor-pointer flex items-center space-x-1.5" title="Re-open the Drag-and-Drop Elements &amp; Search Window Canvas to edit your blocks">
+                        <i class="fa-solid fa-shapes text-[10px]"></i>
+                        <span>Edit Drag &amp; Drop Blocks</span>
+                    </button>
                     <button type="button" onclick="openVisualAnalyticsStudioFromCurrentSearch(true)" class="px-3 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5" title="Visualize these search findings as Bar Charts, Pie/Donut Charts, Trends, or Comparative Tables">
                         <i class="fa-solid fa-chart-pie text-[10px]"></i>
                         <span>Visualize &amp; Compare</span>
