@@ -28,6 +28,7 @@
     <script src="https://cdn.jsdelivr.net/gh/openscriptures/strongs@master/greek/strongs-greek-dictionary.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/openscriptures/strongs@master/hebrew/strongs-hebrew-dictionary.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -1077,21 +1078,19 @@
                     <select id="projectSelect" onchange="loadSelectedProject()" class="glass-control w-full text-gray-800 dark:text-gray-200 px-2.5 py-1.5 outline-none font-medium text-xs">
                         <option value="lexflow_default">Default Scratchpad</option>
                     </select>
+                    <div class="flex items-center gap-1">
+                        <input id="sidebarNewProjectNameInput" type="text" placeholder="New project name (e.g. James 1 Study)..." class="select-text glass-control flex-1 min-w-0 px-2 py-1.5 text-[11px] text-gray-900 dark:text-white outline-none" onkeydown="if(event.key==='Enter'){ event.preventDefault(); saveCurrentAsNewProject('sidebarNewProjectNameInput'); }">
+                        <button type="button" onclick="saveCurrentAsNewProject('sidebarNewProjectNameInput')" class="glass-control px-2.5 py-1.5 !bg-emerald-600 hover:!bg-emerald-700 text-white font-bold text-[11px] shrink-0 cursor-pointer" title="Save current workspace & notes as a new named project">+ Save</button>
+                    </div>
                     <div class="grid grid-cols-2 gap-1.5">
-                        <button onclick="saveCurrentAsNewProject()" class="glass-control px-2.5 py-1.5 !bg-emerald-600/85 hover:!bg-emerald-600 text-white font-semibold text-center">+ Save As New</button>
-                        <button onclick="deleteCurrentProject()" class="glass-control px-2.5 py-1.5 text-red-600 dark:text-red-400 font-semibold flex items-center justify-center space-x-1">
+                        <button type="button" onclick="saveActiveProjectData(true)" class="glass-control px-2.5 py-1.5 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center justify-center space-x-1 cursor-pointer" title="Save changes to current active project">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Save Current</span>
+                        </button>
+                        <button type="button" onclick="deleteCurrentProject()" class="glass-control px-2.5 py-1.5 text-red-600 dark:text-red-400 font-semibold flex items-center justify-center space-x-1 cursor-pointer">
                             <i class="fa-solid fa-trash-can"></i>
-                            <span>Delete</span>
+                            <span id="deleteProjectBtnLabel">Delete</span>
                         </button>
-                        <button onclick="exportAllProjects()" class="glass-control px-2.5 py-1.5 text-sky-700 dark:text-sky-300 font-semibold flex items-center justify-center space-x-1">
-                            <i class="fa-solid fa-file-export"></i>
-                            <span>Export</span>
-                        </button>
-                        <label class="glass-control px-2.5 py-1.5 text-sky-700 dark:text-sky-300 font-semibold cursor-pointer flex items-center justify-center space-x-1">
-                            <i class="fa-solid fa-file-import"></i>
-                            <span>Import</span>
-                            <input type="file" accept=".json" class="hidden" onchange="importAllProjects(event)">
-                        </label>
                     </div>
                     <div class="pt-1 border-t border-gray-300/40 dark:border-zinc-700/50">
                         <span id="srgntStatus" class="text-[11px] text-sky-700 dark:text-sky-300 font-medium block truncate"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> SRGNT, EMTV &amp; Thayer's Ready</span>
@@ -1525,29 +1524,21 @@
                         </div>
                     </div>
 
-                    <!-- SQL Database Inspector & Optional Custom Supabase/PostgreSQL Endpoint -->
-                    <div class="pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                        <div class="flex items-center flex-wrap gap-2">
-                            <button type="button" onclick="toggleSqlInspectorPanel()" class="glass-control px-2.5 py-1 font-semibold text-indigo-700 dark:text-indigo-300 flex items-center space-x-1 cursor-pointer">
-                                <i class="fa-solid fa-table"></i>
-                                <span>Inspect SQL Tables &amp; Cloud Endpoint</span>
-                            </button>
-                            <button type="button" onclick="exportSqlDatabaseFile()" class="glass-control px-2.5 py-1 font-semibold text-teal-700 dark:text-teal-300 flex items-center space-x-1 cursor-pointer" title="Download SQLite .sqlite database file">
-                                <i class="fa-solid fa-database"></i>
-                                <span>Export .sqlite DB</span>
-                            </button>
+                    <!-- In-Settings Project Manager (Create, Switch, or Delete Projects Directly Here) -->
+                    <div class="pt-3 border-t border-gray-200/70 dark:border-zinc-700/70 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs text-gray-800 dark:text-gray-100"><i class="fa-solid fa-folder-tree text-emerald-600 mr-1.5"></i>Saved Workspace Projects</span>
+                            <span id="settingsProjectsCountBadge" class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">1 project saved</span>
                         </div>
-                        <span id="sqlTableRowCountSummary" class="font-mono text-[10px] text-gray-500 dark:text-gray-400">SQL Tables: 4 active</span>
-                    </div>
-
-                    <!-- Collapsible Live SQL Table Inspector & Custom Cloud SQL Endpoint Config -->
-                    <div id="sqlInspectorCollapsible" class="hidden pt-2 space-y-2.5 border-t border-gray-200/60 dark:border-zinc-700/60">
-                        <div class="p-2.5 rounded-lg bg-gray-900 text-emerald-300 font-mono text-[10px] overflow-x-auto max-h-36 custom-scrollbar" id="sqlLiveDumpPreview">
-                            -- SQL Tables Initialized: lexflow_accounts, lexflow_user_settings, lexflow_projects, lexflow_clause_notes
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input type="text" id="customCloudSqlUrlInput" placeholder="Optional Custom Supabase / REST SQL URL..." class="select-text glass-control px-2.5 py-1.5 text-[11px] text-gray-800 dark:text-gray-100 outline-none" onchange="saveCustomCloudSqlConfig()">
-                            <input type="password" id="customCloudSqlKeyInput" placeholder="Optional Supabase Anon / API Key..." class="select-text glass-control px-2.5 py-1.5 text-[11px] text-gray-800 dark:text-gray-100 outline-none" onchange="saveCustomCloudSqlConfig()">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="settingsProjectSelect" onchange="switchProjectFromSettings(this.value)" class="glass-control flex-1 min-w-[180px] px-3 py-1.5 text-xs font-semibold text-gray-800 dark:text-gray-100 outline-none cursor-pointer">
+                                <option value="lexflow_default">Default Scratchpad</option>
+                            </select>
+                            <input id="settingsNewProjectNameInput" type="text" placeholder="New project name (e.g. James Imperatives)..." class="select-text glass-control flex-1 min-w-[200px] px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none" onkeydown="if(event.key==='Enter'){ event.preventDefault(); saveCurrentAsNewProject('settingsNewProjectNameInput'); }">
+                            <button type="button" onclick="saveCurrentAsNewProject('settingsNewProjectNameInput')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Save New Project</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1680,9 +1671,9 @@
                         <i class="fa-solid fa-heart text-[10px]"></i>
                         <span>Kudos</span>
                     </button>
-                    <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.toggle('hidden')" class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[11px] font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Show/Hide Custom Search Schema Guide">
+                    <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.toggle('hidden')" class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[11px] font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Show/Hide Custom Search Schema Guide &amp; Example Searches">
                         <i class="fa-solid fa-circle-question text-[10px]"></i>
-                        <span>Schema Syntax Guide</span>
+                        <span>Schema Guide &amp; Example Searches</span>
                     </button>
                     <button type="button" onclick="closeGrammarSearchModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-0.5 rounded transition cursor-pointer" title="Close Search (Esc)">
                         <i class="fa-solid fa-xmark"></i>
@@ -1702,12 +1693,12 @@
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
-                    <select id="grammarUnitSelect" onchange="executeGrammarMorphSearch(false)" class="glass-control px-2.5 py-2 text-xs font-bold text-teal-700 dark:text-teal-300 outline-none cursor-pointer" title="Choose Search Boundary: Verse, Sentence, or Paragraph">
+                    <select id="grammarUnitSelect" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }" class="glass-control px-2.5 py-2 text-xs font-bold text-teal-700 dark:text-teal-300 outline-none cursor-pointer" title="Choose Search Boundary: Verse, Sentence, or Paragraph">
                         <option value="verse" selected>Unit: Verse</option>
                         <option value="sentence">Unit: Sentence</option>
                         <option value="paragraph">Unit: Paragraph</option>
                     </select>
-                    <select id="grammarScopeSelect" onchange="executeGrammarMorphSearch(false)" class="glass-control px-2.5 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer" title="Choose Testament / Scope">
+                    <select id="grammarScopeSelect" onchange="this.dataset.userChanged='true'" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }" class="glass-control px-2.5 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer" title="Choose Testament / Scope">
                         <option value="both">Scope: Both OT &amp; NT</option>
                         <option value="nt">Scope: New Testament (NT)</option>
                         <option value="ot">Scope: Old Testament (OT)</option>
@@ -1728,10 +1719,10 @@
                     </button>
                 </div>
 
-                <!-- Collapsible Custom Schema Syntax Cheat-Sheet -->
-                <div id="customSchemaSyntaxGuideBox" class="hidden p-3 rounded-xl bg-amber-50/95 dark:bg-zinc-800/95 border border-amber-300 dark:border-zinc-700 text-[11px] space-y-2">
-                    <div class="flex items-center justify-between border-b border-amber-200 dark:border-zinc-700 pb-1">
-                        <span class="font-bold text-amber-900 dark:text-amber-300"><i class="fa-solid fa-book-open mr-1"></i>LexFlow Custom Search Schema (Works with English, Greek &amp; Hebrew Words — Click any example to run!)</span>
+                <!-- Collapsible Custom Schema Syntax Guide + Example Searches (Moved Here to Keep Search Bar Clean!) -->
+                <div id="customSchemaSyntaxGuideBox" class="hidden p-3.5 rounded-xl bg-amber-50/95 dark:bg-zinc-800/95 border border-amber-300 dark:border-zinc-700 text-[11px] space-y-3">
+                    <div class="flex items-center justify-between border-b border-amber-200 dark:border-zinc-700 pb-1.5">
+                        <span class="font-bold text-amber-900 dark:text-amber-300"><i class="fa-solid fa-book-open mr-1"></i>LexFlow Custom Search Schema Syntax Guide &amp; Example Searches (Click any example to run!)</span>
                         <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.add('hidden')" class="text-gray-500 hover:text-red-500 font-bold cursor-pointer">&times; Close</button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 text-gray-800 dark:text-gray-200">
@@ -1748,10 +1739,36 @@
                         <div><button type="button" onclick="runSchemaExample('god ! love-peace', 'nt')" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">god ! love-peace</button> &mdash; <em>god</em> AND <em>love</em> before <em>peace</em></div>
                         <div><button type="button" onclick="runSchemaExample('λόγος-θεός', 'nt')" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">λόγος-θεός</button> / <button type="button" onclick="runSchemaExample('אֱלֹהִים ברא*', 'ot')" class="font-mono font-bold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer">אֱלֹהִים ברא*</button> &mdash; Original Greek/Hebrew</div>
                     </div>
+
+                    <!-- Example Searches Section (Moved Up from Main Header Area) -->
+                    <div class="pt-2.5 border-t border-amber-200/90 dark:border-zinc-700 space-y-2">
+                        <div class="font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider text-[10px] flex items-center space-x-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
+                            <span>Example Searches</span>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-1.5 text-[11px]">
+                            <span class="font-bold text-gray-600 dark:text-gray-300 mr-0.5">Schema Examples:</span>
+                            <button type="button" onclick="runSchemaExample('god 3-lov*', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' within 3 words of words starting with 'lov'">god 3-lov*</button>
+                            <button type="button" onclick="runSchemaExample('god (love, hope, peace)', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' with love, hope, or peace">god (love, hope, peace)</button>
+                            <button type="button" onclick="runSchemaExample('god ! love-peace', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' AND 'love' before 'peace'">god ! love-peace</button>
+                            <button type="button" onclick="runSchemaExample('~ god of my heart', 'both')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Fuzzy search for phrases like 'god of my heart'">~ god of my heart</button>
+                            <button type="button" onclick="runSchemaExample('&amp;in god-earth', 'ot')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="'In' as first word + 'god' before 'earth'">&amp;in god-earth</button>
+                            <span class="text-gray-300 dark:text-zinc-700">|</span>
+                            <span class="font-bold text-gray-600 dark:text-gray-300 mr-0.5">Grammar:</span>
+                            <button type="button" onclick="runQuickGrammarCommand('Imperative')" class="px-2.5 py-0.5 rounded-full bg-rose-100/90 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 font-bold border border-rose-300 dark:border-rose-800 hover:bg-rose-600 hover:text-white transition cursor-pointer">Imperatives (Commands)</button>
+                            <button type="button" onclick="runQuickGrammarCommand('Participle')" class="px-2.5 py-0.5 rounded-full bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-300 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white transition cursor-pointer">All Participles</button>
+                            <button type="button" onclick="runQuickGrammarCommand('Participle, Genitive, Masculine, Singular')" class="px-2.5 py-0.5 rounded-full bg-purple-100/90 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold border border-purple-300 dark:border-purple-800 hover:bg-purple-600 hover:text-white transition cursor-pointer">Participle, Genitive, Masculine, Singular</button>
+                            <button type="button" onclick="runQuickGrammarCommand('Infinitive')" class="px-2.5 py-0.5 rounded-full bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800 hover:bg-amber-600 hover:text-white transition cursor-pointer">Infinitives</button>
+                            <button type="button" onclick="runQuickGrammarCommand('Noun, Construct')" class="px-2.5 py-0.5 rounded-full bg-teal-100/90 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-bold border border-teal-300 dark:border-teal-800 hover:bg-teal-600 hover:text-white transition cursor-pointer">Hebrew Construct Nouns</button>
+                            <button type="button" onclick="runQuickGrammarCommand('Verb, Hiphil')" class="px-2.5 py-0.5 rounded-full bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-600 hover:text-white transition cursor-pointer">Causative Verbs (Hiphil)</button>
+                        </div>
+                        <div id="grammarSmartSuggestionsBar" class="p-2 rounded-lg bg-white/85 dark:bg-zinc-900/85 border border-amber-200/80 dark:border-zinc-700">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Exact Form Dropdown Builder Row -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }">
                     <select id="gfPos" onchange="syncGrammarCommandFromFilters()" class="glass-control px-2.5 py-1.5 font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer">
                         <option value="">Part of Speech: Any</option>
                         <option value="Verb">Verb</option>
@@ -1808,31 +1825,28 @@
                     </select>
                 </div>
 
-                <!-- Quick Schema & Grammar Presets -->
-                <div class="flex items-center flex-wrap gap-1.5 text-[11px] pt-0.5">
-                    <span class="font-bold text-gray-500 dark:text-gray-400 mr-0.5">Schema Examples:</span>
-                    <button type="button" onclick="runSchemaExample('god 3-lov*', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' within 3 words of words starting with 'lov'">god 3-lov*</button>
-                    <button type="button" onclick="runSchemaExample('god (love, hope, peace)', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' with love, hope, or peace">god (love, hope, peace)</button>
-                    <button type="button" onclick="runSchemaExample('god ! love-peace', 'nt')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Find 'god' AND 'love' before 'peace'">god ! love-peace</button>
-                    <button type="button" onclick="runSchemaExample('~ god of my heart', 'both')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="Fuzzy search for phrases like 'god of my heart'">~ god of my heart</button>
-                    <button type="button" onclick="runSchemaExample('&amp;in god-earth', 'ot')" class="px-2 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-mono font-bold border border-sky-300 dark:border-sky-800 hover:bg-sky-600 hover:text-white transition cursor-pointer" title="'In' as first word + 'god' before 'earth'">&amp;in god-earth</button>
-                    <span class="text-gray-300 dark:text-zinc-700">|</span>
-                    <span class="font-bold text-gray-500 dark:text-gray-400 mr-0.5">Grammar:</span>
-                    <button type="button" onclick="runQuickGrammarCommand('Imperative')" class="px-2.5 py-0.5 rounded-full bg-rose-100/90 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 font-bold border border-rose-300 dark:border-rose-800 hover:bg-rose-600 hover:text-white transition cursor-pointer">Imperatives (Commands)</button>
-                    <button type="button" onclick="runQuickGrammarCommand('Participle')" class="px-2.5 py-0.5 rounded-full bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-300 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white transition cursor-pointer">All Participles</button>
-                    <button type="button" onclick="runQuickGrammarCommand('Participle, Genitive, Masculine, Singular')" class="px-2.5 py-0.5 rounded-full bg-purple-100/90 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold border border-purple-300 dark:border-purple-800 hover:bg-purple-600 hover:text-white transition cursor-pointer">Participle, Genitive, Masculine, Singular</button>
-                    <button type="button" onclick="runQuickGrammarCommand('Infinitive')" class="px-2.5 py-0.5 rounded-full bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800 hover:bg-amber-600 hover:text-white transition cursor-pointer">Infinitives</button>
-                    <button type="button" onclick="runQuickGrammarCommand('Noun, Construct')" class="px-2.5 py-0.5 rounded-full bg-teal-100/90 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-bold border border-teal-300 dark:border-teal-800 hover:bg-teal-600 hover:text-white transition cursor-pointer">Hebrew Construct Nouns</button>
-                    <button type="button" onclick="runQuickGrammarCommand('Verb, Hiphil')" class="px-2.5 py-0.5 rounded-full bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-600 hover:text-white transition cursor-pointer">Causative Verbs (Hiphil)</button>
+                <!-- Search View Switcher Tabs: Current Search vs. Last 5 Searches -->
+                <div class="flex items-center justify-between pt-1 border-t border-gray-200/60 dark:border-zinc-800 text-xs">
+                    <div class="flex items-center space-x-1.5">
+                        <button type="button" id="grammarSearchTabBtn_current" onclick="switchGrammarSearchTab('current')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                            <span>Search Results</span>
+                        </button>
+                        <button type="button" id="grammarSearchTabBtn_history" onclick="switchGrammarSearchTab('history')" class="px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-zinc-700 font-bold text-[11px] border border-gray-300/80 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1.5">
+                            <i class="fa-solid fa-clock-rotate-left text-[10px] text-indigo-500"></i>
+                            <span id="lastFiveSearchesTabLabel">Last 5 Searches (0)</span>
+                        </button>
+                    </div>
+                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden sm:inline">Closing Search clears the active view &bull; Your last 5 searches are saved in the tab</span>
                 </div>
             </div>
 
-            <!-- Compact 1-Line Smart Search Suggestions Bar (Expandable on Click so Results Stay Top & Center!) -->
-            <div id="grammarSmartSuggestionsBar" class="px-5 py-1.5 bg-gradient-to-r from-amber-50/90 via-indigo-50/70 to-teal-50/80 dark:from-zinc-800/90 dark:via-zinc-900 dark:to-zinc-800/90 border-b border-amber-200/70 dark:border-zinc-700 shrink-0">
+            <!-- Tab 1: Active Search Results Container -->
+            <div id="grammarSearchResultsContainer" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-2.5 bg-gray-50/60 dark:bg-zinc-900/60">
             </div>
 
-            <!-- Results Container (Gets 75% of the Window Height!) -->
-            <div id="grammarSearchResultsContainer" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-2.5 bg-gray-50/60 dark:bg-zinc-900/60">
+            <!-- Tab 2: Last 5 Searches History Container -->
+            <div id="grammarLastFiveSearchesContainer" class="hidden flex-1 p-5 overflow-y-auto custom-scrollbar space-y-3 bg-gray-50/60 dark:bg-zinc-900/60">
             </div>
         </div>
     </div>
@@ -10351,18 +10365,60 @@
             }
         }
 
-        function getProjectsCatalog() { return JSON.parse(localStorage.getItem('lexflow_catalog') || localStorage.getItem('scriptureGram_catalog') || '{}'); }
-
+        function getProjectsCatalog() {
+            let parsed = {};
+            try {
+                parsed = JSON.parse(localStorage.getItem('lexflow_catalog') || localStorage.getItem('scriptureGram_catalog') || '{}') || {};
+            } catch (e) {
+                parsed = {};
+            }
+            if (!parsed['lexflow_default']) {
+                parsed = Object.assign({ 'lexflow_default': 'Default Scratchpad' }, parsed);
+            }
+            return parsed;
+        }
         function populateProjectsMenu() {
-            if (!projectSelect) return;
             const catalog = getProjectsCatalog();
-            projectSelect.innerHTML = '<option value="lexflow_default">Default Scratchpad</option>';
-            Object.keys(catalog).forEach(key => {
-                const opt = document.createElement('option');
-                opt.value = key; opt.textContent = catalog[key];
-                if (key === currentProjectKey) opt.selected = true;
-                projectSelect.appendChild(opt);
-            });
+            try { localStorage.setItem('lexflow_catalog', JSON.stringify(catalog)); } catch (e) {}
+            const keys = Object.keys(catalog);
+            if (projectSelect) {
+                projectSelect.innerHTML = '';
+                keys.forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = catalog[key];
+                    projectSelect.appendChild(opt);
+                });
+                if (catalog[currentProjectKey]) {
+                    projectSelect.value = currentProjectKey;
+                } else {
+                    currentProjectKey = 'lexflow_default';
+                    projectSelect.value = 'lexflow_default';
+                }
+            }
+            const settingsSel = document.getElementById('settingsProjectSelect');
+            if (settingsSel) {
+                settingsSel.innerHTML = '';
+                keys.forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = catalog[key];
+                    settingsSel.appendChild(opt);
+                });
+                settingsSel.value = currentProjectKey;
+            }
+            const countBadge = document.getElementById('settingsProjectsCountBadge');
+            if (countBadge) {
+                countBadge.textContent = `${keys.length} project${keys.length === 1 ? '' : 's'} saved`;
+            }
+        }
+        function switchProjectFromSettings(projKey) {
+            if (!projKey) return;
+            currentProjectKey = projKey;
+            if (projectSelect) projectSelect.value = projKey;
+            try { localStorage.setItem('lexflow_activeProjectKey', currentProjectKey); } catch (e) {}
+            loadSelectedProject();
+            showSettingsSyncStatus(`Switched active project to "${getProjectsCatalog()[projKey] || projKey}".`);
         }
 
         function scheduleSaveActiveProjectData() {
@@ -10371,6 +10427,11 @@
         }
 
         let currentAppBorderColor = '#3b82f6';
+        let lastExplicitUserChangeAt = Number(localStorage.getItem('lexflow_last_user_change_at') || 0);
+        function markExplicitUserModification() {
+            lastExplicitUserChangeAt = Date.now();
+            try { localStorage.setItem('lexflow_last_user_change_at', String(lastExplicitUserChangeAt)); } catch (e) {}
+        }
 
         function readWindowNameProfileBackup() {
             try {
@@ -10421,7 +10482,8 @@
 
             return {
                 version: 'lexflow_personal_v1',
-                updatedAt: Date.now(),
+                updatedAt: lastExplicitUserChangeAt || Date.now(),
+                explicitModifiedAt: lastExplicitUserChangeAt || 0,
                 settings: {
                     borderColor: currentAppBorderColor || '#3b82f6',
                     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
@@ -10434,7 +10496,8 @@
                     customRelations: getSavedCustomRelations()
                 },
                 catalog: catalog,
-                projects: projectsMap
+                projects: projectsMap,
+                lastFiveSearches: (typeof getSavedLastFiveSearches === 'function') ? getSavedLastFiveSearches() : []
             };
         }
 
@@ -10448,9 +10511,16 @@
                 localStorage.setItem('lexflow_text_flow_hidden', String(bundle.settings.isTextFlowHidden));
                 localStorage.setItem('lexflow_hinge_guide', String(bundle.settings.isHingeWordGuideActive));
                 localStorage.setItem('lexflow_sub_focus', String(bundle.settings.isSubordinateHoverFocusEnabled));
+                if (currentSignedInAccount && currentSignedInAccount.accountId) {
+                    localStorage.setItem('lexflow_acct_bundle_' + currentSignedInAccount.accountId, JSON.stringify(bundle));
+                }
+                localStorage.setItem('lexflow_acct_bundle_local_default_user', JSON.stringify(bundle));
             } catch (e) {}
             writeWindowNameProfileBackup(bundle);
             setCachedFileData('universal_workspace_profile_v1', bundle);
+            if (currentSignedInAccount && currentSignedInAccount.accountId) {
+                setCachedFileData('acct_bundle_' + currentSignedInAccount.accountId, bundle);
+            }
             if (typeof syncBundleToSqlTables === 'function') {
                 try { syncBundleToSqlTables(bundle); } catch (sqlErr) {}
             }
@@ -10469,10 +10539,12 @@
             }
             if (s.theme === 'dark') {
                 document.documentElement.classList.add('dark');
+                try { localStorage.setItem('lexflow_theme_v2', 'dark'); } catch (e) {}
                 const themeIcon = document.getElementById('themeIcon');
                 if (themeIcon) themeIcon.className = "fa-solid fa-moon text-indigo-400 w-4 text-center";
             } else {
                 document.documentElement.classList.remove('dark');
+                try { localStorage.setItem('lexflow_theme_v2', 'light'); } catch (e) {}
                 const themeIcon = document.getElementById('themeIcon');
                 if (themeIcon) themeIcon.className = "fa-solid fa-sun text-amber-500 w-4 text-center";
             }
@@ -10503,8 +10575,9 @@
             if (Array.isArray(s.customRelations)) {
                 try { localStorage.setItem('lexflow_customRelations', JSON.stringify(s.customRelations)); } catch (e) {}
             }
-            if (bundle.catalog) {
-                try { localStorage.setItem('lexflow_catalog', JSON.stringify(bundle.catalog)); } catch (e) {}
+            if (bundle.catalog && Object.keys(bundle.catalog).length > 0) {
+                const mergedCatalog = Object.assign({ 'lexflow_default': 'Default Scratchpad' }, getProjectsCatalog(), bundle.catalog);
+                try { localStorage.setItem('lexflow_catalog', JSON.stringify(mergedCatalog)); } catch (e) {}
             }
             if (bundle.projects) {
                 Object.keys(bundle.projects).forEach(k => {
@@ -10516,18 +10589,30 @@
                     }
                 });
             }
+            if (Array.isArray(bundle.lastFiveSearches) && bundle.lastFiveSearches.length > 0) {
+                try { localStorage.setItem('lexflow_last_five_searches_v1', JSON.stringify(bundle.lastFiveSearches.slice(0, 5))); } catch (e) {}
+                if (typeof updateLastFiveSearchesTabBadge === 'function') updateLastFiveSearchesTabBadge();
+            }
             if (s.activeProjectKey) {
                 currentProjectKey = s.activeProjectKey;
                 try { localStorage.setItem('lexflow_activeProjectKey', currentProjectKey); } catch (e) {}
             }
+            populateProjectsMenu();
             updateSettingsModalBadges();
+            // Persist the applied bundle so IndexedDB/localStorage stay in sync with what was just applied
+            try {
+                const syncedBundle = buildCompletePersonalProfileBundle();
+                localStorage.setItem('lexflow_universal_profile_v1', JSON.stringify(syncedBundle));
+                writeWindowNameProfileBackup(syncedBundle);
+                setCachedFileData('universal_workspace_profile_v1', syncedBundle);
+            } catch (e) {}
             if (reloadWorkspace) {
-                populateProjectsMenu();
-                loadSelectedProject();
+                loadSelectedProject(true);
             }
         }
 
-        function saveActiveProjectData() {
+        function saveActiveProjectData(showToast = false) {
+            markExplicitUserModification();
             if (editor && editor.children.length > 50) {
                 captureModifiedChaptersFromDOM(currentCorpusType);
             }
@@ -10543,19 +10628,35 @@
             } catch (e) {}
             setCachedFileData('project_' + currentProjectKey, projectData);
             saveUniversalProfileState();
-            if (globalSaveStatus) { globalSaveStatus.textContent = 'Saving...'; setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 400); }
+            if (globalSaveStatus) {
+                globalSaveStatus.textContent = showToast ? 'Project Saved!' : 'Saving...';
+                setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 1200);
+            }
         }
 
-        async function loadSelectedProject() {
-            // First check if IndexedDB or window.name has a newer Universal Profile
-            const winBundle = readWindowNameProfileBackup();
-            const idbBundle = await getCachedFileData('universal_workspace_profile_v1');
-            const bestBundle = (idbBundle && (!winBundle || (idbBundle.updatedAt || 0) >= (winBundle.updatedAt || 0))) ? idbBundle : winBundle;
-            if (bestBundle && bestBundle.settings) {
-                applyPersonalSettingsFromBundle(bestBundle, false);
+        let hasRestoredInitialProfileOnce = false;
+        async function loadSelectedProject(skipInitialBundleRestore = false) {
+            if (!hasRestoredInitialProfileOnce && !skipInitialBundleRestore) {
+                hasRestoredInitialProfileOnce = true;
+                const winBundle = readWindowNameProfileBackup();
+                const idbBundle = await getCachedFileData('universal_workspace_profile_v1');
+                let localBundle = null;
+                try {
+                    const rawLocal = localStorage.getItem('lexflow_universal_profile_v1');
+                    if (rawLocal) localBundle = JSON.parse(rawLocal);
+                } catch (e) {}
+                const candidates = [winBundle, idbBundle, localBundle].filter(b => b && b.settings);
+                if (candidates.length > 0) {
+                    candidates.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                    applyPersonalSettingsFromBundle(candidates[0], false);
+                }
             }
 
             if (!projectSelect) return;
+            // When user selects from dropdown, read projectSelect.value
+            if (projectSelect.value && getProjectsCatalog()[projectSelect.value] && !skipInitialBundleRestore) {
+                currentProjectKey = projectSelect.value;
+            }
             populateProjectsMenu();
             if (currentProjectKey && Array.from(projectSelect.options).some(o => o.value === currentProjectKey)) {
                 projectSelect.value = currentProjectKey;
@@ -10631,45 +10732,85 @@
             await loadScriptureIntoWorkspace(currentCorpusType, { silent: true });
         }
 
-        function saveCurrentAsNewProject() {
-            const defaultName = document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value.trim() : '';
-            const title = prompt('Enter project name (e.g., "2 Peter 1:1-4 Flow"):', defaultName);
-            if (!title || !title.trim()) return;
-            const newKey = 'lexflow_proj_' + Date.now();
+        let pendingDeleteConfirmTimer = null;
+        function saveCurrentAsNewProject(inputElementId = 'sidebarNewProjectNameInput') {
+            const nameInput = document.getElementById(inputElementId)
+                || document.getElementById('sidebarNewProjectNameInput')
+                || document.getElementById('settingsNewProjectNameInput');
+            const passageVal = document.getElementById('passageRefInput') ? document.getElementById('passageRefInput').value.trim() : '';
             const catalog = getProjectsCatalog();
-            catalog[newKey] = title.trim();
-            localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
+            const customCount = Object.keys(catalog).length;
+            let title = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : '';
+            if (!title) {
+                title = passageVal ? `${passageVal} Study` : `Study Project ${customCount}`;
+            }
+
+            const newKey = 'lexflow_proj_' + Date.now();
+            catalog[newKey] = title;
+            try { localStorage.setItem('lexflow_catalog', JSON.stringify(catalog)); } catch (e) {}
             currentProjectKey = newKey;
-            localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
-            saveActiveProjectData();
+            try { localStorage.setItem('lexflow_activeProjectKey', currentProjectKey); } catch (e) {}
+
+            if (nameInput) nameInput.value = '';
+            saveActiveProjectData(true);
             populateProjectsMenu();
             if (projectSelect) projectSelect.value = newKey;
+            const settingsSel = document.getElementById('settingsProjectSelect');
+            if (settingsSel) settingsSel.value = newKey;
+
+            showSettingsSyncStatus(`Saved new project "${title}"! Synced to your profile & account.`);
+            if (globalSaveStatus) {
+                globalSaveStatus.textContent = `Saved "${title}"!`;
+                setTimeout(() => { globalSaveStatus.textContent = 'Auto-saved'; }, 2200);
+            }
         }
 
         function deleteCurrentProject() {
-            if (currentProjectKey === 'lexflow_default') {
-                if (confirm('Reset default scratchpad?')) {
-                    projectModifiedChapters = { emtv: {}, srgnt: {} };
-                    if (masterNoteEditor) masterNoteEditor.innerHTML = '';
-                    if (document.getElementById('passageRefInput')) document.getElementById('passageRefInput').value = '';
-                    localStorage.removeItem('lexflow_default');
-                    localStorage.removeItem('scriptureGram_default');
-                    saveUniversalProfileState();
-                    loadScriptureIntoWorkspace(currentCorpusType, { silent: true });
+            const delLabel = document.getElementById('deleteProjectBtnLabel');
+            if (!delLabel || delLabel.dataset.confirming !== 'true') {
+                if (delLabel) {
+                    delLabel.dataset.confirming = 'true';
+                    delLabel.textContent = currentProjectKey === 'lexflow_default' ? 'Click to Reset' : 'Confirm Delete?';
+                    if (pendingDeleteConfirmTimer) clearTimeout(pendingDeleteConfirmTimer);
+                    pendingDeleteConfirmTimer = setTimeout(() => {
+                        delLabel.dataset.confirming = 'false';
+                        delLabel.textContent = 'Delete';
+                    }, 3500);
                 }
                 return;
             }
-            if (confirm('Delete this project?')) {
-                localStorage.removeItem(currentProjectKey);
-                let catalog = getProjectsCatalog();
-                delete catalog[currentProjectKey];
-                localStorage.setItem('lexflow_catalog', JSON.stringify(catalog));
-                currentProjectKey = 'lexflow_default';
-                localStorage.setItem('lexflow_activeProjectKey', currentProjectKey);
+            delLabel.dataset.confirming = 'false';
+            delLabel.textContent = 'Delete';
+
+            if (currentProjectKey === 'lexflow_default') {
+                projectModifiedChapters = { emtv: {}, srgnt: {} };
+                if (masterNoteEditor) masterNoteEditor.innerHTML = '';
+                if (document.getElementById('passageRefInput')) document.getElementById('passageRefInput').value = '';
+                try {
+                    localStorage.removeItem('lexflow_default');
+                    localStorage.removeItem('scriptureGram_default');
+                } catch (e) {}
                 saveUniversalProfileState();
-                populateProjectsMenu();
-                loadSelectedProject();
+                loadScriptureIntoWorkspace(currentCorpusType, { silent: true });
+                showSettingsSyncStatus('Default Scratchpad reset.');
+                return;
             }
+
+            const removedKey = currentProjectKey;
+            try { localStorage.removeItem(removedKey); } catch (e) {}
+            const catalog = getProjectsCatalog();
+            const removedTitle = catalog[removedKey] || removedKey;
+            delete catalog[removedKey];
+            try { localStorage.setItem('lexflow_catalog', JSON.stringify(catalog)); } catch (e) {}
+            if (lexFlowSqlDb && lexFlowSqlEngineReady) {
+                try { lexFlowSqlDb.run(`DELETE FROM lexflow_projects WHERE project_key = ?`, [removedKey]); } catch (e) {}
+            }
+            currentProjectKey = 'lexflow_default';
+            try { localStorage.setItem('lexflow_activeProjectKey', currentProjectKey); } catch (e) {}
+            saveUniversalProfileState();
+            populateProjectsMenu();
+            loadSelectedProject(true);
+            showSettingsSyncStatus(`Deleted project "${removedTitle}".`);
         }
 
         function exportAllProjects() {
@@ -10761,12 +10902,105 @@
         }
 
         // =========================================================================
-        // RELATIONAL SQL DATABASE (SQLite via sql.js) & SINGLE SIGN-IN CLOUD SYNC
+        // SUPABASE CLOUD POSTGRESQL (`azpxyxjdumcgiblkqtxt.supabase.co`) + SQLITE SYNC
         // =========================================================================
+        const LEXFLOW_SUPABASE_URL = 'https://azpxyxjdumcgiblkqtxt.supabase.co';
+        const LEXFLOW_SUPABASE_KEY = 'sb_publishable_4A_1e_vZfhtP9gawqiJ3jg_kB2zUERC';
+        const LEXFLOW_SUPABASE_REST_URL = 'https://azpxyxjdumcgiblkqtxt.supabase.co/rest/v1/lexflow_sync';
+        let lexFlowSupabaseClient = null;
         let lexFlowSqlDb = null;
         let lexFlowSqlEngineReady = false;
         let currentSignedInAccount = null; // { accountId, email, passHash, cloudSyncId, lastSyncedAt }
         let autoCloudSyncTimer = null;
+
+        function getLexFlowSupabaseClient() {
+            if (lexFlowSupabaseClient) return lexFlowSupabaseClient;
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    lexFlowSupabaseClient = window.supabase.createClient(LEXFLOW_SUPABASE_URL, LEXFLOW_SUPABASE_KEY, {
+                        auth: { persistSession: true, autoRefreshToken: true }
+                    });
+                } catch (e) {}
+            }
+            return lexFlowSupabaseClient;
+        }
+
+        function mergeRemoteAndLocalBundles(remoteBundle, localBundle, preferRemoteSettings = true) {
+            if (!remoteBundle || !remoteBundle.settings) return localBundle;
+            if (!localBundle || !localBundle.settings) return remoteBundle;
+
+            // Merge catalogs (every saved project from both browsers is kept!)
+            const mergedCatalog = Object.assign(
+                { lexflow_default: 'Default Scratchpad' },
+                localBundle.catalog || {},
+                remoteBundle.catalog || {}
+            );
+
+            // Merge projects map (keep whichever copy of each project has a newer updatedAt or non-empty content)
+            const mergedProjects = {};
+            const allProjKeys = new Set([
+                ...Object.keys(localBundle.projects || {}),
+                ...Object.keys(remoteBundle.projects || {}),
+                ...Object.keys(mergedCatalog)
+            ]);
+            allProjKeys.forEach(k => {
+                let locP = (localBundle.projects || {})[k];
+                let remP = (remoteBundle.projects || {})[k];
+                if (typeof locP === 'string') { try { locP = JSON.parse(locP); } catch (e) { locP = null; } }
+                if (typeof remP === 'string') { try { remP = JSON.parse(remP); } catch (e) { remP = null; } }
+                if (remP && !locP) {
+                    mergedProjects[k] = remP;
+                } else if (locP && !remP) {
+                    mergedProjects[k] = locP;
+                } else if (remP && locP) {
+                    const remHasNotes = Boolean((remP.masterNotesHTML && remP.masterNotesHTML.trim()) || (remP.passageRef && remP.passageRef.trim()) || Object.keys((remP.modifiedChapters || {}).emtv || {}).length || Object.keys((remP.modifiedChapters || {}).srgnt || {}).length);
+                    const locHasNotes = Boolean((locP.masterNotesHTML && locP.masterNotesHTML.trim()) || (locP.passageRef && locP.passageRef.trim()) || Object.keys((locP.modifiedChapters || {}).emtv || {}).length || Object.keys((locP.modifiedChapters || {}).srgnt || {}).length);
+                    if (remHasNotes && !locHasNotes) {
+                        mergedProjects[k] = remP;
+                    } else if (locHasNotes && !remHasNotes) {
+                        mergedProjects[k] = locP;
+                    } else {
+                        mergedProjects[k] = ((remP.updatedAt || 0) >= (locP.updatedAt || 0)) ? remP : locP;
+                    }
+                }
+            });
+
+            // Merge Last 5 Searches
+            const combinedSearches = [
+                ...(Array.isArray(remoteBundle.lastFiveSearches) ? remoteBundle.lastFiveSearches : []),
+                ...(Array.isArray(localBundle.lastFiveSearches) ? localBundle.lastFiveSearches : [])
+            ];
+            combinedSearches.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            const seenSigs = new Set();
+            const mergedSearches = [];
+            combinedSearches.forEach(item => {
+                if (!item || !item.sig || seenSigs.has(item.sig)) return;
+                seenSigs.add(item.sig);
+                mergedSearches.push(item);
+            });
+
+            const useRemoteSettings = preferRemoteSettings || ((remoteBundle.explicitModifiedAt || remoteBundle.updatedAt || 0) >= (localBundle.explicitModifiedAt || 0));
+            const chosenSettings = useRemoteSettings
+                ? Object.assign({}, localBundle.settings, remoteBundle.settings)
+                : Object.assign({}, remoteBundle.settings, localBundle.settings);
+
+            // If remote has a custom project selected and local was on lexflow_default, select the remote custom project
+            if (remoteBundle.settings && remoteBundle.settings.activeProjectKey && remoteBundle.settings.activeProjectKey !== 'lexflow_default' && mergedCatalog[remoteBundle.settings.activeProjectKey]) {
+                if (useRemoteSettings || chosenSettings.activeProjectKey === 'lexflow_default') {
+                    chosenSettings.activeProjectKey = remoteBundle.settings.activeProjectKey;
+                }
+            }
+
+            return {
+                version: 'lexflow_personal_v1',
+                updatedAt: Math.max(remoteBundle.updatedAt || 0, localBundle.updatedAt || 0, Date.now()),
+                explicitModifiedAt: Math.max(remoteBundle.explicitModifiedAt || remoteBundle.updatedAt || 0, localBundle.explicitModifiedAt || 0),
+                settings: chosenSettings,
+                catalog: mergedCatalog,
+                projects: mergedProjects,
+                lastFiveSearches: mergedSearches.slice(0, 5)
+            };
+        }
 
         function simpleAccountHash(str) {
             let h1 = 0xdeadbeef ^ str.length, h2 = 0x41c6ce57 ^ str.length;
@@ -10966,18 +11200,26 @@
         }
 
         function loadBundleFromSqlTables(accountIdOverride) {
-            if (!lexFlowSqlDb || !lexFlowSqlEngineReady) return null;
             const acctId = accountIdOverride || getActiveSqlAccountId();
+            // 1. Check direct account bundle in localStorage first (fastest & most up-to-date)
+            let directBundle = null;
             try {
-                const setRes = lexFlowSqlDb.exec(`SELECT border_color, theme, ot_version, is_text_flow_hidden, is_hinge_guide_active, is_sub_focus_enabled, active_corpus, active_project_key, custom_relations_json, updated_at FROM lexflow_user_settings WHERE account_id = ?`, [acctId]);
-                if (!setRes || !setRes.length || !setRes[0].values.length) return null;
+                const rawDirect = localStorage.getItem('lexflow_acct_bundle_' + acctId);
+                if (rawDirect) directBundle = JSON.parse(rawDirect);
+            } catch (e) {}
+
+            if (!lexFlowSqlDb || !lexFlowSqlEngineReady) return directBundle;
+            try {
+                const safeAcct = String(acctId).replace(/'/g, "''");
+                const setRes = lexFlowSqlDb.exec(`SELECT border_color, theme, ot_version, is_text_flow_hidden, is_hinge_guide_active, is_sub_focus_enabled, active_corpus, active_project_key, custom_relations_json, updated_at FROM lexflow_user_settings WHERE account_id = '${safeAcct}'`);
+                if (!setRes || !setRes.length || !setRes[0].values.length) return directBundle;
                 const row = setRes[0].values[0];
                 let customRels = [];
                 try { customRels = JSON.parse(row[8] || '[]'); } catch (e) {}
 
-                const catalog = {};
+                const catalog = { lexflow_default: 'Default Scratchpad' };
                 const projects = {};
-                const projRes = lexFlowSqlDb.exec(`SELECT project_key, project_title, active_corpus, passage_ref, master_notes_html, modified_chapters_json, updated_at FROM lexflow_projects WHERE account_id = ?`, [acctId]);
+                const projRes = lexFlowSqlDb.exec(`SELECT project_key, project_title, active_corpus, passage_ref, master_notes_html, modified_chapters_json, updated_at FROM lexflow_projects WHERE account_id = '${safeAcct}'`);
                 if (projRes && projRes.length && projRes[0].values.length) {
                     projRes[0].values.forEach(pRow => {
                         const pKey = pRow[0];
@@ -10994,7 +11236,7 @@
                     });
                 }
 
-                return {
+                const sqlBundle = {
                     version: 'lexflow_personal_v1',
                     updatedAt: row[9] || Date.now(),
                     settings: {
@@ -11008,11 +11250,16 @@
                         activeProjectKey: row[7] || 'lexflow_default',
                         customRelations: customRels
                     },
-                    catalog: Object.keys(catalog).length ? catalog : { lexflow_default: 'Default Scratchpad' },
+                    catalog: catalog,
                     projects: projects
                 };
+
+                if (directBundle && (directBundle.updatedAt || 0) >= (sqlBundle.updatedAt || 0)) {
+                    return directBundle;
+                }
+                return sqlBundle;
             } catch (e) {
-                return null;
+                return directBundle;
             }
         }
 
@@ -11131,147 +11378,189 @@
             const password = passInput ? passInput.value : '';
 
             if (!email || !password) {
-                showSettingsSyncStatus('Please enter both an Email/Username and a Password to sign in or create your SQL sync account.');
+                showSettingsSyncStatus('Please enter both an Email/Username and a Password to sign in.');
                 return;
             }
 
             const accountId = 'acct_' + simpleAccountHash(email + '::' + password);
             const passHash = simpleAccountHash(password + '::lexflow_salt');
-            let existingCloudId = '';
-            try {
-                const mapRaw = localStorage.getItem('lexflow_cloud_bucket_map_v1');
-                const mapObj = mapRaw ? JSON.parse(mapRaw) : {};
-                if (mapObj[accountId]) existingCloudId = mapObj[accountId];
-            } catch (e) {}
 
             currentSignedInAccount = {
                 accountId: accountId,
                 email: email,
                 passHash: passHash,
-                cloudSyncId: existingCloudId,
+                cloudSyncId: LEXFLOW_SUPABASE_URL,
                 lastSyncedAt: Date.now()
             };
             try {
                 localStorage.setItem('lexflow_sql_account_v1', JSON.stringify(currentSignedInAccount));
             } catch (e) {}
 
-            // Check if this account already has rows in the local SQLite database
+            // 1. Merge any local account data on this browser first
+            const currentSessionBundle = buildCompletePersonalProfileBundle();
             const existingSqlBundle = loadBundleFromSqlTables(accountId);
             if (existingSqlBundle && existingSqlBundle.settings) {
-                applyPersonalSettingsFromBundle(existingSqlBundle, true);
+                const localMerged = mergeRemoteAndLocalBundles(existingSqlBundle, currentSessionBundle, false);
+                applyPersonalSettingsFromBundle(localMerged, true);
             }
 
             updateSqlAccountUI();
-            await syncAccountWithCloudSql(true);
+            // 2. Immediately pull & merge from live Supabase cloud database (`azpxyxjdumcgiblkqtxt.supabase.co`), then push unified state!
+            await syncAccountWithCloudSql(true, true);
         }
 
         function signOutLexFlowSqlAccount() {
+            saveUniversalProfileState();
             currentSignedInAccount = null;
             try {
                 localStorage.removeItem('lexflow_sql_account_v1');
             } catch (e) {}
             updateSqlAccountUI();
-            showSettingsSyncStatus('Signed out of Cloud SQL session. Your local SQL database remains safely stored.');
+            showSettingsSyncStatus('Signed out. Your theme, border color, and projects remain safely saved.');
         }
 
         function scheduleAutoCloudSqlSync() {
             if (!currentSignedInAccount || !currentSignedInAccount.email) return;
             if (autoCloudSyncTimer) clearTimeout(autoCloudSyncTimer);
             autoCloudSyncTimer = setTimeout(() => {
-                syncAccountWithCloudSql(false);
-            }, 2200);
+                syncAccountWithCloudSql(false, false);
+            }, 1500);
         }
 
-        async function syncAccountWithCloudSql(isManual = false) {
+        async function syncAccountWithCloudSql(isManual = false, isFreshSignIn = false) {
             if (!currentSignedInAccount || !currentSignedInAccount.accountId) {
-                if (isManual) showSettingsSyncStatus('Please sign in first to sync with the Cloud SQL database.');
+                if (isManual) showSettingsSyncStatus('Please sign in first to sync with your Supabase Cloud database.');
                 return;
             }
             const acctId = currentSignedInAccount.accountId;
-            const localBundle = buildCompletePersonalProfileBundle();
+            let localBundle = buildCompletePersonalProfileBundle();
             syncBundleToSqlTables(localBundle);
 
             const lastSyncEl = document.getElementById('sqlLastSyncTimeLabel');
             if (lastSyncEl && isManual) {
-                lastSyncEl.textContent = 'Syncing SQL tables with cloud...';
+                lastSyncEl.textContent = 'Syncing with Supabase Cloud (azpxyxjdumcgiblkqtxt.supabase.co)...';
             }
 
-            const customUrl = (localStorage.getItem('lexflow_custom_sql_url') || '').trim();
-            const customKey = (localStorage.getItem('lexflow_custom_sql_key') || '').trim();
             let cloudSyncedOk = false;
+            let tableMissingWarning = false;
+            const sbClient = getLexFlowSupabaseClient();
 
-            // 1. If user configured a custom Supabase / REST SQL endpoint, sync there first
-            if (customUrl) {
+            // 1. Official Supabase JS Client against `public.lexflow_sync`
+            if (sbClient) {
                 try {
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (customKey) {
-                        headers['apikey'] = customKey;
-                        headers['Authorization'] = `Bearer ${customKey}`;
+                    const { data: rows, error: selErr } = await sbClient
+                        .from('lexflow_sync')
+                        .select('account_id, email, payload, updated_at')
+                        .eq('account_id', acctId);
+
+                    if (selErr) {
+                        const errCode = String(selErr.code || '');
+                        const errMsg = String(selErr.message || '');
+                        if (errCode === 'PGRST205' || errCode === '42P01' || errMsg.includes('lexflow_sync')) {
+                            tableMissingWarning = true;
+                        }
+                    } else {
+                        if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
+                            const remoteBundle = typeof rows[0].payload === 'string'
+                                ? JSON.parse(rows[0].payload)
+                                : rows[0].payload;
+                            // On a fresh sign-in (or when remote was modified more recently), merge remote settings & projects into local!
+                            const preferRemote = isFreshSignIn || ((remoteBundle.explicitModifiedAt || rows[0].updated_at || 0) > (localBundle.explicitModifiedAt || 0));
+                            const mergedBundle = mergeRemoteAndLocalBundles(remoteBundle, localBundle, preferRemote);
+                            applyPersonalSettingsFromBundle(mergedBundle, true);
+                            syncBundleToSqlTables(mergedBundle);
+                            localBundle = mergedBundle;
+                        }
+
+                        const { error: upsErr } = await sbClient
+                            .from('lexflow_sync')
+                            .upsert({
+                                account_id: acctId,
+                                email: currentSignedInAccount.email,
+                                payload: localBundle,
+                                updated_at: Date.now()
+                            }, { onConflict: 'account_id' });
+
+                        if (!upsErr) {
+                            cloudSyncedOk = true;
+                        }
                     }
-                    const getResp = await fetch(`${customUrl}?account_id=eq.${encodeURIComponent(acctId)}`, { method: 'GET', headers });
+                } catch (e) {}
+            }
+
+            // 2. Direct PostgREST fallback to `https://azpxyxjdumcgiblkqtxt.supabase.co/rest/v1/lexflow_sync`
+            if (!cloudSyncedOk && !tableMissingWarning) {
+                try {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'apikey': LEXFLOW_SUPABASE_KEY
+                    };
+                    const getResp = await fetch(`${LEXFLOW_SUPABASE_REST_URL}?account_id=eq.${encodeURIComponent(acctId)}`, {
+                        method: 'GET',
+                        headers: headers
+                    });
                     if (getResp.ok) {
                         const rows = await getResp.json();
                         if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
-                            const remoteBundle = typeof rows[0].payload === 'string' ? JSON.parse(rows[0].payload) : rows[0].payload;
-                            if ((remoteBundle.updatedAt || 0) > (localBundle.updatedAt || 0)) {
-                                applyPersonalSettingsFromBundle(remoteBundle, true);
-                                syncBundleToSqlTables(remoteBundle);
-                            }
+                            const remoteBundle = typeof rows[0].payload === 'string'
+                                ? JSON.parse(rows[0].payload)
+                                : rows[0].payload;
+                            const preferRemote = isFreshSignIn || ((remoteBundle.explicitModifiedAt || rows[0].updated_at || 0) > (localBundle.explicitModifiedAt || 0));
+                            const mergedBundle = mergeRemoteAndLocalBundles(remoteBundle, localBundle, preferRemote);
+                            applyPersonalSettingsFromBundle(mergedBundle, true);
+                            syncBundleToSqlTables(mergedBundle);
+                            localBundle = mergedBundle;
                         }
-                        await fetch(customUrl, {
+                        const postResp = await fetch(LEXFLOW_SUPABASE_REST_URL, {
                             method: 'POST',
                             headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates' }),
                             body: JSON.stringify({
                                 account_id: acctId,
                                 email: currentSignedInAccount.email,
-                                payload: buildCompletePersonalProfileBundle(),
+                                payload: localBundle,
                                 updated_at: Date.now()
                             })
                         });
-                        cloudSyncedOk = true;
-                    }
-                } catch (e) {}
-            }
-
-            // 2. Built-in Zero-Config Cross-Browser Cloud Key-Value / SQL Replica (kvdb.io public bucket deterministic by accountId)
-            if (!cloudSyncedOk) {
-                const kvKey = `lexflow_sql_${acctId}`;
-                const kvEndpoint = `https://kvdb.io/A2x9kLp7VqW3mN8rT5yB1c/${encodeURIComponent(kvKey)}`;
-                try {
-                    const getRes = await fetch(kvEndpoint, { method: 'GET', mode: 'cors' });
-                    if (getRes.ok) {
-                        const remoteText = await getRes.text();
-                        if (remoteText && remoteText.trim().startsWith('{')) {
-                            const remoteBundle = JSON.parse(remoteText);
-                            if (remoteBundle && remoteBundle.settings && (remoteBundle.updatedAt || 0) > (localBundle.updatedAt || 0) && !isManual) {
-                                applyPersonalSettingsFromBundle(remoteBundle, true);
-                                syncBundleToSqlTables(remoteBundle);
-                            }
+                        if (postResp.ok) {
+                            cloudSyncedOk = true;
                         }
+                    } else if (getResp.status === 404) {
+                        tableMissingWarning = true;
                     }
-                    const latestBundle = buildCompletePersonalProfileBundle();
-                    const putRes = await fetch(kvEndpoint, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(latestBundle)
-                    });
-                    if (putRes.ok) cloudSyncedOk = true;
                 } catch (e) {}
             }
 
+            const badge = document.getElementById('sqlDbStatusBadge');
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            if (lastSyncEl) {
-                lastSyncEl.textContent = cloudSyncedOk
-                    ? `Synced to SQL Database & Cloud at ${timeStr}`
-                    : `Saved to SQLite relational tables at ${timeStr}`;
-            }
-            if (isManual) {
-                showSettingsSyncStatus(
-                    cloudSyncedOk
-                        ? `Signed in as ${currentSignedInAccount.email} — all border colors, themes, projects & notes synced to SQL tables & Cloud!`
-                        : `Signed in as ${currentSignedInAccount.email} — all border colors, themes, projects & notes committed to SQLite database tables!`
-                );
+            if (cloudSyncedOk) {
+                if (badge) {
+                    badge.innerHTML = '<i class="fa-solid fa-cloud-check mr-1"></i>Supabase Cloud Connected';
+                }
+                if (lastSyncEl) {
+                    lastSyncEl.textContent = `Synced with Supabase Cloud (LexFlow) at ${timeStr}`;
+                }
+                if (isManual) {
+                    const projCount = Object.keys(localBundle.catalog || {}).length;
+                    showSettingsSyncStatus(
+                        `Connected to Supabase (${currentSignedInAccount.email}) — synced border theme (${localBundle.settings.borderColor}), ${projCount} project(s), and notes across all browsers!`
+                    );
+                }
+            } else if (tableMissingWarning) {
+                if (lastSyncEl) {
+                    lastSyncEl.textContent = `Supabase connected — run the lexflow_sync table SQL in your Supabase SQL Editor to finish table setup`;
+                }
+                if (isManual) {
+                    showSettingsSyncStatus(
+                        `Supabase key verified! Please make sure you clicked green "Run" on the CREATE TABLE public.lexflow_sync query in your Supabase SQL Editor.`
+                    );
+                }
+            } else {
+                if (lastSyncEl) {
+                    lastSyncEl.textContent = `Saved locally at ${timeStr} (Supabase sync will retry when online)`;
+                }
+                if (isManual) {
+                    showSettingsSyncStatus(`Signed in as ${currentSignedInAccount.email} — settings and projects saved.`);
+                }
             }
         }
 
@@ -11366,7 +11655,17 @@
             }
 
             updateSettingsModalBadges();
-            if (persistNow) saveUniversalProfileState();
+            if (persistNow) {
+                markExplicitUserModification();
+                saveUniversalProfileState();
+                if (lexFlowSqlDb && lexFlowSqlEngineReady) {
+                    try {
+                        const safeCol = String(currentAppBorderColor).replace(/'/g, "''");
+                        lexFlowSqlDb.run(`UPDATE lexflow_user_settings SET border_color = '${safeCol}', updated_at = ${Date.now()}`);
+                        persistSqlBinaryToStorage();
+                    } catch (e) {}
+                }
+            }
         }
 
         function toggleTheme() {
@@ -11376,6 +11675,7 @@
             const isDark = html.classList.contains('dark');
             try { localStorage.setItem('lexflow_theme_v2', isDark ? 'dark' : 'light'); } catch (e) {}
             if (themeIcon) themeIcon.className = isDark ? "fa-solid fa-moon text-indigo-400 w-4 text-center" : "fa-solid fa-sun text-amber-500 w-4 text-center";
+            markExplicitUserModification();
             updateSettingsModalBadges();
             saveUniversalProfileState();
         }
@@ -11860,6 +12160,239 @@
             ]
         };
 
+        let activeGrammarSearchTab = 'current';
+
+        function getSavedLastFiveSearches() {
+            try {
+                const raw = localStorage.getItem('lexflow_last_five_searches_v1');
+                const arr = raw ? JSON.parse(raw) : [];
+                return Array.isArray(arr) ? arr.slice(0, 5) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function recordSearchInLastFiveHistory(entry) {
+            if (!entry || (!entry.rawQuery && (!entry.dropdownTags || entry.dropdownTags.length === 0))) return;
+            const list = getSavedLastFiveSearches();
+            const sig = [
+                (entry.rawQuery || '').trim().toLowerCase(),
+                (entry.dropdownTags || []).join(','),
+                entry.scope || 'both',
+                entry.unitType || 'verse',
+                (entry.bookChapFilterRaw || '').trim().toLowerCase()
+            ].join('||');
+
+            const filtered = list.filter(item => item.sig !== sig);
+            filtered.unshift({
+                sig: sig,
+                rawQuery: entry.rawQuery || '',
+                dropdownValues: entry.dropdownValues || {},
+                dropdownTags: entry.dropdownTags || [],
+                scope: entry.scope || 'both',
+                unitType: entry.unitType || 'verse',
+                bookChapFilterRaw: entry.bookChapFilterRaw || '',
+                hitCount: entry.hitCount || 0,
+                bookCount: entry.bookCount || 0,
+                timestamp: Date.now()
+            });
+            const trimmed = filtered.slice(0, 5);
+            try {
+                localStorage.setItem('lexflow_last_five_searches_v1', JSON.stringify(trimmed));
+            } catch (e) {}
+            updateLastFiveSearchesTabBadge();
+            renderLastFiveSearchesTab();
+            saveUniversalProfileState();
+        }
+
+        function updateLastFiveSearchesTabBadge() {
+            const lbl = document.getElementById('lastFiveSearchesTabLabel');
+            const list = getSavedLastFiveSearches();
+            if (lbl) {
+                lbl.textContent = `Last 5 Searches (${list.length}/5)`;
+            }
+        }
+
+        function switchGrammarSearchTab(tabName) {
+            activeGrammarSearchTab = tabName === 'history' ? 'history' : 'current';
+            const curBtn = document.getElementById('grammarSearchTabBtn_current');
+            const histBtn = document.getElementById('grammarSearchTabBtn_history');
+            const curBox = document.getElementById('grammarSearchResultsContainer');
+            const histBox = document.getElementById('grammarLastFiveSearchesContainer');
+
+            if (activeGrammarSearchTab === 'history') {
+                if (curBtn) curBtn.className = 'px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-zinc-700 font-bold text-[11px] border border-gray-300/80 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1.5';
+                if (histBtn) histBtn.className = 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1.5';
+                if (curBox) curBox.classList.add('hidden');
+                if (histBox) histBox.classList.remove('hidden');
+                renderLastFiveSearchesTab();
+            } else {
+                if (curBtn) curBtn.className = 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1.5';
+                if (histBtn) histBtn.className = 'px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-zinc-700 font-bold text-[11px] border border-gray-300/80 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1.5';
+                if (curBox) curBox.classList.remove('hidden');
+                if (histBox) histBox.classList.add('hidden');
+            }
+            updateLastFiveSearchesTabBadge();
+        }
+
+        function renderLastFiveSearchesTab() {
+            const histBox = document.getElementById('grammarLastFiveSearchesContainer');
+            if (!histBox) return;
+            const list = getSavedLastFiveSearches();
+            updateLastFiveSearchesTabBadge();
+
+            if (list.length === 0) {
+                histBox.innerHTML = `
+                    <div class="p-8 text-center rounded-2xl bg-white/90 dark:bg-zinc-800/90 border border-gray-200 dark:border-zinc-700 max-w-xl mx-auto my-6 space-y-2">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white">No Recent Searches Yet</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Your last 5 executed searches are automatically saved here so you can re-run or compare them anytime with 1 click.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const scopeNames = {
+                both: 'Both OT & NT',
+                nt: 'New Testament (Greek)',
+                ot: 'Old Testament (Hebrew)',
+                book: 'Current Book',
+                chapter: 'Current Chapter'
+            };
+
+            const cardsHtml = list.map((item, idx) => {
+                const titleStr = item.rawQuery || (item.dropdownTags && item.dropdownTags.length ? item.dropdownTags.join(', ') : 'Grammar Search');
+                const scopeLabel = item.bookChapFilterRaw ? `Filter: ${item.bookChapFilterRaw}` : (scopeNames[item.scope] || 'Both OT & NT');
+                const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                return `
+                    <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm flex flex-wrap items-center justify-between gap-3 hover:border-indigo-400 transition">
+                        <div class="space-y-1">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <span class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono font-bold text-[11px]">#${idx + 1}</span>
+                                <span class="font-bold text-sm text-gray-900 dark:text-white">${escapeHtmlText(titleStr)}</span>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">${Number(item.hitCount || 0).toLocaleString()} hits (${item.bookCount || 0} books)</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 flex items-center flex-wrap gap-2">
+                                <span><i class="fa-solid fa-layer-group mr-1 text-indigo-400"></i>${escapeHtmlText(scopeLabel)}</span>
+                                <span>&bull;</span>
+                                <span>Unit: ${escapeHtmlText((item.unitType || 'verse').toUpperCase())}</span>
+                                ${timeStr ? `<span>&bull; Saved at ${escapeHtmlText(timeStr)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="rerunSavedHistorySearch(${idx})" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                                <i class="fa-solid fa-play text-[10px]"></i>
+                                <span>Run Search &rarr;</span>
+                            </button>
+                            <button type="button" onclick="removeSavedHistorySearch(${idx})" class="px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-zinc-900 hover:bg-red-500 hover:text-white text-gray-500 dark:text-gray-400 text-xs font-bold transition cursor-pointer" title="Remove from Last 5 Searches">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            histBox.innerHTML = `
+                <div class="max-w-4xl mx-auto space-y-3">
+                    <div class="flex items-center justify-between pb-1">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200"><i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-1.5"></i>Last 5 Searches Performed</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Click <strong>Run Search &rarr;</strong> on any entry below to reload its exact query, filters, and results.</p>
+                        </div>
+                        <button type="button" onclick="clearAllSavedHistorySearches()" class="px-2.5 py-1 rounded-lg bg-gray-200/80 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-700 dark:text-gray-300 text-[11px] font-bold transition cursor-pointer">
+                            Clear History
+                        </button>
+                    </div>
+                    ${cardsHtml}
+                </div>
+            `;
+        }
+
+        function rerunSavedHistorySearch(idx) {
+            const list = getSavedLastFiveSearches();
+            const item = list[idx];
+            if (!item) return;
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) inp.value = item.rawQuery || '';
+            const dv = item.dropdownValues || {};
+            ['gfPos', 'gfMood', 'gfCase', 'gfGender', 'gfNumber', 'gfVoice'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = dv[id] || '';
+            });
+            const scopeSel = document.getElementById('grammarScopeSelect');
+            if (scopeSel && item.scope) scopeSel.value = item.scope;
+            const unitSel = document.getElementById('grammarUnitSelect');
+            if (unitSel && item.unitType) unitSel.value = item.unitType;
+            const bookChapIn = document.getElementById('grammarBookChapFilterInput');
+            if (bookChapIn) bookChapIn.value = item.bookChapFilterRaw || '';
+
+            switchGrammarSearchTab('current');
+            executeGrammarMorphSearch(false);
+        }
+
+        function removeSavedHistorySearch(idx) {
+            const list = getSavedLastFiveSearches();
+            list.splice(idx, 1);
+            try { localStorage.setItem('lexflow_last_five_searches_v1', JSON.stringify(list)); } catch (e) {}
+            renderLastFiveSearchesTab();
+            saveUniversalProfileState();
+        }
+
+        function clearAllSavedHistorySearches() {
+            try { localStorage.removeItem('lexflow_last_five_searches_v1'); } catch (e) {}
+            renderLastFiveSearchesTab();
+            saveUniversalProfileState();
+        }
+
+        function clearActiveGrammarSearchFieldsAndResults() {
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) inp.value = '';
+            ['gfPos', 'gfMood', 'gfCase', 'gfGender', 'gfNumber', 'gfVoice'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const bookChapIn = document.getElementById('grammarBookChapFilterInput');
+            if (bookChapIn) bookChapIn.value = '';
+            const scopeSel = document.getElementById('grammarScopeSelect');
+            if (scopeSel) {
+                scopeSel.value = 'both';
+                delete scopeSel.dataset.userChanged;
+            }
+            const unitSel = document.getElementById('grammarUnitSelect');
+            if (unitSel) unitSel.value = 'verse';
+
+            lastGrammarSearchAllResults = [];
+            lastGrammarSearchRequiredTags = [];
+            lastGrammarSearchWordFilters = [];
+            activeGrammarBookFilter = 'all';
+
+            const container = document.getElementById('grammarSearchResultsContainer');
+            if (container) {
+                const histCount = getSavedLastFiveSearches().length;
+                container.innerHTML = `
+                    <div class="p-8 text-center rounded-2xl bg-white/90 dark:bg-zinc-800/90 border border-gray-200/90 dark:border-zinc-700 max-w-2xl mx-auto my-6 space-y-3">
+                        <div class="w-11 h-11 rounded-2xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto shadow-sm">
+                            <i class="fa-solid fa-magnifying-glass text-base"></i>
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white">Ready to Search English, Greek (SRGNT), or Hebrew (WLC)</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                            Type a word or custom schema query above, pick any combination of <strong>Part of Speech, Mood/Tense, Case/State, Gender, Number, or Voice/Stem</strong>, and click <strong>Search</strong>.
+                        </p>
+                        <div class="flex items-center justify-center flex-wrap gap-2 pt-1">
+                            <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>View Example Searches &amp; Schema Guide
+                            </button>
+                            <button type="button" onclick="switchGrammarSearchTab('history')" class="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-zinc-700 text-xs font-bold hover:bg-indigo-600 hover:text-white transition cursor-pointer">
+                                <i class="fa-solid fa-clock-rotate-left mr-1"></i>Open Last 5 Searches (${histCount}/5)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
         function openGrammarSearchModal(initialQuery = '') {
             const modal = document.getElementById('grammarSearchModal');
             if (modal) modal.classList.remove('hidden');
@@ -11868,8 +12401,10 @@
             const curBookNum = anchorBlk ? parseInt(anchorBlk.dataset.bookNum || '40', 10) : 40;
             const scopeSel = document.getElementById('grammarScopeSelect');
 
-            if (initialQuery) {
-                // Clear all 6 dropdowns & book filter so leftover filters (e.g. Participle) NEVER contaminate the new query!
+            renderGrammarSmartSuggestions(curBookNum);
+            switchGrammarSearchTab('current');
+
+            if (initialQuery && initialQuery.trim()) {
                 ['gfPos', 'gfMood', 'gfCase', 'gfGender', 'gfNumber', 'gfVoice'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.value = '';
@@ -11877,19 +12412,21 @@
                 const bookChapIn = document.getElementById('grammarBookChapFilterInput');
                 if (bookChapIn) bookChapIn.value = '';
                 const inp = document.getElementById('grammarSearchInput');
-                if (inp) inp.value = initialQuery;
+                if (inp) inp.value = initialQuery.trim();
                 if (scopeSel) {
                     scopeSel.value = curBookNum <= 39 ? 'ot' : 'nt';
                 }
-            } else if (scopeSel && !scopeSel.dataset.userChanged) {
-                scopeSel.value = 'both';
+                executeGrammarMorphSearch(false);
+            } else {
+                clearActiveGrammarSearchFieldsAndResults();
             }
-
-            renderGrammarSmartSuggestions(curBookNum);
-            executeGrammarMorphSearch(false);
         }
 
         function closeGrammarSearchModal() {
+            // Clear all active search inputs, dropdown filters, and results when closing the Search window
+            clearActiveGrammarSearchFieldsAndResults();
+            const guideBox = document.getElementById('customSchemaSyntaxGuideBox');
+            if (guideBox) guideBox.classList.add('hidden');
             const modal = document.getElementById('grammarSearchModal');
             if (modal) modal.classList.add('hidden');
         }
@@ -12017,7 +12554,7 @@
                     inp.value = parts.join(', ');
                 }
             }
-            executeGrammarMorphSearch(false);
+            // Wait for the user to finish building their full query and click 'Search' or press 'Enter'
         }
 
         function resetGrammarSearchFilters() {
@@ -12915,6 +13452,13 @@
                 requiredTags = [...dropdownTags];
             }
 
+            if (typeof switchGrammarSearchTab === 'function' && activeGrammarSearchTab !== 'current') {
+                switchGrammarSearchTab('current');
+            }
+            if (!rawQuery && requiredTags.length === 0 && !bookChapFilterRaw) {
+                clearActiveGrammarSearchFieldsAndResults();
+                return;
+            }
             const hasOrigScriptInQuery = /[\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff]/.test(rawQuery) || /\b[GH]\d+\b/i.test(rawQuery);
             const scopeSel = document.getElementById('grammarScopeSelect');
             const scope = scopeOverride || (scopeSel ? scopeSel.value : 'both');
@@ -13037,6 +13581,24 @@
                 activeGrammarBookFilter = 'all';
                 activeGrammarDisplayLimit = 100;
 
+                const fastBookSet = new Set(results.map(r => r.bookNum));
+                recordSearchInLastFiveHistory({
+                    rawQuery: rawQuery,
+                    dropdownValues: {
+                        gfPos: document.getElementById('gfPos') ? document.getElementById('gfPos').value : '',
+                        gfMood: document.getElementById('gfMood') ? document.getElementById('gfMood').value : '',
+                        gfCase: document.getElementById('gfCase') ? document.getElementById('gfCase').value : '',
+                        gfGender: document.getElementById('gfGender') ? document.getElementById('gfGender').value : '',
+                        gfNumber: document.getElementById('gfNumber') ? document.getElementById('gfNumber').value : '',
+                        gfVoice: document.getElementById('gfVoice') ? document.getElementById('gfVoice').value : ''
+                    },
+                    dropdownTags: requiredTags,
+                    scope: scope,
+                    unitType: unitType,
+                    bookChapFilterRaw: bookChapFilterRaw,
+                    hitCount: results.length,
+                    bookCount: fastBookSet.size
+                });
                 renderGrammarSearchResults(results, requiredTags, lastGrammarSearchWordFilters);
                 if (openInSeparateWindow) {
                     openGrammarResultsPopupModal();
@@ -13233,6 +13795,24 @@
             activeGrammarBookFilter = 'all';
             activeGrammarDisplayLimit = 100;
 
+            const morphBookSet = new Set(results.map(r => r.bookNum));
+            recordSearchInLastFiveHistory({
+                rawQuery: rawQuery,
+                dropdownValues: {
+                    gfPos: document.getElementById('gfPos') ? document.getElementById('gfPos').value : '',
+                    gfMood: document.getElementById('gfMood') ? document.getElementById('gfMood').value : '',
+                    gfCase: document.getElementById('gfCase') ? document.getElementById('gfCase').value : '',
+                    gfGender: document.getElementById('gfGender') ? document.getElementById('gfGender').value : '',
+                    gfNumber: document.getElementById('gfNumber') ? document.getElementById('gfNumber').value : '',
+                    gfVoice: document.getElementById('gfVoice') ? document.getElementById('gfVoice').value : ''
+                },
+                dropdownTags: requiredTags,
+                scope: scope,
+                unitType: unitType,
+                bookChapFilterRaw: bookChapFilterRaw,
+                hitCount: results.length,
+                bookCount: morphBookSet.size
+            });
             renderGrammarSearchResults(results, requiredTags, filterLabels);
             if (openInSeparateWindow) {
                 openGrammarResultsPopupModal();
