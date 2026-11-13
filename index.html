@@ -1671,6 +1671,10 @@
                         <i class="fa-solid fa-heart text-[10px]"></i>
                         <span>Kudos</span>
                     </button>
+                    <button type="button" onclick="toggleTransliterationGuideBox()" class="px-2.5 py-1 rounded-lg bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700 text-[11px] font-bold hover:bg-teal-600 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Open Greek &amp; Hebrew Transliteration + Vowel Points Guide">
+                        <i class="fa-solid fa-keyboard text-[10px]"></i>
+                        <span>Transliteration &amp; Vowel Guide</span>
+                    </button>
                     <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.toggle('hidden')" class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[11px] font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer flex items-center space-x-1" title="Show/Hide Custom Search Schema Guide &amp; Example Searches">
                         <i class="fa-solid fa-circle-question text-[10px]"></i>
                         <span>Schema Guide &amp; Example Searches</span>
@@ -1681,8 +1685,49 @@
                 </div>
             </div>
 
+            <!-- Top Search Mode Tabs: 'English Search' vs. 'Original Language Search' (Both Linked to Grammar & Construct Chains!) -->
+            <div class="px-5 pt-2.5 pb-2 bg-gradient-to-r from-slate-100/90 via-indigo-50/60 to-teal-50/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-indigo-200/70 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center flex-wrap gap-2">
+                    <button type="button" id="searchLangModeTab_english" onclick="setGrammarSearchLanguageMode('english')" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-2">
+                        <i class="fa-solid fa-book-open text-xs"></i>
+                        <span>English Search</span>
+                        <span class="px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-semibold">+ Grammar Chains</span>
+                    </button>
+                    <button type="button" id="searchLangModeTab_original" onclick="setGrammarSearchLanguageMode('original')" class="px-4 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 hover:bg-teal-600 hover:text-white font-bold text-xs border border-gray-300 dark:border-zinc-700 shadow-sm transition cursor-pointer flex items-center space-x-2">
+                        <i class="fa-solid fa-language text-xs text-teal-600 dark:text-teal-400"></i>
+                        <span>Original Language Search (Greek SRGNT &amp; Hebrew WLC)</span>
+                        <span class="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[10px] font-semibold">+ Grammar Chains</span>
+                    </button>
+                </div>
+                <div id="searchLangModeSubHint" class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                    <i class="fa-solid fa-link mr-1"></i>English Search Mode: Search English words/schema or link them directly to Greek &amp; Hebrew grammar chains
+                </div>
+            </div>
+
             <!-- Compact Search Command Input + Boundary (Verse/Sentence/Paragraph) + Scope + Book/Ch Filter -->
             <div class="px-5 py-2 bg-white/90 dark:bg-zinc-900/95 border-b border-gray-200/80 dark:border-zinc-800 space-y-1.5 shrink-0">
+                <!-- Quick Original-Language Root Picker Bar (Shown when 'Original Language Search' tab is active) -->
+                <div id="originalLanguageQuickRootsBar" class="hidden pb-1.5 mb-1 border-b border-teal-200/70 dark:border-zinc-700 flex items-center flex-wrap gap-1.5 text-[11px]">
+                    <span class="font-bold text-teal-800 dark:text-teal-300 mr-0.5"><i class="fa-solid fa-feather-pointed mr-1"></i>Insert Original Root into Search / Chain:</span>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('θεός', 'G2316', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: θεός (G2316 — God)">θεός <span class="font-sans text-[10px] opacity-75">(God)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('ἀγαπάω', 'G25', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: ἀγαπάω (G25 — to love)">ἀγαπάω <span class="font-sans text-[10px] opacity-75">(love)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('κόσμος', 'G2889', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: κόσμος (G2889 — world)">κόσμος <span class="font-sans text-[10px] opacity-75">(world)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('κύριος', 'G2962', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: κύριος (G2962 — Lord)">κύριος <span class="font-sans text-[10px] opacity-75">(Lord)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('χριστός', 'G5547', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: χριστός (G5547 — Christ)">χριστός <span class="font-sans text-[10px] opacity-75">(Christ)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('λόγος', 'G3056', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: λόγος (G3056 — word)">λόγος <span class="font-sans text-[10px] opacity-75">(word)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('πίστις', 'G4102', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: πίστις (G4102 — faith)">πίστις <span class="font-sans text-[10px] opacity-75">(faith)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('πνεῦμα', 'G4151', 'nt')" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" title="Greek: πνεῦμα (G4151 — Spirit)">πνεῦμα <span class="font-sans text-[10px] opacity-75">(Spirit)</span></button>
+                    <span class="text-gray-300 dark:text-zinc-700">|</span>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('אֱלֹהִים', 'H430', 'ot')" class="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" dir="rtl" title="Hebrew: אֱלֹהִים (H430 — God)">אֱלֹהִים <span class="font-sans text-[10px] opacity-75" dir="ltr">(God)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('יְהוָה', 'H3068', 'ot')" class="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" dir="rtl" title="Hebrew: יְהוָה (H3068 — LORD)">יְהוָה <span class="font-sans text-[10px] opacity-75" dir="ltr">(LORD)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('אָהַב', 'H157', 'ot')" class="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" dir="rtl" title="Hebrew: אָהַב (H157 — love)">אָהַב <span class="font-sans text-[10px] opacity-75" dir="ltr">(love)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('דָּבָר', 'H1697', 'ot')" class="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" dir="rtl" title="Hebrew: דָּבָר (H1697 — word)">דָּבָר <span class="font-sans text-[10px] opacity-75" dir="ltr">(word)</span></button>
+                    <button type="button" onclick="insertOriginalRootIntoActiveSearch('תּוֹרָה', 'H8451', 'ot')" class="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-zinc-700 font-serif font-bold cursor-pointer" dir="rtl" title="Hebrew: תּוֹרָה (H8451 — law/instruction)">תּוֹרָה <span class="font-sans text-[10px] opacity-75" dir="ltr">(law)</span></button>
+                    <button type="button" onclick="toggleTransliterationGuideBox(true)" class="ml-auto px-2.5 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/90 hover:bg-amber-500 hover:text-white text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-bold cursor-pointer flex items-center space-x-1" title="View Greek &amp; Hebrew Transliteration + Vowel Point Guide">
+                        <i class="fa-solid fa-keyboard text-[10px]"></i>
+                        <span>Transliteration &amp; Vowel Guide</span>
+                    </button>
+                </div>
                 <div class="flex flex-wrap items-center gap-1.5">
                     <div class="relative flex-1 min-w-[240px]">
                         <i class="fa-solid fa-terminal absolute left-3.5 top-3 text-indigo-500 text-xs"></i>
@@ -1717,6 +1762,156 @@
                         <i class="fa-solid fa-window-restore text-xs"></i>
                         <span>Separate Window</span>
                     </button>
+                </div>
+
+                <!-- Collapsible Greek & Hebrew Transliteration + Vowel Points Guide (#transliterationGuideBox) -->
+                <div id="transliterationGuideBox" class="hidden p-3.5 rounded-xl bg-teal-50/95 dark:bg-zinc-800/95 border-2 border-teal-300 dark:border-teal-700 text-[11px] space-y-3 max-h-[54vh] overflow-y-auto custom-scrollbar shadow-md">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-teal-200 dark:border-zinc-700 pb-2">
+                        <div>
+                            <span class="font-bold text-teal-950 dark:text-teal-200 text-xs"><i class="fa-solid fa-keyboard mr-1.5 text-teal-600"></i>Greek &amp; Hebrew Transliteration + Hebrew Vowel Points Guide</span>
+                            <p class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                                Type plain Roman transliteration directly in the search bar or Chain Builder (e.g. <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">logos</code>, <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">agapao</code>, <code class="font-mono font-bold text-teal-700 dark:text-teal-300">elohim</code>, <code class="font-mono font-bold text-teal-700 dark:text-teal-300">bereshit</code>, <code class="font-mono font-bold text-teal-700 dark:text-teal-300">shalom</code>, <code class="font-mono font-bold text-teal-700 dark:text-teal-300">b:r'shiyt</code>) &bull; Click any card below to insert into your active box!
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <button type="button" id="translitGuideTab_hebrewVowels" onclick="switchTranslitGuideSection('hebrewVowels')" class="px-2.5 py-1 rounded-lg bg-teal-600 text-white font-bold text-[11px] cursor-pointer">1. Hebrew Vowel Points (Niqqud)</button>
+                            <button type="button" id="translitGuideTab_hebrewCons" onclick="switchTranslitGuideSection('hebrewCons')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 font-bold text-[11px] cursor-pointer">2. Hebrew Consonants</button>
+                            <button type="button" id="translitGuideTab_greek" onclick="switchTranslitGuideSection('greek')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 font-bold text-[11px] cursor-pointer">3. Greek Alphabet &amp; Diphthongs</button>
+                            <button type="button" onclick="toggleTransliterationGuideBox(false)" class="text-gray-500 hover:text-red-500 font-bold text-sm px-1.5 cursor-pointer">&times; Close</button>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Transliterated Search Examples -->
+                    <div class="flex items-center flex-wrap gap-1.5 pb-2 border-b border-teal-200/70 dark:border-zinc-700">
+                        <span class="font-bold text-teal-900 dark:text-teal-300 mr-0.5"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Try Transliterated Searches:</span>
+                        <button type="button" onclick="setTransliterationExampleQuery('theos@[Subject] agapao@[Verb] kosmos@[Object]', 'nt')" class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200 font-mono font-bold border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white cursor-pointer" title="Greek transliterated construct chain: theos (Subject) + agapao (Verb) + kosmos (Object)">theos@[Subject] agapao@[Verb] kosmos@[Object]</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('logos', 'nt')" class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200 font-mono font-bold border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white cursor-pointer">logos (λόγος)</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('pneuma', 'nt')" class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200 font-mono font-bold border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white cursor-pointer">pneuma (πνεῦμα)</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('elohim@[Subject] bara@[Verb]', 'ot')" class="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-900 dark:text-teal-200 font-mono font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white cursor-pointer" title="Hebrew transliterated construct chain: elohim (Subject) + bara (Verb)">elohim@[Subject] bara@[Verb]</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('bereshit', 'ot')" class="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-900 dark:text-teal-200 font-mono font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white cursor-pointer">bereshit (בְּרֵאשִׁית)</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('shalom', 'ot')" class="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-900 dark:text-teal-200 font-mono font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white cursor-pointer">shalom (שָׁלוֹם)</button>
+                        <button type="button" onclick="setTransliterationExampleQuery('chesed', 'ot')" class="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-900 dark:text-teal-200 font-mono font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white cursor-pointer">chesed (חֶסֶד)</button>
+                    </div>
+
+                    <!-- Section 1: Hebrew Vowel Points (Niqqud) -->
+                    <div id="translitSection_hebrewVowels" class="space-y-2">
+                        <div class="font-bold text-teal-900 dark:text-teal-200 flex items-center justify-between">
+                            <span>Hebrew Vowel Points (Niqqud) — Type either the phonetic vowel (<code class="font-mono">a, e, i, o, u</code>) or the exact pointed code (<code class="font-mono">a, A, e, E, i, o, u, W, :, :a, :e, :o</code>):</span>
+                            <span class="text-[10px] text-gray-500">Click any vowel card to insert</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            <button type="button" onclick="insertTranslitTokenIntoInput('a', 'ַ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Patah (Short a)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">a</code> &bull; Sound: <em>f<u>a</u>ther</em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בַ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('a', 'ָ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Qamets (Long ā)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">a</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">A / aa</code></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בָ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'ֵ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Tsere (Long ē)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">e</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">ey / ei</code></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בֵ / בֵי</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'ֶ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Segol (Short e)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">e</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">E</code> &bull; Sound: <em>m<u>e</u>t</em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בֶ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('i', 'ִ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Hiriq (i / î)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">i</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">iy</code> &bull; Sound: <em>mach<u>i</u>ne</em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בִ / בִי</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('o', 'ֹ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Holam (Long ō)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">o</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">ow</code> &bull; Sound: <em>g<u>o</u></em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בֹ / בוֹ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('u', 'ֻ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Qibbuts (Short u)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">u</code> &bull; Sound: <em>p<u>u</u>t</em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בֻ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('u', 'וּ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Shureq (Long ū)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">u</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">uw / W</code> &bull; Sound: <em>r<u>u</u>le</em></div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">וּ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'ְ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Sheva (ə / Silent)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">e</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">:</code> (or omit)</div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">בְ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('a', 'ֲ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Hataf Patah (ă)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">a</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">:a</code> (Hurried <em>a</em>)</div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">אֲ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'ֱ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Hataf Segol (ĕ)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">e</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">:e</code> (e.g. <em><u>e</u>lohim</em>)</div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">אֱ</span>
+                            </button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('o', 'ֳ')" class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-teal-200 dark:border-zinc-700 hover:border-teal-500 text-left flex items-center justify-between cursor-pointer">
+                                <div><div class="font-bold text-gray-900 dark:text-white">Hataf Qamets (ŏ)</div><div class="text-[10px] text-gray-500">Type: <code class="font-mono font-bold text-teal-700 dark:text-teal-300">o</code> or <code class="font-mono font-bold text-teal-700 dark:text-teal-300">:o</code> (Hurried <em>o</em>)</div></div>
+                                <span class="font-serif text-xl font-bold text-teal-700 dark:text-teal-300" dir="rtl">אֳ</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Hebrew Consonants (22 Letters + Shin/Sin) -->
+                    <div id="translitSection_hebrewCons" class="hidden space-y-2">
+                        <div class="font-bold text-teal-900 dark:text-teal-200">Hebrew Consonants — Type standard phonetic letters (e.g. <code class="font-mono">sh, ch, ts, q, b/v, k/kh</code>) or single-key codes:</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-1.5">
+                            <button type="button" onclick="insertTranslitTokenIntoInput('', 'א')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Alef</strong> (<code class="text-teal-600">'</code> or omit)</span><span class="font-serif text-base font-bold">א</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('b', 'ב')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Bet/Vet</strong> (<code class="text-teal-600">b / v</code>)</span><span class="font-serif text-base font-bold">בּ / ב</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('g', 'ג')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Gimel</strong> (<code class="text-teal-600">g</code>)</span><span class="font-serif text-base font-bold">ג</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('d', 'ד')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Dalet</strong> (<code class="text-teal-600">d</code>)</span><span class="font-serif text-base font-bold">ד</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('h', 'ה')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>He</strong> (<code class="text-teal-600">h</code>)</span><span class="font-serif text-base font-bold">ה</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('w', 'ו')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Vav</strong> (<code class="text-teal-600">w / v / o / u</code>)</span><span class="font-serif text-base font-bold">ו</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('z', 'ז')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Zayin</strong> (<code class="text-teal-600">z</code>)</span><span class="font-serif text-base font-bold">ז</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('ch', 'ח')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Het</strong> (<code class="text-teal-600">ch / h</code>)</span><span class="font-serif text-base font-bold">ח</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('t', 'ט')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Tet</strong> (<code class="text-teal-600">t</code>)</span><span class="font-serif text-base font-bold">ט</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('y', 'י')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Yod</strong> (<code class="text-teal-600">y / i</code>)</span><span class="font-serif text-base font-bold">י</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('k', 'כ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Kaf</strong> (<code class="text-teal-600">k / kh</code>)</span><span class="font-serif text-base font-bold">כ / ך</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('l', 'ל')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Lamed</strong> (<code class="text-teal-600">l</code>)</span><span class="font-serif text-base font-bold">ל</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('m', 'מ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Mem</strong> (<code class="text-teal-600">m</code>)</span><span class="font-serif text-base font-bold">מ / ם</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('n', 'נ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Nun</strong> (<code class="text-teal-600">n</code>)</span><span class="font-serif text-base font-bold">נ / ן</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('s', 'ס')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Samekh</strong> (<code class="text-teal-600">s</code>)</span><span class="font-serif text-base font-bold">ס</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('', 'ע')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Ayin</strong> (<code class="text-teal-600">'</code> or omit)</span><span class="font-serif text-base font-bold">ע</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('p', 'פ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Pe/Fe</strong> (<code class="text-teal-600">p / ph / f</code>)</span><span class="font-serif text-base font-bold">פ / ף</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('ts', 'צ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Tsadi</strong> (<code class="text-teal-600">ts / tz / s</code>)</span><span class="font-serif text-base font-bold">צ / ץ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('q', 'ק')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Qof</strong> (<code class="text-teal-600">q / k</code>)</span><span class="font-serif text-base font-bold">ק</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('r', 'ר')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Resh</strong> (<code class="text-teal-600">r</code>)</span><span class="font-serif text-base font-bold">ר</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('sh', 'שׁ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Shin</strong> (<code class="text-teal-600">sh</code>)</span><span class="font-serif text-base font-bold">שׁ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('s', 'שׂ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Sin</strong> (<code class="text-teal-600">s</code>)</span><span class="font-serif text-base font-bold">שׂ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('t', 'ת')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Tav</strong> (<code class="text-teal-600">t / th</code>)</span><span class="font-serif text-base font-bold">תּ / ת</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('.', 'ּ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-teal-500 flex items-center justify-between cursor-pointer"><span><strong>Dagesh</strong> (<code class="text-teal-600">.</code> / double)</span><span class="font-serif text-base font-bold">בּ</span></button>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Greek Alphabet & Diphthongs -->
+                    <div id="translitSection_greek" class="hidden space-y-2">
+                        <div class="font-bold text-indigo-900 dark:text-indigo-200">Greek Alphabet, Rough Breathing (<code class="font-mono">h</code>) &amp; Diphthongs — Type standard Roman equivalents:</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-1.5">
+                            <button type="button" onclick="insertTranslitTokenIntoInput('a', 'α')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Alpha</strong> (<code class="text-indigo-600">a</code>)</span><span class="font-serif text-base font-bold">Α α</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('b', 'β')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Beta</strong> (<code class="text-indigo-600">b</code>)</span><span class="font-serif text-base font-bold">Β β</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('g', 'γ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Gamma</strong> (<code class="text-indigo-600">g / n</code>)</span><span class="font-serif text-base font-bold">Γ γ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('d', 'δ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Delta</strong> (<code class="text-indigo-600">d</code>)</span><span class="font-serif text-base font-bold">Δ δ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'ε')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Epsilon</strong> (<code class="text-indigo-600">e</code>)</span><span class="font-serif text-base font-bold">Ε ε</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('z', 'ζ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Zeta</strong> (<code class="text-indigo-600">z</code>)</span><span class="font-serif text-base font-bold">Ζ ζ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('e', 'η')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Eta</strong> (<code class="text-indigo-600">e / ē</code>)</span><span class="font-serif text-base font-bold">Η η</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('th', 'θ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Theta</strong> (<code class="text-indigo-600">th / q</code>)</span><span class="font-serif text-base font-bold">Θ θ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('i', 'ι')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Iota</strong> (<code class="text-indigo-600">i</code>)</span><span class="font-serif text-base font-bold">Ι ι</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('k', 'κ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Kappa</strong> (<code class="text-indigo-600">k / c</code>)</span><span class="font-serif text-base font-bold">Κ κ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('l', 'λ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Lambda</strong> (<code class="text-indigo-600">l</code>)</span><span class="font-serif text-base font-bold">Λ λ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('m', 'μ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Mu</strong> (<code class="text-indigo-600">m</code>)</span><span class="font-serif text-base font-bold">Μ μ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('n', 'ν')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Nu</strong> (<code class="text-indigo-600">n</code>)</span><span class="font-serif text-base font-bold">Ν ν</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('x', 'ξ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Xi</strong> (<code class="text-indigo-600">x / ks</code>)</span><span class="font-serif text-base font-bold">Ξ ξ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('o', 'ο')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Omicron</strong> (<code class="text-indigo-600">o</code>)</span><span class="font-serif text-base font-bold">Ο ο</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('p', 'π')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Pi</strong> (<code class="text-indigo-600">p</code>)</span><span class="font-serif text-base font-bold">Π π</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('r', 'ρ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Rho</strong> (<code class="text-indigo-600">r / rh</code>)</span><span class="font-serif text-base font-bold">Ρ ρ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('s', 'σ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Sigma</strong> (<code class="text-indigo-600">s</code>)</span><span class="font-serif text-base font-bold">Σ σ/ς</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('t', 'τ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Tau</strong> (<code class="text-indigo-600">t</code>)</span><span class="font-serif text-base font-bold">Τ τ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('u', 'υ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Upsilon</strong> (<code class="text-indigo-600">u / y</code>)</span><span class="font-serif text-base font-bold">Υ υ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('ph', 'φ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Phi</strong> (<code class="text-indigo-600">ph / f</code>)</span><span class="font-serif text-base font-bold">Φ φ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('ch', 'χ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Chi</strong> (<code class="text-indigo-600">ch / kh</code>)</span><span class="font-serif text-base font-bold">Χ χ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('ps', 'ψ')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Psi</strong> (<code class="text-indigo-600">ps</code>)</span><span class="font-serif text-base font-bold">Ψ ψ</span></button>
+                            <button type="button" onclick="insertTranslitTokenIntoInput('o', 'ω')" class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-indigo-500 flex items-center justify-between cursor-pointer"><span><strong>Omega</strong> (<code class="text-indigo-600">o / ō / w</code>)</span><span class="font-serif text-base font-bold">Ω ω</span></button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Collapsible Custom Schema Syntax Guide + Example Searches (Moved Here to Keep Search Bar Clean!) -->
@@ -1825,9 +2020,71 @@
                     </select>
                 </div>
 
-                <!-- Search View Switcher Tabs: Current Search vs. Last 5 Searches -->
-                <div class="flex items-center justify-between pt-1 border-t border-gray-200/60 dark:border-zinc-800 text-xs">
-                    <div class="flex items-center space-x-1.5">
+                <!-- Collapsible Accordance-Style Syntactic Role & Word Chain Builder (String Subject + Verb + Object or Multi-Word Grammar Forms!) -->
+                <div id="syntacticChainBuilderPanel" class="hidden p-3.5 rounded-xl bg-gradient-to-r from-indigo-50/95 via-white/95 to-teal-50/90 dark:from-zinc-800/95 dark:via-zinc-900 dark:to-zinc-800/95 border-2 border-indigo-300 dark:border-indigo-700 text-xs space-y-3 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-indigo-200/80 dark:border-zinc-700">
+                        <div>
+                            <div class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center space-x-2">
+                                <i class="fa-solid fa-link text-indigo-600 dark:text-indigo-400"></i>
+                                <span>Syntactic Word &amp; Role Chain Builder (Accordance-Style Construct Search)</span>
+                            </div>
+                            <p class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                                String 2, 3, or more words &amp; grammatical roles together (e.g., <strong>"God" as Subject + "love" as Verb + "world" as Direct Object</strong>) &bull; Syncs live with the search bar above, then click <strong>Search</strong> or press <strong>Enter</strong>!
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="addSyntacticChainSlot()" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>+ Add Word / Role Slot</span>
+                            </button>
+                            <button type="button" onclick="resetSyntacticChainSlots()" class="px-2 py-1 rounded-lg bg-gray-200/80 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-700 dark:text-gray-300 font-semibold text-[11px] transition cursor-pointer">
+                                Reset Slots
+                            </button>
+                            <button type="button" onclick="toggleSyntacticChainBuilderPanel(false)" class="text-gray-400 hover:text-red-500 font-bold text-sm px-1 cursor-pointer">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Construct Templates (Populates the Builder & Search Box — Click Search or Enter When Ready!) -->
+                    <div class="flex items-center flex-wrap gap-1.5 text-[11px]">
+                        <span class="font-bold text-indigo-900 dark:text-indigo-300 mr-0.5"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Try Construct Examples:</span>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: 'love', role: '', pos: 'Verb', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/90 text-indigo-800 dark:text-indigo-200 font-bold border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white transition cursor-pointer" title="Find 'God' as Subject (Nominative) + 'love' as Verb">
+                            'God' [Subject] + 'love' [Verb]
+                        </button>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'love', role: '', pos: 'Verb', mood: '', voice: '' }, { connector: 'AND', word: 'world', role: 'Object', pos: '', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/90 text-teal-800 dark:text-teal-200 font-bold border border-teal-300 dark:border-teal-700 hover:bg-teal-600 hover:text-white transition cursor-pointer" title="Find 'love' as Verb + 'world' as Direct Object (Accusative)">
+                            'love' [Verb] + 'world' [Object]
+                        </button>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: 'love', role: '', pos: 'Verb', mood: '', voice: '' }, { connector: 'AND', word: 'world', role: 'Object', pos: '', mood: '', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/90 text-purple-800 dark:text-purple-200 font-bold border border-purple-300 dark:border-purple-700 hover:bg-purple-600 hover:text-white transition cursor-pointer" title="Find 'God' [Subject] + 'love' [Verb] + 'world' [Object] (e.g. John 3:16)">
+                            'God' [Subject] + 'love' [Verb] + 'world' [Object]
+                        </button>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'jesus', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: '*', role: '', pos: 'Verb', mood: 'Imperative', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 font-bold border border-rose-300 dark:border-rose-700 hover:bg-rose-600 hover:text-white transition cursor-pointer" title="Find 'Jesus' as Subject + any Imperative Command Verb">
+                            'Jesus' [Subject] + Any [Imperative]
+                        </button>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: '*', role: 'Subject', pos: '', mood: 'Participle', voice: '' }, { connector: 'BEFORE', word: '*', role: '', pos: 'Verb', mood: 'Imperative', voice: '' } ], 'nt')" class="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/90 text-amber-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-700 hover:bg-amber-600 hover:text-white transition cursor-pointer" title="Greek Attendant Circumstance / Command: Nominative Participle followed by an Imperative Verb">
+                            [Nominative Participle] &rarr; [Imperative Verb]
+                        </button>
+                        <button type="button" onclick="loadConstructPresetIntoBuilder([ { word: 'god', role: 'Subject', pos: '', mood: '', voice: '' }, { connector: 'AND', word: '*', role: '', pos: 'Verb', mood: '', voice: 'Hiphil' } ], 'ot')" class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200 font-bold border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-600 hover:text-white transition cursor-pointer" title="Hebrew OT: 'God' as Subject + any Hiphil Causative Verb">
+                            OT: 'God' [Subject] + [Hiphil Verb]
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Chained Slot Cards Container -->
+                    <div id="syntacticChainSlotsContainer" class="space-y-2" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); executeGrammarMorphSearch(false); }">
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-200/60 dark:border-zinc-700 text-[11px]">
+                        <div class="text-gray-600 dark:text-gray-300">
+                            <strong>Tip:</strong> You can also type chained tags directly in the search box using <code class="font-mono font-bold text-indigo-700 dark:text-indigo-300">word@[Role, Grammar]</code> (e.g. <code class="font-mono font-bold text-indigo-700 dark:text-indigo-300">god@[Subject] love@[Verb] world@[Object]</code>).
+                        </div>
+                        <button type="button" onclick="executeGrammarMorphSearch(false)" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                            <span>Run Chained Search (or Press Enter)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search View Switcher Tabs: Current Search vs. Last 5 Searches + Chain Builder Toggle -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-200/60 dark:border-zinc-800 text-xs">
+                    <div class="flex items-center flex-wrap gap-1.5">
                         <button type="button" id="grammarSearchTabBtn_current" onclick="switchGrammarSearchTab('current')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm transition cursor-pointer flex items-center space-x-1.5">
                             <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
                             <span>Search Results</span>
@@ -1836,8 +2093,12 @@
                             <i class="fa-solid fa-clock-rotate-left text-[10px] text-indigo-500"></i>
                             <span id="lastFiveSearchesTabLabel">Last 5 Searches (0)</span>
                         </button>
+                        <button type="button" id="toggleChainBuilderBtn" onclick="toggleSyntacticChainBuilderPanel()" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 hover:bg-teal-600 hover:text-white font-bold text-[11px] border border-teal-300 dark:border-teal-700 transition cursor-pointer flex items-center space-x-1.5" title="String multiple words &amp; grammatical roles together (e.g. 'God' as Subject + 'love' as Verb + 'world' as Object)">
+                            <i class="fa-solid fa-link text-[10px]"></i>
+                            <span>Chain Words &amp; Roles (Subject + Verb + Object)</span>
+                        </button>
                     </div>
-                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden sm:inline">Closing Search clears the active view &bull; Your last 5 searches are saved in the tab</span>
+                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden md:inline">Build your query or chain &bull; Searches only when you click <strong>Search</strong> or press <strong>Enter</strong></span>
                 </div>
             </div>
 
@@ -12381,6 +12642,9 @@
                             Type a word or custom schema query above, pick any combination of <strong>Part of Speech, Mood/Tense, Case/State, Gender, Number, or Voice/Stem</strong>, and click <strong>Search</strong>.
                         </p>
                         <div class="flex items-center justify-center flex-wrap gap-2 pt-1">
+                            <button type="button" onclick="toggleSyntacticChainBuilderPanel(true)" class="px-3 py-1.5 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 text-xs font-bold hover:bg-teal-600 hover:text-white transition cursor-pointer">
+                                <i class="fa-solid fa-link mr-1"></i>Chain Words &amp; Roles (e.g. Subject + Verb + Object)
+                            </button>
                             <button type="button" onclick="document.getElementById('customSchemaSyntaxGuideBox').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold hover:bg-amber-500 hover:text-white transition cursor-pointer">
                                 <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>View Example Searches &amp; Schema Guide
                             </button>
@@ -12427,6 +12691,10 @@
             clearActiveGrammarSearchFieldsAndResults();
             const guideBox = document.getElementById('customSchemaSyntaxGuideBox');
             if (guideBox) guideBox.classList.add('hidden');
+            const chainBox = document.getElementById('syntacticChainBuilderPanel');
+            if (chainBox) chainBox.classList.add('hidden');
+            const trBox = document.getElementById('transliterationGuideBox');
+            if (trBox) trBox.classList.add('hidden');
             const modal = document.getElementById('grammarSearchModal');
             if (modal) modal.classList.add('hidden');
         }
@@ -12582,6 +12850,800 @@
         // =========================================================================
         // LEXFLOW CUSTOM SEARCH SCHEMA PARSER & EVALUATOR (ENGLISH + GREEK + HEBREW)
         // =========================================================================
+        // =========================================================================
+        // ACCORDANCE-STYLE SYNTACTIC WORD & ROLE CHAIN BUILDER (SUBJECT + VERB + OBJECT)
+        // =========================================================================
+        let activeGrammarSearchLangMode = 'english'; // 'english' | 'original'
+        let lastFocusedChainSlotIdx = 0;
+
+        let syntacticChainSlotsState = [
+            { connector: 'AND', word: 'god', wordsList: ['god'], tagsList: ['Subject'], role: 'Subject', pos: '', mood: '', voice: '' },
+            { connector: 'AND', word: 'love', wordsList: ['love'], tagsList: ['Verb'], role: '', pos: 'Verb', mood: '', voice: '' }
+        ];
+
+        function setGrammarSearchLanguageMode(mode) {
+            activeGrammarSearchLangMode = (mode === 'original') ? 'original' : 'english';
+            const engBtn = document.getElementById('searchLangModeTab_english');
+            const origBtn = document.getElementById('searchLangModeTab_original');
+            const rootsBar = document.getElementById('originalLanguageQuickRootsBar');
+            const subHint = document.getElementById('searchLangModeSubHint');
+            const inp = document.getElementById('grammarSearchInput');
+
+            if (activeGrammarSearchLangMode === 'original') {
+                if (engBtn) engBtn.className = 'px-4 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 hover:bg-indigo-600 hover:text-white font-bold text-xs border border-gray-300 dark:border-zinc-700 shadow-sm transition cursor-pointer flex items-center space-x-2';
+                if (origBtn) origBtn.className = 'px-4 py-1.5 rounded-xl bg-teal-600 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-2';
+                if (rootsBar) rootsBar.classList.remove('hidden');
+                if (subHint) {
+                    subHint.className = 'text-[11px] font-semibold text-teal-800 dark:text-teal-300';
+                    subHint.innerHTML = '<i class="fa-solid fa-scroll mr-1"></i>Original Language Mode: Search Greek (SRGNT) &amp; Hebrew (WLC) roots, Strong\x27s codes, and chained grammar tags';
+                }
+                if (inp) {
+                    inp.placeholder = 'Search Greek/Hebrew roots, Strong\x27s (G25, H430), or chained grammar (e.g. θεός@[Subject] ἀγαπάω@[Verb] κόσμος@[Object])...';
+                }
+            } else {
+                if (engBtn) engBtn.className = 'px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center space-x-2';
+                if (origBtn) origBtn.className = 'px-4 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 hover:bg-teal-600 hover:text-white font-bold text-xs border border-gray-300 dark:border-zinc-700 shadow-sm transition cursor-pointer flex items-center space-x-2';
+                if (rootsBar) rootsBar.classList.add('hidden');
+                if (subHint) {
+                    subHint.className = 'text-[11px] font-semibold text-indigo-700 dark:text-indigo-300';
+                    subHint.innerHTML = '<i class="fa-solid fa-link mr-1"></i>English Search Mode: Search English words/schema or link them directly to Greek &amp; Hebrew grammar chains';
+                }
+                if (inp) {
+                    inp.placeholder = 'Search English schema (e.g. god 3-love | god (love, hope, peace) | ~ god of my heart) or chained grammar (god@[Subject] love@[Verb])...';
+                }
+            }
+
+            const panel = document.getElementById('syntacticChainBuilderPanel');
+            if (panel && !panel.classList.contains('hidden')) {
+                renderSyntacticChainSlotsUI();
+            }
+        }
+
+        function insertOriginalRootIntoActiveSearch(lemmaStr, strongsCode, targetScope) {
+            if (targetScope) {
+                const scopeSel = document.getElementById('grammarScopeSelect');
+                if (scopeSel) {
+                    scopeSel.value = targetScope;
+                    scopeSel.dataset.userChanged = 'true';
+                }
+            }
+            const panel = document.getElementById('syntacticChainBuilderPanel');
+            if (panel && !panel.classList.contains('hidden')) {
+                const targetIdx = (lastFocusedChainSlotIdx >= 0 && lastFocusedChainSlotIdx < syntacticChainSlotsState.length)
+                    ? lastFocusedChainSlotIdx
+                    : (syntacticChainSlotsState.length - 1);
+                addWordToChainSlot(targetIdx, lemmaStr);
+                return;
+            }
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) {
+                const cur = inp.value.trim();
+                inp.value = cur ? `${cur} ${lemmaStr}` : lemmaStr;
+                inp.focus();
+            }
+        }
+
+        function normalizeChainSlotObject(slot) {
+            if (!Array.isArray(slot.wordsList)) {
+                const initW = (slot.word || '').trim();
+                slot.wordsList = (initW && initW !== '*') ? [initW] : [];
+            }
+            if (!Array.isArray(slot.tagsList)) {
+                slot.tagsList = [slot.role, slot.pos, slot.mood, slot.voice].filter(Boolean);
+            }
+            return slot;
+        }
+
+        function toggleSyntacticChainBuilderPanel(forceState) {
+            const panel = document.getElementById('syntacticChainBuilderPanel');
+            if (!panel) return;
+            const willShow = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !willShow);
+            if (willShow) {
+                renderSyntacticChainSlotsUI();
+            }
+        }
+
+        function renderSyntacticChainSlotsUI() {
+            const container = document.getElementById('syntacticChainSlotsContainer');
+            if (!container) return;
+
+            const roleOptions = [
+                { val: '', label: '+ Syntactic Role...' },
+                { val: 'Subject', label: 'Subject (Doer — Gk. Nominative / Heb. Subject)' },
+                { val: 'Object', label: 'Direct Object (Receiver — Gk. Accusative / Heb. אֵת)' },
+                { val: 'IndirectObject', label: 'Indirect Object (To/For — Gk. Dative / Heb. לְ)' },
+                { val: 'Possessive', label: 'Possessive / Source (Of — Gk. Genitive / Construct)' }
+            ];
+            const posOptions = [
+                { val: '', label: '+ Part of Speech...' },
+                { val: 'Verb', label: 'Verb (Action)' },
+                { val: 'Noun', label: 'Noun' },
+                { val: 'Adjective', label: 'Adjective' },
+                { val: 'Pronoun', label: 'Pronoun' },
+                { val: 'Participle', label: 'Participle (-ing)' },
+                { val: 'Preposition', label: 'Preposition' },
+                { val: 'Adverb', label: 'Adverb' },
+                { val: 'Article', label: 'Article (The)' },
+                { val: 'Particle', label: 'Particle' }
+            ];
+            const moodOptions = [
+                { val: '', label: '+ Mood / Tense...' },
+                { val: 'Indicative', label: 'Indicative (Statement)' },
+                { val: 'Imperative', label: 'Imperative (Command)' },
+                { val: 'Subjunctive', label: 'Subjunctive (Purpose/Cond)' },
+                { val: 'Participle', label: 'Participle (-ing)' },
+                { val: 'Infinitive', label: 'Infinitive (To do)' },
+                { val: 'Present', label: 'Present' },
+                { val: 'Aorist', label: 'Aorist' },
+                { val: 'Perfect', label: 'Perfect' },
+                { val: 'Imperfect', label: 'Imperfect' },
+                { val: 'Future', label: 'Future' }
+            ];
+            const voiceOptions = [
+                { val: '', label: '+ Voice / Stem / Case / Num...' },
+                { val: 'Active', label: 'Active Voice' },
+                { val: 'Middle', label: 'Middle Voice' },
+                { val: 'Passive', label: 'Passive Voice' },
+                { val: 'Qal', label: 'Hebrew Qal (Simple)' },
+                { val: 'Niphal', label: 'Hebrew Niphal (Passive)' },
+                { val: 'Piel', label: 'Hebrew Piel (Intensive)' },
+                { val: 'Hiphil', label: 'Hebrew Hiphil (Causative)' },
+                { val: 'Hithpael', label: 'Hebrew Hithpael (Reflexive)' },
+                { val: 'Nominative', label: 'Nominative Case' },
+                { val: 'Accusative', label: 'Accusative Case' },
+                { val: 'Genitive', label: 'Genitive Case' },
+                { val: 'Dative', label: 'Dative Case' },
+                { val: 'Construct', label: 'Hebrew Construct State' },
+                { val: 'Absolute', label: 'Hebrew Absolute State' },
+                { val: 'Masculine', label: 'Masculine' },
+                { val: 'Feminine', label: 'Feminine' },
+                { val: 'Neuter', label: 'Neuter' },
+                { val: 'Singular', label: 'Singular' },
+                { val: 'Plural', label: 'Plural' },
+                { val: '1st Person', label: '1st Person' },
+                { val: '2nd Person', label: '2nd Person' },
+                { val: '3rd Person', label: '3rd Person' }
+            ];
+            const connectorOptions = [
+                { val: 'AND', label: '+ AND (Any Word Order in Verse/Sentence)' },
+                { val: 'BEFORE', label: '→ FOLLOWED BY (In Word Order)' },
+                { val: 'PROX_3', label: '↔ WITHIN 3 WORDS (≤ 3 words apart)' },
+                { val: 'PROX_5', label: '↔ WITHIN 5 WORDS (≤ 5 words apart)' }
+            ];
+
+            const placeholderText = activeGrammarSearchLangMode === 'original'
+                ? 'Type Greek/Hebrew root, Strong\x27s (G25), or English meaning...'
+                : 'Type word (e.g. love, god, world, or * for any)...';
+
+            container.innerHTML = syntacticChainSlotsState.map((rawSlot, idx) => {
+                const slot = normalizeChainSlotObject(rawSlot);
+                const connectorHtml = idx > 0 ? `
+                    <div class="flex items-center space-x-2 py-0.5 pl-3">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Chain Link:</span>
+                        <select onchange="updateSyntacticChainSlot(${idx}, 'connector', this.value)" class="glass-control px-2.5 py-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer">
+                            ${connectorOptions.map(co => `<option value="${co.val}" ${slot.connector === co.val ? 'selected' : ''}>${escapeHtmlText(co.label)}</option>`).join('')}
+                        </select>
+                    </div>
+                ` : '';
+
+                const wordChipsHtml = (slot.wordsList && slot.wordsList.length > 0)
+                    ? slot.wordsList.map((w, wIdx) => `
+                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700 font-bold text-[11px]">
+                            <span>${escapeHtmlText(w)}</span>
+                            <button type="button" onclick="removeWordFromChainSlot(${idx}, ${wIdx})" class="text-indigo-500 hover:text-red-500 font-bold ml-1 cursor-pointer" title="Remove word">&times;</button>
+                        </span>
+                    `).join('<span class="text-[10px] font-bold text-gray-400">OR</span>')
+                    : `<span class="text-[11px] italic text-gray-400">Any word (*)</span>`;
+
+                const tagChipsHtml = (slot.tagsList && slot.tagsList.length > 0)
+                    ? slot.tagsList.map((tg, tIdx) => `
+                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-700 font-bold text-[11px]">
+                            <span>${escapeHtmlText(tg)}</span>
+                            <button type="button" onclick="removeTagFromChainSlot(${idx}, ${tIdx})" class="text-teal-600 hover:text-red-500 font-bold ml-1 cursor-pointer" title="Remove grammar tag">&times;</button>
+                        </span>
+                    `).join('<span class="text-[10px] font-bold text-teal-600">+</span>')
+                    : `<span class="text-[11px] italic text-gray-400">Any grammar</span>`;
+
+                return `
+                    ${connectorHtml}
+                    <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200/90 dark:border-zinc-700 space-y-2 shadow-sm">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-mono font-bold text-[11px] shrink-0">Word #${idx + 1}</span>
+                            <div class="flex items-center flex-1 min-w-[210px] gap-1">
+                                <input type="text" id="chainSlotWordInput_${idx}" value="${escapeHtmlText(slot.word || '')}"
+                                       placeholder="${placeholderText}"
+                                       onfocus="lastFocusedChainSlotIdx = ${idx}"
+                                       oninput="onChainSlotWordInputChange(${idx}, this.value)"
+                                       onkeydown="if(event.key === '+'){ event.preventDefault(); addTypedWordToChainSlot(${idx}); }"
+                                       class="select-text glass-control flex-1 min-w-[140px] px-2.5 py-1.5 text-xs font-bold text-gray-900 dark:text-white outline-none">
+                                <button type="button" onclick="addTypedWordToChainSlot(${idx})" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/90 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 font-bold text-[11px] shrink-0 transition cursor-pointer flex items-center space-x-1" title="Add another word/synonym to this slot (e.g. love + compassion)">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <span>Word</span>
+                                </button>
+                            </div>
+                            <select onchange="addTagToChainSlotFromSelect(${idx}, this)" class="glass-control px-2 py-1.5 text-[11px] font-bold text-teal-800 dark:text-teal-300 outline-none cursor-pointer" title="Add a Syntactic Role (Subject, Direct Object, Indirect Object, Possessive)">
+                                ${roleOptions.map(ro => `<option value="${ro.val}">${escapeHtmlText(ro.label)}</option>`).join('')}
+                            </select>
+                            <select onchange="addTagToChainSlotFromSelect(${idx}, this)" class="glass-control px-2 py-1.5 text-[11px] font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer" title="Add Part of Speech tag">
+                                ${posOptions.map(po => `<option value="${po.val}">${escapeHtmlText(po.label)}</option>`).join('')}
+                            </select>
+                            <select onchange="addTagToChainSlotFromSelect(${idx}, this)" class="glass-control px-2 py-1.5 text-[11px] font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer" title="Add Mood or Tense tag">
+                                ${moodOptions.map(mo => `<option value="${mo.val}">${escapeHtmlText(mo.label)}</option>`).join('')}
+                            </select>
+                            <select onchange="addTagToChainSlotFromSelect(${idx}, this)" class="glass-control px-2 py-1.5 text-[11px] font-semibold text-gray-800 dark:text-gray-200 outline-none cursor-pointer" title="Add Voice, Hebrew Stem, Case, Gender, or Number tag">
+                                ${voiceOptions.map(vo => `<option value="${vo.val}">${escapeHtmlText(vo.label)}</option>`).join('')}
+                            </select>
+                            <button type="button" onclick="insertSyntacticChainSlotAfter(${idx})" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center space-x-1 shrink-0" title="Add another chained Word / Role slot below this row">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Add Slot</span>
+                            </button>
+                            ${syntacticChainSlotsState.length > 1 ? `
+                                <button type="button" onclick="removeSyntacticChainSlot(${idx})" class="px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-500 hover:text-white text-gray-500 text-xs font-bold transition cursor-pointer shrink-0" title="Remove this slot">
+                                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <!-- Active Multi-Word & Multi-Grammar Tag Pills Row for This Slot -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-gray-100 dark:border-zinc-800 text-[11px]">
+                            <div class="flex items-center flex-wrap gap-1.5">
+                                <span class="font-bold text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-wider">Words in Slot #${idx + 1}:</span>
+                                ${wordChipsHtml}
+                            </div>
+                            <div class="flex items-center flex-wrap gap-1.5">
+                                <span class="font-bold text-teal-700 dark:text-teal-400 text-[10px] uppercase tracking-wider">Grammar Tags (${slot.tagsList.length}):</span>
+                                ${tagChipsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function onChainSlotWordInputChange(idx, val) {
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            slot.word = val;
+            const trimmed = (val || '').trim();
+            if (slot.wordsList.length <= 1) {
+                slot.wordsList = (trimmed && trimmed !== '*') ? [trimmed] : [];
+            } else if (trimmed && trimmed !== '*') {
+                slot.wordsList[slot.wordsList.length - 1] = trimmed;
+            }
+            syncSyntacticChainToSearchBox();
+        }
+
+        function addTypedWordToChainSlot(idx) {
+            const inp = document.getElementById('chainSlotWordInput_' + idx);
+            const val = inp ? inp.value.trim() : '';
+            addWordToChainSlot(idx, val);
+        }
+
+        function addWordToChainSlot(idx, wordVal) {
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            const clean = (wordVal || '').trim();
+            if (clean && clean !== '*' && !slot.wordsList.includes(clean)) {
+                slot.wordsList.push(clean);
+            }
+            slot.word = '';
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+            const inp = document.getElementById('chainSlotWordInput_' + idx);
+            if (inp) inp.focus();
+        }
+
+        function removeWordFromChainSlot(idx, wordIdx) {
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            slot.wordsList.splice(wordIdx, 1);
+            slot.word = slot.wordsList.length === 1 ? slot.wordsList[0] : '';
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function addTagToChainSlotFromSelect(idx, selectEl) {
+            const val = selectEl ? selectEl.value : '';
+            if (!val) return;
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            if (!slot.tagsList.includes(val)) {
+                slot.tagsList.push(val);
+            }
+            selectEl.value = '';
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function removeTagFromChainSlot(idx, tagIdx) {
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            slot.tagsList.splice(tagIdx, 1);
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function insertSyntacticChainSlotAfter(idx) {
+            const newSlot = {
+                connector: 'AND',
+                word: '',
+                wordsList: [],
+                tagsList: [],
+                role: '',
+                pos: '',
+                mood: '',
+                voice: ''
+            };
+            syntacticChainSlotsState.splice(idx + 1, 0, newSlot);
+            lastFocusedChainSlotIdx = idx + 1;
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function buildConstructQueryStringFromSlots() {
+            const parts = [];
+            syntacticChainSlotsState.forEach((rawSlot, idx) => {
+                const slot = normalizeChainSlotObject(rawSlot);
+                const activeWords = (slot.wordsList && slot.wordsList.length > 0)
+                    ? slot.wordsList.filter(Boolean)
+                    : ((slot.word && slot.word.trim() && slot.word.trim() !== '*') ? [slot.word.trim()] : []);
+                let wordExpr = '*';
+                if (activeWords.length === 1) {
+                    wordExpr = activeWords[0];
+                } else if (activeWords.length > 1) {
+                    wordExpr = `(${activeWords.join(', ')})`;
+                }
+
+                const uniqueTags = Array.from(new Set((slot.tagsList || []).filter(Boolean)));
+                const tokenExpr = uniqueTags.length > 0
+                    ? `${wordExpr}@[${uniqueTags.join(', ')}]`
+                    : wordExpr;
+
+                if (idx > 0) {
+                    if (slot.connector === 'BEFORE') {
+                        parts.push('->');
+                        parts.push(tokenExpr);
+                    } else if (slot.connector === 'PROX_3') {
+                        parts.push(`3-${tokenExpr}`);
+                    } else if (slot.connector === 'PROX_5') {
+                        parts.push(`5-${tokenExpr}`);
+                    } else {
+                        parts.push(tokenExpr);
+                    }
+                } else {
+                    parts.push(tokenExpr);
+                }
+            });
+            return parts.join(' ');
+        }
+
+        function syncSyntacticChainToSearchBox() {
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) {
+                inp.value = buildConstructQueryStringFromSlots();
+            }
+            ['gfPos', 'gfMood', 'gfCase', 'gfGender', 'gfNumber', 'gfVoice'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+        function updateSyntacticChainSlot(idx, field, val) {
+            const slot = normalizeChainSlotObject(syntacticChainSlotsState[idx]);
+            if (!slot) return;
+            slot[field] = val;
+            syncSyntacticChainToSearchBox();
+        }
+
+        function addSyntacticChainSlot() {
+            syntacticChainSlotsState.push({
+                connector: 'AND',
+                word: '',
+                wordsList: [],
+                tagsList: ['Object'],
+                role: 'Object',
+                pos: '',
+                mood: '',
+                voice: ''
+            });
+            lastFocusedChainSlotIdx = syntacticChainSlotsState.length - 1;
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function removeSyntacticChainSlot(idx) {
+            if (syntacticChainSlotsState.length <= 1) return;
+            syntacticChainSlotsState.splice(idx, 1);
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function resetSyntacticChainSlots() {
+            syntacticChainSlotsState = [
+                { connector: 'AND', word: 'god', wordsList: ['god'], tagsList: ['Subject'], role: 'Subject', pos: '', mood: '', voice: '' },
+                { connector: 'AND', word: 'love', wordsList: ['love'], tagsList: ['Verb'], role: '', pos: 'Verb', mood: '', voice: '' }
+            ];
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        function loadConstructPresetIntoBuilder(slotsArray, targetScope) {
+            syntacticChainSlotsState = slotsArray.map((s, i) => {
+                const w = s.word !== undefined ? s.word : '*';
+                const wList = Array.isArray(s.wordsList) ? s.wordsList : ((w && w !== '*') ? [w] : []);
+                const tList = Array.isArray(s.tagsList) ? s.tagsList : [s.role, s.pos, s.mood, s.voice].filter(Boolean);
+                return {
+                    connector: i === 0 ? 'AND' : (s.connector || 'AND'),
+                    word: w === '*' ? '' : w,
+                    wordsList: wList,
+                    tagsList: tList,
+                    role: s.role || '',
+                    pos: s.pos || '',
+                    mood: s.mood || '',
+                    voice: s.voice || ''
+                };
+            });
+            if (targetScope) {
+                const scopeSel = document.getElementById('grammarScopeSelect');
+                if (scopeSel) {
+                    scopeSel.value = targetScope;
+                    scopeSel.dataset.userChanged = 'true';
+                }
+            }
+            const panel = document.getElementById('syntacticChainBuilderPanel');
+            if (panel) panel.classList.remove('hidden');
+            renderSyntacticChainSlotsUI();
+            syncSyntacticChainToSearchBox();
+        }
+
+        // High-precision English -> Original Greek & Hebrew Lexeme / Strong's Map for Construct Searches
+        const biblicalConstructConceptMap = {
+            'god': { strongs: ['G2316', 'H430', 'H410', 'H433'], lemmas: ['θεοσ', 'אלהים', 'אל', 'אלוה'], glossStems: ['god', 'deity', 'almighty'] },
+            'lord': { strongs: ['G2962', 'H3068', 'H136', 'H113'], lemmas: ['κυριοσ', 'יהוה', 'אדני', 'אדון'], glossStems: ['lord', 'master', 'jehovah', 'yahweh'] },
+            'jesus': { strongs: ['G2424'], lemmas: ['ιησουσ'], glossStems: ['jesus'] },
+            'christ': { strongs: ['G5547', 'H4899'], lemmas: ['χριστοσ', 'משיח'], glossStems: ['christ', 'messiah', 'anointed'] },
+            'spirit': { strongs: ['G4151', 'H7307'], lemmas: ['πνευμα', 'רוח'], glossStems: ['spirit', 'ghost', 'breath'] },
+            'father': { strongs: ['G3962', 'H1'], lemmas: ['πατηρ', 'אב'], glossStems: ['father'] },
+            'son': { strongs: ['G5207', 'H1121'], lemmas: ['υιοσ', 'τεκνον', 'בן'], glossStems: ['son', 'child'] },
+            'world': { strongs: ['G2889', 'G165', 'G3625', 'H8398', 'H776'], lemmas: ['κοσμοσ', 'αιων', 'οικουμενη', 'תבל', 'ארץ'], glossStems: ['world', 'earth', 'age'] },
+            'love': { strongs: ['G25', 'G26', 'G5368', 'G5360', 'H157', 'H160', 'H2617'], lemmas: ['αγαπαω', 'αγαπη', 'φιλεω', 'אהב', 'אהבה', 'חסד'], glossStems: ['love', 'loved', 'loveth', 'loving', 'beloved', 'lovingkindness'] },
+            'believe': { strongs: ['G4100', 'H539'], lemmas: ['πιστευω', 'אמן'], glossStems: ['believe', 'believed', 'believeth', 'believing', 'trust'] },
+            'faith': { strongs: ['G4102', 'G4100', 'H530', 'H539'], lemmas: ['πιστισ', 'πιστευω', 'אמונה'], glossStems: ['faith', 'faithful', 'belief', 'believe'] },
+            'hope': { strongs: ['G1680', 'G1679', 'H8615', 'H3176', 'H6960'], lemmas: ['ελπισ', 'ελπιζω', 'תקוה', 'יחל', 'קוה'], glossStems: ['hope', 'hoped', 'wait', 'trust'] },
+            'peace': { strongs: ['G1515', 'H7965'], lemmas: ['ειρηνη', 'שלום'], glossStems: ['peace'] },
+            'grace': { strongs: ['G5485', 'H2580'], lemmas: ['χαρισ', 'חן'], glossStems: ['grace', 'favor', 'favour'] },
+            'sin': { strongs: ['G266', 'G264', 'G268', 'H2403', 'H2398', 'H5771', 'H6588'], lemmas: ['αμαρτια', 'αμαρτανω', 'חטאה', 'חטא', 'עון', 'פשע'], glossStems: ['sin', 'sinned', 'sinner', 'iniquity', 'transgression'] },
+            'save': { strongs: ['G4982', 'G4991', 'H3467', 'H5337'], lemmas: ['σωζω', 'σωτηρια', 'ישע', 'נצל'], glossStems: ['save', 'saved', 'saveth', 'salvation', 'deliver', 'rescue'] },
+            'law': { strongs: ['G3551', 'H8451'], lemmas: ['νομοσ', 'תורה'], glossStems: ['law', 'torah'] },
+            'word': { strongs: ['G3056', 'G4487', 'H1697', 'H565'], lemmas: ['λογοσ', 'ρημα', 'דבר', 'אמרה'], glossStems: ['word', 'saying', 'speech'] },
+            'life': { strongs: ['G2222', 'G2198', 'G979', 'H2416', 'H2421'], lemmas: ['ζωη', 'ζαω', 'חי', 'חיה'], glossStems: ['life', 'live', 'living', 'alive'] },
+            'light': { strongs: ['G5457', 'H216'], lemmas: ['φωσ', 'אור'], glossStems: ['light', 'shine'] },
+            'flesh': { strongs: ['G4561', 'H1320'], lemmas: ['σαρξ', 'בשר'], glossStems: ['flesh'] },
+            'heart': { strongs: ['G2588', 'H3820', 'H3824'], lemmas: ['καρδια', 'לב', 'לבב'], glossStems: ['heart', 'mind'] },
+            'soul': { strongs: ['G5590', 'H5315'], lemmas: ['ψυχη', 'נפש'], glossStems: ['soul', 'life'] },
+            'man': { strongs: ['G444', 'G435', 'H120', 'H376', 'H582'], lemmas: ['ανθρωποσ', 'ανηρ', 'אדם', 'איש', 'אנוש'], glossStems: ['man', 'men', 'mankind', 'human'] },
+            'know': { strongs: ['G1097', 'G1492', 'G1921', 'H3045'], lemmas: ['γινωσκω', 'οιδα', 'επιγινωσκω', 'ידע'], glossStems: ['know', 'knew', 'known', 'perceive', 'understand'] },
+            'see': { strongs: ['G3708', 'G991', 'G2334', 'G1492', 'H7200', 'H2372'], lemmas: ['οραω', 'βλεπω', 'θεωρεω', 'ראה', 'חזה'], glossStems: ['see', 'saw', 'seen', 'behold', 'look'] },
+            'give': { strongs: ['G1325', 'G5483', 'H5414'], lemmas: ['διδωμι', 'χαριζομαι', 'נתן'], glossStems: ['give', 'gave', 'given', 'grant', 'bestow'] },
+            'send': { strongs: ['G649', 'G3992', 'H7971'], lemmas: ['αποστελλω', 'πεμπω', 'שלח'], glossStems: ['send', 'sent'] },
+            'speak': { strongs: ['G2980', 'G3004', 'H1696', 'H559'], lemmas: ['λαλεω', 'λεγω', 'דבר', 'אמר'], glossStems: ['speak', 'spoke', 'spoken', 'say', 'said', 'tell'] },
+            'say': { strongs: ['G3004', 'G2036', 'G2980', 'H559', 'H1696'], lemmas: ['λεγω', 'ειπον', 'λαλεω', 'אמר', 'דבר'], glossStems: ['say', 'said', 'speak', 'spoke'] },
+            'hear': { strongs: ['G191', 'H8085'], lemmas: ['ακουω', 'שמע'], glossStems: ['hear', 'heard', 'hearken', 'listen'] },
+            'walk': { strongs: ['G4043', 'H1980', 'H3212'], lemmas: ['περιπατεω', 'הלך'], glossStems: ['walk', 'walked'] },
+            'keep': { strongs: ['G5083', 'G5442', 'H8104'], lemmas: ['τηρεω', 'φυλασσω', 'שמר'], glossStems: ['keep', 'kept', 'guard', 'observe'] },
+            'abide': { strongs: ['G3306', 'H3427'], lemmas: ['μενω', 'ישב'], glossStems: ['abide', 'remain', 'dwell', 'continue'] }
+        };
+
+        const constructRoleAndTagAliasMap = {
+            'subject': 'Subject', 'subj': 'Subject', 'doer': 'Subject',
+            'object': 'Object', 'obj': 'Object', 'direct_object': 'Object', 'directobject': 'Object', 'receiver': 'Object',
+            'indirect_object': 'IndirectObject', 'indirectobject': 'IndirectObject', 'iobj': 'IndirectObject', 'recipient': 'IndirectObject',
+            'possessive': 'Possessive', 'poss': 'Possessive', 'source': 'Possessive',
+            'verb': 'Verb', 'verbs': 'Verb', 'action': 'Verb',
+            'noun': 'Noun', 'nouns': 'Noun',
+            'adjective': 'Adjective', 'adjectives': 'Adjective', 'adj': 'Adjective',
+            'pronoun': 'Pronoun', 'pronouns': 'Pronoun', 'pron': 'Pronoun',
+            'preposition': 'Preposition', 'prepositions': 'Preposition', 'prep': 'Preposition',
+            'conjunction': 'Conjunction', 'conjunctions': 'Conjunction', 'conj': 'Conjunction',
+            'adverb': 'Adverb', 'adverbs': 'Adverb', 'adv': 'Adverb',
+            'particle': 'Particle', 'particles': 'Particle', 'article': 'Article', 'art': 'Article',
+            'imperative': 'Imperative', 'imperatives': 'Imperative', 'impv': 'Imperative', 'command': 'Imperative',
+            'participle': 'Participle', 'participles': 'Participle', 'ptcp': 'Participle',
+            'infinitive': 'Infinitive', 'infinitives': 'Infinitive', 'inf': 'Infinitive',
+            'indicative': 'Indicative', 'indicatives': 'Indicative', 'ind': 'Indicative',
+            'subjunctive': 'Subjunctive', 'subjunctives': 'Subjunctive',
+            'optative': 'Optative',
+            'present': 'Present', 'pres': 'Present',
+            'imperfect': 'Imperfect', 'impf': 'Imperfect',
+            'future': 'Future', 'fut': 'Future',
+            'aorist': 'Aorist', 'aor': 'Aorist',
+            'perfect': 'Perfect', 'perf': 'Perfect',
+            'pluperfect': 'Pluperfect',
+            'jussive': 'Jussive', 'cohortative': 'Cohortative',
+            'nominative': 'Nominative', 'nom': 'Nominative',
+            'genitive': 'Genitive', 'gen': 'Genitive',
+            'dative': 'Dative', 'dat': 'Dative',
+            'accusative': 'Accusative', 'acc': 'Accusative',
+            'vocative': 'Vocative', 'voc': 'Vocative',
+            'construct': 'Construct', 'const': 'Construct',
+            'absolute': 'Absolute', 'abs': 'Absolute',
+            'masculine': 'Masculine', 'masc': 'Masculine',
+            'feminine': 'Feminine', 'fem': 'Feminine',
+            'neuter': 'Neuter', 'neut': 'Neuter',
+            'singular': 'Singular', 'sg': 'Singular', 'sing': 'Singular',
+            'plural': 'Plural', 'pl': 'Plural', 'plur': 'Plural',
+            'dual': 'Dual',
+            'active': 'Active', 'act': 'Active',
+            'passive': 'Passive', 'pass': 'Passive',
+            'middle': 'Middle', 'mid': 'Middle',
+            'qal': 'Qal', 'niphal': 'Niphal', 'piel': 'Piel', 'pual': 'Pual',
+            'hiphil': 'Hiphil', 'hophal': 'Hophal', 'hithpael': 'Hithpael',
+            '1st_person': '1st Person', '2nd_person': '2nd Person', '3rd_person': '3rd Person',
+            '1st': '1st Person', '2nd': '2nd Person', '3rd': '3rd Person'
+        };
+
+        function hasConstructChainSyntax(rawQuery) {
+            return /@\[[^\]]+\]/.test(String(rawQuery || ''));
+        }
+
+        function parseConstructChainQuery(rawQuery) {
+            const q = String(rawQuery || '').trim();
+            if (!hasConstructChainSyntax(q)) return [];
+
+            // Tokenize keeping `word@[Tag1, Tag2]`, `(w1, w2)@[Tag1]`, `->`, `3-word@[Tag]`, etc.
+            const tokenRegex = /(\([^)]+\)@\[[^\]]+\]|[^\s@]+@\[[^\]]+\]|->|[^\s]+)/g;
+            const rawParts = q.match(tokenRegex) || [];
+            const slots = [];
+            let pendingConnector = 'AND';
+            let pendingDist = null;
+
+            for (let i = 0; i < rawParts.length; i++) {
+                let piece = rawParts[i].trim();
+                if (!piece) continue;
+                if (piece === '->' || piece === '-') {
+                    pendingConnector = 'BEFORE';
+                    continue;
+                }
+                if (piece === '+' || piece.toLowerCase() === 'and') {
+                    pendingConnector = 'AND';
+                    continue;
+                }
+                const proxPrefix = piece.match(/^(\d+)-(.+)$/);
+                if (proxPrefix) {
+                    pendingConnector = 'PROX';
+                    pendingDist = parseInt(proxPrefix[1], 10) || 3;
+                    piece = proxPrefix[2].trim();
+                }
+
+                const tagMatch = piece.match(/^(.+?)@\[([^\]]+)\]$/);
+                if (tagMatch) {
+                    const wordPart = tagMatch[1].trim() || '*';
+                    const rawTagStr = tagMatch[2]
+                        .replace(/(1st|2nd|3rd)\s+person/gi, '$1_person')
+                        .replace(/direct\s+object/gi, 'direct_object')
+                        .replace(/indirect\s+object/gi, 'indirect_object');
+                    const parsedTags = [];
+                    rawTagStr.split(/[,;+|/]+|\s+/).forEach(t => {
+                        const cleanT = t.trim().toLowerCase();
+                        if (!cleanT) return;
+                        const mapped = constructRoleAndTagAliasMap[cleanT];
+                        if (mapped && !parsedTags.includes(mapped)) {
+                            parsedTags.push(mapped);
+                        }
+                    });
+                    slots.push({
+                        slotIndex: slots.length + 1,
+                        wordPattern: wordPart,
+                        requiredTags: parsedTags,
+                        connectorFromPrev: slots.length === 0 ? 'AND' : pendingConnector,
+                        maxDistFromPrev: pendingDist,
+                        displayBadge: `Slot ${slots.length + 1}: ${wordPart === '*' ? 'Any' : wordPart} [${parsedTags.join(', ')}]`
+                    });
+                } else {
+                    // Plain word in the middle of a construct query
+                    slots.push({
+                        slotIndex: slots.length + 1,
+                        wordPattern: piece,
+                        requiredTags: [],
+                        connectorFromPrev: slots.length === 0 ? 'AND' : pendingConnector,
+                        maxDistFromPrev: pendingDist,
+                        displayBadge: `Slot ${slots.length + 1}: ${piece}`
+                    });
+                }
+                pendingConnector = 'AND';
+                pendingDist = null;
+            }
+            return slots;
+        }
+
+        function enrichVerseTokensWithSyntacticRoles(analyzedTokens, isOt) {
+            if (!Array.isArray(analyzedTokens) || analyzedTokens.length === 0) return;
+
+            if (!isOt) {
+                // Greek NT: Map morphological Cases directly to syntactic roles
+                analyzedTokens.forEach(tok => {
+                    if (!Array.isArray(tok.tags)) tok.tags = [];
+                    const isSubstantiveOrMod = tok.tags.includes('Noun') || tok.tags.includes('Pronoun') || tok.tags.includes('Adjective') || tok.tags.includes('Participle') || tok.tags.includes('Article');
+                    if (tok.tags.includes('Nominative') && isSubstantiveOrMod) {
+                        if (!tok.tags.includes('Subject')) tok.tags.push('Subject');
+                    }
+                    if (tok.tags.includes('Accusative') && isSubstantiveOrMod) {
+                        if (!tok.tags.includes('Object')) tok.tags.push('Object');
+                    }
+                    if (tok.tags.includes('Dative') && isSubstantiveOrMod) {
+                        if (!tok.tags.includes('IndirectObject')) tok.tags.push('IndirectObject');
+                    }
+                    if (tok.tags.includes('Genitive') && isSubstantiveOrMod) {
+                        if (!tok.tags.includes('Possessive')) tok.tags.push('Possessive');
+                    }
+                });
+            } else {
+                // Hebrew OT: Use definite direct object marker אֵת (H853), prepositions, construct state, and verb-argument order
+                let seenFiniteVerb = false;
+                for (let idx = 0; idx < analyzedTokens.length; idx++) {
+                    const tok = analyzedTokens[idx];
+                    if (!Array.isArray(tok.tags)) tok.tags = [];
+                    const prevTok = idx > 0 ? analyzedTokens[idx - 1] : null;
+                    const prev2Tok = idx > 1 ? analyzedTokens[idx - 2] : null;
+
+                    const isEtMarker = (t) => t && (t.strongs === 'H853' || t.norm === 'את');
+                    if (tok.tags.includes('Verb')) {
+                        seenFiniteVerb = true;
+                    }
+                    const isNominal = tok.tags.includes('Noun') || tok.tags.includes('Pronoun') || tok.tags.includes('Adjective');
+                    const followedEt = isEtMarker(prevTok) || (prevTok && prevTok.tags && prevTok.tags.includes('Article') && isEtMarker(prev2Tok));
+
+                    if (followedEt && isNominal) {
+                        if (!tok.tags.includes('Object')) tok.tags.push('Object');
+                        if (!tok.tags.includes('Accusative')) tok.tags.push('Accusative');
+                    } else if (tok.tags.includes('Construct')) {
+                        if (!tok.tags.includes('Possessive')) tok.tags.push('Possessive');
+                    } else if (tok.tags.includes('Preposition') || tok.tags.includes('Dative')) {
+                        if (!tok.tags.includes('IndirectObject')) tok.tags.push('IndirectObject');
+                    } else if (isNominal && !isEtMarker(tok)) {
+                        // In Hebrew VSO / SVO clauses, an unmarked Absolute noun/pronoun is the Subject (or post-verbal unmarked Object)
+                        if (!tok.tags.includes('Subject')) tok.tags.push('Subject');
+                        if (!tok.tags.includes('Nominative')) tok.tags.push('Nominative');
+                        if (seenFiniteVerb && !tok.tags.includes('Object')) {
+                            tok.tags.push('Object');
+                        }
+                    }
+                }
+            }
+        }
+
+        function matchOriginalTokenToWordPattern(wordPatternRaw, tokObj, idx, totalLen) {
+            const raw = String(wordPatternRaw || '').trim();
+            if (!raw || raw === '*' || raw.toLowerCase() === 'any') return true;
+
+            // Support parenthetical OR list: e.g. `(god, lord)` or `(christ, jesus)`
+            if (raw.startsWith('(') && raw.endsWith(')')) {
+                const opts = raw.slice(1, -1).split(/[,|/]+/).map(s => s.trim()).filter(Boolean);
+                return opts.some(opt => matchOriginalTokenToWordPattern(opt, tokObj, idx, totalLen));
+            }
+            if (raw.includes('/')) {
+                const opts = raw.split('/').map(s => s.trim()).filter(Boolean);
+                return opts.some(opt => matchOriginalTokenToWordPattern(opt, tokObj, idx, totalLen));
+            }
+
+            // 1. Direct match against Greek/Hebrew surface, lemma, Strong's code, or transliteration
+            if (matchUnitTokenAgainstPattern(raw, tokObj, idx, totalLen)) {
+                return true;
+            }
+
+            // 2. English Concept & Gloss Matching against Original Greek/Hebrew Token
+            const isPrefix = raw.endsWith('*') && raw.length > 1;
+            const cleanEng = normalizeSchemaToken(isPrefix ? raw.slice(0, -1) : raw);
+            if (!cleanEng || !/^[a-z0-9]+$/.test(cleanEng)) return false;
+
+            const stemEng = cleanEng.replace(/(ing|ed|eth|est|es|s)$/, '');
+            const concept = biblicalConstructConceptMap[cleanEng] || (stemEng.length >= 3 ? biblicalConstructConceptMap[stemEng] : null);
+            if (concept) {
+                if (tokObj.strongs && concept.strongs && concept.strongs.includes(tokObj.strongs.toUpperCase())) {
+                    return true;
+                }
+                if (tokObj.normLemma && concept.lemmas && concept.lemmas.includes(tokObj.normLemma)) {
+                    return true;
+                }
+                if (tokObj.norm && concept.lemmas && concept.lemmas.includes(tokObj.norm)) {
+                    return true;
+                }
+            }
+
+            // 3. Check whole words in token's English glosses / Strong's definition
+            if (!tokObj._cachedGlossWords) {
+                const combinedGloss = [tokObj.gloss || '', tokObj.fullGloss || '', tokObj.kjvDef || '', tokObj.strongsDef || ''].join(' ').toLowerCase();
+                tokObj._cachedGlossWords = combinedGloss.split(/[^a-z]+/).filter(w => w.length >= 2 && !fuzzyStopWords.has(w));
+            }
+            const gWords = tokObj._cachedGlossWords;
+            if (isPrefix) {
+                return gWords.some(gw => gw.startsWith(cleanEng));
+            }
+            if (gWords.includes(cleanEng)) return true;
+            if (stemEng.length >= 3 && gWords.some(gw => gw === stemEng || gw.replace(/(ing|ed|eth|est|es|s)$/, '') === stemEng)) {
+                return true;
+            }
+            return false;
+        }
+
+        function evaluateConstructChainOnVerseTokens(constructSlots, analyzedVerseTokens) {
+            const len = analyzedVerseTokens.length;
+            if (!constructSlots || constructSlots.length === 0 || len === 0) {
+                return { matched: false, matchedTokens: [] };
+            }
+
+            // Find candidate token indices for each slot
+            const slotCandidates = constructSlots.map(slot => {
+                const indices = [];
+                for (let i = 0; i < len; i++) {
+                    const tok = analyzedVerseTokens[i];
+                    let tagsOk = true;
+                    for (const reqTag of slot.requiredTags) {
+                        if (!tok.tags || !tok.tags.includes(reqTag)) {
+                            tagsOk = false;
+                            break;
+                        }
+                    }
+                    if (!tagsOk) continue;
+                    if (!matchOriginalTokenToWordPattern(slot.wordPattern, tok, i, len)) continue;
+                    indices.push(i);
+                }
+                return indices;
+            });
+
+            if (slotCandidates.some(arr => arr.length === 0)) {
+                return { matched: false, matchedTokens: [] };
+            }
+
+            // Backtracking search to assign a distinct token to each slot while honoring connectors (AND, BEFORE, PROX)
+            const chosenAssignment = new Array(constructSlots.length).fill(-1);
+            function backtrack(slotPos) {
+                if (slotPos === constructSlots.length) return true;
+                const candidates = slotCandidates[slotPos];
+                const slot = constructSlots[slotPos];
+
+                for (let c = 0; c < candidates.length; c++) {
+                    const tokIdx = candidates[c];
+                    // Require distinct tokens across slots when chaining multiple slots
+                    if (constructSlots.length > 1 && chosenAssignment.slice(0, slotPos).includes(tokIdx)) {
+                        continue;
+                    }
+                    if (slotPos > 0) {
+                        const prevTokIdx = chosenAssignment[slotPos - 1];
+                        if (slot.connectorFromPrev === 'BEFORE' && !(prevTokIdx < tokIdx)) {
+                            continue;
+                        }
+                        if (slot.connectorFromPrev === 'PROX' && slot.maxDistFromPrev) {
+                            if (Math.abs(tokIdx - prevTokIdx) > slot.maxDistFromPrev) {
+                                continue;
+                            }
+                        }
+                    }
+                    chosenAssignment[slotPos] = tokIdx;
+                    if (backtrack(slotPos + 1)) return true;
+                }
+                return false;
+            }
+
+            if (!backtrack(0)) {
+                return { matched: false, matchedTokens: [] };
+            }
+
+            const matchedTokens = chosenAssignment.map((tokIdx, sIdx) => {
+                const baseTok = analyzedVerseTokens[tokIdx];
+                return Object.assign({}, baseTok, {
+                    chainSlotLabel: constructSlots[sIdx].displayBadge
+                });
+            });
+
+            return {
+                matched: true,
+                matchedTokens: matchedTokens,
+                matchedIndices: chosenAssignment
+            };
+        }
+
         const strictMorphKeywordMap = {
             'verb': 'Verb', 'verbs': 'Verb',
             'noun': 'Noun', 'nouns': 'Noun',
@@ -12995,6 +14057,254 @@
             return clauses;
         }
 
+        function toggleTransliterationGuideBox(forceState) {
+            const box = document.getElementById('transliterationGuideBox');
+            if (!box) return;
+            const willShow = typeof forceState === 'boolean' ? forceState : box.classList.contains('hidden');
+            box.classList.toggle('hidden', !willShow);
+        }
+
+        function switchTranslitGuideSection(sec) {
+            ['hebrewVowels', 'hebrewCons', 'greek'].forEach(k => {
+                const secEl = document.getElementById('translitSection_' + k);
+                const btnEl = document.getElementById('translitGuideTab_' + k);
+                const isAct = k === sec;
+                if (secEl) secEl.classList.toggle('hidden', !isAct);
+                if (btnEl) {
+                    btnEl.className = isAct
+                        ? 'px-2.5 py-1 rounded-lg bg-teal-600 text-white font-bold text-[11px] cursor-pointer'
+                        : 'px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 font-bold text-[11px] cursor-pointer';
+                }
+            });
+        }
+
+        function setTransliterationExampleQuery(queryStr, targetScope) {
+            if (targetScope) {
+                const scopeSel = document.getElementById('grammarScopeSelect');
+                if (scopeSel) {
+                    scopeSel.value = targetScope;
+                    scopeSel.dataset.userChanged = 'true';
+                }
+            }
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) {
+                inp.value = queryStr;
+                inp.focus();
+            }
+        }
+
+        function insertTranslitTokenIntoInput(romanChar, origChar) {
+            const panel = document.getElementById('syntacticChainBuilderPanel');
+            const useRoman = Boolean(romanChar);
+            const charToInsert = useRoman ? romanChar : origChar;
+            if (panel && !panel.classList.contains('hidden')) {
+                const slotIdx = (lastFocusedChainSlotIdx >= 0 && lastFocusedChainSlotIdx < syntacticChainSlotsState.length)
+                    ? lastFocusedChainSlotIdx : 0;
+                const slotIn = document.getElementById('chainSlotWordInput_' + slotIdx);
+                if (slotIn) {
+                    slotIn.value = (slotIn.value || '') + charToInsert;
+                    onChainSlotWordInputChange(slotIdx, slotIn.value);
+                    slotIn.focus();
+                    return;
+                }
+            }
+            const inp = document.getElementById('grammarSearchInput');
+            if (inp) {
+                inp.value = (inp.value || '') + charToInsert;
+                inp.focus();
+            }
+        }
+
+        function normalizeTranslitAscii(str) {
+            if (!str) return '';
+            return String(str)
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[ʼ'’‘`ʿʾ]/g, '')
+                .replace(/:/g, '')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        function generateGreekRomanTransliterations(greekStr) {
+            if (!greekStr || !/[\u0370-\u03ff\u1f00-\u1fff]/.test(greekStr)) return [];
+            const nfd = greekStr.toLowerCase().normalize('NFD');
+            const hasRoughBreathing = /\u0314/.test(nfd);
+            const clean = nfd.replace(/[\u0300-\u036f]/g, '').replace(/ς/g, 'σ');
+
+            const mapStd = {
+                'α':'a', 'β':'b', 'γ':'g', 'δ':'d', 'ε':'e', 'ζ':'z', 'η':'e', 'θ':'th',
+                'ι':'i', 'κ':'k', 'λ':'l', 'μ':'m', 'ν':'n', 'ξ':'x', 'ο':'o', 'π':'p',
+                'ρ':'r', 'σ':'s', 'τ':'t', 'υ':'u', 'φ':'ph', 'χ':'ch', 'ψ':'ps', 'ω':'o'
+            };
+            const mapAlt = {
+                'α':'a', 'β':'b', 'γ':'g', 'δ':'d', 'ε':'e', 'ζ':'z', 'η':'e', 'θ':'q',
+                'ι':'i', 'κ':'c', 'λ':'l', 'μ':'m', 'ν':'n', 'ξ':'ks', 'ο':'o', 'π':'p',
+                'ρ':'r', 'σ':'s', 'τ':'t', 'υ':'y', 'φ':'f', 'χ':'kh', 'ψ':'ps', 'ω':'w'
+            };
+
+            let s1 = '';
+            let s2 = '';
+            for (let i = 0; i < clean.length; i++) {
+                const ch = clean[i];
+                const nxt = clean[i + 1] || '';
+                if (ch === 'γ' && (nxt === 'γ' || nxt === 'κ' || nxt === 'χ' || nxt === 'ξ')) {
+                    s1 += 'n';
+                    s2 += 'n';
+                } else {
+                    s1 += (mapStd[ch] !== undefined ? mapStd[ch] : '');
+                    s2 += (mapAlt[ch] !== undefined ? mapAlt[ch] : '');
+                }
+            }
+            // Also produce 'y' variant for upsilon when not part of au/eu/ou diphthong
+            const s3 = s1.replace(/([^aeo])u/g, '$1y').replace(/^u/, 'y');
+            const out = new Set([s1, s2, s3].filter(Boolean));
+            if (hasRoughBreathing) {
+                out.add('h' + s1);
+                out.add('h' + s3);
+            }
+            return Array.from(out);
+        }
+
+        function generateHebrewRomanTransliterations(hebStr) {
+            if (!hebStr || !/[\u0590-\u05ff]/.test(hebStr)) return [];
+            const nfd = hebStr.normalize('NFD');
+            // Strip cantillation marks (U+0591..U+05AF, U+05BD, U+05BF, U+05C0, U+05C3..U+05C7) while keeping vowel points (U+05B0..U+05BC, U+05C1, U+05C2)
+            const pointed = nfd.replace(/[\u0591-\u05AF\u05BD\u05BF\u05C0\u05C3-\u05C7]/g, '');
+
+            const consMap = {
+                'א': '', 'ב': 'b', 'ג': 'g', 'ד': 'd', 'ה': 'h', 'ו': 'w', 'ז': 'z',
+                'ח': 'ch', 'ט': 't', 'י': 'y', 'כ': 'k', 'ך': 'k', 'ל': 'l', 'מ': 'm',
+                'ם': 'm', 'נ': 'n', 'ן': 'n', 'ס': 's', 'ע': '', 'פ': 'p', 'ף': 'p',
+                'צ': 'ts', 'ץ': 'ts', 'ק': 'q', 'ר': 'r', 'ש': 'sh', 'ת': 't'
+            };
+            const vowelMap = {
+                '\u05B0': 'e',  // Sheva
+                '\u05B1': 'e',  // Hataf Segol
+                '\u05B2': 'a',  // Hataf Patah
+                '\u05B3': 'o',  // Hataf Qamets
+                '\u05B4': 'i',  // Hiriq
+                '\u05B5': 'e',  // Tsere
+                '\u05B6': 'e',  // Segol
+                '\u05B7': 'a',  // Patah
+                '\u05B8': 'a',  // Qamets
+                '\u05B9': 'o',  // Holam
+                '\u05BA': 'o',  // Holam Haser
+                '\u05BB': 'u'   // Qibbuts
+            };
+
+            let phoneticFull = '';
+            let michiganCode = '';
+            let consOnly = '';
+
+            let i = 0;
+            while (i < pointed.length) {
+                const ch = pointed[i];
+                if (consMap[ch] !== undefined) {
+                    let cStd = consMap[ch];
+                    let cCode = ch === 'א' ? "'" : (ch === 'ע' ? "'" : cStd);
+                    let vowelsAfter = '';
+                    let codeVowelsAfter = '';
+                    let hasDagesh = false;
+                    let isSin = false;
+                    let hasHolam = false;
+
+                    let j = i + 1;
+                    while (j < pointed.length && /[\u05B0-\u05BC\u05C1\u05C2]/.test(pointed[j])) {
+                        const mk = pointed[j];
+                        if (mk === '\u05BC') hasDagesh = true;
+                        else if (mk === '\u05C2') isSin = true;
+                        else if (mk === '\u05B9' || mk === '\u05BA') { hasHolam = true; vowelsAfter += 'o'; codeVowelsAfter += 'o'; }
+                        else if (mk === '\u05B0') { vowelsAfter += 'e'; codeVowelsAfter += ':'; }
+                        else if (vowelMap[mk]) { vowelsAfter += vowelMap[mk]; codeVowelsAfter += vowelMap[mk]; }
+                        j++;
+                    }
+
+                    if (ch === 'ש') {
+                        cStd = isSin ? 's' : 'sh';
+                        cCode = isSin ? 's' : 'sh';
+                    }
+                    // Mater lectionis: וֹ (Holam male = 'o'), וּ (Shureq = 'u')
+                    if (ch === 'ו' && hasHolam && vowelsAfter === 'o') {
+                        phoneticFull += 'o';
+                        michiganCode += 'ow';
+                        consOnly += 'w';
+                        i = j;
+                        continue;
+                    }
+                    if (ch === 'ו' && hasDagesh && !vowelsAfter) {
+                        phoneticFull += 'u';
+                        michiganCode += 'uw';
+                        consOnly += 'w';
+                        i = j;
+                        continue;
+                    }
+                    // Hiriq/Tsere/Segol followed by unvoweled Yod (בִי / בֵי)
+                    if (ch === 'י' && !vowelsAfter && phoneticFull && /[ie]$/.test(phoneticFull)) {
+                        michiganCode += 'y';
+                        consOnly += 'y';
+                        i = j;
+                        continue;
+                    }
+                    // Silent final He (ה) with a preceding vowel and no vowel of its own
+                    if (ch === 'ה' && j >= pointed.length && !vowelsAfter && !hasDagesh && /[aeiou]$/.test(phoneticFull)) {
+                        phoneticFull += 'h';
+                        michiganCode += 'h';
+                        consOnly += 'h';
+                        i = j;
+                        continue;
+                    }
+
+                    phoneticFull += cStd + vowelsAfter;
+                    michiganCode += cCode + codeVowelsAfter;
+                    consOnly += (cStd || '');
+                    i = j;
+                } else {
+                    i++;
+                }
+            }
+
+            const cleanPhon = phoneticFull.replace(/ee+/g, 'e').replace(/ii+/g, 'i').replace(/oo+/g, 'o').replace(/uu+/g, 'u');
+            // Variant without vocal sheva 'e' at start (e.g. breshit & bereshit, shlom & shalom)
+            const noSchwa = cleanPhon.replace(/^([bgdhwzchtklmnsprq]|sh|ts)e/, '$1');
+            // Variant replacing 'ch'->'h', 'ts'->'tz'/'s', 'q'->'k', 'b'->'v', 'w'->'v'
+            const alt1 = cleanPhon.replace(/ch/g, 'h').replace(/ts/g, 'tz').replace(/q/g, 'k').replace(/w/g, 'v');
+            const alt2 = cleanPhon.replace(/b/g, 'v').replace(/p/g, 'f').replace(/k/g, 'kh');
+            const cleanCode = normalizeTranslitAscii(michiganCode);
+
+            return Array.from(new Set([cleanPhon, noSchwa, alt1, alt2, cleanCode, consOnly].filter(Boolean)));
+        }
+
+        function getOrBuildTokenTranslitCandidates(tokObj) {
+            if (tokObj._cachedTranslitSet) return tokObj._cachedTranslitSet;
+            const cands = new Set();
+            if (tokObj.translit) {
+                cands.add(tokObj.translit.toLowerCase());
+                cands.add(normalizeTranslitAscii(tokObj.translit));
+                // Also normalize w->v, ch->h, ts->tz on lexicon translit
+                const normT = normalizeTranslitAscii(tokObj.translit);
+                cands.add(normT.replace(/w/g, 'v'));
+                cands.add(normT.replace(/ch/g, 'h'));
+                cands.add(normT.replace(/sh/g, 's'));
+                // Strip initial/medial schwa 'e' for flexible matching
+                cands.add(normT.replace(/h$/g, ''));
+            }
+            const rawScripts = [tokObj.surface || '', tokObj.lemma || ''].filter(Boolean);
+            rawScripts.forEach(s => {
+                if (/[\u0370-\u03ff\u1f00-\u1fff]/.test(s)) {
+                    generateGreekRomanTransliterations(s).forEach(t => cands.add(t));
+                }
+                if (/[\u0590-\u05ff]/.test(s)) {
+                    generateHebrewRomanTransliterations(s).forEach(t => {
+                        cands.add(t);
+                        cands.add(t.replace(/h$/g, ''));
+                    });
+                }
+            });
+            tokObj._cachedTranslitSet = Array.from(cands).filter(Boolean);
+            return tokObj._cachedTranslitSet;
+        }
+
         function matchUnitTokenAgainstPattern(patternRaw, tokObj, idx, totalLen) {
             let pat = String(patternRaw || '').trim();
             if (!pat) return false;
@@ -13025,12 +14335,20 @@
             if (tokObj.normLemma) candidates.push(tokObj.normLemma);
             if (tokObj.strongs) candidates.push(tokObj.strongs.toLowerCase());
             if (tokObj.translit) candidates.push(tokObj.translit.toLowerCase());
+            // Include full Greek & Hebrew (consonantal + vowel-pointed!) Roman transliteration candidates
+            if (tokObj.surface || tokObj.lemma || tokObj.translit) {
+                const translitCands = getOrBuildTokenTranslitCandidates(tokObj);
+                for (let t = 0; t < translitCands.length; t++) {
+                    candidates.push(translitCands[t]);
+                }
+            }
+            const asciiPat = normalizeTranslitAscii(isPrefixWildcard ? pat.slice(0, -1) : pat);
 
             if (isPrefixWildcard) {
                 // Strictly startsWith — never matches in the middle of a word
-                return candidates.some(c => c && c.startsWith(cleanPat));
+                return candidates.some(c => c && (c.startsWith(cleanPat) || (asciiPat && c.startsWith(asciiPat))));
             }
-            return candidates.some(c => c === cleanPat);
+            return candidates.some(c => c === cleanPat || (asciiPat && c === asciiPat));
         }
 
         function findMatchingIndicesForPattern(patternRaw, unitTokens) {
@@ -13419,10 +14737,13 @@
 
             let requiredTags = [];
             let schemaClauses = [];
+            let constructChainSlots = [];
             let scopeOverride = null;
 
             if (rawQuery) {
-                if (isPureGrammarCommandQuery(rawQuery)) {
+                if (hasConstructChainSyntax(rawQuery)) {
+                    constructChainSlots = parseConstructChainQuery(rawQuery);
+                } else if (isPureGrammarCommandQuery(rawQuery)) {
                     // Pure grammar query in the text box is authoritative — derive requiredTags strictly from it and sync dropdowns to match!
                     const tokens = normalizeGrammarCommandTokens(rawQuery);
                     tokens.forEach(tok => {
@@ -13476,8 +14797,8 @@
                 engVerseMap.set(`${ev.bookNum}_${ev.chapter}_${ev.verse}`, ev.text);
             });
 
-            // Fast Path for English Schema Search when no morphology tags or Greek/Hebrew characters are required!
-            if (schemaClauses.length > 0 && requiredTags.length === 0 && !hasOrigScriptInQuery) {
+            // Fast Path for English Schema Search when no morphology tags, Construct Chain slots, or Greek/Hebrew characters are required!
+            if (activeGrammarSearchLangMode !== 'original' && schemaClauses.length > 0 && constructChainSlots.length === 0 && requiredTags.length === 0 && !hasOrigScriptInQuery) {
                 let candidateEngVerses = allEngCorpusVerses.filter(ev => {
                     if (bookChapFilter) {
                         if (ev.bookNum !== bookChapFilter.bookNum) return false;
@@ -13739,7 +15060,30 @@
                     };
                 });
 
-                // If schemaClauses are present, check against either Original Language tokens OR English verse tokens
+                // Enrich every Greek & Hebrew token with syntactic role tags (Subject, Object, IndirectObject, Possessive)
+                enrichVerseTokensWithSyntacticRoles(analyzedVerseTokens, v.isOt);
+
+                // Path A: Accordance-Style Chained Construct Query (e.g. `god@[Subject] love@[Verb] world@[Object]`)
+                if (constructChainSlots.length > 0) {
+                    const chainRes = evaluateConstructChainOnVerseTokens(constructChainSlots, analyzedVerseTokens);
+                    if (!chainRes.matched) continue;
+                    results.push({
+                        bookNum: v.bookNum,
+                        bookName: v.bookName,
+                        chapter: v.chapter,
+                        verse: v.verse,
+                        endVerse: v.verse,
+                        unitLabel: '',
+                        isOt: v.isOt,
+                        engTextOverride: engVerseMap.get(vKey) || '',
+                        matchedEngWordsOverride: [],
+                        origText: v.text,
+                        matchedTokens: chainRes.matchedTokens
+                    });
+                    continue;
+                }
+
+                // Path B: Standard Schema Clauses + Required Morphology Tags
                 let schemaMatchedOrigIndices = [];
                 let schemaMatchedEngWords = [];
                 if (schemaClauses.length > 0) {
@@ -13747,6 +15091,16 @@
                     const engText = engVerseMap.get(vKey) || '';
                     const engToks = tokenizeSchemaUnitText(engText);
                     const engSchemaRes = engToks.length > 0 ? evaluateSchemaClausesOnTokens(schemaClauses, engToks) : { matched: false, matchedIndices: [] };
+                    // If English words matched in Original Language Mode, also highlight the corresponding Greek/Hebrew tokens in this verse!
+                    if (!origSchemaRes.matched && engSchemaRes.matched && schemaClauses.length === 1 && schemaClauses[0].type === 'WORD') {
+                        const patW = schemaClauses[0].word;
+                        analyzedVerseTokens.forEach((at, tIdx) => {
+                            if (matchOriginalTokenToWordPattern(patW, at, tIdx, analyzedVerseTokens.length)) {
+                                origSchemaRes.matched = true;
+                                origSchemaRes.matchedIndices.push(tIdx);
+                            }
+                        });
+                    }
 
                     if (!origSchemaRes.matched && !engSchemaRes.matched) continue;
                     if (origSchemaRes.matched) {
@@ -16503,6 +17857,7 @@
                     const tokenPayload = encodeURIComponent(JSON.stringify({ ...mt, isOt: item.isOt }));
                     return `
                         <button type="button" data-token-json="${tokenPayload}" onclick="toggleHitTokenStudyDrawer(this, ${tIdx})" class="px-2.5 py-1.5 rounded-lg bg-indigo-50/90 dark:bg-zinc-900 hover:bg-indigo-600 hover:text-white border border-indigo-200 dark:border-zinc-700 transition flex items-center flex-wrap gap-1.5 text-left cursor-pointer shadow-sm group" title="Click to expand full Lexicon definition &amp; Plain-English Grammar Breakdown">
+                            ${mt.chainSlotLabel ? `<span class="px-1.5 py-0.5 rounded bg-teal-600 text-white font-mono text-[10px] font-bold shadow-sm">${escapeHtmlText(mt.chainSlotLabel)}</span>` : ''}
                             <span class="font-serif font-bold text-sm text-gray-900 dark:text-white group-hover:text-white" dir="${item.isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(mt.surface)}</span>
                             ${mt.strongs ? `<span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">${escapeHtmlText(mt.strongs)}</span>` : ''}
                             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/70 dark:border-amber-700">${escapeHtmlText(mt.morphSummary)}</span>
