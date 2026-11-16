@@ -14464,83 +14464,429 @@
             return false;
         }
 
-        function evaluateConstructChainOnVerseTokens(constructSlots, analyzedVerseTokens) {
-            const len = analyzedVerseTokens.length;
-            if (!constructSlots || constructSlots.length === 0 || len === 0) {
-                return { matched: false, matchedTokens: [] };
-            }
-
-            // Find candidate token indices for each slot
-            const slotCandidates = constructSlots.map(slot => {
-                const indices = [];
-                for (let i = 0; i < len; i++) {
-                    const tok = analyzedVerseTokens[i];
-                    let tagsOk = true;
-                    for (const reqTag of slot.requiredTags) {
-                        if (!tok.tags || !tok.tags.includes(reqTag)) {
-                            tagsOk = false;
-                            break;
-                        }
+        // High-precision Primary Lexeme & Concept Map for Construct Searches (@)
+                const strictConstructConceptLexemes = {
+                    'god': {
+                        strongs: ['G2316', 'H430', 'H410', 'H433'],
+                        lemmas: ['θεοσ', 'אלהים', 'אל', 'אלוה'],
+                        engForms: ['god', 'deity', 'almighty']
+                    },
+                    'lord': {
+                        strongs: ['G2962', 'H3068', 'H136', 'H113'],
+                        lemmas: ['κυριοσ', 'יהוה', 'אדני', 'אדון'],
+                        engForms: ['lord', 'master', 'yahweh', 'jehovah']
+                    },
+                    'jesus': {
+                        strongs: ['G2424'],
+                        lemmas: ['ιησουσ'],
+                        engForms: ['jesus']
+                    },
+                    'christ': {
+                        strongs: ['G5547', 'H4899'],
+                        lemmas: ['χριστοσ', 'משיח'],
+                        engForms: ['christ', 'messiah', 'anointed']
+                    },
+                    'spirit': {
+                        strongs: ['G4151', 'H7307'],
+                        lemmas: ['πνευμα', 'רוח'],
+                        engForms: ['spirit', 'ghost', 'breath']
+                    },
+                    'father': {
+                        strongs: ['G3962', 'H1'],
+                        lemmas: ['πατηρ', 'אב'],
+                        engForms: ['father', 'fathers']
+                    },
+                    'son': {
+                        strongs: ['G5207', 'H1121'],
+                        lemmas: ['υιοσ', 'τεκνον', 'בן'],
+                        engForms: ['son', 'sons', 'child']
+                    },
+                    'world': {
+                        strongs: ['G2889', 'G165', 'G3625', 'H8398', 'H776'],
+                        lemmas: ['κοσμοσ', 'αιων', 'οικουμενη', 'ארץ', 'תבל'],
+                        engForms: ['world', 'earth', 'age']
+                    },
+                    'heaven': {
+                        strongs: ['G3772', 'H8064'],
+                        lemmas: ['ουρανοσ', 'שמים'],
+                        engForms: ['heaven', 'heavens', 'sky']
+                    },
+                    'call': {
+                        strongs: ['G2564', 'G4341', 'G1941', 'G5455', 'G3687', 'G4779', 'G1528', 'H7121'],
+                        lemmas: ['καλεω', 'προσκαλεομαι', 'επικαλεω', 'φωνεω', 'ονομαζω', 'συγκαλεω', 'εισκαλεομαι', 'קרא'],
+                        engForms: ['call', 'calls', 'called', 'calling', 'calleth', 'named']
+                    },
+                    'love': {
+                        strongs: ['G25', 'G26', 'G5368', 'G5360', 'H157', 'H160', 'H2617'],
+                        lemmas: ['αγαπαω', 'αγαπη', 'φιλεω', 'אהב', 'אהבה', 'חסד'],
+                        engForms: ['love', 'loves', 'loved', 'loving', 'loveth', 'beloved']
+                    },
+                    'believe': {
+                        strongs: ['G4100', 'H539'],
+                        lemmas: ['πιστευω', 'אמן'],
+                        engForms: ['believe', 'believes', 'believed', 'believing', 'believeth', 'trust']
+                    },
+                    'save': {
+                        strongs: ['G4982', 'G4991', 'H3467', 'H5337'],
+                        lemmas: ['σωζω', 'σωτηρια', 'ישע', 'נצל'],
+                        engForms: ['save', 'saves', 'saved', 'saving', 'saveth', 'deliver', 'delivered', 'rescue']
+                    },
+                    'send': {
+                        strongs: ['G649', 'G3992', 'H7971'],
+                        lemmas: ['αποστελλω', 'πεμπω', 'שלח'],
+                        engForms: ['send', 'sends', 'sent', 'sending', 'sendeth']
+                    },
+                    'give': {
+                        strongs: ['G1325', 'G5483', 'H5414'],
+                        lemmas: ['διδωμι', 'χαριζομαι', 'נתן'],
+                        engForms: ['give', 'gives', 'gave', 'given', 'giving', 'giveth', 'grant', 'granted']
+                    },
+                    'say': {
+                        strongs: ['G3004', 'G2036', 'G2980', 'H559', 'H1696'],
+                        lemmas: ['λεγω', 'ειπον', 'λαλεω', 'אמר', 'דבר'],
+                        engForms: ['say', 'says', 'said', 'saying', 'saith', 'speak', 'spoke', 'spoken', 'tell', 'told']
+                    },
+                    'know': {
+                        strongs: ['G1097', 'G1492', 'H3045'],
+                        lemmas: ['γινωσκω', 'οιδα', 'ידע'],
+                        engForms: ['know', 'knows', 'knew', 'known', 'knowing', 'knoweth']
+                    },
+                    'create': {
+                        strongs: ['G2936', 'H1254'],
+                        lemmas: ['κτιζω', 'ברא'],
+                        engForms: ['create', 'creates', 'created', 'creating', 'creator']
                     }
-                    if (!tagsOk) continue;
-                    if (!matchOriginalTokenToWordPattern(slot.wordPattern, tok, i, len)) continue;
-                    indices.push(i);
+                };
+
+                function strictMatchConstructSlotWord(wordPatternRaw, tok, idx, totalLen, engVerseTextLower) {
+                    if (!wordPatternRaw || wordPatternRaw === '*') return true;
+                    const subPatterns = String(wordPatternRaw)
+                        .replace(/^\(|\)$/g, '')
+                        .split(/\s*(?:,|\bOR\b|\|)\s*/i)
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                    if (subPatterns.length > 1) {
+                        return subPatterns.some(sp => strictMatchConstructSlotWord(sp, tok, idx, totalLen, engVerseTextLower));
+                    }
+
+                    const cleanPat = String(wordPatternRaw).trim();
+                    const lowPat = cleanPat.toLowerCase().replace(/[^a-z0-9\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff*]/g, '');
+                    if (!lowPat) return true;
+
+                    // 1. If the user typed a known core concept in English (e.g. 'god', 'call', 'love', 'world'), enforce strict primary lexeme + English verse verification
+                    const conceptFrames = Object.entries(strictConstructConceptLexemes).find(([key, cfg]) =>
+                        key === lowPat || cfg.engForms.includes(lowPat)
+                    );
+                    if (conceptFrames) {
+                        const [, cfg] = conceptFrames;
+                        const tokStrong = (tok.strongs || '').toUpperCase();
+                        const tokNormLemma = (tok.normLemma || '').toLowerCase();
+                        const strongHit = tokStrong && cfg.strongs.includes(tokStrong);
+                        const lemmaHit = tokNormLemma && cfg.lemmas.includes(tokNormLemma);
+                        if (!strongHit && !lemmaHit) return false;
+
+                        // If English verse text is available, also verify the English verse actually translates this word with one of its target English forms (prevents λέγω 'say/tell' from ever matching 'call')
+                        if (engVerseTextLower) {
+                            const hasEngWordInVerse = cfg.engForms.some(ef => {
+                                const re = new RegExp(`\\b${ef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                                return re.test(engVerseTextLower);
+                            });
+                            if (!hasEngWordInVerse) return false;
+                        }
+                        return true;
+                    }
+
+                    // 2. If the user typed Greek, Hebrew, Strong's #, or Transliteration, use matchOriginalTokenToWordPattern but block secondary Strong's definition noise
+                    const hasOrigOrStrong = /[\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff]/.test(cleanPat) || /^[GH]\d+$/i.test(cleanPat);
+                    if (hasOrigOrStrong) {
+                        return matchOriginalTokenToWordPattern(cleanPat, tok, idx, totalLen);
+                    }
+
+                    // 3. For any other English word (or transliteration), check transliteration first, then primary gloss ONLY (stripping parenthetical explanatory notes like "(of heaven)" or "(by implication)")
+                    const tokTranslit = (tok.translit || '').toLowerCase().replace(/[^a-z]/g, '');
+                    if (tokTranslit && lowPat.length >= 3 && (tokTranslit === lowPat || tok.normLemma === lowPat)) {
+                        return true;
+                    }
+
+                    const primaryGlossClean = String(tok.strongsDef || tok.gloss || '')
+                        .replace(/\([^)]*\)/g, ' ')
+                        .replace(/\[[^\]]*\]/g, ' ')
+                        .toLowerCase();
+                    const searchStems = getEnglishSearchTerms(lowPat);
+                    const glossHit = searchStems.some(stem => {
+                        if (stem.length < 3) return false;
+                        const re = new RegExp(`\\b${stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                        return re.test(primaryGlossClean);
+                    });
+                    if (!glossHit) return false;
+
+                    if (engVerseTextLower) {
+                        const verseHasStem = searchStems.some(stem => {
+                            const re = new RegExp(`\\b${stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                            return re.test(engVerseTextLower);
+                        });
+                        if (!verseHasStem) return false;
+                    }
+                    return true;
                 }
-                return indices;
-            });
 
-            if (slotCandidates.some(arr => arr.length === 0)) {
-                return { matched: false, matchedTokens: [] };
-            }
+                function checkClauseLevelSubjectVerbAgreement(subjTok, subjIdx, verbTok, verbIdx, allTokens) {
+                    if (!subjTok || !verbTok) return false;
+                    const sTags = subjTok.tags || [];
+                    const vTags = verbTok.tags || [];
 
-            // Backtracking search to assign a distinct token to each slot while honoring connectors (AND, BEFORE, PROX)
-            const chosenAssignment = new Array(constructSlots.length).fill(-1);
-            function backtrack(slotPos) {
-                if (slotPos === constructSlots.length) return true;
-                const candidates = slotCandidates[slotPos];
-                const slot = constructSlots[slotPos];
-
-                for (let c = 0; c < candidates.length; c++) {
-                    const tokIdx = candidates[c];
-                    // Require distinct tokens across slots when chaining multiple slots
-                    if (constructSlots.length > 1 && chosenAssignment.slice(0, slotPos).includes(tokIdx)) {
-                        continue;
+                    // 1. A finite verb or participle acting as the main verb of a Subject CANNOT be an Infinitive
+                    // (Unless the subject is Accusative in an articular infinitive, which is not a Nominative Subject)
+                    if (vTags.includes('Infinitive') && !sTags.includes('Accusative')) {
+                        return false;
                     }
-                    if (slotPos > 0) {
-                        const prevTokIdx = chosenAssignment[slotPos - 1];
-                        if (slot.connectorFromPrev === 'BEFORE' && !(prevTokIdx < tokIdx)) {
-                            continue;
+
+                    // 2. If the Verb is a Participle, it must agree with the Subject in Case (Nominative for NT), Number, and Gender (or be anarthrous/substantival predicate)
+                    if (vTags.includes('Participle')) {
+                        if (sTags.includes('Nominative') && !vTags.includes('Nominative')) return false;
+                        if (sTags.includes('Singular') && vTags.includes('Plural')) return false;
+                        if (sTags.includes('Plural') && vTags.includes('Singular')) return false;
+                        if (sTags.includes('Masculine') && (vTags.includes('Feminine') || vTags.includes('Neuter'))) return false;
+                        if (sTags.includes('Feminine') && (vTags.includes('Masculine') || vTags.includes('Neuter'))) return false;
+                    } else {
+                        // 3. Finite Verb Person & Number Agreement:
+                        // A Noun (like 'God' / θεός / אֱלֹהִים) is inherently 3rd Person. It CANNOT be the grammatical subject of a 1st Person ("I tell") or 2nd Person ("you call") verb!
+                        const isSubjNounOr3rdPron = sTags.includes('Noun') || sTags.includes('Adjective') || sTags.includes('Participle') || sTags.includes('3rd Person');
+                        if (isSubjNounOr3rdPron && !sTags.includes('1st Person') && !sTags.includes('2nd Person')) {
+                            if (vTags.includes('1st Person') || vTags.includes('2nd Person')) {
+                                return false;
+                            }
+                            if (vTags.includes('Imperative') && !vTags.includes('3rd Person')) {
+                                return false;
+                            }
                         }
-                        if (slot.connectorFromPrev === 'PROX' && slot.maxDistFromPrev) {
-                            if (Math.abs(tokIdx - prevTokIdx) > slot.maxDistFromPrev) {
-                                continue;
+                        // Number Agreement (Singular vs. Plural, allowing Hebrew majestic plural אֱלֹהִים H430 to pair with singular verbs, and Greek neuter plural subjects with singular verbs)
+                        const isHebrewElohim = (subjTok.strongs === 'H430' || subjTok.normLemma === 'אלהים');
+                        const isGreekNeuterPlural = (sTags.includes('Neuter') && sTags.includes('Plural'));
+                        if (!isHebrewElohim && !isGreekNeuterPlural) {
+                            if (sTags.includes('Singular') && vTags.includes('Plural')) return false;
+                            if (sTags.includes('Plural') && vTags.includes('Singular')) return false;
+                        }
+                    }
+
+                    // 4. Same-Clause Syntactic Proximity & Boundary Check:
+                    // Do not allow Subject and Verb to be separated by sentence-terminal punctuation or hard clause-breaking conjunctions (like γάρ, ὅτι, ἀλλά, διότι, εἰ) or another competing finite verb + subject
+                    const minI = Math.min(subjIdx, verbIdx);
+                    const maxI = Math.max(subjIdx, verbIdx);
+                    if (maxI - minI > 9) return false;
+
+                    const hardClauseBreakLemmas = new Set(['γαρ', 'οτι', 'διοτι', 'αλλα', 'ουν', 'εαν', 'ει', 'ωστε', 'καθωσ', 'כי', 'אם', 'אולם']);
+                    const relativePronounLemmas = new Set(['οσ', 'οστις', 'אשר']);
+                    let finiteVerbsBetween = 0;
+
+                    for (let k = minI; k < maxI; k++) {
+                        const cur = allTokens[k];
+                        const rawDisp = String(cur.displaySurface || cur.surface || '');
+                        // Sentence-ending or colon/question punctuation between tokens breaks the clause
+                        if (/[.;··!?׃]/.test(rawDisp)) {
+                            return false;
+                        }
+                        if (k > minI) {
+                            const nl = (cur.normLemma || '').toLowerCase();
+                            if (hardClauseBreakLemmas.has(nl)) {
+                                return false;
+                            }
+                            // Allow relative pronoun right after the Subject (e.g. "God, who called...") only if the verb is immediately inside that relative clause
+                            if (relativePronounLemmas.has(nl) && k !== minI + 1) {
+                                return false;
+                            }
+                            const ct = cur.tags || [];
+                            if (ct.includes('Verb') && !ct.includes('Participle') && !ct.includes('Infinitive')) {
+                                finiteVerbsBetween++;
+                                if (finiteVerbsBetween >= 1) return false;
                             }
                         }
                     }
-                    chosenAssignment[slotPos] = tokIdx;
-                    if (backtrack(slotPos + 1)) return true;
+
+                    return true;
                 }
-                return false;
-            }
 
-            if (!backtrack(0)) {
-                return { matched: false, matchedTokens: [] };
-            }
+                function checkClauseLevelVerbObjectGovernance(verbTok, verbIdx, objTok, objIdx, allTokens) {
+                    if (!verbTok || !objTok) return false;
+                    const minI = Math.min(verbIdx, objIdx);
+                    const maxI = Math.max(verbIdx, objIdx);
+                    if (maxI - minI > 9) return false;
 
-            const matchedTokens = chosenAssignment.map((tokIdx, sIdx) => {
-                const baseTok = analyzedVerseTokens[tokIdx];
-                return Object.assign({}, baseTok, {
-                    chainSlotLabel: constructSlots[sIdx].displayBadge
-                });
-            });
+                    const hardClauseBreakLemmas = new Set(['γαρ', 'οτι', 'διοτι', 'αλλα', 'ουν', 'εαν', 'ει', 'ωστε', 'כי', 'אם']);
+                    for (let k = minI; k < maxI; k++) {
+                        const cur = allTokens[k];
+                        const rawDisp = String(cur.displaySurface || cur.surface || '');
+                        if (/[.;··!?׃]/.test(rawDisp)) return false;
+                        if (k > minI) {
+                            const nl = (cur.normLemma || '').toLowerCase();
+                            if (hardClauseBreakLemmas.has(nl)) return false;
+                            const ct = cur.tags || [];
+                            if (ct.includes('Verb') && !ct.includes('Participle') && !ct.includes('Infinitive')) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
 
-            return {
-                matched: true,
-                matchedTokens: matchedTokens,
-                matchedIndices: chosenAssignment
-            };
-        }
+                function evaluateConstructChainOnVerseTokens(constructSlots, analyzedVerseTokens, engVerseText = '') {
+                    const len = analyzedVerseTokens.length;
+                    if (!constructSlots || constructSlots.length === 0 || len === 0) {
+                        return { matched: false, matchedTokens: [], matchedEngWords: [] };
+                    }
 
+                    const engVerseTextLower = String(engVerseText || '').toLowerCase();
+
+                    // Find candidate token indices for each slot
+                    const slotCandidates = constructSlots.map(slot => {
+                        const indices = [];
+                        for (let i = 0; i < len; i++) {
+                            const tok = analyzedVerseTokens[i];
+                            let tagsOk = true;
+                            for (const reqTag of slot.requiredTags) {
+                                // Allow a Verb slot to also match substantival/attributive Participles when God is "the One calling" (ὁ καλέσας / τοῦ καλέσαντος)
+                                if (reqTag === 'Verb' && tok.tags && tok.tags.includes('Participle')) {
+                                    continue;
+                                }
+                                // Allow a Subject slot to match Genitive/Dative head nouns ONLY when paired with an agreeing attributive Participle (e.g. τοῦ θεοῦ τοῦ καλέσαντος — "of the God who called")
+                                if (reqTag === 'Subject' && tok.tags && (tok.tags.includes('Genitive') || tok.tags.includes('Dative') || tok.tags.includes('Accusative'))) {
+                                    const hasAgreeingParticiple = analyzedVerseTokens.some((otherTok, oIdx) =>
+                                        Math.abs(oIdx - i) <= 4 &&
+                                        otherTok.tags &&
+                                        otherTok.tags.includes('Participle') &&
+                                        ((tok.tags.includes('Genitive') && otherTok.tags.includes('Genitive')) ||
+                                         (tok.tags.includes('Dative') && otherTok.tags.includes('Dative')) ||
+                                         (tok.tags.includes('Accusative') && otherTok.tags.includes('Accusative')))
+                                    );
+                                    if (hasAgreeingParticiple) continue;
+                                }
+                                if (!tok.tags || !tok.tags.includes(reqTag)) {
+                                    tagsOk = false;
+                                    break;
+                                }
+                            }
+                            if (!tagsOk) continue;
+                            if (!strictMatchConstructSlotWord(slot.wordPattern, tok, i, len, engVerseTextLower)) continue;
+                            indices.push(i);
+                        }
+                        return indices;
+                    });
+
+                    if (slotCandidates.some(arr => arr.length === 0)) {
+                        return { matched: false, matchedTokens: [], matchedEngWords: [] };
+                    }
+
+                    // Identify which slots are Subject, Verb, and Object so we enforce true syntactic binding across them
+                    const subjectSlotIndices = [];
+                    const verbSlotIndices = [];
+                    const objectSlotIndices = [];
+                    constructSlots.forEach((s, idx) => {
+                        if (s.requiredTags.includes('Subject') || s.requiredTags.includes('Nominative')) subjectSlotIndices.push(idx);
+                        if (s.requiredTags.includes('Verb') || s.requiredTags.includes('Participle')) verbSlotIndices.push(idx);
+                        if (s.requiredTags.includes('Object') || s.requiredTags.includes('Accusative')) objectSlotIndices.push(idx);
+                    });
+
+                    const chosenAssignment = new Array(constructSlots.length).fill(-1);
+                    function backtrack(slotPos) {
+                        if (slotPos === constructSlots.length) {
+                            // Enforce Clause-Level Subject <-> Verb Agreement & Governance
+                            for (const sSlot of subjectSlotIndices) {
+                                for (const vSlot of verbSlotIndices) {
+                                    if (sSlot === vSlot) continue;
+                                    const sTokIdx = chosenAssignment[sSlot];
+                                    const vTokIdx = chosenAssignment[vSlot];
+                                    const sTok = analyzedVerseTokens[sTokIdx];
+                                    const vTok = analyzedVerseTokens[vTokIdx];
+
+                                    // Special support for Attributive Participle phrases (e.g. "God who called" = τοῦ θεοῦ τοῦ καλέσαντος in Gal 1:15, 1 Pet 1:15, 5:10, 2 Tim 1:9, 1 Thess 2:12)
+                                    if (vTok.tags && vTok.tags.includes('Participle') && !sTok.tags.includes('Nominative')) {
+                                        const sameCase = (sTok.tags.includes('Genitive') && vTok.tags.includes('Genitive')) ||
+                                                         (sTok.tags.includes('Dative') && vTok.tags.includes('Dative')) ||
+                                                         (sTok.tags.includes('Accusative') && vTok.tags.includes('Accusative'));
+                                        const sameNum = (sTok.tags.includes('Singular') && vTok.tags.includes('Singular')) ||
+                                                        (sTok.tags.includes('Plural') && vTok.tags.includes('Plural'));
+                                        if (!sameCase || !sameNum || Math.abs(vTokIdx - sTokIdx) > 5) return false;
+                                    } else if (!checkClauseLevelSubjectVerbAgreement(sTok, sTokIdx, vTok, vTokIdx, analyzedVerseTokens)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                            // Enforce Clause-Level Verb <-> Object Governance
+                            for (const vSlot of verbSlotIndices) {
+                                for (const oSlot of objectSlotIndices) {
+                                    if (vSlot === oSlot) continue;
+                                    const vTokIdx = chosenAssignment[vSlot];
+                                    const oTokIdx = chosenAssignment[oSlot];
+                                    if (!checkClauseLevelVerbObjectGovernance(
+                                        analyzedVerseTokens[vTokIdx], vTokIdx,
+                                        analyzedVerseTokens[oTokIdx], oTokIdx,
+                                        analyzedVerseTokens
+                                    )) {
+                                        return false;
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+
+                        const candidates = slotCandidates[slotPos];
+                        const slot = constructSlots[slotPos];
+
+                        for (let c = 0; c < candidates.length; c++) {
+                            const tokIdx = candidates[c];
+                            if (constructSlots.length > 1 && chosenAssignment.slice(0, slotPos).includes(tokIdx)) {
+                                continue;
+                            }
+                            if (slotPos > 0) {
+                                const prevTokIdx = chosenAssignment[slotPos - 1];
+                                if (slot.connectorFromPrev === 'BEFORE' && !(prevTokIdx < tokIdx)) {
+                                    continue;
+                                }
+                                if (slot.connectorFromPrev === 'PROX' && slot.maxDistFromPrev) {
+                                    if (Math.abs(tokIdx - prevTokIdx) > slot.maxDistFromPrev) {
+                                        continue;
+                                    }
+                                }
+                            }
+                            chosenAssignment[slotPos] = tokIdx;
+                            if (backtrack(slotPos + 1)) return true;
+                        }
+                        return false;
+                    }
+
+                    if (!backtrack(0)) {
+                        return { matched: false, matchedTokens: [], matchedEngWords: [] };
+                    }
+
+                    const matchedTokens = chosenAssignment.map((tokIdx, sIdx) => {
+                        const baseTok = analyzedVerseTokens[tokIdx];
+                        return Object.assign({}, baseTok, {
+                            chainSlotLabel: constructSlots[sIdx].displayBadge
+                        });
+                    });
+
+                    // Collect exact English target words for clean highlighting in the English verse
+                    const matchedEngWordsSet = new Set();
+                    constructSlots.forEach(slot => {
+                        const rawPat = String(slot.wordPattern || '').trim().toLowerCase().replace(/[^a-z]/g, '');
+                        if (!rawPat) return;
+                        const conceptEntry = Object.entries(strictConstructConceptLexemes).find(([k, cfg]) =>
+                            k === rawPat || cfg.engForms.includes(rawPat)
+                        );
+                        if (conceptEntry) {
+                            conceptEntry[1].engForms.forEach(ef => matchedEngWordsSet.add(ef));
+                        } else {
+                            getEnglishSearchTerms(rawPat).forEach(st => matchedEngWordsSet.add(st));
+                        }
+                    });
+
+                    return {
+                        matched: true,
+                        matchedTokens: matchedTokens,
+                        matchedIndices: chosenAssignment,
+                        matchedEngWords: Array.from(matchedEngWordsSet)
+                    };
+                }
         const strictMorphKeywordMap = {
             'verb': 'Verb', 'verbs': 'Verb',
             'noun': 'Noun', 'nouns': 'Noun',
@@ -18737,24 +19083,44 @@
                     engVerseText = verseBlocks.map(b => (b.textContent || '').trim()).join(' ');
                 }
 
-                let matchedEngWords = (item.matchedEngWordsOverride && item.matchedEngWordsOverride.length > 0)
-                    ? item.matchedEngWordsOverride
+               let matchedEngWords = (item.matchedEngWordsOverride && item.matchedEngWordsOverride.length > 0)
+                    ? item.matchedEngWordsOverride.slice()
                     : [];
                 if (matchedEngWords.length === 0 && item.matchedTokens && item.matchedTokens.length > 0) {
-                    if (verseBlocks.length === 0 && engVerseText) {
-                        const fakeBlk = document.createElement('div');
-                        fakeBlk.textContent = engVerseText;
-                        verseBlocks = [fakeBlk];
-                    }
-                    const fakeOrigDomTokens = item.matchedTokens.map(mt => ({
-                        dataset: {
-                            gloss: (mt.gloss || '').toLowerCase(),
-                            wordIdx: String(mt.wordIdx),
-                            totalWords: String(mt.totalWords)
+                    const hlStopWords = new Set(['the', 'to', 'of', 'in', 'and', 'for', 'that', 'are', 'self', 'his', 'her', 'him', 'them', 'with', 'from', 'into', 'upon', 'unto', 'out', 'not', 'but', 'one', 'who', 'which', 'what', 'when', 'where', 'idiom', 'literally', 'figuratively', 'properly', 'compare']);
+                    const directEngHits = new Set();
+                    item.matchedTokens.forEach(mt => {
+                        const stCode = (mt.strongs || '').toUpperCase();
+                        if (typeof strictConstructConceptLexemes !== 'undefined') {
+                            Object.values(strictConstructConceptLexemes).forEach(cfg => {
+                                if (stCode && cfg.strongs.includes(stCode)) {
+                                    cfg.engForms.forEach(ef => directEngHits.add(ef));
+                                }
+                            });
                         }
-                    }));
-                    const matchedEngCands = findBestEnglishWordsForOriginalTokens(verseBlocks, fakeOrigDomTokens);
-                    matchedEngWords = matchedEngCands.map(c => c.word);
+                        const cleanDefs = String((mt.strongsDef || '') + ' ' + (mt.kjvDef || '') + ' ' + (mt.fullGloss || mt.gloss || ''))
+                            .replace(/\([^)]*\)/g, ' ')
+                            .replace(/\[[^\]]*\]/g, ' ')
+                            .toLowerCase()
+                            .split(/[^a-z]+/)
+                            .filter(w => w.length >= 3 && !hlStopWords.has(w));
+                        cleanDefs.forEach(cw => {
+                            getEnglishSearchTerms(cw).forEach(stem => {
+                                if (stem.length >= 3 && !hlStopWords.has(stem)) directEngHits.add(stem);
+                            });
+                        });
+                    });
+                    if (engVerseText && directEngHits.size > 0) {
+                        const verseWords = engVerseText.split(/[^a-zA-Z]+/).filter(Boolean);
+                        verseWords.forEach(vw => {
+                            const vwLow = vw.toLowerCase();
+                            if (hlStopWords.has(vwLow)) return;
+                            const vwStems = getEnglishSearchTerms(vwLow);
+                            if (directEngHits.has(vwLow) || vwStems.some(s => directEngHits.has(s))) {
+                                matchedEngWords.push(vw);
+                            }
+                        });
+                    }
                 }
                 const highlightedEngHtml = engVerseText
                     ? highlightEnglishWordsInHtmlString(engVerseText, matchedEngWords)
