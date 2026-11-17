@@ -8584,12 +8584,7 @@ let activeGreekLexiconSource = 'thayers'; // 'thayers' | 'abbott'
                 bestToken.classList.add('orig-word-active');
                 updateParallelHoverInfoBar(engWord, bestToken);
 
-                // Keep the matched verse visible inside #parallelOriginalContent
-                const cRect = contentEl.getBoundingClientRect();
-                const tRect = bestToken.getBoundingClientRect();
-                if (tRect.top < cRect.top + 20 || tRect.bottom > cRect.bottom - 20) {
-                    bestToken.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
+
             }
         }
 
@@ -8940,11 +8935,6 @@ let activeGreekLexiconSource = 'thayers'; // 'thayers' | 'abbott'
                     updateParallelHoverInfoBar(bestEngSpan.dataset.word || bestEngSpan.textContent, matchedOrigTok);
                 }
 
-                const cRect = contentEl.getBoundingClientRect();
-                const tRect = bestEngSpan.getBoundingClientRect();
-                if (tRect.top < cRect.top + 20 || tRect.bottom > cRect.bottom - 20) {
-                    bestEngSpan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
             }
         }
 
