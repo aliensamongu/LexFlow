@@ -20974,22 +20974,37 @@ function showContextMenu(x, y) {
         })();
 
 	/* =========================================================================
-           OT-IN-THE-NT INTERTEXTUAL QUOTATION & ALLUSION ENGINE
-           1. Displays subtle inlineclickable badges on NT verses quoting/alluding to the OT
-           2. Compares NT Greek (SRGNT), OT Hebrew (WLC), and English (NT vs. OT) side-by-side
-           3. Highlights shared Hebrew <-> Greek lexical roots & explains the NT application
+           OT-IN-THE-NT INTERTEXTUAL QUOTATION, ALLUSION & LIVE SCANNER ENGINE
+           1. 3-Tier Color-Coded Badges: Direct Quote (Amber), Allusion (Indigo), Echo/Typology (Teal)
+           2. Dynamic Live OT Allusion Scanner: Finds OT parallels for ANY NT verse via Greek<->Hebrew root bridges
+           3. Side-by-Side 4-Way Comparison: NT English + SRGNT Greek vs. OT English + WLC Hebrew
            ========================================================================= */
 
         const otInNtMasterDatabase = {
-            // HEBREWS 1 & 2 (Right on your active screen!)
+            // HEBREWS 1–2 (Quotations, Allusions & Typological Echoes)
+            '58_1_2': [
+                {
+                    tier: 'allusion',
+                    type: 'Messianic Allusion',
+                    otRef: 'Psalms 2:8',
+                    otBookNum: 19, otChap: 2, otVerse: 8, otEndVerse: 8,
+                    theme: 'Appointed Heir of All Things (κληρονόμος πάντων)',
+                    sharedRoots: [
+                        { heb: 'נַחֲלָה', hCode: 'H5159', grk: 'κληρονόμος', gCode: 'G2818', eng: 'heir / inheritance' },
+                        { heb: 'גּוֹי', hCode: 'H1471', grk: 'πᾶς', gCode: 'G3956', eng: 'all things / nations' }
+                    ],
+                    application: 'Alludes to the Father’s promise to the Davidic King in Psalm 2:8 ("Ask of Me, and I will make the nations Your heritage"), expanding the inheritance from earthly nations to the entire created universe ("all things").'
+                }
+            ],
             '58_1_3': [
                 {
-                    type: 'Allusion / Enthronement',
+                    tier: 'allusion',
+                    type: 'Enthronement Allusion',
                     otRef: 'Psalms 110:1',
                     otBookNum: 19, otChap: 110, otVerse: 1, otEndVerse: 1,
                     theme: 'Messianic Royal Session at God’s Right Hand',
                     sharedRoots: [
-                        { heb: 'יָשַׁב', hCode: 'H3427', grk: 'καθίζω', gCode: 'G2523', eng: 'sit down / sat' },
+                        { heb: 'יָשַׁב', hCode: 'H3427', grk: 'καθίζω', gCode: 'G2523', eng: 'sat down / sit' },
                         { heb: 'יָמִין', hCode: 'H3225', grk: 'δεξιός', gCode: 'G1188', eng: 'right hand' }
                     ],
                     application: 'After making purification for sins as High Priest, the Son assumes the Messianic throne of Psalm 110:1 ("Sit at My right hand"), uniting priestly atonement with royal sovereignty over the cosmos.'
@@ -20997,6 +21012,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_5': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 2:7',
                     otBookNum: 19, otChap: 2, otVerse: 7, otEndVerse: 7,
@@ -21009,6 +21025,7 @@ function showContextMenu(x, y) {
                     application: 'The author cites the royal enthronement decree of Psalm 2:7 to prove that "Son" is an exalted covenantal-royal title that God never conferred upon any angel.'
                 },
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: '2 Samuel 7:14',
                     otBookNum: 10, otChap: 7, otVerse: 14, otEndVerse: 14,
@@ -21017,15 +21034,16 @@ function showContextMenu(x, y) {
                         { heb: 'אָב', hCode: 'H1', grk: 'πατήρ', gCode: 'G3962', eng: 'Father' },
                         { heb: 'בֵּן', hCode: 'H1121', grk: 'υἱός', gCode: 'G5207', eng: 'Son' }
                     ],
-                    application: 'Applies Nathan’s covenant oracle to David’s seed (2 Sam 7:14) directly to Jesus as the ultimate Davidic Heir whosefilial relationship with the Father surpasses all angelic messengers.'
+                    application: 'Applies Nathan’s covenant oracle to David’s seed (2 Sam 7:14) directly to Jesus as the ultimate Davidic Heir whose filial relationship with the Father surpasses all angelic messengers.'
                 }
             ],
             '58_1_6': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 97:7',
                     otBookNum: 19, otChap: 97, otVerse: 7, otEndVerse: 7,
-                    theme: 'All God’s Angels Commanded to Worship the Son (cf. Deut 32:43)',
+                    theme: 'All God’s Angels Commanded to Worship the Son (cf. Deut 32:43 LXX)',
                     sharedRoots: [
                         { heb: 'שָׁחָה', hCode: 'H7812', grk: 'προσκυνέω', gCode: 'G4352', eng: 'worship / bow down' },
                         { heb: 'אֱלֹהִים', hCode: 'H430', grk: 'ἄγγελος', gCode: 'G32', eng: 'angels / heavenly beings' }
@@ -21035,6 +21053,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_7': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 104:4',
                     otBookNum: 19, otChap: 104, otVerse: 4, otEndVerse: 4,
@@ -21049,6 +21068,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_8': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 45:6',
                     otBookNum: 19, otChap: 45, otVerse: 6, otEndVerse: 7,
@@ -21063,6 +21083,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_9': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 45:7',
                     otBookNum: 19, otChap: 45, otVerse: 7, otEndVerse: 7,
@@ -21077,6 +21098,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_10': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 102:25',
                     otBookNum: 19, otChap: 102, otVerse: 25, otEndVerse: 27,
@@ -21091,6 +21113,7 @@ function showContextMenu(x, y) {
             ],
             '58_1_13': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 110:1',
                     otBookNum: 19, otChap: 110, otVerse: 1, otEndVerse: 1,
@@ -21105,6 +21128,7 @@ function showContextMenu(x, y) {
             ],
             '58_2_6': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 8:4',
                     otBookNum: 19, otChap: 8, otVerse: 4, otEndVerse: 6,
@@ -21117,9 +21141,71 @@ function showContextMenu(x, y) {
                     application: 'Reads Psalm 8 christologically: humanity failed to exercise dominion, but Jesus stepped into our humanity ("for a little while lower than the angels") to taste death and lead many sons to glory.'
                 }
             ],
-            // MATTHEW, JOHN, ACTS, ROMANS, GALATIANS, 1-2 PETER
+            '58_3_7': [
+                {
+                    tier: 'quote',
+                    type: 'Direct Quotation',
+                    otRef: 'Psalms 95:7',
+                    otBookNum: 19, otChap: 95, otVerse: 7, otEndVerse: 11,
+                    theme: '"Today, If You Hear His Voice, Do Not Harden Your Hearts"',
+                    sharedRoots: [
+                        { heb: 'יוֹם', hCode: 'H3117', grk: 'σήμερον', gCode: 'G4594', eng: 'Today' },
+                        { heb: 'קוֹל', hCode: 'H6963', grk: 'φωνή', gCode: 'G5456', eng: 'voice' },
+                        { heb: 'קָשָׁה', hCode: 'H7185', grk: 'σκληρύνω', gCode: 'G4645', eng: 'harden' },
+                        { heb: 'לֵבָב', hCode: 'H3824', grk: 'καρδία', gCode: 'G2588', eng: 'hearts' }
+                    ],
+                    application: 'Attribute Psalm 95 directly to the living speech of the Holy Spirit ("Therefore, as the Holy Spirit says"), turning Israel’s wilderness testing at Meribah into an urgent present-tense warning for the church.'
+                }
+            ],
+            '58_4_4': [
+                {
+                    tier: 'quote',
+                    type: 'Direct Quotation',
+                    otRef: 'Genesis 2:2',
+                    otBookNum: 1, otChap: 2, otVerse: 2, otEndVerse: 2,
+                    theme: 'God’s Seventh-Day Creation Rest (κατάπαυσις / שָׁבַת)',
+                    sharedRoots: [
+                        { heb: 'שָׁבַת', hCode: 'H7673', grk: 'καταπαύω', gCode: 'G2664', eng: 'rested' },
+                        { heb: 'שְׁבִיעִי', hCode: 'H7637', grk: 'ἕβδομος', gCode: 'G1442', eng: 'seventh' },
+                        { heb: 'מְלָאכָה', hCode: 'H4399', grk: 'ἔργον', gCode: 'G2041', eng: 'works' }
+                    ],
+                    application: 'Links Genesis 2:2 with Psalm 95:11 ("My rest") to prove that Joshua’s conquest of Canaan did not exhaust God’s promised rest—a Sabbath-rest remains open for the people of God through faith in Christ.'
+                }
+            ],
+            '58_5_6': [
+                {
+                    tier: 'quote',
+                    type: 'Direct Quotation',
+                    otRef: 'Psalms 110:4',
+                    otBookNum: 19, otChap: 110, otVerse: 4, otEndVerse: 4,
+                    theme: 'A Priest Forever According to the Order of Melchizedek',
+                    sharedRoots: [
+                        { heb: 'כֹּהֵן', hCode: 'H3548', grk: 'ἱερεύς', gCode: 'G2409', eng: 'priest' },
+                        { heb: 'עוֹלָם', hCode: 'H5769', grk: 'αἰών', gCode: 'G165', eng: 'forever' },
+                        { heb: 'מַלְכִּי־צֶדֶק', hCode: 'H4442', grk: 'Μελχισεδέκ', gCode: 'G3198', eng: 'Melchizedek' }
+                    ],
+                    application: 'Pairs Psalm 2:7 (Royal Son) with Psalm 110:4 (Eternal Priest) to show that the Father appointed Christ to a superior, indestructible priesthood prefigured by Melchizedek in Genesis 14.'
+                }
+            ],
+            '58_8_8': [
+                {
+                    tier: 'quote',
+                    type: 'Direct Quotation',
+                    otRef: 'Jeremiah 31:31',
+                    otBookNum: 24, otChap: 31, otVerse: 31, otEndVerse: 34,
+                    theme: 'The Promise of the New Covenant (διαθήκη καινή / בְּרִית חֲדָשָׁה)',
+                    sharedRoots: [
+                        { heb: 'בְּרִית', hCode: 'H1285', grk: 'διαθήκη', gCode: 'G1242', eng: 'covenant' },
+                        { heb: 'חָדָשׁ', hCode: 'H2319', grk: 'καινός', gCode: 'G2537', eng: 'new' },
+                        { heb: 'תּוֹרָה', hCode: 'H8451', grk: 'νόμος', gCode: 'G3551', eng: 'laws' }
+                    ],
+                    application: 'Quotes the longest OT passage in the entire NT (Jer 31:31–34) to demonstrate that the Old Covenant was always intended to be fulfilled and superseded by Christ’s internal, forgiving New Covenant.'
+                }
+            ],
+            // GOSPELS, PAULINE EPISTLES, PETRINE EPISTLES & REVELATION
             '40_1_23': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 7:14',
                     otBookNum: 23, otChap: 7, otVerse: 14, otEndVerse: 14,
@@ -21134,6 +21220,7 @@ function showContextMenu(x, y) {
             ],
             '40_2_6': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Micah 5:2',
                     otBookNum: 33, otChap: 5, otVerse: 2, otEndVerse: 2,
@@ -21145,8 +21232,24 @@ function showContextMenu(x, y) {
                     application: 'Combines Micah 5:2 with 2 Samuel 5:2 ("shepherd My people Israel") to show that the Davidic Messiah comes from humble Bethlehem to shepherd God’s flock.'
                 }
             ],
+            '40_2_15': [
+                {
+                    tier: 'quote',
+                    type: 'Typological Fulfillment Quotation',
+                    otRef: 'Hosea 11:1',
+                    otBookNum: 28, otChap: 11, otVerse: 1, otEndVerse: 1,
+                    theme: '"Out of Egypt I Called My Son" — Jesus as True Israel',
+                    sharedRoots: [
+                        { heb: 'מִצְרַיִם', hCode: 'H4714', grk: 'Αἴγυπτος', gCode: 'G125', eng: 'Egypt' },
+                        { heb: 'קָרָא', hCode: 'H7121', grk: 'καλέω', gCode: 'G2564', eng: 'called' },
+                        { heb: 'בֵּן', hCode: 'H1121', grk: 'υἱός', gCode: 'G5207', eng: 'Son' }
+                    ],
+                    application: 'Classic corporate-to-Christ typology: Hosea 11:1 looked back to Israel’s Exodus out of Egypt as God’s "son" (Exod 4:22); Matthew shows that Jesus recapitulates Israel’s history as the obedient Divine Son.'
+                }
+            ],
             '40_3_3': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 40:3',
                     otBookNum: 23, otChap: 40, otVerse: 3, otEndVerse: 3,
@@ -21161,6 +21264,7 @@ function showContextMenu(x, y) {
             ],
             '40_4_4': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Deuteronomy 8:3',
                     otBookNum: 5, otChap: 8, otVerse: 3, otEndVerse: 3,
@@ -21173,9 +21277,24 @@ function showContextMenu(x, y) {
                     application: 'Where Israel grumbled in the wilderness, Jesus, the true Son, succeeds in the wilderness by trusting every word (ῥῆμα) proceeding from the Father’s mouth.'
                 }
             ],
+            '40_5_1': [
+                {
+                    tier: 'echo',
+                    type: 'Typological Echo (New Sinai)',
+                    otRef: 'Exodus 19:3',
+                    otBookNum: 2, otChap: 19, otVerse: 3, otEndVerse: 3,
+                    theme: 'Jesus Ascends the Mountain (τὸ ὄρος) as the Greater Moses',
+                    sharedRoots: [
+                        { heb: 'הַר', hCode: 'H2022', grk: 'ὄρος', gCode: 'G3735', eng: 'mountain' },
+                        { heb: 'עָלָה', hCode: 'H5927', grk: 'ἀναβαίνω', gCode: 'G305', eng: 'went up / ascended' }
+                    ],
+                    application: 'After passing through the waters (Matt 3) and the wilderness for 40 days (Matt 4), Jesus ascends the mountain (ἀνέβη εἰς τὸ ὄρος, matching Exod 19:3 LXX) to deliver the authoritative Torah of the Kingdom.'
+                }
+            ],
             '43_1_1': [
                 {
-                    type: 'Allusion / Creation Echo',
+                    tier: 'echo',
+                    type: 'Creation Echo',
                     otRef: 'Genesis 1:1',
                     otBookNum: 1, otChap: 1, otVerse: 1, otEndVerse: 3,
                     theme: '"In the Beginning" (Ἐν ἀρχῇ / בְּרֵאשִׁית) — The Eternal Word & New Creation',
@@ -21187,8 +21306,55 @@ function showContextMenu(x, y) {
                     application: 'John deliberately opens with the exact Greek words of Genesis 1:1 LXX (Ἐν ἀρχῇ) to reveal that the divine Word by whom God spoke creation into existence is a distinct Person who was eternally with God and was God.'
                 }
             ],
+            '43_1_14': [
+                {
+                    tier: 'allusion',
+                    type: 'Tabernacle & Shekinah Allusion',
+                    otRef: 'Exodus 40:34',
+                    otBookNum: 2, otChap: 40, otVerse: 34, otEndVerse: 35,
+                    theme: 'The Word "Tabernacled" (ἐσκήνωσεν) & We Beheld His Glory',
+                    sharedRoots: [
+                        { heb: 'שָׁכַן', hCode: 'H7931', grk: 'σκηνόω', gCode: 'G4637', eng: 'dwelt / tabernacled' },
+                        { heb: 'כָּבוֹד', hCode: 'H3519', grk: 'δόξα', gCode: 'G1391', eng: 'glory' },
+                        { heb: 'חֶסֶד', hCode: 'H2617', grk: 'χάρις', gCode: 'G5485', eng: 'grace / steadfast love' },
+                        { heb: 'אֱמֶת', hCode: 'H571', grk: 'ἀλήθεια', gCode: 'G225', eng: 'truth / faithfulness' }
+                    ],
+                    application: 'Alludes to both the Tabernacle glory of Exodus 40:34 (σκηνόω shares consonants sk-n with Hebrew שָׁכַן / מִשְׁכָּן) and God’s covenantal self-revelation to Moses in Exodus 34:6 ("abounding in חֶסֶד וֶאֱמֶת" = "full of grace and truth").'
+                }
+            ],
+            '43_1_29': [
+                {
+                    tier: 'allusion',
+                    type: 'Sacrificial Allusion',
+                    otRef: 'Isaiah 53:7',
+                    otBookNum: 23, otChap: 53, otVerse: 7, otEndVerse: 7,
+                    theme: '"Behold, the Lamb of God Who Takes Away the Sin of the World"',
+                    sharedRoots: [
+                        { heb: 'שֶׂה', hCode: 'H7716', grk: 'ἀμνός', gCode: 'G286', eng: 'Lamb' },
+                        { heb: 'נָשָׂא', hCode: 'H5375', grk: 'αἴρω', gCode: 'G142', eng: 'takes away / bears' },
+                        { heb: 'חֵטְא', hCode: 'H2399', grk: 'ἁμαρτία', gCode: 'G266', eng: 'sin' }
+                    ],
+                    application: 'Synthesizes the Passover lamb of Exodus 12, Abraham’s promise in Genesis 22:8 ("God will provide for Himself the lamb"), and the sin-bearing Servant of Isaiah 53:7, 12.'
+                }
+            ],
+            '43_3_14': [
+                {
+                    tier: 'allusion',
+                    type: 'Typological Allusion',
+                    otRef: 'Numbers 21:8',
+                    otBookNum: 4, otChap: 21, otVerse: 8, otEndVerse: 9,
+                    theme: 'The Bronze Serpent Lifted Up in the Wilderness',
+                    sharedRoots: [
+                        { heb: 'נָחָשׁ', hCode: 'H5175', grk: 'ὄφις', gCode: 'G3789', eng: 'serpent' },
+                        { heb: 'מִדְבָּר', hCode: 'H4057', grk: 'ἔρημος', gCode: 'G2048', eng: 'wilderness' },
+                        { heb: 'חָיָה', hCode: 'H2421', grk: 'ζωή', gCode: 'G2222', eng: 'live / eternal life' }
+                    ],
+                    application: 'Jesus compares His crucifixion ("lifted up", ὑψόω) to Moses lifting up the bronze serpent on a pole so that everyone who looks in faith receives eternal life instead of perishing.'
+                }
+            ],
             '43_12_38': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 53:1',
                     otBookNum: 23, otChap: 53, otVerse: 1, otEndVerse: 1,
@@ -21203,6 +21369,7 @@ function showContextMenu(x, y) {
             ],
             '45_1_17': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Habakkuk 2:4',
                     otBookNum: 35, otChap: 2, otVerse: 4, otEndVerse: 4,
@@ -21217,6 +21384,7 @@ function showContextMenu(x, y) {
             ],
             '45_3_10': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Psalms 14:1',
                     otBookNum: 19, otChap: 14, otVerse: 1, otEndVerse: 3,
@@ -21230,6 +21398,7 @@ function showContextMenu(x, y) {
             ],
             '45_4_3': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Genesis 15:6',
                     otBookNum: 1, otChap: 15, otVerse: 6, otEndVerse: 6,
@@ -21244,6 +21413,7 @@ function showContextMenu(x, y) {
             ],
             '48_3_11': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Habakkuk 2:4',
                     otBookNum: 35, otChap: 2, otVerse: 4, otEndVerse: 4,
@@ -21258,6 +21428,7 @@ function showContextMenu(x, y) {
             ],
             '60_1_16': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Leviticus 19:2',
                     otBookNum: 3, otChap: 19, otVerse: 2, otEndVerse: 2,
@@ -21269,8 +21440,24 @@ function showContextMenu(x, y) {
                     application: 'Peter grounds New Covenant holiness in the character of God Himself from the Holiness Code of Leviticus (Lev 11:44; 19:2).'
                 }
             ],
+            '60_1_19': [
+                {
+                    tier: 'allusion',
+                    type: 'Passover & Sacrificial Allusion',
+                    otRef: 'Exodus 12:5',
+                    otBookNum: 2, otChap: 12, otVerse: 5, otEndVerse: 5,
+                    theme: 'Precious Blood of Christ as a Lamb Unblemished and Spotless',
+                    sharedRoots: [
+                        { heb: 'תָּמִים', hCode: 'H8549', grk: 'ἄμωμος', gCode: 'G299', eng: 'unblemished / without defect' },
+                        { heb: 'שֶׂה', hCode: 'H7716', grk: 'ἀμνός', gCode: 'G286', eng: 'lamb' },
+                        { heb: 'דָּם', hCode: 'H1818', grk: 'αἷμα', gCode: 'G129', eng: 'blood' }
+                    ],
+                    application: 'Alludes to the Passover lamb of Exodus 12:5 (תָּמִים rendered ἄμωμος in LXX) and Isaiah 53:7 to show that believers are ransomed from futile ways by the costly blood of the true Passover Lamb.'
+                }
+            ],
             '60_1_24': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 40:6',
                     otBookNum: 23, otChap: 40, otVerse: 6, otEndVerse: 8,
@@ -21285,6 +21472,7 @@ function showContextMenu(x, y) {
             ],
             '60_2_6': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 28:16',
                     otBookNum: 23, otChap: 28, otVerse: 16, otEndVerse: 16,
@@ -21297,8 +21485,25 @@ function showContextMenu(x, y) {
                     application: 'Weaves together three "Stone" passages (Isa 28:16; Ps 118:22; Isa 8:14) to present Christ as the living Cornerstone upon whom believers are built as a spiritual house.'
                 }
             ],
+            '60_2_9': [
+                {
+                    tier: 'allusion',
+                    type: 'Sinai Covenant Allusion',
+                    otRef: 'Exodus 19:5',
+                    otBookNum: 2, otChap: 19, otVerse: 5, otEndVerse: 6,
+                    theme: 'A Chosen Race, a Royal Priesthood, a Holy Nation, a People for His Possession',
+                    sharedRoots: [
+                        { heb: 'מַמְלָכָה', hCode: 'H4467', grk: 'βασίλειος', gCode: 'G934', eng: 'royal / kingdom' },
+                        { heb: 'כֹּהֵן', hCode: 'H3548', grk: 'ἱεράτευμα', gCode: 'G2406', eng: 'priesthood / priests' },
+                        { heb: 'גּוֹי', hCode: 'H1471', grk: 'ἔθνος', gCode: 'G1484', eng: 'nation' },
+                        { heb: 'קָדוֹשׁ', hCode: 'H6918', grk: 'ἅγιος', gCode: 'G40', eng: 'holy' }
+                    ],
+                    application: 'Directly transfers Israel’s Sinai titles of honor (Exod 19:5–6 LXX: βασίλειον ἱεράτευμα καὶ ἔθνος ἅγιον + Isa 43:20–21) to the multi-ethnic New Covenant church in Christ.'
+                }
+            ],
             '60_2_22': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Isaiah 53:9',
                     otBookNum: 23, otChap: 53, otVerse: 9, otEndVerse: 9,
@@ -21313,6 +21518,7 @@ function showContextMenu(x, y) {
             ],
             '61_2_22': [
                 {
+                    tier: 'quote',
                     type: 'Direct Quotation',
                     otRef: 'Proverbs 26:11',
                     otBookNum: 20, otChap: 26, otVerse: 11, otEndVerse: 11,
@@ -21327,6 +21533,7 @@ function showContextMenu(x, y) {
             ],
             '61_3_8': [
                 {
+                    tier: 'allusion',
                     type: 'Allusion / Echo',
                     otRef: 'Psalms 90:4',
                     otBookNum: 19, otChap: 90, otVerse: 4, otEndVerse: 4,
@@ -21341,7 +21548,8 @@ function showContextMenu(x, y) {
             ],
             '61_3_13': [
                 {
-                    type: 'Allusion / Promise',
+                    tier: 'allusion',
+                    type: 'Prophetic Allusion',
                     otRef: 'Isaiah 65:17',
                     otBookNum: 23, otChap: 65, otVerse: 17, otEndVerse: 17,
                     theme: 'New Heavens and a New Earth Where Righteousness Dwells (cf. Isa 66:22)',
@@ -21351,6 +21559,36 @@ function showContextMenu(x, y) {
                         { heb: 'אֶרֶץ', hCode: 'H776', grk: 'γῆ', gCode: 'G1093', eng: 'earth' }
                     ],
                     application: 'Grounds Christian eschatological hope in Isaiah’s promise of a renewed cosmos purged of sin where righteousness permanently dwells.'
+                }
+            ],
+            '66_1_13': [
+                {
+                    tier: 'allusion',
+                    type: 'Apocalyptic Allusion',
+                    otRef: 'Daniel 7:13',
+                    otBookNum: 27, otChap: 7, otVerse: 13, otEndVerse: 14,
+                    theme: 'One Like a Son of Man With Hair White as Wool (Ancient of Days + Son of Man)',
+                    sharedRoots: [
+                        { heb: 'בַּר', hCode: 'H1247', grk: 'υἱός', gCode: 'G5207', eng: 'Son' },
+                        { heb: 'אֱנָשׁ', hCode: 'H606', grk: 'ἄνθρωπος', gCode: 'G444', eng: 'man' },
+                        { heb: 'לְבוּשׁ', hCode: 'H3830', grk: 'ἐνδύω', gCode: 'G1746', eng: 'clothed / garment' }
+                    ],
+                    application: 'John’s vision of the risen Christ blends the "One like a son of man" (Dan 7:13) with the snow-white hair of the "Ancient of Days" (Dan 7:9), revealing Jesus’ full deity.'
+                }
+            ],
+            '66_21_1': [
+                {
+                    tier: 'echo',
+                    type: 'New Creation Echo',
+                    otRef: 'Isaiah 65:17',
+                    otBookNum: 23, otChap: 65, otVerse: 17, otEndVerse: 18,
+                    theme: 'A New Heaven and a New Earth (Consummation of Isaiah’s Vision)',
+                    sharedRoots: [
+                        { heb: 'חָדָשׁ', hCode: 'H2319', grk: 'καινός', gCode: 'G2537', eng: 'new' },
+                        { heb: 'שָׁמַיִם', hCode: 'H8064', grk: 'οὐρανός', gCode: 'G3772', eng: 'heaven' },
+                        { heb: 'אֶרֶץ', hCode: 'H776', grk: 'γῆ', gCode: 'G1093', eng: 'earth' }
+                    ],
+                    application: 'Brings the entire biblical canon full circle from Genesis 1:1 through Isaiah 65:17 to the consummated New Creation where God dwells with humanity forever.'
                 }
             ]
         };
@@ -21374,23 +21612,45 @@ function showContextMenu(x, y) {
                         cursor: pointer;
                         user-select: none;
                         vertical-align: middle;
-                        background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(99, 102, 241, 0.16));
-                        color: #b45309;
-                        border: 1px solid rgba(245, 158, 11, 0.55);
                         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
                         transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
                     }
+                    .ot-in-nt-inline-badge.tier-quote {
+                        background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.18));
+                        color: #b45309;
+                        border: 1px solid rgba(245, 158, 11, 0.65);
+                    }
+                    .ot-in-nt-inline-badge.tier-allusion {
+                        background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(79, 70, 229, 0.18));
+                        color: #4338ca;
+                        border: 1px solid rgba(99, 102, 241, 0.6);
+                    }
+                    .ot-in-nt-inline-badge.tier-echo {
+                        background: linear-gradient(135deg, rgba(13, 148, 136, 0.16), rgba(15, 118, 110, 0.18));
+                        color: #0f766e;
+                        border: 1px solid rgba(20, 184, 166, 0.6);
+                    }
                     .ot-in-nt-inline-badge:hover {
                         transform: translateY(-1px) scale(1.03);
-                        background: linear-gradient(135deg, #f59e0b, #4f46e5);
+                        background: linear-gradient(135deg, #f59e0b, #4f46e5) !important;
                         color: #ffffff !important;
-                        border-color: #4f46e5;
-                        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+                        border-color: #4f46e5 !important;
+                        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
                     }
-                    html.dark .ot-in-nt-inline-badge {
-                        background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.25));
+                    html.dark .ot-in-nt-inline-badge.tier-quote {
+                        background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(180, 83, 9, 0.28));
                         color: #fde68a;
-                        border-color: rgba(251, 191, 36, 0.55);
+                        border-color: rgba(251, 191, 36, 0.6);
+                    }
+                    html.dark .ot-in-nt-inline-badge.tier-allusion {
+                        background: linear-gradient(135deg, rgba(99, 102, 241, 0.26), rgba(67, 56, 202, 0.3));
+                        color: #c7d2fe;
+                        border-color: rgba(129, 140, 248, 0.6);
+                    }
+                    html.dark .ot-in-nt-inline-badge.tier-echo {
+                        background: linear-gradient(135deg, rgba(20, 184, 166, 0.25), rgba(15, 118, 110, 0.3));
+                        color: #99f6e4;
+                        border-color: rgba(45, 212, 191, 0.6);
                     }
                 `;
                 document.head.appendChild(styleEl);
@@ -21408,14 +21668,22 @@ function showContextMenu(x, y) {
                                     </div>
                                     <div>
                                         <div class="flex items-center flex-wrap gap-2">
-                                            <h3 id="otInNtModalTitle" class="text-base font-bold text-gray-900 dark:text-white">OT in the NT — Intertextual Scripture Bridge</h3>
+                                            <h3 id="otInNtModalTitle" class="text-base font-bold text-gray-900 dark:text-white">OT in the NT — Intertextual &amp; Allusion Studio</h3>
                                             <span id="otInNtTypeBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">Direct Quotation</span>
                                         </div>
-                                        <p id="otInNtModalSubtitle" class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">Compares NT Greek (SRGNT), OT Hebrew (WLC), and English side-by-side • Highlights shared lexical roots &amp; apostolic application</p>
+                                        <p id="otInNtModalSubtitle" class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">3-Tier Intertextual Engine: Direct Quotes (Amber) • Intentional Allusions (Indigo) • Typological Echoes &amp; Live Root Scanner (Teal)</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center flex-wrap gap-2">
-                                    <select id="otInNtQuickPassageSelect" onchange="if(this.value) openOtInNtModalForVerseKey(this.value)" class="glass-control px-2.5 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer" title="Browse OT Quotations &amp; Allusions across the New Testament">
+                                    <!-- Live Scanner Input for ANY NT Verse -->
+                                    <div class="flex items-center bg-white/95 dark:bg-zinc-800 rounded-xl px-2.5 py-1 border border-indigo-200 dark:border-zinc-700 space-x-1.5">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-500 text-xs"></i>
+                                        <input type="text" id="otInNtLiveScanInput" placeholder="Scan any NT verse (e.g. Heb 1:4, John 3:16, Rev 1:7)..."
+                                               onkeydown="if(event.key==='Enter'){ event.preventDefault(); runLiveOtAllusionScanFromInput(); }"
+                                               class="select-text bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-100 outline-none w-48 sm:w-56">
+                                        <button type="button" onclick="runLiveOtAllusionScanFromInput()" class="px-2.5 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition cursor-pointer">Scan OT Roots</button>
+                                    </div>
+                                    <select id="otInNtQuickPassageSelect" onchange="if(this.value) openOtInNtModalForVerseKey(this.value)" class="glass-control px-2.5 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 outline-none cursor-pointer" title="Browse Curated OT Quotations &amp; Allusions">
                                     </select>
                                     <button type="button" onclick="closeOtInNtComparisonModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-0.5 rounded transition cursor-pointer" title="Close (Esc)">
                                         <i class="fa-solid fa-xmark"></i>
@@ -21442,7 +21710,6 @@ function showContextMenu(x, y) {
             if (!editor) return;
             ensureOtInNtModalAndStylesExist();
 
-            // Remove any stale badges before re-attaching cleanly to verse head blocks
             editor.querySelectorAll('.ot-in-nt-inline-badge').forEach(b => b.remove());
 
             Object.keys(otInNtMasterDatabase).forEach(vKey => {
@@ -21455,17 +21722,29 @@ function showContextMenu(x, y) {
                 ));
                 if (matchingBlocks.length === 0) return;
 
-                // Attach badge to the final block of that verse so it sits naturally at the end of the verse text
                 const targetBlock = matchingBlocks[matchingBlocks.length - 1];
                 const refSummary = quotes.map(q => q.otRef).join(' • ');
-                const isDirect = quotes.some(q => q.type.toLowerCase().includes('quote') || q.type.toLowerCase().includes('quotation'));
+                const primaryTier = quotes[0].tier || (quotes[0].type.toLowerCase().includes('quote') ? 'quote' : 'allusion');
+
+                let tierClass = 'tier-quote';
+                let iconClass = 'fa-scroll';
+                let tierLabel = 'OT Quote';
+                if (primaryTier === 'allusion') {
+                    tierClass = 'tier-allusion';
+                    iconClass = 'fa-link';
+                    tierLabel = 'OT Allusion';
+                } else if (primaryTier === 'echo') {
+                    tierClass = 'tier-echo';
+                    iconClass = 'fa-water';
+                    tierLabel = 'OT Echo';
+                }
 
                 const badge = document.createElement('span');
-                badge.className = 'ot-in-nt-inline-badge';
+                badge.className = `ot-in-nt-inline-badge ${tierClass}`;
                 badge.contentEditable = 'false';
                 badge.dataset.otNtKey = vKey;
-                badge.title = `${isDirect ? 'Old Testament Quotation' : 'Old Testament Allusion'}: ${refSummary} — Click to compare NT Greek, OT Hebrew (WLC), and English side-by-side!`;
-                badge.innerHTML = `<i class="fa-solid fa-scroll text-[10px]"></i><span>${isDirect ? 'OT Quote' : 'OT Allusion'}: ${escapeHtmlText(refSummary)}</span>`;
+                badge.title = `${quotes[0].type}: ${refSummary} — Click to compare NT Greek, OT Hebrew (WLC), and English side-by-side!`;
+                badge.innerHTML = `<i class="fa-solid ${iconClass} text-[10px]"></i><span>${tierLabel}: ${escapeHtmlText(refSummary)}</span>`;
                 badge.onclick = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -21498,7 +21777,6 @@ function showContextMenu(x, y) {
                 const pat = unique.map(u => u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
                 return escaped.replace(new RegExp(`(\\b(?:${pat})[a-z]*)`, 'gi'), '<mark class="sg-theme-word-modal">$1</mark>');
             } else {
-                // Highlight matching Hebrew or Greek surface words by normalized root
                 const rawTokens = text.split(/\s+/);
                 const targetNorms = wordsToHighlight.map(w => isOt ? normalizeHebrewConsonants(w) : normalizeGreekWord(w)).filter(Boolean);
                 return rawTokens.map(tok => {
@@ -21511,7 +21789,149 @@ function showContextMenu(x, y) {
             }
         }
 
-        async function openOtInNtModalForVerseKey(vKey) {
+        // Dynamic Live OT Allusion & Shared-Root Scanner:
+        // Extracts key theological Greek words in ANY NT verse, bridges them to Hebrew Strong's roots,
+        // and finds the top Old Testament verses that share those roots!
+        async function scanDynamicOtAllusionsForNtVerse(ntBookNum, ntChap, ntVerse) {
+            ensureLexiconLookupMaps();
+            const ntTokens = await getSrgntTokensForSingleVerse(ntBookNum, ntChap, ntVerse);
+            if (!ntTokens || ntTokens.length === 0) return [];
+
+            // 1. Identify content Greek words in the NT verse (excluding common articles/conjunctions/prepositions)
+            const skipStrongs = new Set(['G3588', 'G2532', 'G1161', 'G1063', 'G3767', 'G1722', 'G1519', 'G1537', 'G575', 'G4314', 'G1223', 'G5259', 'G1909', 'G2596', 'G3326', 'G4012', 'G846', 'G1473', 'G4771', 'G3739', 'G3778', 'G1510', 'G3756', 'G3361', 'G2443', 'G3754', 'G5613', 'G235']);
+            const skipNorms = new Set(['ο', 'η', 'το', 'του', 'της', 'τω', 'τη', 'τον', 'την', 'οι', 'αι', 'τα', 'των', 'τοις', 'ταις', 'τους', 'τας', 'και', 'δε', 'γαρ', 'ουν', 'εν', 'εις', 'εκ', 'εξ', 'απο', 'προς', 'δια', 'υπο', 'επι', 'κατα', 'μετα', 'περι', 'αυτος', 'αυτου', 'αυτω', 'αυτον', 'ος', 'ην', 'εστιν', 'εισιν', 'οτι', 'ινα', 'ως', 'ου', 'μη']);
+
+            const ntKeyConcepts = [];
+            const seenGStrongs = new Set();
+
+            ntTokens.forEach(tok => {
+                const res = resolveGreekSurfaceWord(tok.surface || '', tok.lemma || '', tok.strongs || '');
+                const gStrong = (res && res.strongs) || tok.strongs || '';
+                const normL = normalizeGreekWord((res && res.lemma) || tok.lemma || tok.surface || '');
+                if (!normL || skipNorms.has(normL) || (gStrong && skipStrongs.has(gStrong))) return;
+                if (gStrong && seenGStrongs.has(gStrong)) return;
+                if (gStrong) seenGStrongs.add(gStrong);
+
+                const rawGloss = ((res && res.kjvGlossLower) || (res && res.glossLower) || '').replace(/\([^)]*\)/g, ' ');
+                const glossWords = rawGloss.split(/[^a-z]+/).filter(w => w.length >= 3 && !['the', 'and', 'for', 'with', 'that', 'from', 'into', 'upon', 'have', 'make', 'more', 'very', 'also', 'this', 'one'].includes(w));
+                if (glossWords.length === 0) return;
+
+                // Map Greek concept to top matching Hebrew Strong's numbers
+                const matchedHebrewRoots = [];
+                if (hebrewByStrongMap) {
+                    const primaryTerms = glossWords.slice(0, 4);
+                    hebrewByStrongMap.forEach((hObj, hCode) => {
+                        if (matchedHebrewRoots.length >= 6) return;
+                        const hKjv = (hObj.kjvGlossLower || '');
+                        for (const pt of primaryTerms) {
+                            if (pt.length >= 4 && new RegExp(`\\b${pt}\\b`, 'i').test(hKjv)) {
+                                matchedHebrewRoots.push({ hCode, hebLemma: hObj.lemma, engMatch: pt });
+                                break;
+                            }
+                        }
+                    });
+                }
+
+                if (matchedHebrewRoots.length > 0) {
+                    ntKeyConcepts.push({
+                        grkSurface: tok.surface,
+                        grkLemma: (res && res.lemma) || tok.lemma || tok.surface,
+                        gCode: gStrong || '',
+                        primaryEng: glossWords[0],
+                        glossWords: new Set(glossWords.slice(0, 5)),
+                        hebrewCandidates: matchedHebrewRoots
+                    });
+                }
+            });
+
+            if (ntKeyConcepts.length === 0) return [];
+
+            // 2. Scan the English Old Testament corpus for verses sharing the highest concentration of these concepts
+            const allEngVerses = await getFullCorpusVerses('emtv', true);
+            const otEngVerses = allEngVerses.filter(v => v.bookNum >= 1 && v.bookNum <= 39);
+
+            const scoredOtVerses = [];
+            for (let i = 0; i < otEngVerses.length; i++) {
+                const ov = otEngVerses[i];
+                const textLow = ov.text.toLowerCase();
+                const matchedConcepts = [];
+
+                for (let c = 0; c < ntKeyConcepts.length; c++) {
+                    const concept = ntKeyConcepts[c];
+                    let hitEngWord = '';
+                    for (const gw of concept.glossWords) {
+                        if (gw.length >= 3 && textLow.includes(gw)) {
+                            if (new RegExp(`\\b${gw}[a-z]*\\b`, 'i').test(textLow)) {
+                                hitEngWord = gw;
+                                break;
+                            }
+                        }
+                    }
+                    if (hitEngWord) {
+                        matchedConcepts.push({ concept, hitEngWord });
+                    }
+                }
+
+                const minRequired = ntKeyConcepts.length >= 2 ? 2 : 1;
+                if (matchedConcepts.length >= minRequired) {
+                    // Bonus for Psalms, Isaiah, Genesis, Exodus, Deuteronomy, Daniel, Zechariah (most frequently alluded OT books in NT)
+                    const canonicalBonus = [19, 23, 1, 2, 5, 24, 26, 27, 38].includes(ov.bookNum) ? 25 : 0;
+                    const score = (matchedConcepts.length * 100) + canonicalBonus - (ov.text.length * 0.08);
+                    scoredOtVerses.push({
+                        otVerseObj: ov,
+                        matchedConcepts,
+                        score
+                    });
+                }
+            }
+
+            scoredOtVerses.sort((a, b) => b.score - a.score);
+            const topHits = scoredOtVerses.slice(0, 4);
+
+            // 3. Convert top hits into comparison cards with resolved Hebrew WLC roots
+            const dynamicCards = [];
+            for (const hit of topHits) {
+                const ov = hit.otVerseObj;
+                const sharedRoots = hit.matchedConcepts.map(mc => {
+                    const topHeb = mc.concept.hebrewCandidates[0] || { hebLemma: '', hCode: '' };
+                    return {
+                        heb: topHeb.hebLemma || 'WLC',
+                        hCode: topHeb.hCode || '',
+                        grk: mc.concept.grkLemma,
+                        gCode: mc.concept.gCode,
+                        eng: mc.hitEngWord
+                    };
+                });
+
+                dynamicCards.push({
+                    tier: 'echo',
+                    type: `Dynamic Lexical Parallel (${sharedRoots.length} Shared Roots)`,
+                    otRef: `${ov.bookName} ${ov.chapter}:${ov.verse}`,
+                    otBookNum: ov.bookNum,
+                    otChap: ov.chapter,
+                    otVerse: ov.verse,
+                    otEndVerse: ov.verse,
+                    theme: `Shared Theological Vocabulary: ${sharedRoots.map(r => `"${r.eng}"`).join(' + ')}`,
+                    sharedRoots,
+                    application: `Detected via Live Lexical Bridge: Both this New Testament verse and ${ov.bookName} ${ov.chapter}:${ov.verse} share the key root concepts ${sharedRoots.map(r => `${r.grk} (${r.gCode}) ↔ ${r.heb} (${r.hCode}) ["${r.eng}"]`).join('; ')}.`
+                });
+            }
+            return dynamicCards;
+        }
+
+        async function runLiveOtAllusionScanFromInput() {
+            const inp = document.getElementById('otInNtLiveScanInput');
+            if (!inp || !inp.value.trim()) return;
+            const parsed = parseScriptureReference(inp.value.trim());
+            if (!parsed || parsed.bookNum < 40) {
+                alert('Please enter a New Testament verse reference (e.g., Hebrews 1:4, John 1:14, Romans 8:32, Revelation 1:7).');
+                return;
+            }
+            const vKey = `${parsed.bookNum}_${parsed.chapter}_${parsed.startVerse}`;
+            await openOtInNtModalForVerseKey(vKey, true);
+        }
+
+        async function openOtInNtModalForVerseKey(vKey, includeLiveScan = false) {
             ensureOtInNtModalAndStylesExist();
             const modal = document.getElementById('otInNtComparisonModal');
             const body = document.getElementById('otInNtModalBody');
@@ -21522,35 +21942,57 @@ function showContextMenu(x, y) {
             if (!modal || !body) return;
             modal.classList.remove('hidden');
 
-            // Populate quick-jump dropdown with all curated OT-in-NT passages
             if (selEl) {
                 const allKeys = Object.keys(otInNtMasterDatabase);
-                selEl.innerHTML = allKeys.map(k => {
+                selEl.innerHTML = `<option value="">Browse Curated NT Quotations &amp; Allusions (${allKeys.length})...</option>` + allKeys.map(k => {
                     const [b, c, v] = k.split('_').map(Number);
                     const bObj = bibleBooksList[b - 1] || { name: 'NT' };
                     const qList = otInNtMasterDatabase[k];
                     const otSummary = qList.map(q => q.otRef).join(', ');
-                    return `<option value="${k}" ${k === vKey ? 'selected' : ''}>${escapeHtmlText(bObj.name)} ${c}:${v} &larr; ${escapeHtmlText(otSummary)}</option>`;
+                    const tIcon = qList[0].tier === 'allusion' ? '🔗' : (qList[0].tier === 'echo' ? '🌊' : '📜');
+                    return `<option value="${k}" ${k === vKey ? 'selected' : ''}>${tIcon} ${escapeHtmlText(bObj.name)} ${c}:${v} &larr; ${escapeHtmlText(otSummary)}</option>`;
                 }).join('');
             }
-
-            const quotes = otInNtMasterDatabase[vKey];
-            if (!quotes || quotes.length === 0) return;
 
             const [ntBookNum, ntChap, ntVerse] = vKey.split('_').map(Number);
             const ntBookObj = bibleBooksList[ntBookNum - 1] || { name: 'New Testament' };
             const ntRefStr = `${ntBookObj.name} ${ntChap}:${ntVerse}`;
+            const scanInput = document.getElementById('otInNtLiveScanInput');
+            if (scanInput) scanInput.value = ntRefStr;
+
+            body.innerHTML = `<div class="p-8 text-center text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-500"></i>Loading NT Greek (SRGNT), OT Hebrew (WLC), and scanning intertextual root bridges for <strong>${escapeHtmlText(ntRefStr)}</strong>...</div>`;
+
+            let quotes = otInNtMasterDatabase[vKey] ? [...otInNtMasterDatabase[vKey]] : [];
+
+            // If this verse has no pre-curated entry OR user clicked "Scan OT Roots", run the Dynamic Live OT Allusion Scanner!
+            if (quotes.length === 0 || includeLiveScan) {
+                const scanned = await scanDynamicOtAllusionsForNtVerse(ntBookNum, ntChap, ntVerse);
+                const existingRefs = new Set(quotes.map(q => q.otRef));
+                scanned.forEach(sc => {
+                    if (!existingRefs.has(sc.otRef)) {
+                        quotes.push(sc);
+                    }
+                });
+            }
+
+            if (quotes.length === 0) {
+                body.innerHTML = `<div class="p-8 text-center text-sm text-gray-500">No direct quotations or multi-root allusions found for <strong>${escapeHtmlText(ntRefStr)}</strong>. Try typing another NT verse above (e.g. Hebrews 1:3, John 1:14, 1 Peter 2:9) or selecting from the dropdown.</div>`;
+                return;
+            }
 
             if (titleEl) {
-                titleEl.innerHTML = `${escapeHtmlText(ntRefStr)} <span class="text-amber-600 dark:text-amber-400 font-normal mx-1">&larr;</span> ${escapeHtmlText(quotes.map(q => q.otRef).join(' & '))}`;
+                titleEl.innerHTML = `${escapeHtmlText(ntRefStr)} <span class="text-amber-600 dark:text-amber-400 font-normal mx-1">&larr;</span> ${escapeHtmlText(quotes.map(q => q.otRef).slice(0, 3).join(' & '))}`;
             }
             if (badgeEl) {
+                const topTier = quotes[0].tier || 'quote';
                 badgeEl.textContent = quotes[0].type;
+                badgeEl.className = topTier === 'allusion'
+                    ? 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700'
+                    : (topTier === 'echo'
+                        ? 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700'
+                        : 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700');
             }
 
-            body.innerHTML = `<div class="p-8 text-center text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-500"></i>Loading NT Greek (SRGNT), OT Hebrew (WLC), and English texts for side-by-side comparison...</div>`;
-
-            // Fetch English corpus, NT Greek verse, and OT Hebrew verse(s)
             const allEngVerses = await getFullCorpusVerses('emtv', true);
             const getEngRangeText = (bNum, ch, vStart, vEnd) => {
                 return allEngVerses
@@ -21565,6 +22007,19 @@ function showContextMenu(x, y) {
             const ntGreekText = ntGreekObj ? ntGreekObj.text : '';
 
             const cardsHtml = [];
+
+            // Top bar allowing user to run a deeper Live Scan on the current verse if viewing curated quotes
+            if (!includeLiveScan && otInNtMasterDatabase[vKey]) {
+                cardsHtml.push(`
+                    <div class="px-4 py-2.5 rounded-xl bg-indigo-50/80 dark:bg-zinc-800/90 border border-indigo-200 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="text-gray-700 dark:text-gray-200"><i class="fa-solid fa-wand-magic-sparkles text-indigo-500 mr-1.5"></i>Want to discover additional Old Testament lexical echoes &amp; shared roots for <strong>${escapeHtmlText(ntRefStr)}</strong> beyond the primary ${quotes.length === 1 ? 'citation' : 'citations'}?</span>
+                        <button type="button" onclick="openOtInNtModalForVerseKey('${vKey}', true)" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition cursor-pointer shadow-xs">
+                            + Scan Entire OT for Shared Roots in ${escapeHtmlText(ntRefStr)}
+                        </button>
+                    </div>
+                `);
+            }
+
             for (let qIdx = 0; qIdx < quotes.length; qIdx++) {
                 const q = quotes[qIdx];
                 const otEngText = getEngRangeText(q.otBookNum, q.otChap, q.otVerse, q.otEndVerse || q.otVerse);
@@ -21583,32 +22038,38 @@ function showContextMenu(x, y) {
                 const hlNtGrk = highlightSharedWordsInCompareText(ntGreekText, grkSharedWords, true, false);
                 const hlOtHeb = highlightSharedWordsInCompareText(otHebText, hebSharedWords, true, true);
 
+                const tierPillHtml = q.tier === 'allusion'
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300">🔗 ${escapeHtmlText(q.type)}</span>`
+                    : (q.tier === 'echo'
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300">🌊 ${escapeHtmlText(q.type)}</span>`
+                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300">📜 ${escapeHtmlText(q.type)}</span>`);
+
                 const sharedRootChipsHtml = (q.sharedRoots || []).map(sr => `
                     <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-amber-300/80 dark:border-zinc-700 shadow-xs flex items-center justify-between gap-3">
                         <div class="flex items-center flex-wrap gap-2">
-                            <button type="button" onclick="closeOtInNtComparisonModal(); openBdbModal('${sr.hCode}');" class="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-600 hover:text-white text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-teal-800 font-serif font-bold text-base cursor-pointer transition" dir="rtl" title="Click to open Hebrew Lexicon for ${sr.hCode}">
-                                ${escapeHtmlText(sr.heb)} <span class="font-mono text-[10px] font-bold ml-1" dir="ltr">(${escapeHtmlText(sr.hCode)})</span>
+                            <button type="button" onclick="closeOtInNtComparisonModal(); openBdbModal('${sr.hCode || sr.heb}');" class="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-600 hover:text-white text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-teal-800 font-serif font-bold text-base cursor-pointer transition" dir="rtl" title="Click to open Hebrew Lexicon for ${sr.hCode}">
+                                ${escapeHtmlText(sr.heb)} ${sr.hCode ? `<span class="font-mono text-[10px] font-bold ml-1" dir="ltr">(${escapeHtmlText(sr.hCode)})</span>` : ''}
                             </button>
                             <i class="fa-solid fa-arrow-right-arrow-left text-amber-500 text-xs"></i>
-                            <button type="button" onclick="closeOtInNtComparisonModal(); openThayersModal('${sr.gCode}');" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 font-serif font-bold text-sm cursor-pointer transition" title="Click to open Greek Lexicon for ${sr.gCode}">
-                                ${escapeHtmlText(sr.grk)} <span class="font-mono text-[10px] font-bold ml-1">(${escapeHtmlText(sr.gCode)})</span>
+                            <button type="button" onclick="closeOtInNtComparisonModal(); openThayersModal('${sr.gCode || sr.grk}');" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 font-serif font-bold text-sm cursor-pointer transition" title="Click to open Greek Lexicon for ${sr.gCode}">
+                                ${escapeHtmlText(sr.grk)} ${sr.gCode ? `<span class="font-mono text-[10px] font-bold ml-1">(${escapeHtmlText(sr.gCode)})</span>` : ''}
                             </button>
                             <span class="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 font-bold text-xs">
                                 "${escapeHtmlText(sr.eng)}"
                             </span>
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
-                            <button type="button" onclick="openTranslationMosaicModal({strongs:'${sr.hCode}', lemma:'${sr.heb}', isOt:true})" class="px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition cursor-pointer" title="View OT Translation Mosaic for ${sr.heb}">OT Mosaic</button>
-                            <button type="button" onclick="openTranslationMosaicModal({strongs:'${sr.gCode}', lemma:'${sr.grk}', isOt:false})" class="px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition cursor-pointer" title="View NT Translation Mosaic for ${sr.grk}">NT Mosaic</button>
+                            ${sr.hCode ? `<button type="button" onclick="openTranslationMosaicModal({strongs:'${sr.hCode}', lemma:'${sr.heb}', isOt:true})" class="px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-teal-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition cursor-pointer" title="View OT Translation Mosaic for ${sr.heb}">OT Mosaic</button>` : ''}
+                            ${sr.gCode ? `<button type="button" onclick="openTranslationMosaicModal({strongs:'${sr.gCode}', lemma:'${sr.grk}', isOt:false})" class="px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-300 text-[10px] font-bold transition cursor-pointer" title="View NT Translation Mosaic for ${sr.grk}">NT Mosaic</button>` : ''}
                         </div>
                     </div>
                 `).join('');
 
                 cardsHtml.push(`
                     <div class="p-5 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-amber-300/80 dark:border-zinc-700 shadow-sm space-y-4">
-                        <!-- Top Banner of Card -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-200/80 dark:border-zinc-700">
                             <div class="flex items-center flex-wrap gap-2">
+                                ${tierPillHtml}
                                 <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-mono text-xs font-bold">NT: ${escapeHtmlText(ntRefStr)}</span>
                                 <i class="fa-solid fa-link text-amber-500 text-xs"></i>
                                 <span class="px-2.5 py-1 rounded-lg bg-teal-600 text-white font-mono text-xs font-bold">OT Source: ${escapeHtmlText(q.otRef)}</span>
@@ -21624,9 +22085,7 @@ function showContextMenu(x, y) {
                             </div>
                         </div>
 
-                        <!-- 4-Way Side-by-Side Comparison Grid (NT vs. OT in English & Original Languages) -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <!-- Left Column: NEW TESTAMENT (English + SRGNT Greek) -->
                             <div class="p-4 rounded-xl bg-indigo-50/40 dark:bg-zinc-900/90 border border-indigo-200/80 dark:border-indigo-900/60 space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300"><i class="fa-solid fa-book-open mr-1.5"></i>New Testament (${escapeHtmlText(ntRefStr)})</span>
@@ -21641,7 +22100,6 @@ function showContextMenu(x, y) {
                                 </div>
                             </div>
 
-                            <!-- Right Column: OLD TESTAMENT (English + WLC Hebrew) -->
                             <div class="p-4 rounded-xl bg-teal-50/40 dark:bg-zinc-900/90 border border-teal-200/80 dark:border-teal-900/60 space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-[11px] font-extrabold uppercase tracking-wider text-teal-800 dark:text-teal-300"><i class="fa-solid fa-scroll mr-1.5"></i>Old Testament Source (${escapeHtmlText(q.otRef)})</span>
@@ -21657,7 +22115,6 @@ function showContextMenu(x, y) {
                             </div>
                         </div>
 
-                        <!-- Shared Hebrew <-> Greek Root Bridge -->
                         <div class="space-y-2 pt-1">
                             <div class="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center space-x-1.5">
                                 <i class="fa-solid fa-language"></i>
@@ -21668,7 +22125,6 @@ function showContextMenu(x, y) {
                             </div>
                         </div>
 
-                        <!-- Exegetical & Theological Application -->
                         <div class="p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border-l-4 border-amber-500 text-xs leading-relaxed text-gray-800 dark:text-gray-200">
                             <div class="font-bold text-amber-900 dark:text-amber-300 mb-1 flex items-center space-x-1.5">
                                 <i class="fa-solid fa-lightbulb text-amber-500"></i>
@@ -21683,7 +22139,18 @@ function showContextMenu(x, y) {
             body.innerHTML = cardsHtml.join('');
         }
 
-        // Hook into renderFullCorpusIntoEditor so OT-in-NT badges appear automatically whenever any Bible text loads!
+        function ctxScanVerseForOtAllusions() {
+            const blk = rightClickedBlock || lastSelectedBlock || findTopVisibleVerseBlock();
+            hideContextMenu();
+            if (!blk) return;
+            const bNum = parseInt(blk.dataset.bookNum || '40', 10);
+            const cNum = parseInt(blk.dataset.chapterNum || '1', 10);
+            const vNum = parseInt(blk.dataset.verseNum || '1', 10);
+            const vKey = `${bNum}_${cNum}_${vNum}`;
+            openOtInNtModalForVerseKey(vKey, !otInNtMasterDatabase[vKey]);
+        }
+
+        // Automatically hook badges into the editor and add "Scan Verse for OT Quotes & Allusions" to the Right-Click Menu!
         (function initOtInNtEngineHooks() {
             const origRenderCorpus = window.renderFullCorpusIntoEditor;
             if (typeof origRenderCorpus === 'function') {
@@ -21692,10 +22159,19 @@ function showContextMenu(x, y) {
                     setTimeout(decorateEditorWithOtInNtBadges, 60);
                 };
             }
-            // Also decorate on initial page load
             setTimeout(decorateEditorWithOtInNtBadges, 600);
-        })();
 
+            // Inject Right-Click Context Menu option for scanning any NT verse for OT Allusions
+            const ctxMenu = document.getElementById('contextMenu');
+            if (ctxMenu && !document.getElementById('ctxItemOtInNtScan')) {
+                const item = document.createElement('div');
+                item.id = 'ctxItemOtInNtScan';
+                item.className = 'ctx-item text-amber-600 dark:text-amber-400 font-semibold';
+                item.innerHTML = '<i class="fa-solid fa-scroll text-xs"></i><span>OT in the NT (Quotes &amp; Allusions)</span>';
+                item.onclick = () => ctxScanVerseForOtAllusions();
+                ctxMenu.insertBefore(item, ctxMenu.firstChild);
+            }
+        })();
 
     </script>
 </body>
