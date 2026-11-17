@@ -21593,11 +21593,52 @@ function showContextMenu(x, y) {
             ]
         };
 
+      let isOtInNtBadgesVisible = localStorage.getItem('lexflow_ot_in_nt_badges') !== 'false';
+
+        function syncOtInNtToggleSwitchUI() {
+            document.body.classList.toggle('hide-ot-in-nt-badges', !isOtInNtBadgesVisible);
+            const tbBtn = document.getElementById('toggleOtInNtBadgesBtn');
+            const tbLabel = document.getElementById('toggleOtInNtBadgesLabel');
+            const tbDot = document.getElementById('toggleOtInNtBadgesDot');
+            if (tbLabel) tbLabel.textContent = isOtInNtBadgesVisible ? 'OT-in-NT: On' : 'OT-in-NT: Off';
+            if (tbBtn) {
+                tbBtn.className = isOtInNtBadgesVisible
+                    ? 'glass-control inline-flex items-center space-x-1.5 cursor-pointer select-none px-3 py-1.5 text-amber-700 dark:text-amber-300 font-bold border-amber-300/80 dark:border-amber-700/80'
+                    : 'glass-control inline-flex items-center space-x-1.5 cursor-pointer select-none px-3 py-1.5 text-gray-500 dark:text-gray-400 font-semibold opacity-80';
+            }
+            if (tbDot) {
+                tbDot.className = isOtInNtBadgesVisible
+                    ? 'w-2 h-2 rounded-full bg-amber-500 shadow-xs'
+                    : 'w-2 h-2 rounded-full bg-gray-400 dark:bg-zinc-600';
+            }
+        }
+
+        function toggleOtInNtBadgesVisibility(forceState) {
+            isOtInNtBadgesVisible = (typeof forceState === 'boolean') ? forceState : !isOtInNtBadgesVisible;
+            try { localStorage.setItem('lexflow_ot_in_nt_badges', String(isOtInNtBadgesVisible)); } catch (e) {}
+            syncOtInNtToggleSwitchUI();
+            if (typeof syncOverlayControls === 'function') syncOverlayControls();
+        }
+
         function ensureOtInNtModalAndStylesExist() {
+            const parallelBtn = document.getElementById('toggleParallelPaneBtn');
+            if (parallelBtn && !document.getElementById('toggleOtInNtBadgesBtn')) {
+                const switchBtn = document.createElement('button');
+                switchBtn.type = 'button';
+                switchBtn.id = 'toggleOtInNtBadgesBtn';
+                switchBtn.onmousedown = (e) => e.preventDefault();
+                switchBtn.onclick = () => toggleOtInNtBadgesVisibility();
+                switchBtn.title = 'Toggle OT-in-NT Quotation & Allusion Badges On or Off (On by default)';
+                switchBtn.innerHTML = `<i class="fa-solid fa-scroll text-amber-500 text-xs"></i><span id="toggleOtInNtBadgesLabel">OT-in-NT: On</span><span id="toggleOtInNtBadgesDot" class="w-2 h-2 rounded-full bg-amber-500"></span>`;
+                parallelBtn.parentNode.insertBefore(switchBtn, parallelBtn.nextSibling);
+            }
+            syncOtInNtToggleSwitchUI();
+
             if (!document.getElementById('otInNtStyles')) {
                 const styleEl = document.createElement('style');
                 styleEl.id = 'otInNtStyles';
                 styleEl.textContent = `
+                    body.hide-ot-in-nt-badges .ot-in-nt-inline-badge { display: none !important; }
                     .ot-in-nt-inline-badge {
                         display: inline-flex;
                         align-items: center;
