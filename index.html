@@ -900,19 +900,19 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <div class="h-4 w-px bg-gray-300/70 dark:bg-zinc-600/70"></div>
-                <button type="button" id="btnLoadSrgnt" onclick="loadScriptureIntoWorkspace('srgnt')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1 rounded-lg transition shadow-sm" title="Load Entire Original Language Bible (WLC Hebrew OT + SRGNT Greek NT) into Workspace">
-                    Load SRGNT
-                </button>
-                <button type="button" id="btnLoadEmtv" onclick="loadScriptureIntoWorkspace('emtv')" class="text-xs bg-sky-600 hover:bg-sky-700 text-white font-semibold px-3 py-1 rounded-lg transition shadow-sm" title="Load Entire English Bible (Modern English OT + EMTV NT) into Workspace">
-                    Load EMTV
-                </button>
-                <select id="otVersionSelect" onchange="changeEnglishOtVersion(this.value)" class="glass-control text-[11px] font-bold text-sky-700 dark:text-sky-300 px-2 py-1 rounded-lg outline-none cursor-pointer" title="Choose Modern English Old Testament Translation (Replaces KJV)">
-                    <option value="BSB">OT: BSB (Berean Standard)</option>
-                    <option value="WEB">OT: WEB (World English)</option>
-                    <option value="ESV">OT: ESV (English Standard)</option>
-                    <option value="NASB">OT: NASB (New American Standard)</option>
-                    <option value="NET">OT: NET (New English Translation)</option>
+               <select id="otVersionSelect" onchange="changeBibleCorpusSelection(this.value)" class="glass-control text-[11px] font-bold text-sky-700 dark:text-sky-300 px-2.5 py-1.5 rounded-lg outline-none cursor-pointer" title="Choose Full Bible Text (66 Books OT &amp; NT)">
+                    <option value="BSB">BSB — Berean Standard Bible (OT &amp; NT)</option>
+                    <option value="ESV">ESV — English Standard Version (OT &amp; NT)</option>
+                    <option value="NASB">NASB — New American Standard (OT &amp; NT)</option>
+                    <option value="NET">NET — New English Translation (OT &amp; NT)</option>
+                    <option value="WEB">WEB — World English Bible (OT &amp; NT)</option>
+                    <option value="EMTV">EMTV — English Majority Text NT (+ BSB OT)</option>
+                    <option value="SRGNT">SRGNT / WLC — Original Greek NT &amp; Hebrew OT</option>
                 </select>
+                <button type="button" id="btnLoadSelectedText" onclick="loadSelectedTextFromMenu()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-lg transition shadow-sm cursor-pointer flex items-center space-x-1.5" title="Load the selected Bible translation or Original Language text into the workspace">
+                    <i class="fa-solid fa-book-open text-[10px]"></i>
+                    <span>Load Text</span>
+                </button>
                 <div class="h-4 w-px bg-gray-300/70 dark:bg-zinc-600/70"></div>
                 <button type="button" id="topGrammarSearchBtn" onclick="openGrammarSearchModal()" class="glass-control px-2.5 py-1 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-bold transition cursor-pointer flex items-center justify-center" title="Search OT &amp; NT Grammar, Parts of Speech &amp; Exact Morphological Forms (e.g. Imperatives, Participle Genitive Masculine Singular)">
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
@@ -1171,24 +1171,25 @@
                 </div>
                 <div id="controlsOverlay"></div>
 
-                <!-- Floating Selection Toolbar -->
+                <!-- Floating Selection Toolbar (Testament-Aware: Shows Thayer's + Abbott-Smith in NT, or BDB + Gesenius in OT) -->
                 <div id="highlightToolbar" onmousedown="event.preventDefault();" class="flex items-center space-x-1.5">
-                    <button type="button" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInThayers();" class="px-2.5 py-0.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition cursor-pointer" title="Look up highlighted word in Thayer's Greek Lexicon">
+                    <button type="button" id="hlBtnThayers" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInGreekLexicon('thayers');" class="px-2.5 py-0.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition cursor-pointer" title="Look up highlighted word in Thayer's Greek-English Lexicon (NT)">
                         <i class="fa-solid fa-book-atlas text-[10px]"></i>
                         <span>Thayer's</span>
                     </button>
-                    <button type="button" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInBdb();" class="px-2.5 py-0.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition mr-1 cursor-pointer" title="Look up highlighted word in BDB Hebrew Lexicon">
+                    <button type="button" id="hlBtnAbbottSmith" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInGreekLexicon('abbott');" class="px-2.5 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition mr-1 cursor-pointer" title="Look up highlighted word in Abbott-Smith's Manual Greek Lexicon of the NT (1922 Public Domain)">
+                        <i class="fa-solid fa-feather-pointed text-[10px]"></i>
+                        <span>Abbott-Smith</span>
+                    </button>
+                    <button type="button" id="hlBtnBdb" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInHebrewLexicon('bdb');" class="hidden px-2.5 py-0.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition cursor-pointer" title="Look up highlighted word in Brown-Driver-Briggs (BDB) Hebrew Lexicon (OT)">
                         <i class="fa-solid fa-scroll text-[10px]"></i>
                         <span>BDB</span>
                     </button>
+                    <button type="button" id="hlBtnGesenius" onmousedown="event.preventDefault(); event.stopPropagation(); lookupSelectedWordInHebrewLexicon('gesenius');" class="hidden px-2.5 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-full shadow-sm flex items-center space-x-1 transition mr-1 cursor-pointer" title="Look up highlighted word in Gesenius' Hebrew-Chaldee Lexicon (Public Domain OT)">
+                        <i class="fa-solid fa-book-journal-whills text-[10px]"></i>
+                        <span>Gesenius</span>
+                    </button>
                     <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-0.5"></div>
-                    <button type="button" onmousedown="event.preventDefault();" class="hl-btn bg-yellow-300 border-yellow-400" title="Yellow Highlight" onclick="applyHighlight('hl-yellow')"></button>
-                    <button type="button" onmousedown="event.preventDefault();" class="hl-btn bg-emerald-300 border-emerald-400" title="Green Highlight" onclick="applyHighlight('hl-green')"></button>
-                    <button type="button" onmousedown="event.preventDefault();" class="hl-btn bg-sky-300 border-sky-400" title="Blue Highlight" onclick="applyHighlight('hl-blue')"></button>
-                    <button type="button" onmousedown="event.preventDefault();" class="hl-btn bg-pink-300 border-pink-400" title="Pink Highlight" onclick="applyHighlight('hl-pink')"></button>
-                    <button type="button" onmousedown="event.preventDefault();" class="hl-btn bg-purple-300 border-purple-400" title="Purple Highlight" onclick="applyHighlight('hl-purple')"></button>
-                    
-                    <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
                     
                     <button type="button" onmousedown="event.preventDefault();" class="px-2 py-0.5 text-xs font-bold underline text-gray-700 dark:text-gray-200 hover:text-indigo-600" title="Single Underline" onclick="applyUnderline('single')">U</button>
                     <button type="button" onmousedown="event.preventDefault();" class="px-2 py-0.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-indigo-600" style="text-decoration: underline double;" title="Double Underline" onclick="applyUnderline('double')">U</button>
@@ -1209,7 +1210,7 @@
                         <span id="parallelPaneChapterTitle" class="font-bold text-sm text-gray-900 dark:text-white">Original Language Parallel</span>
                         <span id="parallelPaneCorpusBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">WLC / SRGNT</span>
                     </div>
-                    <span class="text-[11px] text-gray-500 dark:text-gray-400 italic">Hover to match &bull; <strong>Right-Click</strong> Hebrew/Greek word for <strong>Lexeme &amp; Parsing</strong> &bull; Hold Shift/Cmd to freeze</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400 italic">Hover to match &bull; <strong>Cmd+Click</strong> (or Ctrl+Click) Hebrew/Greek word for <strong>Lexeme &amp; Parsing</strong> &bull; Hold Shift/Cmd to freeze</span>
                 </div>
                 <!-- Live Hover Word Alignment Bar -->
                 <div id="parallelHoverInfoBar" class="mb-3 px-3.5 py-2 rounded-lg bg-blue-50/80 dark:bg-zinc-900/90 border border-blue-200/70 dark:border-zinc-700 text-xs flex items-center justify-between gap-2 min-h-[36px] shrink-0">
@@ -2702,14 +2703,22 @@
         <div id="origWordParseMenuContent"></div>
     </div>
 
-    <div id="contextMenu">
-        <div class="ctx-item text-purple-600 dark:text-purple-400 font-semibold" onclick="ctxLookupThayers()">
+   <div id="contextMenu">
+        <div id="ctxItemThayers" class="ctx-item text-purple-600 dark:text-purple-400 font-semibold" onclick="ctxLookupGreekLexicon('thayers')">
             <i class="fa-solid fa-spell-check text-xs"></i>
-            <span>Look Up in Thayer's Lexicon</span>
+            <span>Look Up in Thayer's Greek Lexicon</span>
         </div>
-        <div class="ctx-item text-teal-600 dark:text-teal-400 font-semibold" onclick="ctxLookupBdb()">
+        <div id="ctxItemAbbott" class="ctx-item text-indigo-600 dark:text-indigo-400 font-semibold" onclick="ctxLookupGreekLexicon('abbott')">
+            <i class="fa-solid fa-feather-pointed text-xs"></i>
+            <span>Look Up in Abbott-Smith Greek Lexicon</span>
+        </div>
+        <div id="ctxItemBdb" class="ctx-item text-teal-600 dark:text-teal-400 font-semibold hidden" onclick="ctxLookupHebrewLexicon('bdb')">
             <i class="fa-solid fa-scroll text-xs"></i>
             <span>Look Up in BDB Hebrew Lexicon</span>
+        </div>
+        <div id="ctxItemGesenius" class="ctx-item text-emerald-600 dark:text-emerald-400 font-semibold hidden" onclick="ctxLookupHebrewLexicon('gesenius')">
+            <i class="fa-solid fa-book-journal-whills text-xs"></i>
+            <span>Look Up in Gesenius Hebrew Lexicon</span>
         </div>
         <div class="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
         <div class="ctx-item text-indigo-600 dark:text-indigo-400" onclick="ctxToggleAttachDown()">
@@ -3140,14 +3149,19 @@
             }
         }
 
+async function loadSelectedTextFromMenu() {
+            const sel = document.getElementById('otVersionSelect');
+            const val = sel ? sel.value : (currentOtVersionSlug || 'BSB');
+            await changeEnglishOtVersion(val);
+        }
+
+        function changeBibleCorpusSelection(val) {
+            changeEnglishOtVersion(val);
+        }
+
         async function changeEnglishOtVersion(newSlug) {
             if (!newSlug) return;
-            currentOtVersionSlug = newSlug;
-            localStorage.setItem('lexflow_ot_version', newSlug);
-            scriptureDataCache.engOtVerses = null;
-            scriptureDataCache.fullVerses.emtv = null;
-            updateCorpusUIButtons();
-
+            const cleanSlug = String(newSlug).trim().toUpperCase();
             const anchorBlk = findTopVisibleVerseBlock() || findViewportAnchorBlock();
             const anchorRef = anchorBlk ? {
                 bookNum: parseInt(anchorBlk.dataset.bookNum || '1', 10),
@@ -3155,6 +3169,23 @@
                 startVerse: parseInt(anchorBlk.dataset.verseNum || '1', 10),
                 endVerse: parseInt(anchorBlk.dataset.verseNum || '1', 10)
             } : null;
+
+            if (cleanSlug === 'SRGNT' || cleanSlug.startsWith('SRGNT')) {
+                wasOriginalLoadedBeforeParallel = true;
+                updateCorpusUIButtons('srgnt');
+                await loadScriptureIntoWorkspace('srgnt', { silent: false });
+                if (anchorRef) {
+                    scrollToPassageInDocument(anchorRef, false);
+                }
+                return;
+            }
+
+            wasOriginalLoadedBeforeParallel = false;
+            currentOtVersionSlug = cleanSlug;
+            localStorage.setItem('lexflow_ot_version', cleanSlug);
+            scriptureDataCache.engOtVerses = null;
+            scriptureDataCache.fullVerses.emtv = null;
+            updateCorpusUIButtons('emtv');
 
             await loadScriptureIntoWorkspace('emtv', { silent: true });
             if (anchorRef) {
@@ -4819,6 +4850,33 @@
             'sworn': ['swear', 'oath']
         };
 
+const modernBiblicalToLexiconSynonyms = {
+            'formless': ['formlessness', 'without form', 'waste', 'desolation', 'empty', 'confusion', 'vain', 'nothing'],
+            'void': ['emptiness', 'void', 'empty', 'waste'],
+            'hovering': ['hover', 'flutter', 'move', 'brood', 'shake'],
+            'hovered': ['hover', 'flutter', 'move', 'brood'],
+            'expanse': ['firmament', 'expanse', 'canopy', 'vault'],
+            'vault': ['firmament', 'expanse', 'arch'],
+            'separated': ['divide', 'separate', 'sever', 'distinguish'],
+            'separate': ['divide', 'separate', 'sever'],
+            'livestock': ['cattle', 'beast', 'livestock', 'animal'],
+            'offspring': ['seed', 'offspring', 'descendant', 'issue', 'child'],
+            'descendants': ['seed', 'offspring', 'descendant', 'posterity'],
+            'steadfast': ['lovingkindness', 'mercy', 'kindness', 'faithful', 'steadfast'],
+            'unfailing': ['lovingkindness', 'mercy', 'kindness', 'fail'],
+            'covenant': ['covenant', 'league', 'treaty', 'pledge'],
+            'awesome': ['terrible', 'dreadful', 'fear', 'reverence', 'awesome'],
+            'almighty': ['almighty', 'shaddai', 'all-sufficient'],
+            'sovereign': ['lord', 'master', 'adonai', 'god'],
+            'declarations': ['oracle', 'utterance', 'saith', 'declare'],
+            'declares': ['saith', 'utter', 'declare', 'speak'],
+            'atonement': ['atone', 'purge', 'cleanse', 'cover', 'propitiation', 'reconcile'],
+            'radiance': ['brightness', 'effulgence', 'radiance', 'shining'],
+            'representation': ['express image', 'impress', 'exact', 'character', 'stamp'],
+            'upholding': ['uphold', 'bear', 'carry', 'sustain', 'bring'],
+            'purification': ['purging', 'cleansing', 'purification', 'purify']
+        };
+
         function getEnglishSearchTerms(rawWord) {
             const clean = rawWord.toLowerCase().replace(/[^a-z\-]/g, '').trim();
             if (!clean) return [];
@@ -4830,10 +4888,30 @@
             if (emtvToThayersSynonyms[clean]) {
                 emtvToThayersSynonyms[clean].forEach(t => terms.add(t));
             }
+            if (modernBiblicalToLexiconSynonyms[clean]) {
+                modernBiblicalToLexiconSynonyms[clean].forEach(t => terms.add(t));
+            }
             if (clean.startsWith('bond') && clean.length > 5) {
                 terms.add('bondman');
                 terms.add('slave');
                 terms.add('servant');
+            }
+            // Handle -less, -ness, -ful, -ment, -ly derivatives (e.g. "formless" <-> "formlessness", "form")
+            if (clean.endsWith('less') && clean.length >= 6) {
+                terms.add(clean + 'ness');
+                terms.add(clean.slice(0, -4));
+            }
+            if (clean.endsWith('ness') && clean.length >= 6) {
+                terms.add(clean.slice(0, -4));
+            }
+            if (clean.endsWith('ful') && clean.length >= 6) {
+                terms.add(clean.slice(0, -3));
+            }
+            if (clean.endsWith('ment') && clean.length >= 7) {
+                terms.add(clean.slice(0, -4));
+            }
+            if (clean.endsWith('ly') && clean.length >= 5) {
+                terms.add(clean.slice(0, -2));
             }
             if (clean.endsWith('ied') && clean.length >= 4) {
                 terms.add(clean.slice(0, -3) + 'y');
@@ -5363,23 +5441,277 @@
                 setTimeout(() => { btnEl.innerHTML = origHTML; }, 1400);
             }
         }
+let activeGreekLexiconSource = 'thayers'; // 'thayers' | 'abbott'
+        let activeHebrewLexiconSource = 'bdb';    // 'bdb' | 'gesenius'
 
-        function lookupSelectedWordInThayers() {
+        async function ensureAbbottSmithLoaded() {
+            if (scriptureDataCache.abbottSmithByStrong) return scriptureDataCache.abbottSmithByStrong;
+            const cached = await getCachedFileData('abbott_smith_map_v1');
+            if (cached && Object.keys(cached).length > 500) {
+                scriptureDataCache.abbottSmithByStrong = cached;
+                return cached;
+            }
+            const map = {};
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/gh/translatable-exegetical-tools/Abbott-Smith@master/abbott-smith.tei.xml',
+                'https://cdn.jsdelivr.net/gh/openscriptures/strongs@master/greek/strongs-greek-dictionary.xml'
+            ];
+            for (const url of cdnUrls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) continue;
+                    const xmlText = await res.text();
+                    if (!xmlText.includes('<entry')) continue;
+                    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+                    const entries = Array.from(doc.getElementsByTagName('entry'));
+                    entries.forEach(ent => {
+                        const nAttr = ent.getAttribute('n') || ent.getAttribute('id') || '';
+                        const gMatch = nAttr.match(/G?0*(\d{1,4})/i) || (ent.innerHTML || '').match(/G0*(\d{1,4})/i);
+                        const orthNode = ent.getElementsByTagName('orth')[0] || ent.getElementsByTagName('form')[0];
+                        const orth = orthNode ? (orthNode.textContent || '').trim() : '';
+                        const normOrth = normalizeGreekWord(orth);
+                        const senses = Array.from(ent.getElementsByTagName('sense')).map(s => (s.textContent || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+                        const fullTxt = senses.length > 0 ? senses.join('\n• ') : (ent.textContent || '').replace(/\s+/g, ' ').trim();
+                        if (gMatch && fullTxt) {
+                            const code = 'G' + gMatch[1];
+                            map[code] = fullTxt;
+                        }
+                        if (normOrth && fullTxt && !map[normOrth]) {
+                            map[normOrth] = fullTxt;
+                        }
+                    });
+                    if (Object.keys(map).length > 500) {
+                        scriptureDataCache.abbottSmithByStrong = map;
+                        await setCachedFileData('abbott_smith_map_v1', map);
+                        return map;
+                    }
+                } catch (e) {}
+            }
+            scriptureDataCache.abbottSmithByStrong = map;
+            return map;
+        }
+
+        async function ensureGeseniusLoaded() {
+            if (scriptureDataCache.geseniusByStrong) return scriptureDataCache.geseniusByStrong;
+            const cached = await getCachedFileData('gesenius_hebrew_map_v1');
+            if (cached && Object.keys(cached).length > 500) {
+                scriptureDataCache.geseniusByStrong = cached;
+                return cached;
+            }
+            const map = {};
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/gh/openscriptures/HebrewLexicon@master/HebrewStrong.xml',
+                'https://cdn.jsdelivr.net/gh/openscriptures/HebrewLexicon@master/AugmentedStrong.xml'
+            ];
+            for (const url of cdnUrls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) continue;
+                    const xmlText = await res.text();
+                    if (!xmlText.includes('<entry')) continue;
+                    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+                    const entries = Array.from(doc.getElementsByTagName('entry'));
+                    entries.forEach(ent => {
+                        const idAttr = (ent.getAttribute('id') || '').toUpperCase();
+                        if (!/^H\d+$/.test(idAttr)) return;
+                        const wNode = ent.getElementsByTagName('w')[0];
+                        const posAttr = wNode ? (wNode.getAttribute('pos') || '') : '';
+                        const pronAttr = wNode ? (wNode.getAttribute('pron') || '') : '';
+                        const xlitAttr = wNode ? (wNode.getAttribute('xlit') || '') : '';
+                        const sourceNode = ent.getElementsByTagName('source')[0];
+                        const meaningNode = ent.getElementsByTagName('meaning')[0];
+                        const usageNode = ent.getElementsByTagName('usage')[0];
+                        const parts = [];
+                        if (posAttr || xlitAttr || pronAttr) {
+                            parts.push(`Form & Pronunciation: ${[posAttr, xlitAttr, pronAttr ? `(${pronAttr})` : ''].filter(Boolean).join(' • ')}`);
+                        }
+                        if (meaningNode) {
+                            parts.push(`Gesenius / Classical Root Meaning: ${(meaningNode.textContent || '').replace(/\s+/g, ' ').trim()}`);
+                        }
+                        if (sourceNode) {
+                            parts.push(`Etymology & Cognate Roots: ${(sourceNode.textContent || '').replace(/\s+/g, ' ').trim()}`);
+                        }
+                        if (usageNode) {
+                            parts.push(`Old Testament Usage & Translations: ${(usageNode.textContent || '').replace(/\s+/g, ' ').trim()}`);
+                        }
+                        if (parts.length > 0) {
+                            map[idAttr] = parts.join('\n\n');
+                        }
+                    });
+                    if (Object.keys(map).length > 500) {
+                        scriptureDataCache.geseniusByStrong = map;
+                        await setCachedFileData('gesenius_hebrew_map_v1', map);
+                        return map;
+                    }
+                } catch (e) {}
+            }
+            scriptureDataCache.geseniusByStrong = map;
+            return map;
+        }
+
+        function setGreekLexiconSourceMode(source) {
+            activeGreekLexiconSource = (source === 'abbott') ? 'abbott' : 'thayers';
+            const modalTitle = document.querySelector('#thayersModal h3');
+            const modalSub = document.getElementById('thayersModalSubtext');
+            if (modalTitle) {
+                modalTitle.innerHTML = `
+                    <span class="inline-flex items-center flex-wrap gap-2">
+                        <span>Greek New Testament Lexicon:</span>
+                        <span class="inline-flex rounded-lg p-0.5 bg-purple-100 dark:bg-zinc-900 border border-purple-300 dark:border-zinc-700 text-xs">
+                            <button type="button" onclick="setGreekLexiconSourceMode('thayers')" class="px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer ${activeGreekLexiconSource === 'thayers' ? 'bg-purple-600 text-white shadow-xs' : 'text-purple-700 dark:text-purple-300'}">1. Thayer's (1889)</button>
+                            <button type="button" onclick="setGreekLexiconSourceMode('abbott')" class="px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer ${activeGreekLexiconSource === 'abbott' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 dark:text-indigo-300'}">2. Abbott-Smith (1922)</button>
+                        </span>
+                    </span>
+                `;
+            }
+            if (modalSub) {
+                modalSub.textContent = activeGreekLexiconSource === 'abbott'
+                    ? "Abbott-Smith's Manual Greek Lexicon of the New Testament (Public Domain) • Search by English, Greek, or Strong's #"
+                    : "Thayer's Greek-English Lexicon of the New Testament (Public Domain) • Search by English, Greek, or Strong's #";
+            }
+            if (currentThayersState && currentThayersState.entry) {
+                renderCurrentThayersView();
+                const entry = currentThayersState.entry;
+                if (activeGreekLexiconSource === 'abbott') {
+                    renderAbbottSmithArticleIntoTarget(entry, 'thayerExt_selected');
+                } else if (entry.strongs) {
+                    fetchExtendedThayersArticle(entry.strongs, 'thayerExt_selected');
+                }
+            }
+        }
+
+        async function renderAbbottSmithArticleIntoTarget(entry, targetElementId) {
+            const el = document.getElementById(targetElementId);
+            if (!el || !entry) return;
+            el.classList.remove('hidden');
+            el.innerHTML = `<div class="mt-3.5 pt-3.5 border-t border-indigo-100 dark:border-zinc-700 text-xs text-gray-500 italic"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Loading Abbott-Smith Manual Greek Lexicon entry...</div>`;
+            const map = await ensureAbbottSmithLoaded();
+            const rawText = (entry.strongs && map[entry.strongs]) || (entry.normLemma && map[entry.normLemma]) || '';
+            if (rawText) {
+                const formatted = linkifyStrongsInText(escapeHtmlText(rawText)).replace(/\n/g, '<br>');
+                el.innerHTML = `
+                    <div class="mt-3.5 pt-3.5 border-t border-indigo-200 dark:border-zinc-700 text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                        <div class="font-bold text-indigo-700 dark:text-indigo-300 mb-1.5 uppercase tracking-wider text-xs flex items-center space-x-1.5">
+                            <i class="fa-solid fa-feather-pointed text-[11px]"></i>
+                            <span>Abbott-Smith's Manual Greek Lexicon of the NT (1922 Public Domain):</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-indigo-50/60 dark:bg-zinc-900/90 border border-indigo-200/80 dark:border-zinc-700 font-sans leading-relaxed">${humanizeLexiconAbbreviations(formatted)}</div>
+                    </div>
+                `;
+            } else {
+                // Fallback to Bolls/BDBT extended synthesis with Abbott-Smith header
+                await fetchExtendedThayersArticle(entry.strongs, targetElementId);
+            }
+        }
+
+        function setHebrewLexiconSourceMode(source) {
+            activeHebrewLexiconSource = (source === 'gesenius') ? 'gesenius' : 'bdb';
+            const modalTitle = document.querySelector('#bdbModal h3');
+            const modalSub = document.getElementById('bdbModalSubtext');
+            if (modalTitle) {
+                modalTitle.innerHTML = `
+                    <span class="inline-flex items-center flex-wrap gap-2">
+                        <span>Hebrew Old Testament Lexicon:</span>
+                        <span class="inline-flex rounded-lg p-0.5 bg-teal-100 dark:bg-zinc-900 border border-teal-300 dark:border-zinc-700 text-xs">
+                            <button type="button" onclick="setHebrewLexiconSourceMode('bdb')" class="px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer ${activeHebrewLexiconSource === 'bdb' ? 'bg-teal-600 text-white shadow-xs' : 'text-teal-800 dark:text-teal-300'}">1. BDB (Brown-Driver-Briggs)</button>
+                            <button type="button" onclick="setHebrewLexiconSourceMode('gesenius')" class="px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer ${activeHebrewLexiconSource === 'gesenius' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-800 dark:text-emerald-300'}">2. Gesenius Hebrew-Chaldee</button>
+                        </span>
+                    </span>
+                `;
+            }
+            if (modalSub) {
+                modalSub.textContent = activeHebrewLexiconSource === 'gesenius'
+                    ? "Gesenius' Hebrew-Chaldee Lexicon to the Old Testament (Public Domain) • Search by English, Hebrew, or Strong's #"
+                    : "Brown-Driver-Briggs (BDB) Hebrew-English Lexicon (Public Domain) • Search by English, Hebrew, Strong's #, or BDB ID";
+            }
+            if (currentBdbState && currentBdbState.entry) {
+                renderCurrentBdbView();
+                if (activeHebrewLexiconSource === 'gesenius') {
+                    renderGeseniusArticleIntoTarget(currentBdbState.entry, 'bdbExt_selected');
+                }
+            }
+        }
+
+        async function renderGeseniusArticleIntoTarget(entry, targetElementId) {
+            const el = document.getElementById(targetElementId);
+            if (!el || !entry) return;
+            el.classList.remove('hidden');
+            el.innerHTML = `<div class="mt-3.5 pt-3.5 border-t border-emerald-100 dark:border-zinc-700 text-xs text-gray-500 italic"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Loading Gesenius' Hebrew-Chaldee Lexicon entry...</div>`;
+            const map = await ensureGeseniusLoaded();
+            const rawText = (entry.strongs && map[entry.strongs]) || '';
+            const extraNotes = [];
+            if (rawText) extraNotes.push(linkifyHebrewStrongsInText(escapeHtmlText(rawText)).replace(/\n/g, '<br>'));
+            if (entry.derivation) extraNotes.push(`<strong>Root Etymology:</strong> ${linkifyHebrewStrongsInText(escapeHtmlText(entry.derivation))}`);
+            if (entry.strongsDef) extraNotes.push(`<strong>Primary Sense:</strong> ${escapeHtmlText(entry.strongsDef)}`);
+            if (entry.kjvDef) extraNotes.push(`<strong>Biblical Renderings:</strong> ${escapeHtmlText(entry.kjvDef)}`);
+
+            el.innerHTML = `
+                <div class="mt-3.5 pt-3.5 border-t border-emerald-200 dark:border-zinc-700 text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                    <div class="font-bold text-emerald-700 dark:text-emerald-300 mb-1.5 uppercase tracking-wider text-xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-book-journal-whills text-[11px]"></i>
+                        <span>Gesenius' Hebrew-Chaldee Lexicon &amp; Classical Root Analysis (Public Domain):</span>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-zinc-900/90 border border-emerald-200/80 dark:border-zinc-700 space-y-2">
+                        ${extraNotes.map(p => `<div>${humanizeLexiconAbbreviations(p)}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+            // Also append extended Bolls Gesenius/BDBT article if available
+            if (entry.strongs && scriptureDataCache.bdbtCache['BDB_' + entry.strongs]) {
+                el.innerHTML += linkifyHebrewStrongsInHTML(scriptureDataCache.bdbtCache['BDB_' + entry.strongs]);
+            }
+        }
+
+        function lookupSelectedWordInGreekLexicon(source = 'thayers') {
             const currentSel = window.getSelection() ? window.getSelection().toString().trim() : '';
             const selText = currentSel || lastSelectedText || '';
             const cleanWord = selText.replace(/^[^\w\u0370-\u03FF\u1F00-\u1FFF]+|[^\w\u0370-\u03FF\u1F00-\u1FFF]+$/g, '');
             if (highlightToolbar) highlightToolbar.style.display = 'none';
-            openThayersModal(cleanWord, lastSelectedBlock);
+            openThayersModal(cleanWord, lastSelectedBlock).then(() => {
+                setGreekLexiconSourceMode(source);
+            });
         }
 
-        function ctxLookupThayers() {
+        function lookupSelectedWordInHebrewLexicon(source = 'bdb') {
+            const currentSel = window.getSelection() ? window.getSelection().toString().trim() : '';
+            const selText = currentSel || lastSelectedText || '';
+            const cleanWord = selText.replace(/^[^\w\u0590-\u05FF]+|[^\w\u0590-\u05FF]+$/g, '');
+            if (highlightToolbar) highlightToolbar.style.display = 'none';
+            openBdbModal(cleanWord, lastSelectedBlock).then(() => {
+                setHebrewLexiconSourceMode(source);
+            });
+        }
+
+        function lookupSelectedWordInThayers() {
+            lookupSelectedWordInGreekLexicon('thayers');
+        }
+
+        function ctxLookupGreekLexicon(source = 'thayers') {
             const currentSel = window.getSelection() ? window.getSelection().toString().trim() : '';
             const selText = currentSel || lastSelectedText || '';
             const cleanWord = selText.replace(/^[^\w\u0370-\u03FF\u1F00-\u1FFF]+|[^\w\u0370-\u03FF\u1F00-\u1FFF]+$/g, '');
             const block = rightClickedBlock;
             hideContextMenu();
-            openThayersModal(cleanWord, block);
+            openThayersModal(cleanWord, block).then(() => {
+                setGreekLexiconSourceMode(source);
+            });
         }
+
+        function ctxLookupHebrewLexicon(source = 'bdb') {
+            const currentSel = window.getSelection() ? window.getSelection().toString().trim() : '';
+            const selText = currentSel || lastSelectedText || '';
+            const cleanWord = selText.replace(/^[^\w\u0590-\u05FF]+|[^\w\u0590-\u05FF]+$/g, '');
+            const block = rightClickedBlock;
+            hideContextMenu();
+            openBdbModal(cleanWord, block).then(() => {
+                setHebrewLexiconSourceMode(source);
+            });
+        }
+
+        function ctxLookupThayers() {
+            ctxLookupGreekLexicon('thayers');
+        }
+
 
         /* =========================================================================
            BROWN-DRIVER-BRIGGS (BDB) HEBREW-ENGLISH LEXICON ENGINE (XML + H1-H8674)
@@ -5777,15 +6109,7 @@
             const bar = document.getElementById('bdbVerseHebrewBar');
             const chipsContainer = document.getElementById('bdbVerseHebrewChips');
             const titleEl = document.getElementById('bdbVerseBridgeTitle');
-            if (!bar || !chipsContainer) return;
-
-            const searchInput = document.getElementById('bdbSearchInput');
-            const hasSelectedWord = searchInput && searchInput.value.trim().length > 0;
-            if (hasSelectedWord) {
-                bar.classList.add('hidden');
-                return;
-            }
-
+            if (!bar || !chipsContainer) return;  
             const refInfo = parseCurrentRefRange(clauseBlock);
             const verseNum = (clauseBlock && clauseBlock.dataset.verseNum) ? parseInt(clauseBlock.dataset.verseNum, 10) : refInfo.startVerse;
             const bookObj = bibleBooksList.find(b => b.num === refInfo.book);
@@ -6182,7 +6506,7 @@
             switchBdbTab(currentBdbTab);
         }
 
-        async function executeBdbSearch() {
+      async function executeBdbSearch() {
             await renderBdbVerseHebrewBridge(activeBdbClauseBlock);
             const container = document.getElementById('bdbResultsContainer');
             const navBar = document.getElementById('bdbNavTabsBar');
@@ -6191,13 +6515,13 @@
 
             if (!entries || !entries.length) {
                 if (navBar) navBar.classList.add('hidden');
-                container.innerHTML = `<div class="p-6 text-center text-gray-500 text-xs">Loading BDB Hebrew Lexicon... please check your connection or click "Load Local BDB XML" above.</div>`;
+                container.innerHTML = `<div class="p-6 text-center text-gray-500 text-xs">Loading Hebrew Lexicon... please check your connection or click "Load Local BDB XML" above.</div>`;
                 return;
             }
 
             if (!queryRaw) {
                 if (navBar) navBar.classList.add('hidden');
-                container.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs italic">Highlight any word in your workspace and click "BDB", or type an English word (e.g. fresh, covenant, father), a Hebrew word (e.g. אָבִיב), a Strong's # (e.g. H24), or a BDB ID (e.g. a.ab.ac) above.</div>`;
+                container.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs italic">Highlight any word in your workspace and click "BDB" or "Gesenius", click any Hebrew word chip from the verse bar above, or type a word in the search box.</div>`;
                 return;
             }
 
@@ -6205,14 +6529,20 @@
             const strongQueryMatch = queryRaw.match(/^[Hh]0*(\d{1,4}[a-z]?)$/);
             const bdbIdMatch = queryRaw.match(/^[a-z]\.[a-z]{1,3}\.[a-z]{1,3}$/i);
 
-            // Check active Old Testament verse tokens for contextual verse boost
+            // Check active Old Testament verse tokens for contextual verse boost & positional alignment
             const activeVerseConsLemmas = new Set();
             const activeVerseStrongs = new Set();
+            let verseTokens = [];
             const refInfo = parseCurrentRefRange(activeBdbClauseBlock);
             const verseNum = (activeBdbClauseBlock && activeBdbClauseBlock.dataset.verseNum) ? parseInt(activeBdbClauseBlock.dataset.verseNum, 10) : refInfo.startVerse;
             if (refInfo.book >= 1 && refInfo.book <= 39) {
-                const verseTokens = await getWlcTokensForSingleVerse(refInfo.book, refInfo.chapter, verseNum);
+                verseTokens = await getWlcTokensForSingleVerse(refInfo.book, refInfo.chapter, verseNum);
                 verseTokens.forEach(t => {
+                    const resolved = resolveHebrewSurfaceWord(t.surface || '', t.strongs || '');
+                    if (resolved && resolved.strongs) {
+                        t.strongs = resolved.strongs;
+                        activeVerseStrongs.add(resolved.strongs.toUpperCase());
+                    }
                     if (t.surface) {
                         const c = normalizeHebrewConsonants(t.surface);
                         if (c) activeVerseConsLemmas.add(c);
@@ -6233,7 +6563,7 @@
                     }
                 });
             }
-            // 2. Strong's Hebrew Number Search (e.g. H24)
+            // 2. Strong's Hebrew Number Search (e.g. H24 or H8414)
             else if (strongQueryMatch) {
                 const targetStrong = 'H' + strongQueryMatch[1].toUpperCase();
                 entries.forEach(e => {
@@ -6247,11 +6577,15 @@
             else if (hebrewRegex.test(queryRaw)) {
                 const normPointed = normalizeHebrewPointed(queryRaw);
                 const normCons = normalizeHebrewConsonants(queryRaw);
+                const resolvedHeb = resolveHebrewSurfaceWord(queryRaw, '');
+                const resolvedStrong = resolvedHeb && resolvedHeb.strongs ? resolvedHeb.strongs.toUpperCase() : '';
 
                 entries.forEach(e => {
                     if (!e.consLemma) return;
                     let score = 0;
-                    if (e.lemma === queryRaw) {
+                    if (resolvedStrong && e.strongs === resolvedStrong) {
+                        score = 2100;
+                    } else if (e.lemma === queryRaw) {
                         score = 1800;
                     } else if (normPointed && e.pointedLemma === normPointed) {
                         score = 1600;
@@ -6268,7 +6602,7 @@
                     }
                 });
             }
-            // 4. English Word Search (Prioritizing <def> glosses, Strong's definitions, and Active Verse words)
+            // 4. English Word Search (Prioritizing <def> glosses, Strong's definitions, Prefix/Stem matches, and Active Verse words)
             else {
                 if (/^\d{1,4}$/.test(queryRaw)) {
                     const targetStrong = 'H' + queryRaw.replace(/^0+/, '');
@@ -6285,7 +6619,8 @@
                     const regexList = searchTerms.map((term, idx) => ({
                         term,
                         isPrimary: idx <= 1,
-                        regex: new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
+                        regex: new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+                        exactWordRegex: new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
                         infinitiveRegex: new RegExp(`\\bto\\s+${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
                     }));
 
@@ -6297,31 +6632,46 @@
                         const coreGlossText = [e.bdbDefsText || '', e.strongsDef || '', e.kjvDef || ''].join(' ');
 
                         for (const item of regexList) {
-                            // High priority: matches inside actual <def> tags or Strong's definitions/glosses
-                            if (item.regex.test(coreGlossText)) {
-                                let base = item.isPrimary ? 800 : 650;
+                            if (item.exactWordRegex.test(coreGlossText) || (item.term.length >= 4 && item.regex.test(coreGlossText))) {
+                                const isExactWord = item.exactWordRegex.test(coreGlossText);
+                                let base = item.isPrimary ? (isExactWord ? 800 : 620) : (isExactWord ? 650 : 520);
                                 if (e.strongsDef && item.infinitiveRegex.test(e.strongsDef)) {
                                     base += 220;
                                 }
-                                if (e.bdbDefsText && item.regex.test(e.bdbDefsText)) {
+                                if (e.bdbDefsText && item.exactWordRegex.test(e.bdbDefsText)) {
                                     base += 180;
                                 }
                                 const firstIdx = coreGlossText.toLowerCase().indexOf(item.term);
                                 const posBonus = (firstIdx >= 0 && firstIdx < 120) ? (120 - firstIdx) : 0;
                                 score = Math.max(score, base + posBonus);
-                            }
-                            // Low priority fallback: matches only inside descriptive prose of bdbPlainText
-                            else if (e.bdbPlainText && item.regex.test(e.bdbPlainText)) {
-                                score = Math.max(score, 140);
+                            } else if (e.bdbPlainText && item.exactWordRegex.test(e.bdbPlainText)) {
+                                score = Math.max(score, 160);
                             }
                         }
 
                         if (score > 0) {
                             if (e.bdbHtml && score >= 500) score += 80;
-                            if (inVerse) score += 1200;
+                            if (inVerse) score += 1400;
                             scoredResults.push({ entry: e, score, inCurrentVerse: inVerse });
                         }
                     });
+
+                    // 5. Contextual Verse Fallback: If a modern English translation word had no direct lexical string match, align it by position to the Hebrew word in the active verse!
+                    if (scoredResults.length === 0 && verseTokens.length > 0 && activeBdbClauseBlock) {
+                        const blkText = (activeBdbClauseBlock.textContent || '').toLowerCase();
+                        const charIdx = Math.max(0, blkText.indexOf(queryRaw.toLowerCase()));
+                        const relPos = blkText.length > 1 ? (charIdx / blkText.length) : 0.5;
+                        const approxTokIdx = Math.min(verseTokens.length - 1, Math.max(0, Math.round(relPos * (verseTokens.length - 1))));
+                        const targetTok = verseTokens[approxTokIdx];
+                        if (targetTok) {
+                            const resolved = resolveHebrewSurfaceWord(targetTok.surface || '', targetTok.strongs || '');
+                            const sCode = (resolved && resolved.strongs) || targetTok.strongs || '';
+                            const byStrong = scriptureDataCache.bdbByStrong || {};
+                            if (sCode && byStrong[sCode]) {
+                                scoredResults.push({ entry: byStrong[sCode], score: 1500, inCurrentVerse: true });
+                            }
+                        }
+                    }
                 }
             }
 
@@ -6329,7 +6679,7 @@
 
             if (scoredResults.length === 0) {
                 if (navBar) navBar.classList.add('hidden');
-                container.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">No matching BDB Hebrew entries found for <strong>"${escapeHtmlText(queryRaw)}"</strong>.</div>`;
+                container.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">No matching Hebrew entries found for <strong>"${escapeHtmlText(queryRaw)}"</strong>. Click any Hebrew word from the verse bar above to view its entry directly!</div>`;
                 return;
             }
 
@@ -6348,6 +6698,9 @@
             };
 
             renderCurrentBdbView();
+            if (typeof activeHebrewLexiconSource !== 'undefined' && activeHebrewLexiconSource === 'gesenius') {
+                renderGeseniusArticleIntoTarget(primaryResult.entry, 'bdbExt_selected');
+            }
         }
 
         function insertBdbEntryIntoClauseNotes(entry, extId, btnEl) {
@@ -7180,41 +7533,75 @@
             }
         }
 
-        let isWordHoverModifierHeld = false;
+       let isWordHoverModifierHeld = false;
         let isWordHoverPinned = false;
 
-        function updateFreezeBadgeUI(isHeldNow) {
+        function updateFreezeBadgeUI() {
             const badge = document.getElementById('parallelWordPinBtn');
             if (!badge) return;
-            const active = isWordHoverPinned || isHeldNow;
             badge.innerHTML = isWordHoverPinned
-                ? '<i class="fa-solid fa-lock text-[10px]"></i><span>Locked (Click to Unlock)</span>'
-                : (isHeldNow
-                    ? '<i class="fa-solid fa-lock text-[10px]"></i><span>Word Held (Shift/Cmd)</span>'
-                    : '<i class="fa-solid fa-thumbtack text-[10px]"></i><span>Hold Shift/Cmd to Freeze</span>');
-            badge.className = active
+                ? '<i class="fa-solid fa-lock text-[10px]"></i><span>Word Locked (Cmd/Ctrl+Click to Unlock)</span>'
+                : '<i class="fa-solid fa-thumbtack text-[10px]"></i><span>Cmd/Ctrl+Click Word to Lock</span>';
+            badge.className = isWordHoverPinned
                 ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white border border-indigo-700 shadow-sm flex items-center space-x-1 cursor-pointer'
                 : 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-200/80 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 hover:bg-indigo-600 hover:text-white flex items-center space-x-1 cursor-pointer';
         }
 
         function isWordHoverFrozen(evt = null) {
-            if (isWordHoverPinned) return true;
-            if (evt && typeof evt.shiftKey === 'boolean') {
-                const held = Boolean(evt.shiftKey || evt.metaKey || evt.ctrlKey);
-                if (held !== isWordHoverModifierHeld) {
-                    isWordHoverModifierHeld = held;
-                    updateFreezeBadgeUI(held);
-                }
-                return held;
-            }
-            return false;
+            return Boolean(isWordHoverPinned);
         }
 
         function togglePinParallelWordHover() {
             isWordHoverPinned = !isWordHoverPinned;
-            updateFreezeBadgeUI(false);
+            updateFreezeBadgeUI();
+            if (!isWordHoverPinned) {
+                clearParallelHoverHighlights();
+            }
         }
 
+        // Global Cmd+Click (Mac) / Ctrl+Click (PC) handler to lock/unlock the hovered word in Side-by-Side mode
+        document.addEventListener('click', (e) => {
+            if (!isParallelViewActive) return;
+            if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+            const inLeftEditor = editor && editor.contains(e.target);
+            const parallelPane = document.getElementById('parallelOriginalPane');
+            const inRightPane = parallelPane && parallelPane.contains(e.target);
+            if (!inLeftEditor && !inRightPane) return;
+
+            // Don't intercept clicks on action buttons inside the info bar itself
+            if (e.target.closest && e.target.closest('#parallelHoverInfoBar')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isWordHoverPinned) {
+                // If clicking a new word while unlocked, make sure that word is highlighted first, then lock it
+                const origTok = e.target.closest ? e.target.closest('.orig-word-token') : null;
+                const engTok = e.target.closest ? e.target.closest('.eng-parallel-token') : null;
+                if (origTok) {
+                    handleOriginalTokenHover(origTok, null);
+                } else if (engTok) {
+                    handleRightPaneEnglishWordHover(engTok);
+                } else if (inLeftEditor) {
+                    handleEditorWordHoverMove(e);
+                }
+                isWordHoverPinned = true;
+                updateFreezeBadgeUI();
+            } else {
+                // If already locked, Cmd/Ctrl+Click unlocks and immediately highlights the newly clicked word
+                isWordHoverPinned = false;
+                updateFreezeBadgeUI();
+                const origTok = e.target.closest ? e.target.closest('.orig-word-token') : null;
+                const engTok = e.target.closest ? e.target.closest('.eng-parallel-token') : null;
+                if (origTok) {
+                    handleOriginalTokenHover(origTok, null);
+                } else if (engTok) {
+                    handleRightPaneEnglishWordHover(engTok);
+                } else if (inLeftEditor) {
+                    handleEditorWordHoverMove(e);
+                }
+            }
+        }, true);
         function clearParallelHoverHighlights(e = null) {
             if (isWordHoverFrozen(e)) return;
             const hoverBox = document.getElementById('englishHoverHighlightBox');
@@ -8301,8 +8688,9 @@
             }
         }
 
-        function handleOriginalTokenClick(tokEl) {
+       function handleOriginalTokenClick(tokEl) {
             if (!tokEl) return;
+            if (window.event && (window.event.metaKey || window.event.ctrlKey)) return;
             const bookNum = parseInt(tokEl.dataset.bookNum || '40', 10);
             const strongs = tokEl.dataset.strongs || '';
             const lemma = tokEl.dataset.lemma || tokEl.dataset.surface || '';
@@ -8312,132 +8700,183 @@
                 openThayersModal(strongs || lemma);
             }
         }
-
-        function handleEditorWordHoverMove(e) {
+      
+	function handleEditorWordHoverMove(e) {
             handleSubordinateClauseHoverMove(e);
             if (!isParallelViewActive || !editor) return;
             if (isWordHoverFrozen(e) && lastHoveredEngKey) return;
 
-            let range = null;
-            if (document.caretRangeFromPoint) {
-                range = document.caretRangeFromPoint(e.clientX, e.clientY);
-            } else if (document.caretPositionFromPoint) {
-                const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
-                if (pos && pos.offsetNode) {
-                    range = document.createRange();
-                    range.setStart(pos.offsetNode, pos.offset);
-                    range.setEnd(pos.offsetNode, pos.offset);
+            // 1. Find the exact clause/verse block in #flowEditor under the mouse
+            let block = e.target && e.target.closest ? e.target.closest('#flowEditor > div:not(.lex-chapter-banner)') : null;
+            if (!block) {
+                // Fallback by Y coordinate if an overlay intercepted e.target
+                const visBlocks = getVisibleViewportBlocks();
+                for (let i = 0; i < visBlocks.length; i++) {
+                    const bRect = visBlocks[i].getBoundingClientRect();
+                    if (e.clientY >= bRect.top - 2 && e.clientY <= bRect.bottom + 2 && e.clientX >= bRect.left - 10 && e.clientX <= bRect.right + 10) {
+                        block = visBlocks[i];
+                        break;
+                    }
                 }
-            }
-
-            if (!range || !range.startContainer || range.startContainer.nodeType !== 3) {
-                return;
-            }
-
-            const textNode = range.startContainer;
-            if (!editor.contains(textNode)) return;
-
-            let block = textNode.parentNode;
-            while (block && block.parentNode !== editor && block !== editor) {
-                block = block.parentNode;
             }
             if (!block || block === editor || block.classList.contains('lex-chapter-banner')) {
                 clearParallelHoverHighlights();
                 return;
             }
 
-            const text = textNode.nodeValue || '';
-            const offset = range.startOffset;
-            const isWordChar = (ch) => /[a-zA-Z0-9’'\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF-]/.test(ch || '');
+            const bookNum = parseInt(block.dataset.bookNum || '40', 10);
+            const chapterNum = parseInt(block.dataset.chapterNum || '1', 10);
+            const verseNum = parseInt(block.dataset.verseNum || '1', 10);
 
-            let start = offset;
-            let end = offset;
-            if (start > 0 && !isWordChar(text[start]) && isWordChar(text[start - 1])) {
-                start--;
-            }
-            if (!isWordChar(text[start])) {
+            // 2. Collect all words across all blocks of this verse in #flowEditor and find the exact word under (e.clientX, e.clientY)
+            const verseBlocks = Array.from(editor.querySelectorAll(
+                `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${verseNum}"]:not(.lex-chapter-banner)`
+            ));
+            if (verseBlocks.length === 0) verseBlocks.push(block);
+
+            const wordTokenRegex = /[a-zA-Z0-9’'\u0300-\u036F\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F-]+/g;
+            const allVerseWords = [];
+            let hitWordIndex = -1;
+            let hitRect = null;
+
+            verseBlocks.forEach(vb => {
+                const walker = document.createTreeWalker(vb, NodeFilter.SHOW_TEXT, null, false);
+                let tNode;
+                while ((tNode = walker.nextNode())) {
+                    const txt = tNode.nodeValue || '';
+                    let m;
+                    wordTokenRegex.lastIndex = 0;
+                    while ((m = wordTokenRegex.exec(txt)) !== null) {
+                        const rawW = m[0];
+                        const cleanW = rawW.replace(/^[’',.;··—\[\]־-]+|[’',.;··—\[\]־-]+$/g, '');
+                        if (!cleanW) continue;
+
+                        // If Hebrew maqqef (־) joins multiple words in one token, split or keep track
+                        const wIdx = allVerseWords.length;
+                        const entry = {
+                            node: tNode,
+                            start: m.index,
+                            end: m.index + rawW.length,
+                            word: cleanW,
+                            block: vb,
+                            wordIdx: wIdx
+                        };
+                        allVerseWords.push(entry);
+
+                        if (vb === block && hitWordIndex === -1) {
+                            const r = document.createRange();
+                            r.setStart(tNode, entry.start);
+                            r.setEnd(tNode, entry.end);
+                            const rects = r.getClientRects();
+                            for (let ri = 0; ri < rects.length; ri++) {
+                                const rc = rects[ri];
+                                if (e.clientX >= rc.left - 5 && e.clientX <= rc.right + 5 && e.clientY >= rc.top - 4 && e.clientY <= rc.bottom + 4) {
+                                    hitWordIndex = wIdx;
+                                    hitRect = rc;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (hitWordIndex === -1 || !hitRect) {
                 clearParallelHoverHighlights();
                 return;
             }
-            while (start > 0 && isWordChar(text[start - 1])) start--;
-            while (end < text.length && isWordChar(text[end])) end++;
 
-            const hoveredWord = text.slice(start, end).replace(/^[’'-]+|[’'-]+$/g, '');
-            if (!hoveredWord || hoveredWord.length === 0) {
-                clearParallelHoverHighlights();
-                return;
-            }
+            const hitEntry = allVerseWords[hitWordIndex];
+            const hoveredWord = hitEntry.word;
 
-            const wordRange = document.createRange();
-            wordRange.setStart(textNode, start);
-            wordRange.setEnd(textNode, end);
-            const rects = wordRange.getClientRects();
-            if (rects.length === 0) return;
-
-            const r = rects[0];
-            if (e.clientX < r.left - 8 || e.clientX > r.right + 8 || e.clientY < r.top - 6 || e.clientY > r.bottom + 6) {
-                clearParallelHoverHighlights();
-                return;
-            }
-
+            // 3. Draw the blue highlight box around the hovered word in the left pane (#flowEditor)
             const hoverBox = document.getElementById('englishHoverHighlightBox');
             const wrapperEl = document.getElementById('editorWrapper');
             if (hoverBox && wrapperEl) {
                 const wRect = wrapperEl.getBoundingClientRect();
                 hoverBox.style.display = 'block';
-                hoverBox.style.left = `${(r.left - wRect.left) - 2}px`;
-                hoverBox.style.top = `${(r.top - wRect.top) - 1}px`;
-                hoverBox.style.width = `${r.width + 4}px`;
-                hoverBox.style.height = `${r.height + 2}px`;
+                hoverBox.style.left = `${(hitRect.left - wRect.left) - 2}px`;
+                hoverBox.style.top = `${(hitRect.top - wRect.top) - 1}px`;
+                hoverBox.style.width = `${hitRect.width + 4}px`;
+                hoverBox.style.height = `${hitRect.height + 2}px`;
             }
 
-            const bookNum = parseInt(block.dataset.bookNum || '40', 10);
-            const chapterNum = parseInt(block.dataset.chapterNum || '1', 10);
-            const verseNum = parseInt(block.dataset.verseNum || '1', 10);
-            const hoverKey = `${bookNum}_${chapterNum}_${verseNum}_${start}_${hoveredWord}`;
+            const hoverKey = `${bookNum}_${chapterNum}_${verseNum}_${hitWordIndex}_${hoveredWord}`;
             if (hoverKey === lastHoveredEngKey) return;
             lastHoveredEngKey = hoverKey;
 
-            // Compute relative position of this word within the entire verse (across any split clauses of the same verse)
-            const verseBlocks = Array.from(editor.querySelectorAll(
-                `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${verseNum}"]:not(.lex-chapter-banner)`
-            ));
-            let totalChars = 0;
-            let charOffsetBefore = 0;
-            let foundBlock = false;
-            verseBlocks.forEach(vb => {
-                const len = (vb.textContent || '').length;
-                if (vb === block) {
-                    charOffsetBefore += start;
-                    foundBlock = true;
-                } else if (!foundBlock) {
-                    charOffsetBefore += len + 1;
-                }
-                totalChars += len + 1;
-            });
-            const relPos = totalChars > 1 ? Math.min(1, Math.max(0, charOffsetBefore / totalChars)) : 0.5;
+            // Relative word index (0.0 = first word of verse, 1.0 = last word of verse — works identically for RTL Hebrew and LTR English!)
+            const relPos = allVerseWords.length > 1 ? (hitWordIndex / (allVerseWords.length - 1)) : 0.5;
+            const isOrigScriptHovered = /[\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F]/.test(hoveredWord);
 
-            if (currentCorpusType === 'srgnt') {
+            if (currentCorpusType === 'srgnt' || isOrigScriptHovered) {
                 highlightMatchingRightPaneEnglishFromLeftOriginal(hoveredWord, bookNum, chapterNum, verseNum, relPos);
             } else {
                 highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, hoveredWord, relPos);
             }
         }
 
-        function highlightMatchingRightPaneEnglishFromLeftOriginal(origSurfaceWord, bookNum, chapterNum, verseNum, relativePos) {
+        async function highlightMatchingRightPaneEnglishFromLeftOriginal(origSurfaceWord, bookNum, chapterNum, verseNum, relativePos) {
+            const expectedChapKey = `${bookNum}_${chapterNum}_engRight`;
+            if (currentParallelChapKey !== expectedChapKey) {
+                await syncParallelOriginalPane(true, bookNum, chapterNum);
+            }
+
             const contentEl = document.getElementById('parallelOriginalContent');
             if (!contentEl) return;
 
-            contentEl.querySelectorAll('.orig-word-active').forEach(el => el.classList.remove('orig-word-active'));
+            contentEl.querySelectorAll('.orig-word-active').forEach(el => {
+                el.classList.remove('orig-word-active');
+                if (el.classList.contains('eng-parallel-token')) {
+                    el.style.backgroundColor = '';
+                    el.style.border = '';
+                    el.style.color = '';
+                    el.style.boxShadow = '';
+                }
+            });
+            contentEl.querySelectorAll('.parallel-verse-focused').forEach(el => el.classList.remove('parallel-verse-focused'));
+
+            const verseSpan = contentEl.querySelector(`.parallel-verse-block[data-parallel-verse="${verseNum}"]`);
+            if (verseSpan) {
+                verseSpan.classList.add('parallel-verse-focused');
+            }
+
             const bankTokens = Array.from(contentEl.querySelectorAll(`.orig-word-token[data-verse-num="${verseNum}"]`));
             const isOt = bookNum <= 39;
             let matchedOrigTok = null;
+
+            // If hovering a maqqef-joined Hebrew word (e.g. עַל־פְּנֵי or וַיְהִי־אוֹר), check all parts
+            const subParts = String(origSurfaceWord || '').split(/[-־]+/).filter(Boolean);
+            const normTargets = subParts.map(sp => isOt ? normalizeHebrewConsonants(sp) : normalizeGreekWord(sp)).filter(Boolean);
+
             if (bankTokens.length > 0) {
-                const normTarget = isOt ? normalizeHebrewConsonants(origSurfaceWord) : normalizeGreekWord(origSurfaceWord);
-                matchedOrigTok = bankTokens.find(t => {
+                const approxIdx = Math.min(bankTokens.length - 1, Math.max(0, Math.round(relativePos * (bankTokens.length - 1))));
+                let bestDist = 9999;
+                bankTokens.forEach((t, tIdx) => {
                     const tSurf = t.dataset.surface || '';
-                    return isOt ? (normalizeHebrewConsonants(tSurf) === normTarget) : (normalizeGreekWord(tSurf) === normTarget);
-                }) || bankTokens[Math.min(bankTokens.length - 1, Math.max(0, Math.round(relativePos * (bankTokens.length - 1))))];
+                    const tNorm = isOt ? normalizeHebrewConsonants(tSurf) : normalizeGreekWord(tSurf);
+                    if (tNorm && normTargets.some(nt => nt === tNorm || (nt.length >= 3 && (tNorm.includes(nt) || nt.includes(tNorm))))) {
+                        const dist = Math.abs(tIdx - approxIdx);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            matchedOrigTok = t;
+                        }
+                    }
+                });
+                if (!matchedOrigTok) {
+                    matchedOrigTok = bankTokens[approxIdx];
+                }
+            }
+
+            // If bankToken didn't have a gloss (e.g. unpointed fallback), resolve it on the fly!
+            let glossStr = matchedOrigTok ? ((matchedOrigTok.dataset.kjvGloss || '') + ' ' + (matchedOrigTok.dataset.gloss || '')).toLowerCase().trim() : '';
+            let strongsCode = matchedOrigTok ? (matchedOrigTok.dataset.strongs || '').toUpperCase() : '';
+            if (!glossStr && origSurfaceWord) {
+                const liveResolved = isOt ? resolveHebrewSurfaceWord(origSurfaceWord, strongsCode) : resolveGreekSurfaceWord(origSurfaceWord, '', strongsCode);
+                if (liveResolved) {
+                    glossStr = ((liveResolved.kjvGlossLower || '') + ' ' + (liveResolved.glossLower || '')).trim();
+                    if (!strongsCode && liveResolved.strongs) strongsCode = liveResolved.strongs.toUpperCase();
+                }
             }
 
             const engSpans = Array.from(contentEl.querySelectorAll(`.eng-parallel-token[data-verse-num="${verseNum}"]`));
@@ -8446,10 +8885,9 @@
                 return;
             }
 
+            const engStopWords = new Set(['the', 'and', 'to', 'of', 'in', 'a', 'an', 'that', 'was', 'is', 'it', 'for', 'with', 'on', 'upon', 'over']);
             let bestEngSpan = null;
             let bestScore = -1;
-            const glossStr = matchedOrigTok ? ((matchedOrigTok.dataset.kjvGloss || '') + ' ' + (matchedOrigTok.dataset.gloss || '')).toLowerCase() : '';
-            const strongsCode = matchedOrigTok ? (matchedOrigTok.dataset.strongs || '') : '';
 
             engSpans.forEach((sp, idx) => {
                 const cleanW = (sp.dataset.word || '').toLowerCase().replace(/[^a-z]/g, '');
@@ -8457,16 +8895,29 @@
                 const spRelPos = engSpans.length > 1 ? (idx / (engSpans.length - 1)) : 0.5;
                 const posProx = 1 - Math.abs(spRelPos - relativePos);
                 let score = 0;
-                if (strongsCode && emtvDirectStrongsBoost[cleanW] && emtvDirectStrongsBoost[cleanW].includes(strongsCode)) {
-                    score = 500 + posProx * 30;
-                } else {
-                    const terms = getEnglishSearchTerms(cleanW);
-                    for (const t of terms) {
-                        if (t.length >= 2 && new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(glossStr)) {
-                            score = Math.max(score, 120 + posProx * 25);
+
+                if (strongsCode && typeof strictConstructConceptLexemes !== 'undefined') {
+                    Object.values(strictConstructConceptLexemes).forEach(cfg => {
+                        if (cfg.strongs.includes(strongsCode) && cfg.engForms.includes(cleanW)) {
+                            score = Math.max(score, 650 + posProx * 40);
                         }
+                    });
+                }
+                if (strongsCode && emtvDirectStrongsBoost[cleanW] && emtvDirectStrongsBoost[cleanW].includes(strongsCode)) {
+                    score = Math.max(score, 550 + posProx * 35);
+                }
+
+                const terms = new Set(getEnglishSearchTerms(cleanW));
+                if (englishFunctionWordGlosses[cleanW]) {
+                    englishFunctionWordGlosses[cleanW].forEach(t => terms.add(t));
+                }
+                for (const t of terms) {
+                    if (t.length >= 2 && glossStr && new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(glossStr)) {
+                        const baseVal = engStopWords.has(cleanW) ? 75 : 220;
+                        score = Math.max(score, baseVal + posProx * 45);
                     }
                 }
+
                 if (score > bestScore) {
                     bestScore = score;
                     bestEngSpan = sp;
@@ -8478,20 +8929,47 @@
             }
 
             if (bestEngSpan) {
-                bestEngSpan.classList.add('orig-word-active');
-                updateParallelHoverInfoBar(bestEngSpan.dataset.word || bestEngSpan.textContent, matchedOrigTok);
+                if (typeof styleActiveRightPaneEnglishToken === 'function') {
+                    styleActiveRightPaneEnglishToken(bestEngSpan);
+                } else {
+                    bestEngSpan.classList.add('orig-word-active');
+                    bestEngSpan.style.backgroundColor = 'rgba(59, 130, 246, 0.28)';
+                    bestEngSpan.style.border = '1.5px solid rgba(59, 130, 246, 0.88)';
+                }
+                if (matchedOrigTok) {
+                    updateParallelHoverInfoBar(bestEngSpan.dataset.word || bestEngSpan.textContent, matchedOrigTok);
+                }
+
+                const cRect = contentEl.getBoundingClientRect();
+                const tRect = bestEngSpan.getBoundingClientRect();
+                if (tRect.top < cRect.top + 20 || tRect.bottom > cRect.bottom - 20) {
+                    bestEngSpan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             }
         }
 
-        function handleRightPaneEnglishWordHover(engSpanEl) {
+        async function handleRightPaneEnglishWordHover(engSpanEl) {
             if (!isParallelViewActive || !engSpanEl) return;
             if (isWordHoverFrozen(window.event) && lastHoveredEngKey) return;
 
             const contentEl = document.getElementById('parallelOriginalContent');
             if (contentEl) {
-                contentEl.querySelectorAll('.orig-word-active').forEach(el => el.classList.remove('orig-word-active'));
+                contentEl.querySelectorAll('.orig-word-active').forEach(el => {
+                    el.classList.remove('orig-word-active');
+                    if (el.classList.contains('eng-parallel-token')) {
+                        el.style.backgroundColor = '';
+                        el.style.border = '';
+                        el.style.color = '';
+                        el.style.boxShadow = '';
+                    }
+                });
             }
-            engSpanEl.classList.add('orig-word-active');
+            if (typeof styleActiveRightPaneEnglishToken === 'function') {
+                styleActiveRightPaneEnglishToken(engSpanEl);
+            } else {
+                engSpanEl.classList.add('orig-word-active');
+                engSpanEl.style.backgroundColor = 'rgba(59, 130, 246, 0.28)';
+            }
 
             const engWord = engSpanEl.dataset.word || engSpanEl.textContent.trim();
             const bookNum = parseInt(engSpanEl.dataset.bookNum || '40', 10);
@@ -8501,46 +8979,71 @@
             const totalWords = Math.max(1, parseInt(engSpanEl.dataset.totalWords || '1', 10));
             const relPos = totalWords > 1 ? (wordIdx / (totalWords - 1)) : 0.5;
 
-            // Find matching original token from the hidden bank to update the info bar & highlight the matching Greek/Hebrew word in #flowEditor on the Left!
-            highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, engWord, relPos);
-            const activeOrigTok = contentEl ? contentEl.querySelector('.orig-word-token.orig-word-active') : null;
-            if (!activeOrigTok || !editor) return;
+            const activeOrigTok = await highlightMatchingOriginalWords(bookNum, chapterNum, verseNum, engWord, relPos);
+            const matchedTok = activeOrigTok || (contentEl ? contentEl.querySelector('.orig-word-token.orig-word-active') : null);
+            if (!matchedTok || !editor) return;
 
             const isOt = bookNum <= 39;
-            const targetSurf = activeOrigTok.dataset.surface || '';
+            const targetSurf = matchedTok.dataset.surface || '';
             const normTarget = isOt ? normalizeHebrewConsonants(targetSurf) : normalizeGreekWord(targetSurf);
 
             const verseBlocks = Array.from(editor.querySelectorAll(
                 `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${verseNum}"]:not(.lex-chapter-banner)`
             ));
+
+            const origCandidates = [];
             for (const blk of verseBlocks) {
                 const walker = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT, null, false);
                 let tNode;
                 while ((tNode = walker.nextNode())) {
                     const txt = tNode.nodeValue || '';
-                    const wRegex = /[\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F]+/g;
+                    const wRegex = /[\u0300-\u036F\u0370-\u03FF\u1F00-\u1FFF\u0590-\u05FF\uFB1D-\uFB4F]+/g;
                     let m;
                     while ((m = wRegex.exec(txt)) !== null) {
-                        const candNorm = isOt ? normalizeHebrewConsonants(m[0]) : normalizeGreekWord(m[0]);
-                        if (candNorm && candNorm === normTarget) {
-                            const r = document.createRange();
-                            r.setStart(tNode, m.index);
-                            r.setEnd(tNode, m.index + m[0].length);
-                            const rects = r.getClientRects();
-                            const hoverBox = document.getElementById('englishHoverHighlightBox');
-                            const wrapper = document.getElementById('editorWrapper');
-                            if (rects.length > 0 && hoverBox && wrapper) {
-                                const wRect = wrapper.getBoundingClientRect();
-                                const rect = rects[0];
-                                hoverBox.style.display = 'block';
-                                hoverBox.style.left = `${rect.left - wRect.left - 3}px`;
-                                hoverBox.style.top = `${rect.top - wRect.top - 1}px`;
-                                hoverBox.style.width = `${rect.width + 6}px`;
-                                hoverBox.style.height = `${rect.height + 2}px`;
-                            }
-                            return;
-                        }
+                        origCandidates.push({
+                            node: tNode,
+                            start: m.index,
+                            end: m.index + m[0].length,
+                            word: m[0],
+                            norm: isOt ? normalizeHebrewConsonants(m[0]) : normalizeGreekWord(m[0])
+                        });
                     }
+                }
+            }
+
+            if (origCandidates.length === 0) return;
+            const approxOrigIdx = Math.min(origCandidates.length - 1, Math.max(0, Math.round(relPos * (origCandidates.length - 1))));
+            let bestCand = null;
+            let bestDist = 9999;
+
+            origCandidates.forEach((cand, cIdx) => {
+                if (cand.norm && (cand.norm === normTarget || (normTarget.length >= 3 && cand.norm.includes(normTarget)))) {
+                    const dist = Math.abs(cIdx - approxOrigIdx);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestCand = cand;
+                    }
+                }
+            });
+            if (!bestCand) {
+                bestCand = origCandidates[approxOrigIdx];
+            }
+
+            if (bestCand) {
+                const r = document.createRange();
+                r.setStart(bestCand.node, bestCand.start);
+                r.setEnd(bestCand.node, bestCand.end);
+                const rects = r.getClientRects();
+                const hoverBox = document.getElementById('englishHoverHighlightBox');
+                const wrapper = document.getElementById('editorWrapper');
+                if (rects.length > 0 && hoverBox && wrapper) {
+                    const wRect = wrapper.getBoundingClientRect();
+                    const rect = rects[0];
+                    hoverBox.style.display = 'block';
+                    hoverBox.style.left = `${rect.left - wRect.left - 3}px`;
+                    hoverBox.style.top = `${rect.top - wRect.top - 1}px`;
+                    hoverBox.style.width = `${rect.width + 6}px`;
+                    hoverBox.style.height = `${rect.height + 2}px`;
                 }
             }
         }
@@ -9551,8 +10054,9 @@
             menu.style.top = `${topPx}px`;
         }
 
-        function showContextMenu(x, y) {
+function showContextMenu(x, y) {
             if (!contextMenu) return;
+            updateTestamentLexiconButtonsVisibility(rightClickedBlock);
             hideSemanticMenu();
             contextMenu.style.display = 'block';
             const winWidth = window.innerWidth;
@@ -9877,6 +10381,34 @@
             setTimeout(() => { printWindow.print(); }, 300);
         }
 
+       function updateTestamentLexiconButtonsVisibility(contextBlock = null) {
+            const blk = contextBlock || lastSelectedBlock || rightClickedBlock || findTopVisibleVerseBlock();
+            const bookNum = blk && blk.dataset && blk.dataset.bookNum ? parseInt(blk.dataset.bookNum, 10) : 40;
+            const isOt = bookNum >= 1 && bookNum <= 39;
+
+            // 1. Floating Selection Toolbar buttons
+            const btnThayers = document.getElementById('hlBtnThayers');
+            const btnAbbott = document.getElementById('hlBtnAbbottSmith');
+            const btnBdb = document.getElementById('hlBtnBdb');
+            const btnGesenius = document.getElementById('hlBtnGesenius');
+
+            if (btnThayers) btnThayers.classList.toggle('hidden', isOt);
+            if (btnAbbott) btnAbbott.classList.toggle('hidden', isOt);
+            if (btnBdb) btnBdb.classList.toggle('hidden', !isOt);
+            if (btnGesenius) btnGesenius.classList.toggle('hidden', !isOt);
+
+            // 2. Right-Click Context Menu items
+            const ctxThayers = document.getElementById('ctxItemThayers');
+            const ctxAbbott = document.getElementById('ctxItemAbbott');
+            const ctxBdb = document.getElementById('ctxItemBdb');
+            const ctxGesenius = document.getElementById('ctxItemGesenius');
+
+            if (ctxThayers) ctxThayers.classList.toggle('hidden', isOt);
+            if (ctxAbbott) ctxAbbott.classList.toggle('hidden', isOt);
+            if (ctxBdb) ctxBdb.classList.toggle('hidden', !isOt);
+            if (ctxGesenius) ctxGesenius.classList.toggle('hidden', !isOt);
+        }
+
         function handleTextSelection() {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !editor.contains(selection.anchorNode)) {
@@ -9893,6 +10425,8 @@
                     activeThayersClauseBlock = node;
                 }
             }
+            updateTestamentLexiconButtonsVisibility(lastSelectedBlock);
+
             const range = selection.getRangeAt(0);
             const rect = range.getBoundingClientRect();
             const wrapperRect = document.getElementById('editorWrapper').getBoundingClientRect();
