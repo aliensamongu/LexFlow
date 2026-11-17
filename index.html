@@ -20290,6 +20290,690 @@ function showContextMenu(x, y) {
                 }
             }, 120);
         })();
+
+	/* =========================================================================
+           SEMANTIC TRANSLATION MOSAIC (2D PROPORTIONAL SLICED BOX TREEMAP)
+           Shows how any Greek (SRGNT) or Hebrew (WLC) word is translated into English
+           across the active Bible version, with clickable tiles & verse drill-down!
+           ========================================================================= */
+
+        let currentMosaicState = null;
+
+        function ensureTranslationMosaicModalExists() {
+            if (document.getElementById('translationMosaicModal')) return;
+            const modalHtml = `
+                <div id="translationMosaicModal" class="fixed inset-0 z-[585] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 hidden">
+                    <div class="glass-panel w-full max-w-6xl h-[92vh] flex flex-col relative overflow-hidden">
+                        <!-- Header -->
+                        <div class="px-5 py-3.5 bg-gradient-to-r from-indigo-50/95 via-white/95 to-teal-50/95 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 border-b border-indigo-200/80 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 rounded-xl text-white shadow-sm" style="background: linear-gradient(135deg, #4f46e5, #0d9488);">
+                                    <i class="fa-solid fa-table-cells-large text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <h3 id="mosaicModalTitle" class="text-base font-bold text-gray-900 dark:text-white">Semantic Translation Mosaic</h3>
+                                        <span id="mosaicTotalHitsBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700">0 occurrences</span>
+                                        <span id="mosaicActiveVersionBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800">BSB</span>
+                                    </div>
+                                    <p id="mosaicModalSubtitle" class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">Proportional 2D Sliced Box showing every English word used to translate this original root • Click any slice to inspect its verses</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center flex-wrap gap-2">
+                                <!-- Quick Search Any Root or Strong's Inside Mosaic -->
+                                <div class="flex items-center bg-white/90 dark:bg-zinc-800 rounded-xl px-2.5 py-1 border border-gray-300 dark:border-zinc-700 space-x-1.5">
+                                    <i class="fa-solid fa-magnifying-glass text-indigo-500 text-xs"></i>
+                                    <input type="text" id="mosaicDirectLookupInput" placeholder="Strong's or Greek/Heb (e.g. G25, H2617, λόγος)..."
+                                           onkeydown="if(event.key==='Enter'){ event.preventDefault(); runDirectMosaicLookupFromInput(); }"
+                                           class="select-text bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-100 outline-none w-44 sm:w-52">
+                                    <button type="button" onclick="runDirectMosaicLookupFromInput()" class="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition cursor-pointer">Slice</button>
+                                </div>
+                                <button type="button" id="mosaicOpenLexiconBtn" class="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-book-open text-xs"></i>
+                                    <span>Lexicon</span>
+                                </button>
+                                <button type="button" onclick="closeTranslationMosaicModal()" class="text-gray-400 hover:text-red-500 dark:hover:text-gray-200 text-lg font-bold px-2 py-0.5 rounded transition cursor-pointer" title="Close Translation Mosaic (Esc)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Body: 1. Proportional Sliced Box (2D Treemap) + Spectrum Bar -> 2. Filtered Verses Concordance -->
+                        <div class="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-4 bg-gray-50/70 dark:bg-zinc-900/70">
+                            <!-- 1. SLICED BOX CONTAINER -->
+                            <div id="mosaicTreemapContainer" class="p-4 rounded-2xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 shadow-sm space-y-3">
+                            </div>
+
+                            <!-- 2. CLICKED SLICE VERSE CONCORDANCE LIST -->
+                            <div id="mosaicVersesDrilldownContainer" class="space-y-2.5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeTranslationMosaicModal() {
+            const modal = document.getElementById('translationMosaicModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function runDirectMosaicLookupFromInput() {
+            const inp = document.getElementById('mosaicDirectLookupInput');
+            if (!inp || !inp.value.trim()) return;
+            const q = inp.value.trim();
+            ensureLexiconLookupMaps();
+
+            // Check if Strong's number (G#### or H####)
+            const sMatch = q.match(/^([GHgh])0*(\d{1,4})$/);
+            if (sMatch) {
+                const prefix = sMatch[1].toUpperCase();
+                const code = prefix + sMatch[2];
+                const isOt = (prefix === 'H');
+                const dict = isOt
+                    ? (typeof strongsHebrewDictionary !== 'undefined' ? strongsHebrewDictionary[code] : null)
+                    : (typeof strongsGreekDictionary !== 'undefined' ? strongsGreekDictionary[code] : null);
+                const lemma = dict ? (dict.lemma || code) : code;
+                await openTranslationMosaicModal({ strongs: code, lemma, surface: lemma, isOt });
+                return;
+            }
+
+            // Check if Hebrew or Greek script
+            if (/[\u0590-\u05FF]/.test(q)) {
+                const res = resolveHebrewSurfaceWord(q, '');
+                await openTranslationMosaicModal({
+                    strongs: res.strongs || '',
+                    lemma: res.lemma || q,
+                    surface: q,
+                    isOt: true
+                });
+                return;
+            }
+            if (/[\u0370-\u03FF\u1F00-\u1FFF]/.test(q)) {
+                const res = resolveGreekSurfaceWord(q, q, '');
+                await openTranslationMosaicModal({
+                    strongs: res.strongs || '',
+                    lemma: res.lemma || q,
+                    surface: q,
+                    isOt: false
+                });
+                return;
+            }
+
+            // Otherwise search English / transliteration in Strong's dictionaries
+            const low = q.toLowerCase();
+            if (typeof strictConstructConceptLexemes !== 'undefined' && strictConstructConceptLexemes[low]) {
+                const cfg = strictConstructConceptLexemes[low];
+                const code = cfg.strongs[0];
+                const isOt = code.startsWith('H');
+                await openTranslationMosaicModal({ strongs: code, lemma: cfg.lemmas[0] || q, surface: q, isOt });
+                return;
+            }
+            if (greekByNormLemmaMap) {
+                for (const [k, obj] of greekByNormLemmaMap.entries()) {
+                    if (k.startsWith('G') && (obj.translit.toLowerCase() === low || obj.kjvGlossLower.includes(low))) {
+                        await openTranslationMosaicModal({ strongs: obj.strongs, lemma: obj.lemma, surface: obj.lemma, isOt: false });
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Binary-Tree 2D Squarified Treemap Layout Algorithm:
+        //Recursively partitions a [0..100]% x [0..100]% box into crisp proportional rectangles!
+        function computeSlicedBoxTreemapLayout(items, x = 0, y = 0, w = 100, h = 100) {
+            if (!items || items.length === 0) return [];
+            if (items.length === 1) {
+                return [{ ...items[0], x, y, w, h }];
+            }
+            const total = items.reduce((acc, it) => acc + it.count, 0);
+            if (total <= 0) return [];
+
+            let halfSum = 0;
+            let splitIdx = 0;
+            for (let i = 0; i < items.length - 1; i++) {
+                halfSum += items[i].count;
+                splitIdx = i + 1;
+                if (halfSum >= total * 0.45) break;
+            }
+
+            const leftItems = items.slice(0, splitIdx);
+            const rightItems = items.slice(splitIdx);
+            const leftRatio = halfSum / total;
+
+            // Split horizontally (left/right) if box is wider than tall, or vertically (top/bottom) if taller than wide
+            if (w >= h) {
+                const w1 = w * leftRatio;
+                return [
+                    ...computeSlicedBoxTreemapLayout(leftItems, x, y, w1, h),
+                    ...computeSlicedBoxTreemapLayout(rightItems, x + w1, y, w - w1, h)
+                ];
+            } else {
+                const h1 = h * leftRatio;
+                return [
+                    ...computeSlicedBoxTreemapLayout(leftItems, x, y, w, h1),
+                    ...computeSlicedBoxTreemapLayout(rightItems, x, y + h1, w, h - h1)
+                ];
+            }
+        }
+
+        const mosaicSlicePalette = [
+            { bg: 'linear-gradient(135deg, #4f46e5, #4338ca)', border: '#6366f1', text: '#ffffff', pillBg: '#eef2ff', pillText: '#4338ca' },
+            { bg: 'linear-gradient(135deg, #0d9488, #0f766e)', border: '#14b8a6', text: '#ffffff', pillBg: '#f0fdfa', pillText: '#0f766e' },
+            { bg: 'linear-gradient(135deg, #0284c7, #0369a1)', border: '#38bdf8', text: '#ffffff', pillBg: '#f0f9ff', pillText: '#0369a1' },
+            { bg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', border: '#a78bfa', text: '#ffffff', pillBg: '#f5f3ff', pillText: '#6d28d9' },
+            { bg: 'linear-gradient(135deg, #d97706, #b45309)', border: '#fbbf24', text: '#ffffff', pillBg: '#fffbeb', pillText: '#b45309' },
+            { bg: 'linear-gradient(135deg, #059669, #047857)', border: '#34d399', text: '#ffffff', pillBg: '#ecfdf5', pillText: '#047857' },
+            { bg: 'linear-gradient(135deg, #e11d48, #be123c)', border: '#fb7185', text: '#ffffff', pillBg: '#fff1f2', pillText: '#be123c' },
+            { bg: 'linear-gradient(135deg, #2563eb, #1d4ed8)', border: '#60a5fa', text: '#ffffff', pillBg: '#eff6ff', pillText: '#1d4ed8' },
+            { bg: 'linear-gradient(135deg, #9333ea, #7e22ce)', border: '#c084fc', text: '#ffffff', pillBg: '#faf5ff', pillText: '#7e22ce' },
+            { bg: 'linear-gradient(135deg, #ea580c, #c2410c)', border: '#fb923c', text: '#ffffff', pillBg: '#fff7ed', pillText: '#c2410c' },
+            { bg: 'linear-gradient(135deg, #475569, #334155)', border: '#94a3b8', text: '#ffffff', pillBg: '#f1f5f9', pillText: '#334155' }
+        ];
+
+        function findBestEnglishRenderingInVerseForToken(engVerseText, tokIdx, totalToks, glossTermsSet, kjvPrimaryTermsSet, isOt) {
+            if (!engVerseText) return '(untranslated / idiom)';
+            const rawWords = engVerseText.split(/\s+/).filter(Boolean);
+            if (rawWords.length === 0) return '(untranslated / idiom)';
+
+            const relPos = totalToks > 1 ? (tokIdx / (totalToks - 1)) : 0.5;
+            const strictStopWords = new Set([
+                'the', 'and', 'of', 'to', 'in', 'a', 'an', 'that', 'for', 'with', 'on', 'as', 'at', 'by', 'from',
+                'is', 'was', 'are', 'were', 'be', 'been', 'will', 'shall', 'have', 'has', 'had', 'do', 'does', 'did',
+                'not', 'no', 'but', 'or', 'if', 'when', 'who', 'whom', 'which', 'what', 'this', 'these', 'those',
+                'he', 'him', 'his', 'she', 'her', 'it', 'its', 'they', 'them', 'their', 'we', 'us', 'our', 'you', 'your', 'i', 'me', 'my'
+            ]);
+
+            let bestWordDisplay = '';
+            let bestWordKey = '';
+            let bestScore = -1;
+
+            for (let i = 0; i < rawWords.length; i++) {
+                const cleanW = rawWords[i].replace(/^[^a-zA-Z0-9’']+|[^a-zA-Z0-9’']+$/g, '');
+                const lowW = cleanW.toLowerCase().replace(/[^a-z]/g, '');
+                if (lowW.length < 2) continue;
+
+                const engRelPos = rawWords.length > 1 ? (i / (rawWords.length - 1)) : 0.5;
+                const posProx = 1 - Math.abs(engRelPos - relPos);
+                const wordStems = getEnglishSearchTerms(lowW);
+
+                let score = 0;
+                const isStop = strictStopWords.has(lowW);
+
+                // Priority 1: Exact or stem match in KJV / Primary Lexicon Glosses
+                if (kjvPrimaryTermsSet.has(lowW) || wordStems.some(s => kjvPrimaryTermsSet.has(s))) {
+                    score = (isStop ? 90 : 350) + (posProx * 60);
+                }
+                // Priority 2: Match in broader Strong's / BDB / Thayer's definition terms
+                else if (glossTermsSet.has(lowW) || wordStems.some(s => glossTermsSet.has(s))) {
+                    score = (isStop ? 60 : 210) + (posProx * 50);
+                }
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestWordDisplay = cleanW.toLowerCase();
+                    bestWordKey = lowW;
+                }
+            }
+
+            if (bestScore > 0 && bestWordKey) {
+                return bestWordDisplay;
+            }
+
+            // Fallback: nearest non-stopword content word at the proportional verse position
+            const approxIdx = Math.min(rawWords.length - 1, Math.max(0, Math.round(relPos * (rawWords.length - 1))));
+            for (let d = 0; d <= 3; d++) {
+                for (const candIdx of [approxIdx + d, approxIdx - d]) {
+                    if (candIdx >= 0 && candIdx < rawWords.length) {
+                        const cw = rawWords[candIdx].replace(/^[^a-zA-Z0-9’']+|[^a-zA-Z0-9’']+$/g, '').toLowerCase();
+                        if (cw.length >= 3 && !strictStopWords.has(cw)) {
+                            return cw;
+                        }
+                    }
+                }
+            }
+            return '(contextual / phrase)';
+        }
+
+        async function openTranslationMosaicModal(wordInput) {
+            ensureTranslationMosaicModalExists();
+            ensureLexiconLookupMaps();
+
+            const modal = document.getElementById('translationMosaicModal');
+            const treemapBox = document.getElementById('mosaicTreemapContainer');
+            const drilldownBox = document.getElementById('mosaicVersesDrilldownContainer');
+            const titleEl = document.getElementById('mosaicModalTitle');
+            const badgeEl = document.getElementById('mosaicTotalHitsBadge');
+            const verBadgeEl = document.getElementById('mosaicActiveVersionBadge');
+            const lexBtn = document.getElementById('mosaicOpenLexiconBtn');
+
+            if (!modal || !treemapBox || !drilldownBox) return;
+            modal.classList.remove('hidden');
+
+            let strongs = (wordInput && wordInput.strongs) ? String(wordInput.strongs).toUpperCase() : '';
+            let lemma = (wordInput && wordInput.lemma) ? wordInput.lemma : ((wordInput && wordInput.surface) || '');
+            const surface = (wordInput && wordInput.surface) || lemma;
+            const isOt = (wordInput && typeof wordInput.isOt === 'boolean')
+                ? wordInput.isOt
+                : (strongs.startsWith('H') || /[\u0590-\u05FF]/.test(lemma || surface));
+
+            // Resolve Strong's & Lemma if only surface/lemma was passed
+            if (!strongs || !lemma) {
+                const resolved = isOt
+                    ? resolveHebrewSurfaceWord(surface || lemma, strongs)
+                    : resolveGreekSurfaceWord(surface || lemma, lemma, strongs);
+                if (resolved) {
+                    if (!strongs && resolved.strongs) strongs = resolved.strongs.toUpperCase();
+                    if (!lemma && resolved.lemma) lemma = resolved.lemma;
+                }
+            }
+
+            const dictObj = isOt
+                ? (strongs && typeof strongsHebrewDictionary !== 'undefined' ? strongsHebrewDictionary[strongs] : null)
+                : (strongs && typeof strongsGreekDictionary !== 'undefined' ? strongsGreekDictionary[strongs] : null);
+
+            if (dictObj && dictObj.lemma) lemma = dictObj.lemma;
+            const translit = dictObj ? (dictObj.translit || dictObj.xlit || '') : '';
+            const kjvDefRaw = dictObj ? ((dictObj.kjv_def || '').replace(/^:\s*--+/, '').trim()) : '';
+            const strongsDefRaw = dictObj ? (dictObj.strongs_def || '') : '';
+
+            const activeVerLabel = currentOtVersionSlug || 'BSB';
+            if (verBadgeEl) verBadgeEl.textContent = `${activeVerLabel} English`;
+            if (titleEl) {
+                titleEl.innerHTML = `
+                    <span class="font-serif text-xl font-bold mr-1.5" dir="${isOt ? 'rtl' : 'ltr'}">${escapeHtmlText(lemma || surface)}</span>
+                    ${translit ? `<span class="text-xs italic font-normal text-gray-500 dark:text-gray-400 mr-1">(${escapeHtmlText(translit)})</span>` : ''}
+                    ${strongs ? `<span class="px-2 py-0.5 text-xs font-mono font-bold rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">${escapeHtmlText(strongs)}</span>` : ''}
+                `;
+            }
+            if (lexBtn) {
+                lexBtn.onclick = () => {
+                    closeTranslationMosaicModal();
+                    if (isOt) openBdbModal(strongs || lemma || surface);
+                    else openThayersModal(strongs || lemma || surface);
+                };
+            }
+
+            treemapBox.innerHTML = `<div class="p-8 text-center text-xs text-gray-500 dark:text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-500"></i>Scanning ${isOt ? 'Hebrew Old Testament (WLC)' : 'Greek New Testament (SRGNT)'} &amp; building proportional Translation Mosaic for <strong>${escapeHtmlText(lemma || strongs)}</strong>...</div>`;
+            drilldownBox.innerHTML = '';
+
+            // Build gloss word sets for accurate English word alignment in each verse
+            const kjvPrimaryTermsSet = new Set();
+            const glossTermsSet = new Set();
+            const stopSet = new Set(['the', 'and', 'to', 'of', 'in', 'a', 'for', 'with', 'that', 'is', 'was', 'be', 'by', 'or', 'as', 'at', 'from', 'on', 'into', 'out', 'up', 'so', 'idiom', 'literally', 'figuratively', 'properly', 'compare']);
+
+            String(kjvDefRaw).replace(/\([^)]*\)/g, ' ').toLowerCase().split(/[^a-z]+/).forEach(w => {
+                if (w.length >= 2 && !stopSet.has(w)) {
+                    kjvPrimaryTermsSet.add(w);
+                    getEnglishSearchTerms(w).forEach(st => kjvPrimaryTermsSet.add(st));
+                }
+            });
+            String(kjvDefRaw + ' ' + strongsDefRaw).replace(/\([^)]*\)/g, ' ').toLowerCase().split(/[^a-z]+/).forEach(w => {
+                if (w.length >= 2 && !stopSet.has(w)) {
+                    glossTermsSet.add(w);
+                    getEnglishSearchTerms(w).forEach(st => glossTermsSet.add(st));
+                }
+            });
+            if (typeof strictConstructConceptLexemes !== 'undefined') {
+                Object.values(strictConstructConceptLexemes).forEach(cfg => {
+                    if (strongs && cfg.strongs.includes(strongs)) {
+                        cfg.engForms.forEach(ef => {
+                            kjvPrimaryTermsSet.add(ef);
+                            glossTermsSet.add(ef);
+                        });
+                    }
+                });
+            }
+
+            // Load English verses & Original Testament verses
+            const allEngVerses = await getFullCorpusVerses('emtv', true);
+            const engMap = new Map();
+            allEngVerses.forEach(ev => {
+                engMap.set(`${ev.bookNum}_${ev.chapter}_${ev.verse}`, ev.text);
+            });
+
+            const normTargetLemma = isOt ? normalizeHebrewConsonants(lemma || surface) : normalizeGreekWord(lemma || surface);
+            const matchingVerseHits = [];
+
+            if (!isOt) {
+                // Scan all 27 Greek NT Books
+                const ntNums = [];
+                for (let b = 40; b <= 66; b++) ntNums.push(b);
+                const ntBooks = await Promise.all(ntNums.map(b => fetchGreekNtBookVerses(b)));
+                ntBooks.forEach(bv => {
+                    if (!Array.isArray(bv)) return;
+                    bv.forEach(v => {
+                        const vKey = `${v.bookNum}_${v.chapter}_${v.verse}`;
+                        const toks = (scriptureDataCache.srgntVerseTokensMap && scriptureDataCache.srgntVerseTokensMap.has(vKey))
+                            ? scriptureDataCache.srgntVerseTokensMap.get(vKey)
+                            : [];
+                        toks.forEach((tok, tIdx) => {
+                            const tStrong = (tok.strongs || '').toUpperCase();
+                            const tLem = normalizeGreekWord(tok.lemma || tok.surface || '');
+                            let isHit = false;
+                            if (strongs && tStrong === strongs) isHit = true;
+                            else if (normTargetLemma && tLem === normTargetLemma) isHit = true;
+                            else if (strongs && !tStrong && tLem) {
+                                const res = resolveGreekSurfaceWord(tok.surface || '', tok.lemma || '', '');
+                                if (res && res.strongs === strongs) isHit = true;
+                            }
+                            if (isHit) {
+                                const engText = engMap.get(vKey) || '';
+                                const engWord = findBestEnglishRenderingInVerseForToken(engText, tIdx, toks.length, glossTermsSet, kjvPrimaryTermsSet, false);
+                                matchingVerseHits.push({
+                                    bookNum: v.bookNum,
+                                    bookName: v.bookName,
+                                    chapter: v.chapter,
+                                    verse: v.verse,
+                                    origSurface: tok.surface || lemma,
+                                    origVerseText: v.text,
+                                    engVerseText: engText,
+                                    engRendering: engWord
+                                });
+                            }
+                        });
+                    });
+                });
+            } else {
+                // Scan Hebrew OT Books (prioritizing loaded books + full WLC)
+                const otVerses = await getHebrewOldTestamentVerses();
+                for (let i = 0; i < otVerses.length; i++) {
+                    const v = otVerses[i];
+                    const vKey = `${v.bookNum}_${v.chapter}_${v.verse}`;
+                    const toks = (scriptureDataCache.wlcVerseTokensMap && scriptureDataCache.wlcVerseTokensMap.has(vKey))
+                        ? scriptureDataCache.wlcVerseTokensMap.get(vKey)
+                        : [];
+                    if (toks.length > 0) {
+                        toks.forEach((tok, tIdx) => {
+                            const tStrong = (tok.strongs || '').toUpperCase();
+                            let isHit = false;
+                            if (strongs && tStrong === strongs) {
+                                isHit = true;
+                            } else if (!tStrong && normTargetLemma) {
+                                const c = normalizeHebrewConsonants(tok.surface || '');
+                                if (c === normTargetLemma) isHit = true;
+                            }
+                            if (isHit) {
+                                const engText = engMap.get(vKey) || '';
+                                const engWord = findBestEnglishRenderingInVerseForToken(engText, tIdx, toks.length, glossTermsSet, kjvPrimaryTermsSet, true);
+                                matchingVerseHits.push({
+                                    bookNum: v.bookNum,
+                                    bookName: v.bookName,
+                                    chapter: v.chapter,
+                                    verse: v.verse,
+                                    origSurface: tok.surface || lemma,
+                                    origVerseText: v.text,
+                                    engVerseText: engText,
+                                    engRendering: engWord
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (badgeEl) {
+                badgeEl.textContent = `${matchingVerseHits.length.toLocaleString()} occurrence${matchingVerseHits.length === 1 ? '' : 's'}`;
+            }
+
+            if (matchingVerseHits.length === 0) {
+                treemapBox.innerHTML = `<div class="p-6 text-center text-sm text-gray-500">No occurrences found for <strong>${escapeHtmlText(lemma || strongs)}</strong>. Try typing another Strong's code (e.g. G25, G3056, H430, H2617) in the top box.</div>`;
+                return;
+            }
+
+            // Group occurrences by English rendering (merging singular/capitalization cleanly)
+            const groupsMap = new Map();
+            matchingVerseHits.forEach(hit => {
+                const key = (hit.engRendering || '(contextual)').toLowerCase().trim();
+                if (!groupsMap.has(key)) {
+                    groupsMap.set(key, {
+                        key: key,
+                        label: key.charAt(0).toUpperCase() + key.slice(1),
+                        count: 0,
+                        hits: []
+                    });
+                }
+                const g = groupsMap.get(key);
+                g.count++;
+                g.hits.push(hit);
+            });
+
+            const sortedGroups = Array.from(groupsMap.values()).sort((a, b) => b.count - a.count);
+
+            // Take top 10 distinct English translations as main slices, and bundle any tail into "Other Renderings"
+            let displaySlices = sortedGroups.slice(0, 10);
+            if (sortedGroups.length > 10) {
+                const tail = sortedGroups.slice(10);
+                const tailHits = [];
+                let tailCount = 0;
+                tail.forEach(t => {
+                    tailCount += t.count;
+                    tailHits.push(...t.hits);
+                });
+                displaySlices.push({
+                    key: '__other__',
+                    label: `Other (${tail.length} words)`,
+                    count: tailCount,
+                    hits: tailHits,
+                    subWords: tail.map(t => `${t.label} (${t.count})`).join(', ')
+                });
+            }
+
+            currentMosaicState = {
+                strongs,
+                lemma,
+                translit,
+                isOt,
+                totalOccurrences: matchingVerseHits.length,
+                allHits: matchingVerseHits,
+                slices: displaySlices,
+                selectedSliceKey: displaySlices[0].key
+            };
+
+            renderTranslationMosaicUI();
+        }
+
+        function selectMosaicTranslationSlice(sliceKey) {
+            if (!currentMosaicState) return;
+            currentMosaicState.selectedSliceKey = sliceKey;
+            renderTranslationMosaicUI();
+        }
+
+        function renderTranslationMosaicUI() {
+            if (!currentMosaicState) return;
+            const treemapBox = document.getElementById('mosaicTreemapContainer');
+            const drilldownBox = document.getElementById('mosaicVersesDrilldownContainer');
+            if (!treemapBox || !drilldownBox) return;
+
+            const { strongs, lemma, isOt, totalOccurrences, allHits, slices, selectedSliceKey } = currentMosaicState;
+            const laidOutSlices = computeSlicedBoxTreemapLayout(slices, 0, 0, 100, 100);
+
+            // 1. Build Horizontal Stacked Spectrum Bar
+            const spectrumSegmentsHtml = slices.map((s, idx) => {
+                const pct = ((s.count / totalOccurrences) * 100).toFixed(1);
+                const pal = mosaicSlicePalette[idx % mosaicSlicePalette.length];
+                const isSelected = (selectedSliceKey === s.key);
+                return `
+                    <div onclick="selectMosaicTranslationSlice('${escapeHtmlText(s.key)}')"
+                         style="width: ${Math.max(2.5, parseFloat(pct))}%; background: ${pal.bg};"
+                         class="h-full transition-all cursor-pointer relative group ${isSelected ? 'ring-2 ring-white z-10 brightness-110' : 'opacity-90 hover:opacity-100'}"
+                         title="${escapeHtmlText(s.label)}: ${s.count}× (${pct}%) — Click to view verses">
+                    </div>
+                `;
+            }).join('');
+
+            // 2. Build 2D Proportional Sliced Box (Squarified Treemap)
+            const treemapTilesHtml = laidOutSlices.map((tile, idx) => {
+                const pct = ((tile.count / totalOccurrences) * 100).toFixed(1);
+                const pal = mosaicSlicePalette[idx % mosaicSlicePalette.length];
+                const isSelected = (selectedSliceKey === tile.key);
+                const isCompact = (tile.w < 14 || tile.h < 18);
+
+                return `
+                    <div onclick="selectMosaicTranslationSlice('${escapeHtmlText(tile.key)}')"
+                         style="left: ${tile.x}%; top: ${tile.y}%; width: ${tile.w}%; height: ${tile.h}%; padding: 3px;"
+                         class="absolute transition-all duration-150 cursor-pointer select-none">
+                        <div style="background: ${pal.bg}; border: 2px solid ${isSelected ? '#ffffff' : pal.border};"
+                             class="w-full h-full rounded-xl p-2 sm:p-3 flex flex-col justify-between overflow-hidden shadow-sm transition transform hover:scale-[1.01] ${isSelected ? 'ring-4 ring-amber-400/90 shadow-lg z-10' : 'opacity-95 hover:opacity-100'}"
+                             title="${escapeHtmlText(tile.label)} — ${tile.count} occurrences (${pct}%)${tile.subWords ? ': ' + escapeHtmlText(tile.subWords) : ''}">
+                            <div class="flex items-start justify-between gap-1 min-w-0">
+                                <span class="font-extrabold ${isCompact ? 'text-xs' : 'text-sm sm:text-base'} text-white truncate leading-tight drop-shadow-xs">
+                                    "${escapeHtmlText(tile.label)}"
+                                </span>
+                                ${isSelected ? '<i class="fa-solid fa-circle-check text-amber-300 text-xs shrink-0"></i>' : ''}
+                            </div>
+                            <div class="flex items-baseline justify-between gap-1 mt-auto pt-1">
+                                <span class="font-mono font-extrabold ${isCompact ? 'text-[11px]' : 'text-sm sm:text-lg'} text-white drop-shadow-xs">
+                                    ${tile.count.toLocaleString()}&times;
+                                </span>
+                                <span class="px-1.5 py-0.5 rounded bg-black/25 text-white/95 font-mono text-[10px] font-bold">
+                                    ${pct}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 3. Build Clickable Filter Pills Row (Includes "All Occurrences" + Each Slice)
+            const filterPillsHtml = [
+                `<button type="button" onclick="selectMosaicTranslationSlice('__all__')" class="px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer flex items-center space-x-1.5 ${selectedSliceKey === '__all__' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' : 'bg-gray-100 dark:bg-zinc-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200'}">
+                    <span>All Translations</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-black/15 text-[10px] font-mono">${totalOccurrences}</span>
+                </button>`,
+                ...slices.map((s, idx) => {
+                    const pal = mosaicSlicePalette[idx % mosaicSlicePalette.length];
+                    const isSelected = (selectedSliceKey === s.key);
+                    const pct = Math.round((s.count / totalOccurrences) * 100);
+                    return `
+                        <button type="button" onclick="selectMosaicTranslationSlice('${escapeHtmlText(s.key)}')"
+                                style="${isSelected ? `background: ${pal.bg}; color: #fff; border-color: ${pal.border};` : ''}"
+                                class="px-3 py-1 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center space-x-1.5 ${isSelected ? 'shadow-sm scale-105' : 'bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-zinc-700 hover:border-indigo-400'}">
+                            <span>"${escapeHtmlText(s.label)}"</span>
+                            <span class="text-[10px] font-mono opacity-85">${s.count}&times; (${pct}%)</span>
+                        </button>
+                    `;
+                })
+            ].join('');
+
+            treemapBox.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="text-xs font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-shapes text-indigo-500"></i>
+                        <span>Proportional Translation Box — Click any tile below to filter verses by that English translation:</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Area of each box = exact share of biblical occurrences</span>
+                </div>
+
+                <!-- Horizontal Spectrum Bar -->
+                <div class="w-full h-3.5 rounded-full overflow-hidden flex bg-gray-200 dark:bg-zinc-700 p-0.5 gap-0.5 shadow-inner">
+                    ${spectrumSegmentsHtml}
+                </div>
+
+                <!-- 2D Sliced Box Treemap Canvas -->
+                <div class="relative w-full h-[250px] sm:h-[290px] rounded-2xl bg-slate-100 dark:bg-zinc-950/90 border border-gray-200/90 dark:border-zinc-800 overflow-hidden p-1">
+                    ${treemapTilesHtml}
+                </div>
+
+                <!-- Clickable Slice Pills -->
+                <div class="flex items-center flex-wrap gap-1.5 pt-1">
+                    ${filterPillsHtml}
+                </div>
+            `;
+
+            // 4. Render the Filtered Verses Concordance Below
+            const activeSliceObj = slices.find(s => s.key === selectedSliceKey);
+            const activeHits = (selectedSliceKey === '__all__' || !activeSliceObj) ? allHits : activeSliceObj.hits;
+            const activeLabel = (selectedSliceKey === '__all__' || !activeSliceObj)
+                ? `All English Translations (${activeHits.length} verses)`
+                : `Translated as "${activeSliceObj.label}" (${activeHits.length} of ${totalOccurrences} occurrences — ${((activeHits.length / totalOccurrences) * 100).toFixed(1)}%)`;
+
+            const visibleHits = activeHits.slice(0, 80);
+            const cardsHtml = visibleHits.map(hit => {
+                const hlEngWords = (hit.engRendering && !hit.engRendering.startsWith('(')) ? [hit.engRendering] : [];
+                const highlightedEng = highlightEnglishWordsInHtmlString(hit.engVerseText || '', hlEngWords);
+                return `
+                    <div class="p-3.5 rounded-xl bg-white/95 dark:bg-zinc-800/95 border border-gray-200/90 dark:border-zinc-700 hover:border-indigo-400 transition shadow-xs space-y-1.5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <span class="px-2.5 py-0.5 rounded-md bg-indigo-600 text-white font-mono text-xs font-bold">${escapeHtmlText(hit.bookName)} ${hit.chapter}:${hit.verse}</span>
+                                <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold text-xs border border-amber-300 dark:border-amber-700">
+                                    English: "${escapeHtmlText(hit.engRendering)}"
+                                </span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 font-serif font-bold" dir="${isOt ? 'rtl' : 'ltr'}">
+                                    &larr; ${escapeHtmlText(hit.origSurface)}
+                                </span>
+                            </div>
+                            <button type="button" onclick="closeTranslationMosaicModal(); scrollToPassageInDocument({bookNum:${hit.bookNum},chapter:${hit.chapter},startVerse:${hit.verse},endVerse:${hit.verse}}, true);"
+                                    class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-zinc-900 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-200 dark:border-zinc-700 transition cursor-pointer flex items-center space-x-1">
+                                <span>Jump to Verse</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div class="font-serif text-base leading-relaxed text-gray-900 dark:text-gray-100">${highlightedEng}</div>
+                    </div>
+                `;
+            }).join('');
+
+            drilldownBox.innerHTML = `
+                <div class="flex items-center justify-between px-1 pt-1">
+                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                        <i class="fa-solid fa-list-check mr-1.5"></i>${escapeHtmlText(activeLabel)}
+                    </div>
+                    ${activeHits.length > 80 ? `<span class="text-[11px] text-gray-500">Showing first 80 of ${activeHits.length} verses</span>` : ''}
+                </div>
+                <div class="space-y-2">
+                    ${cardsHtml}
+                </div>
+            `;
+        }
+
+        // Automatically add a "Translation Mosaic" button to the Lexicon Banners & Right-Click Popover
+        (function hookTranslationMosaicButtons() {
+            const origBannerFn = window.buildPlainEnglishLexiconBanner;
+            if (typeof origBannerFn === 'function') {
+                window.buildPlainEnglishLexiconBanner = function(entry, isHebrew = false) {
+                    const baseHtml = origBannerFn(entry, isHebrew);
+                    if (!entry) return baseHtml;
+                    const safeStrong = (entry.strongs || '').replace(/'/g, "\\'");
+                    const safeLemma = (entry.lemma || '').replace(/'/g, "\\'");
+                    const mosaicBtnHtml = `
+                        <div class="mt-2.5 pt-2.5 border-t border-indigo-200/60 dark:border-zinc-700 flex items-center justify-between flex-wrap gap-2">
+                            <span class="text-xs text-gray-600 dark:text-gray-300 font-medium"><i class="fa-solid fa-table-cells-large text-indigo-500 mr-1.5"></i>See every English word used to translate <strong dir="${isHebrew ? 'rtl' : 'ltr'}">${escapeHtmlText(entry.lemma || entry.strongs)}</strong> across the Bible:</span>
+                            <button type="button" onclick="openTranslationMosaicModal({strongs:'${safeStrong}', lemma:'${safeLemma}', isOt:${isHebrew ? 'true' : 'false'}})" class="px-3 py-1 rounded-xl text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center space-x-1.5" style="background: linear-gradient(135deg, #4f46e5, #0d9488);">
+                                <i class="fa-solid fa-table-cells-large text-[11px]"></i>
+                                <span>Open Translation Mosaic (Sliced Box) &rarr;</span>
+                            </button>
+                        </div>
+                    `;
+                    return baseHtml + mosaicBtnHtml;
+                };
+            }
+
+            const origHoverBarFn = window.updateParallelHoverInfoBar;
+            if (typeof origHoverBarFn === 'function') {
+                window.updateParallelHoverInfoBar = function(engWord, origTokenEl) {
+                    origHoverBarFn(engWord, origTokenEl);
+                    const pinBtn = document.getElementById('parallelWordPinBtn');
+                    if (pinBtn && origTokenEl && !document.getElementById('parallelHoverMosaicBtn')) {
+                        const safeStrong = (origTokenEl.dataset.strongs || '').replace(/'/g, "\\'");
+                        const safeLemma = (origTokenEl.dataset.lemma || origTokenEl.dataset.surface || '').replace(/'/g, "\\'");
+                        const isOt = parseInt(origTokenEl.dataset.bookNum || '40', 10) <= 39;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.id = 'parallelHoverMosaicBtn';
+                        btn.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-600 hover:text-white transition cursor-pointer flex items-center space-x-1';
+                        btn.title = 'Open 2D Sliced Box showing every English translation of this root across the Bible';
+                        btn.innerHTML = '<i class="fa-solid fa-table-cells-large text-[9px]"></i><span>Translation Mosaic</span>';
+                        btn.onclick = () => openTranslationMosaicModal({ strongs: safeStrong, lemma: safeLemma, isOt });
+                        pinBtn.parentNode.insertBefore(btn, pinBtn);
+                    }
+                };
+            }
+        })();
+
+
     </script>
 </body>
 </html>
