@@ -3266,8 +3266,10 @@ async function loadSelectedTextFromMenu() {
             const anchorEl = findViewportAnchorBlock();
             const anchorPrevTop = anchorEl ? anchorEl.getBoundingClientRect().top : null;
 
-            isTextFlowHidden = !showFlow;
-            document.body.classList.toggle('hide-text-flow', isTextFlowHidden);
+           isTextFlowHidden = !showFlow;
+    console.trace('TEXT FLOW CHANGED TO:', isTextFlowHidden);
+    try { localStorage.setItem('lexflow_text_flow_hidden', String(isTextFlowHidden)); } catch (e) {}
+    document.body.classList.toggle('hide-text-flow', isTextFlowHidden);
 
             if (btn) btn.setAttribute('aria-checked', String(!isTextFlowHidden));
             if (track) {
@@ -3306,8 +3308,12 @@ async function loadSelectedTextFromMenu() {
                 syncOverlayControls();
             }
             if (typeof updateSettingsModalBadges === 'function') updateSettingsModalBadges();
-            if (persistNow && typeof saveUniversalProfileState === 'function') saveUniversalProfileState();
-        }
+	if (persistNow) {
+        if (typeof markExplicitUserModification === 'function') markExplicitUserModification();
+        if (typeof saveUniversalProfileState === 'function') saveUniversalProfileState();
+
+	}
+    }
 
         let wasOriginalLoadedBeforeParallel = false;
 
@@ -11650,11 +11656,8 @@ function showContextMenu(x, y) {
                     passageInput.value = resolvedTargetRef ? resolvedTargetRef.refStr : '';
                 }
 
-                // If the loaded project has saved thought-flow indents/labels, automatically show Text Flow so the user sees their diagram!
-                const hasSavedDiagram = Object.keys(projectModifiedChapters[currentCorpusType] || {}).length > 0;
-                if (hasSavedDiagram && isTextFlowHidden) {
-                    toggleTextFlowVisibility(true, false);
-                }
+               
+                
             } else {
                 if (masterNoteEditor) masterNoteEditor.innerHTML = '';
                 resolvedTargetRef = resolveProjectTargetPassageRef(null, projectTitle);
