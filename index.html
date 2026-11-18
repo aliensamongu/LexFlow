@@ -902,9 +902,6 @@
                 <div class="h-4 w-px bg-gray-300/70 dark:bg-zinc-600/70"></div>
                <select id="otVersionSelect" onchange="changeBibleCorpusSelection(this.value)" class="glass-control text-[11px] font-bold text-sky-700 dark:text-sky-300 px-2.5 py-1.5 rounded-lg outline-none cursor-pointer" title="Choose Full Bible Text (66 Books OT &amp; NT)">
                     <option value="BSB">BSB — Berean Standard Bible (OT &amp; NT)</option>
-                    <option value="ESV">ESV — English Standard Version (OT &amp; NT)</option>
-                    <option value="NASB">NASB — New American Standard (OT &amp; NT)</option>
-                    <option value="NET">NET — New English Translation (OT &amp; NT)</option>
                     <option value="WEB">WEB — World English Bible (OT &amp; NT)</option>
                     <option value="EMTV">EMTV — English Majority Text NT (+ BSB OT)</option>
                     <option value="SRGNT">SRGNT / WLC — Original Greek NT &amp; Hebrew OT</option>
@@ -1075,9 +1072,14 @@
                         <span class="font-bold text-gray-600 dark:text-gray-300 text-[11px] uppercase tracking-wider">Project Workspace</span>
                         <span id="globalSaveStatus" class="text-emerald-500 font-semibold text-[11px]">Auto-saved</span>
                     </div>
-                    <select id="projectSelect" onchange="loadSelectedProject()" class="glass-control w-full text-gray-800 dark:text-gray-200 px-2.5 py-1.5 outline-none font-medium text-xs">
-                        <option value="lexflow_default">Default Scratchpad</option>
-                    </select>
+                  <div class="flex items-center gap-1.5">
+                        <select id="projectSelect" onchange="loadSelectedProject(false, true)" class="glass-control flex-1 min-w-0 text-gray-800 dark:text-gray-200 px-2.5 py-1.5 outline-none font-medium text-xs cursor-pointer">
+                            <option value="lexflow_default">Default Scratchpad</option>
+                        </select>
+                        <button type="button" onclick="loadSelectedProject(false, true)" class="glass-control px-2.5 py-1.5 !bg-indigo-600 hover:!bg-indigo-700 text-white font-bold text-[11px] shrink-0 cursor-pointer" title="Load &amp; jump to the selected project's passage and thought-flow diagram">
+                            Open
+                        </button>
+                    </div>
                     <div class="flex items-center gap-1">
                         <input id="sidebarNewProjectNameInput" type="text" placeholder="New project name (e.g. James 1 Study)..." class="select-text glass-control flex-1 min-w-0 px-2 py-1.5 text-[11px] text-gray-900 dark:text-white outline-none" onkeydown="if(event.key==='Enter'){ event.preventDefault(); saveCurrentAsNewProject('sidebarNewProjectNameInput'); }">
                         <button type="button" onclick="saveCurrentAsNewProject('sidebarNewProjectNameInput')" class="glass-control px-2.5 py-1.5 !bg-emerald-600 hover:!bg-emerald-700 text-white font-bold text-[11px] shrink-0 cursor-pointer" title="Save current workspace & notes as a new named project">+ Save</button>
@@ -2649,7 +2651,8 @@
                             <a href="https://berean.bible/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 font-bold hover:bg-sky-600 hover:text-white transition shrink-0">BSB &nearr;</a>
                         </div>
                         <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Provides the clear, literal modern English translations for the New Testament (English Majority Text Version) and Old Testament (Berean Standard Bible, plus WEB, ESV, NASB &amp; NET comparisons via Bolls.life).
+                        Provides the clear, literal modern English translations for the New Testament (English Majority Text Version) and Old Testament (Berean Standard Bible, plus WEB, ASV, KJV &amp; YLT public-domain comparisons via Bolls.life).
+                    </p> comparisons via Bolls.life).
                         </p>
                     </div>
 
@@ -3729,8 +3732,10 @@ async function loadSelectedTextFromMenu() {
                 return cachedOt;
             }
 
-            // 3. Fetch Modern English Old Testament (Books 1-39) from Bolls API (prioritizing user's choice: BSB, WEB, ESV, NASB, NET)
-            const slugOrder = [preferredSlug, 'BSB', 'WEB', 'ESV', 'NASB', 'NET'].filter((v, i, a) => a.indexOf(v) === i);
+            // 3. Fetch Public-Domain English Old Testament (Books 1-39) from Bolls API (BSB, WEB, ASV, KJV, YLT)
+        const allowedPublicDomainSlugs = ['BSB', 'WEB', 'ASV', 'KJV', 'YLT'];
+        const safePreferred = allowedPublicDomainSlugs.includes(String(preferredSlug || '').toUpperCase()) ? String(preferredSlug).toUpperCase() : 'BSB';
+        const slugOrder = [safePreferred, ...allowedPublicDomainSlugs].filter((v, i, a) => a.indexOf(v) === i);
             for (const slug of slugOrder) {
                 try {
                     const res = await fetch(`https://bolls.life/static/translations/${slug}.json`);
@@ -3891,10 +3896,11 @@ async function loadSelectedTextFromMenu() {
                 return cachedVerses;
             }
 
-            const candidateSlugs = sourceType === 'srgnt'
-                ? ['NT', 'TR', 'SBLGNT', 'BYZ']
-                : [currentOtVersionSlug || 'BSB', 'BSB', 'WEB', 'ESV', 'NASB'];
-
+            const pdSlugs = ['BSB', 'WEB', 'ASV', 'KJV', 'YLT'];
+        const safeCurrentSlug = pdSlugs.includes(String(currentOtVersionSlug || '').toUpperCase()) ? String(currentOtVersionSlug).toUpperCase() : 'BSB';
+        const candidateSlugs = sourceType === 'srgnt'
+            ? ['NT', 'TR', 'BYZ']
+            : [safeCurrentSlug, ...pdSlugs].filter((v, i, a) => a.indexOf(v) === i);
             for (const slug of candidateSlugs) {
                 try {
                     const res = await fetch(`https://bolls.life/static/translations/${slug}.json`);
@@ -11491,8 +11497,55 @@ function showContextMenu(x, y) {
             }
         }
 
-        let hasRestoredInitialProfileOnce = false;
-        async function loadSelectedProject(skipInitialBundleRestore = false) {
+	
+	let hasRestoredInitialProfileOnce = false;
+        let lastLoadedProjectKey = currentProjectKey;
+
+        function resolveProjectTargetPassageRef(projectData, projectTitle = '') {
+            // 1. Explicit passageRef saved on the project
+            const explicitRef = (projectData && projectData.passageRef) ? String(projectData.passageRef).trim() : '';
+            if (explicitRef) {
+                const p = parseScriptureReference(explicitRef);
+                if (p) return { refStr: explicitRef, parsed: p };
+            }
+
+            // 2. Reference embedded inside the project title, e.g. "Divine Power (2Pet 1:1-4)" or "James 1 Study"
+            if (projectTitle) {
+                const parenMatch = projectTitle.match(/\(([^)]+)\)/);
+                if (parenMatch) {
+                    const pParen = parseScriptureReference(parenMatch[1].trim());
+                    if (pParen) return { refStr: parenMatch[1].trim(), parsed: pParen };
+                }
+                const pTitle = parseScriptureReference(projectTitle.replace(/\b(study|notes|flow|diagram|project)\b/gi, '').trim());
+                if (pTitle) return { refStr: `${pTitle.bookName} ${pTitle.chapter}:${pTitle.startVerse}`, parsed: pTitle };
+            }
+
+            // 3. First modified chapter stored inside the project's thought-flow diagram
+            if (projectData && projectData.modifiedChapters) {
+                for (const cType of [projectData.activeCorpus || currentCorpusType, 'emtv', 'srgnt']) {
+                    const cmap = projectData.modifiedChapters[cType];
+                    if (cmap && typeof cmap === 'object') {
+                        const keys = Object.keys(cmap).filter(k => cmap[k] && cmap[k].trim().length > 0);
+                        if (keys.length > 0) {
+                            const [bStr, cStr] = keys[0].split('_');
+                            const bNum = parseInt(bStr, 10);
+                            const cNum = parseInt(cStr, 10);
+                            const bObj = bibleBooksList[bNum - 1];
+                            if (bObj && cNum) {
+                                return {
+                                    refStr: `${bObj.name} ${cNum}:1`,
+                                    parsed: { bookObj: bObj, bookNum: bNum, bookName: bObj.name, chapter: cNum, startVerse: 1, endVerse: 1 }
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function loadSelectedProject(skipInitialBundleRestore = false, isExplicitUserSwitch = false) {
+            let bestBundle = null;
             if (!hasRestoredInitialProfileOnce && !skipInitialBundleRestore) {
                 hasRestoredInitialProfileOnce = true;
                 const winBundle = readWindowNameProfileBackup();
@@ -11505,15 +11558,30 @@ function showContextMenu(x, y) {
                 const candidates = [winBundle, idbBundle, localBundle].filter(b => b && b.settings);
                 if (candidates.length > 0) {
                     candidates.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                    applyPersonalSettingsFromBundle(candidates[0], false);
+                    bestBundle = candidates[0];
+                    applyPersonalSettingsFromBundle(bestBundle, false);
                 }
             }
 
             if (!projectSelect) return;
-            // When user selects from dropdown, read projectSelect.value
-            if (projectSelect.value && getProjectsCatalog()[projectSelect.value] && !skipInitialBundleRestore) {
-                currentProjectKey = projectSelect.value;
+
+            // If the user explicitly picked a different project from the dropdown, save the outgoing project first!
+            const targetKey = (isExplicitUserSwitch && projectSelect.value)
+                ? projectSelect.value
+                : ((projectSelect.value && getProjectsCatalog()[projectSelect.value] && !skipInitialBundleRestore)
+                    ? projectSelect.value
+                    : currentProjectKey);
+
+            if (isExplicitUserSwitch && lastLoadedProjectKey && lastLoadedProjectKey !== targetKey && editor && editor.children.length > 50) {
+                const prevKey = currentProjectKey;
+                currentProjectKey = lastLoadedProjectKey;
+                saveActiveProjectData(false);
+                currentProjectKey = prevKey;
             }
+
+            currentProjectKey = targetKey || 'lexflow_default';
+            lastLoadedProjectKey = currentProjectKey;
+
             populateProjectsMenu();
             if (currentProjectKey && Array.from(projectSelect.options).some(o => o.value === currentProjectKey)) {
                 projectSelect.value = currentProjectKey;
@@ -11521,6 +11589,7 @@ function showContextMenu(x, y) {
                 currentProjectKey = projectSelect.value || 'lexflow_default';
             }
             try { localStorage.setItem('lexflow_activeProjectKey', currentProjectKey); } catch (e) {}
+
             let rawData = localStorage.getItem(currentProjectKey);
             if (!rawData && currentProjectKey === 'lexflow_default') rawData = localStorage.getItem('scriptureGram_default');
 
@@ -11541,6 +11610,10 @@ function showContextMenu(x, y) {
                 const cachedProj = await getCachedFileData('project_' + currentProjectKey);
                 if (cachedProj) projectData = cachedProj;
             }
+
+            const catalog = getProjectsCatalog();
+            const projectTitle = catalog[currentProjectKey] || '';
+            let resolvedTargetRef = null;
 
             if (projectData) {
                 if (projectData.activeCorpus) {
@@ -11572,21 +11645,32 @@ function showContextMenu(x, y) {
                 }
 
                 if (masterNoteEditor) masterNoteEditor.innerHTML = projectData.masterNotesHTML || '';
+                resolvedTargetRef = resolveProjectTargetPassageRef(projectData, projectTitle);
                 if (passageInput) {
-                    const savedRef = (projectData.passageRef || '').trim();
-                    if (/^psalms?\s*46(:1-11)?$/i.test(savedRef)) {
-                        passageInput.value = '';
-                    } else {
-                        passageInput.value = savedRef;
-                    }
+                    passageInput.value = resolvedTargetRef ? resolvedTargetRef.refStr : '';
+                }
+
+                // If the loaded project has saved thought-flow indents/labels, automatically show Text Flow so the user sees their diagram!
+                const hasSavedDiagram = Object.keys(projectModifiedChapters[currentCorpusType] || {}).length > 0;
+                if (hasSavedDiagram && isTextFlowHidden) {
+                    toggleTextFlowVisibility(true, false);
                 }
             } else {
                 if (masterNoteEditor) masterNoteEditor.innerHTML = '';
-                if (passageInput) passageInput.value = '';
+                resolvedTargetRef = resolveProjectTargetPassageRef(null, projectTitle);
+                if (passageInput) {
+                    passageInput.value = resolvedTargetRef ? resolvedTargetRef.refStr : '';
+                }
             }
 
             updateCorpusUIButtons();
-            await loadScriptureIntoWorkspace(currentCorpusType, { silent: true });
+            await loadScriptureIntoWorkspace(currentCorpusType, { silent: true, skipPassageScroll: true });
+
+            if (resolvedTargetRef && resolvedTargetRef.parsed) {
+                requestAnimationFrame(() => {
+                    scrollToPassageInDocument(resolvedTargetRef.parsed, true);
+                });
+            }
         }
 
         let pendingDeleteConfirmTimer = null;
@@ -12261,20 +12345,36 @@ function showContextMenu(x, y) {
                 applyPersonalSettingsFromBundle(localMerged, true);
             }
 
+         clearPassageSearchBox();
             updateSqlAccountUI();
             // 2. Immediately pull & merge from live Supabase cloud database (`azpxyxjdumcgiblkqtxt.supabase.co`), then push unified state!
             await syncAccountWithCloudSql(true, true);
+            clearPassageSearchBox();
+        }
+
+        function clearPassageSearchBox() {
+            const pInput = document.getElementById('passageRefInput');
+            if (pInput) {
+                pInput.value = '';
+                pInput.defaultValue = '';
+            }
+            try {
+                localStorage.removeItem('lexflow_lastPassageRef');
+                sessionStorage.removeItem('lexflow_lastPassageRef');
+            } catch (e) {}
         }
 
         function signOutLexFlowSqlAccount() {
             saveUniversalProfileState();
             currentSignedInAccount = null;
+            clearPassageSearchBox();
             try {
                 localStorage.removeItem('lexflow_sql_account_v1');
             } catch (e) {}
             updateSqlAccountUI();
             showSettingsSyncStatus('Signed out. Your theme, border color, and projects remain safely saved.');
         }
+        
 
         function scheduleAutoCloudSqlSync() {
             if (!currentSignedInAccount || !currentSignedInAccount.email) return;
@@ -22204,6 +22304,107 @@ function showContextMenu(x, y) {
             }
         })();
 
+/* =========================================================================
+           COLLAPSIBLE THOUGHT FLOW DOCUMENT TOOLBAR (COLLAPSED BY DEFAULT)
+           ========================================================================= */
+        (function initCollapsibleThoughtFlowToolbar() {
+            function setupCollapsibleBar() {
+                const parallelBtn = document.getElementById('toggleParallelPaneBtn');
+                const mainEditorEl = document.getElementById('editor') || document.querySelector('[contenteditable="true"]');
+                if (!parallelBtn || document.getElementById('thoughtFlowToolbarToggleBtn')) return;
+
+                // Walk up ONLY to the inner toolbar card — NEVER any container that holds the biblical text editor!
+                let toolbarCard = parallelBtn.parentElement;
+                while (toolbarCard && toolbarCard !== document.body) {
+                    if (mainEditorEl && toolbarCard.contains(mainEditorEl)) {
+                        toolbarCard = null;
+                        break;
+                    }
+                    const hasTitle = Array.from(toolbarCard.querySelectorAll('*')).some(
+                        el => el.textContent && el.textContent.trim().startsWith('Thought Flow Document')
+                    );
+                    if (hasTitle && toolbarCard.children.length >= 2) {
+                        break;
+                    }
+                    toolbarCard = toolbarCard.parentElement;
+                }
+                if (!toolbarCard) return;
+
+                // Inject CSS that hides ONLY the inner button rows (never the biblical text)
+                if (!document.getElementById('thoughtFlowCollapseStyles')) {
+                    const st = document.createElement('style');
+                    st.id = 'thoughtFlowCollapseStyles';
+                    st.textContent = `
+                        #thoughtFlowToolbarCard.is-collapsed .tf-collapsible-body {
+                            display: none !important;
+                        }
+                        #thoughtFlowToolbarCard.is-collapsed {
+                            padding-top: 8px !important;
+                            padding-bottom: 8px !important;
+                        }
+                        #thoughtFlowToolbarCard.is-collapsed .tf-header-row {
+                            margin-bottom: 0 !important;
+                        }
+                    `;
+                    document.head.appendChild(st);
+                }
+
+                toolbarCard.id = 'thoughtFlowToolbarCard';
+                toolbarCard.classList.add('is-collapsed'); // Collapsed by default!
+
+                const directRows = Array.from(toolbarCard.children);
+                if (directRows.length >= 2) {
+                    const headerRow = directRows[0];
+                    headerRow.classList.add('tf-header-row', 'cursor-pointer', 'select-none');
+                    headerRow.style.position = 'relative';
+                    headerRow.style.minHeight = '28px';
+
+                    for (let i = 1; i < directRows.length; i++) {
+                        directRows[i].classList.add('tf-collapsible-body');
+                    }
+
+                    // Centered Down/Up Arrow Toggle Button in the exact middle of the bar
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.type = 'button';
+                    toggleBtn.id = 'thoughtFlowToolbarToggleBtn';
+                    toggleBtn.style.position = 'absolute';
+                    toggleBtn.style.left = '50%';
+                    toggleBtn.style.bottom = '-11px';
+                    toggleBtn.style.transform = 'translateX(-50%)';
+                    toggleBtn.className = 'inline-flex items-center justify-center w-9 h-5 rounded-full bg-white dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700 border border-gray-300 dark:border-zinc-600 text-indigo-600 dark:text-indigo-400 shadow-sm transition cursor-pointer z-20';
+                    toggleBtn.title = 'Expand Thought Flow toolbar';
+                    toggleBtn.innerHTML = `<i id="tfToggleChevronIcon" class="fa-solid fa-chevron-down text-xs"></i>`;
+
+                    const toggleAction = (e) => {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        const collapsed = toolbarCard.classList.toggle('is-collapsed');
+                        const icon = document.getElementById('tfToggleChevronIcon');
+                        if (icon) {
+                            icon.className = collapsed
+                                ? 'fa-solid fa-chevron-down text-xs'
+                                : 'fa-solid fa-chevron-up text-xs';
+                        }
+                        toggleBtn.title = collapsed ? 'Expand Thought Flow toolbar' : 'Collapse Thought Flow toolbar';
+                    };
+
+                    toggleBtn.onclick = toggleAction;
+                    headerRow.onclick = (e) => {
+                        if (!e.target.closest('button')) toggleAction(e);
+                    };
+
+                    headerRow.appendChild(toggleBtn);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => setTimeout(setupCollapsibleBar, 120));
+            } else {
+                setTimeout(setupCollapsibleBar, 120);
+            }
+        })();
     </script>
 </body>
 </html>
