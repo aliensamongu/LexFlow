@@ -21687,6 +21687,8 @@ function showContextMenu(x, y) {
         };
 
       let isOtInNtBadgesVisible = localStorage.getItem('lexflow_ot_in_nt_badges') !== 'false';
+	ensureOtInNtModalAndStylesExist();
+syncOtInNtToggleSwitchUI();
 
         function syncOtInNtToggleSwitchUI() {
             document.body.classList.toggle('hide-ot-in-nt-badges', !isOtInNtBadgesVisible);
