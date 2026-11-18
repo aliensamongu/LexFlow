@@ -3267,7 +3267,7 @@ async function loadSelectedTextFromMenu() {
             const anchorPrevTop = anchorEl ? anchorEl.getBoundingClientRect().top : null;
 
            isTextFlowHidden = !showFlow;
-    console.trace('TEXT FLOW CHANGED TO:', isTextFlowHidden);
+   
     try { localStorage.setItem('lexflow_text_flow_hidden', String(isTextFlowHidden)); } catch (e) {}
     document.body.classList.toggle('hide-text-flow', isTextFlowHidden);
 
