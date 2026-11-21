@@ -22411,7 +22411,7 @@ function showContextMenu(x, y) {
         })();
 
 
-	/* === LEXFLOW FIX: ANCHOR-PINNED TOGGLES, NO AUTO-SPLIT/SUGGESTIONS, SHIFT+ENTER, SCROLL LOCK, OT BADGES & 40% LINES === */
+	/* === LEXFLOW COMPLETE PATCH + FLOWCHART & BIG IDEA STUDIO === */
 (function () {
     // Adjust subordination line visibility here (0.4 = 40%, 0.3 = subtler, 0.5 = darker)
     const SUBORDINATION_LINE_OPACITY = 0.4;
@@ -22459,7 +22459,9 @@ function showContextMenu(x, y) {
         return best;
     }
 
-    // --- 0A. COMPLETELY REMOVE & DISABLE AUTO-SPLIT VERSES + RELATIONSHIP SUGGESTION PILLS ---
+    // =========================================================================
+    // PART 1: REMOVE AUTO-SPLIT VERSES & RELATIONSHIP SUGGESTION PILLS
+    // =========================================================================
     const AUTO_SPLIT_RE = /auto[\s_-]*split/i;
     const AUTO_SPLIT_CONTROL_SEL = 'button, input, select, textarea, [role="switch"], [role="menuitem"]';
     const SUGGEST_GLOBAL_RE =
@@ -22548,12 +22550,8 @@ function showContextMenu(x, y) {
     })();
 
     function neutralizeDisabledGlobals() {
-        const noopFalse = function () {
-            return false;
-        };
-        const noopNull = function () {
-            return null;
-        };
+        const noopFalse = function () { return false; };
+        const noopNull = function () { return null; };
 
         try {
             Object.getOwnPropertyNames(window).forEach((name) => {
@@ -22570,9 +22568,7 @@ function showContextMenu(x, y) {
                         try {
                             Object.defineProperty(window, name, {
                                 configurable: true,
-                                get() {
-                                    return false;
-                                },
+                                get() { return false; },
                                 set() {}
                             });
                         } catch (e) {}
@@ -22644,6 +22640,7 @@ function showContextMenu(x, y) {
 
         document.querySelectorAll('button, input, label, option, a, [role="button"], [role="switch"], [role="menuitem"]').forEach((el) => {
             if (ed && (el === ed || ed.contains(el))) return;
+            if (el.closest('#lfFlowModalOverlay')) return;
             const txt = (el.textContent || '').trim();
             if (attrMatches(el) || (txt.length > 0 && txt.length <= 140 && AUTO_SPLIT_RE.test(txt))) {
                 if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio')) {
@@ -22660,6 +22657,7 @@ function showContextMenu(x, y) {
 
         document.querySelectorAll('span, p, div, li, dt, h4, h5').forEach((el) => {
             if (ed && (el === ed || ed.contains(el))) return;
+            if (el.closest('#lfFlowModalOverlay')) return;
             if (el.children.length > 2) return;
             const txt = (el.textContent || '').trim();
             if (!txt || txt.length > 140 || !AUTO_SPLIT_RE.test(txt)) return;
@@ -22703,7 +22701,7 @@ function showContextMenu(x, y) {
         ) {
             return false;
         }
-        if (el.closest('header, nav, [role="dialog"], .modal')) return false;
+        if (el.closest('header, nav, [role="dialog"], .modal, #lfFlowModalOverlay')) return false;
         if (tfBar && tfBar.contains(el)) return false;
 
         const txt = (el.textContent || '').trim();
@@ -22842,6 +22840,7 @@ function showContextMenu(x, y) {
                     if (
                         child === ed ||
                         (tfBar && child === tfBar) ||
+                        child.id === 'lfFlowModalOverlay' ||
                         child.tagName === 'SCRIPT' ||
                         child.tagName === 'STYLE' ||
                         child.tagName === 'HEADER' ||
@@ -22899,7 +22898,9 @@ function showContextMenu(x, y) {
     scrubDisabledStorage();
     neutralizeDisabledGlobals();
 
-    // --- 0B. CHAPTER-BANNER GEOMETRY & CANVAS / PATH2D CROSS-CHAPTER FILTER ---
+    // =========================================================================
+    // PART 2: CHAPTER-BANNER GEOMETRY & CANVAS / PATH2D CROSS-CHAPTER FILTER
+    // =========================================================================
     let cachedBannerRects = [];
     let cachedBannerTs = 0;
 
@@ -22941,7 +22942,7 @@ function showContextMenu(x, y) {
         if (!canvas || !canvas.isConnected) return false;
         if (
             canvas.closest(
-                'header, nav, [role="dialog"], .modal, #visualAnalyticsMainCanvas, [id*="analytics" i], [id*="chart" i]'
+                'header, nav, [role="dialog"], .modal, #lfFlowModalOverlay, #visualAnalyticsMainCanvas, [id*="analytics" i], [id*="chart" i]'
             )
         ) {
             return false;
@@ -22977,25 +22978,17 @@ function showContextMenu(x, y) {
 
         function getTransformMatrix(ctx) {
             if (typeof ctx.getTransform === 'function') {
-                try {
-                    return ctx.getTransform();
-                } catch (e) {}
+                try { return ctx.getTransform(); } catch (e) {}
             }
             return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
         }
 
         function toPoint(m, x, y) {
-            return {
-                x: m.a * x + m.c * y + m.e,
-                y: m.b * x + m.d * y + m.f
-            };
+            return { x: m.a * x + m.c * y + m.e, y: m.b * x + m.d * y + m.f };
         }
 
         function createSubpath(cmd, pts) {
-            let minX = Infinity,
-                maxX = -Infinity,
-                minY = Infinity,
-                maxY = -Infinity;
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             for (let i = 0; i < pts.length; i++) {
                 const p = pts[i];
                 if (p.x < minX) minX = p.x;
@@ -23192,10 +23185,7 @@ function showContextMenu(x, y) {
             let blockedAny = false;
             for (let i = 0; i < st.subpaths.length; i++) {
                 const sp = st.subpaths[i];
-                let minX = sp.minX,
-                    maxX = sp.maxX,
-                    minY = sp.minY,
-                    maxY = sp.maxY;
+                let minX = sp.minX, maxX = sp.maxX, minY = sp.minY, maxY = sp.maxY;
                 if (m) {
                     const p1 = toPoint(m, minX, minY);
                     const p2 = toPoint(m, maxX, maxY);
@@ -23304,15 +23294,13 @@ function showContextMenu(x, y) {
         };
     })();
 
-    // --- 1. HARDWIRED SHIFT+ENTER BLOCK SPLIT (PLAIN ENTER DISABLED IN EDITOR) ---
+    // =========================================================================
+    // PART 3: HARDWIRED SHIFT+ENTER BLOCK SPLIT (PLAIN ENTER DISABLED IN EDITOR)
+    // =========================================================================
     function removeEmptyInlineSpans(root) {
         if (!root) return;
         root.querySelectorAll('span').forEach((sp) => {
-            if (
-                !sp.classList.contains('ot-in-nt-inline-badge') &&
-                sp.children.length === 0 &&
-                !sp.textContent
-            ) {
+            if (!sp.classList.contains('ot-in-nt-inline-badge') && sp.children.length === 0 && !sp.textContent) {
                 sp.remove();
             }
         });
@@ -23345,22 +23333,12 @@ function showContextMenu(x, y) {
     function syncAfterSplit(ed, focusBlock) {
         invalidateBannerCache();
         if (focusBlock) {
-            try {
-                if (typeof activeThaversClauseBlock !== 'undefined') activeThaversClauseBlock = focusBlock;
-            } catch (e) {}
-            try {
-                if (typeof lastSelectedBlock !== 'undefined') lastSelectedBlock = focusBlock;
-            } catch (e) {}
+            try { if (typeof activeThaversClauseBlock !== 'undefined') activeThaversClauseBlock = focusBlock; } catch (e) {}
+            try { if (typeof lastSelectedBlock !== 'undefined') lastSelectedBlock = focusBlock; } catch (e) {}
         }
-        try {
-            if (typeof refreshDocumentBlockAttributes === 'function') refreshDocumentBlockAttributes();
-        } catch (e) {}
-        try {
-            if (typeof syncOverlayControls === 'function') syncOverlayControls();
-        } catch (e) {}
-        try {
-            if (typeof scheduleWordCountUpdate === 'function') scheduleWordCountUpdate();
-        } catch (e) {}
+        try { if (typeof refreshDocumentBlockAttributes === 'function') refreshDocumentBlockAttributes(); } catch (e) {}
+        try { if (typeof syncOverlayControls === 'function') syncOverlayControls(); } catch (e) {}
+        try { if (typeof scheduleWordCountUpdate === 'function') scheduleWordCountUpdate(); } catch (e) {}
         scheduleRemoveAutoSplitAndSuggestions();
         scheduleFixSubordinationLines();
         setTimeout(() => {
@@ -23369,13 +23347,170 @@ function showContextMenu(x, y) {
         }, 50);
     }
 
+	function ensureSpacerSupport() {
+        if (!document.getElementById('lexflowThoughtSpacerStyles')) {
+            const st = document.createElement('style');
+            st.id = 'lexflowThoughtSpacerStyles';
+            st.textContent = `
+                #editor .lex-thought-spacer,
+                [contenteditable="true"] .lex-thought-spacer {
+                    display: block !important;
+                    min-height: 24px !important;
+                    height: 24px !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    background: transparent !important;
+                }
+                #editor .lex-thought-spacer::before,
+                #editor .lex-thought-spacer::after,
+                [contenteditable="true"] .lex-thought-spacer::before,
+                [contenteditable="true"] .lex-thought-spacer::after {
+                    display: none !important;
+                    content: none !important;
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        if (window.__lexflowSpacerDeleteBound) return;
+        window.__lexflowSpacerDeleteBound = true;
+
+        function isThoughtSpacer(el) {
+            return Boolean(el && el.classList && (el.classList.contains('lex-thought-spacer') || el.dataset.thoughtSpacer === 'true'));
+        }
+
+        function placeCaretInBlock(sel, targetBlock, atEnd) {
+            if (!sel || !targetBlock) return;
+            const r = document.createRange();
+            if (isThoughtSpacer(targetBlock)) {
+                r.setStart(targetBlock, 0);
+                r.collapse(true);
+            } else {
+                const tw = document.createTreeWalker(targetBlock, NodeFilter.SHOW_TEXT);
+                let firstNode = null;
+                let lastNode = null;
+                let n;
+                while ((n = tw.nextNode())) {
+                    if (n.parentElement && n.parentElement.closest('.ot-in-nt-inline-badge')) continue;
+                    if (n.nodeValue && n.nodeValue.length > 0) {
+                        if (!firstNode) firstNode = n;
+                        lastNode = n;
+                    }
+                }
+                if (atEnd && lastNode) {
+                    r.setStart(lastNode, lastNode.nodeValue.length);
+                } else if (!atEnd && firstNode) {
+                    r.setStart(firstNode, 0);
+                } else {
+                    r.setStart(targetBlock, 0);
+                }
+                r.collapse(true);
+            }
+            sel.removeAllRanges();
+            sel.addRange(r);
+        }
+
+        window.addEventListener(
+            'keydown',
+            (e) => {
+                if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+                const ed = getEditor();
+                if (!ed || !isInsideMainEditorText(e.target)) return;
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
+
+                const range = sel.getRangeAt(0);
+                let block = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
+                while (block && block.parentElement !== ed) block = block.parentElement;
+                if (!block || block.parentElement !== ed || block.classList.contains('lex-chapter-banner')) return;
+
+                // 1. Pressing Backspace or Delete inside a spacer removes just the spacer
+                if (isThoughtSpacer(block)) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    engageNativeJumpLock(1000);
+                    const prev = block.previousElementSibling;
+                    const next = block.nextElementSibling;
+                    block.remove();
+                    if (e.key === 'Backspace' && prev && !prev.classList.contains('lex-chapter-banner')) {
+                        placeCaretInBlock(sel, prev, true);
+                    } else if (next && !next.classList.contains('lex-chapter-banner')) {
+                        placeCaretInBlock(sel, next, false);
+                    } else if (prev) {
+                        placeCaretInBlock(sel, prev, true);
+                    }
+                    syncAfterSplit(ed, null);
+                    ed.dispatchEvent(new Event('input', { bubbles: true }));
+                    return;
+                }
+
+                // 2. Pressing Backspace at the very start of a verse right below a spacer removes the spacer (never merges verses)
+                if (e.key === 'Backspace' && isThoughtSpacer(block.previousElementSibling)) {
+                    const preRange = document.createRange();
+                    preRange.setStart(block, 0);
+                    preRange.setEnd(range.startContainer, range.startOffset);
+                    if (preRange.toString().replace(/[\s\u00A0\u200B]+/g, '') === '') {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        engageNativeJumpLock(1000);
+                        block.previousElementSibling.remove();
+                        placeCaretInBlock(sel, block, false);
+                        syncAfterSplit(ed, block);
+                        ed.dispatchEvent(new Event('input', { bubbles: true }));
+                        return;
+                    }
+                }
+
+                // 3. Pressing Delete at the very end of a verse right above a spacer removes the spacer
+                if (e.key === 'Delete' && isThoughtSpacer(block.nextElementSibling)) {
+                    const postRange = document.createRange();
+                    postRange.setStart(range.startContainer, range.startOffset);
+                    postRange.setEnd(block, block.childNodes.length);
+                    const postClone = postRange.cloneContents();
+                    postClone.querySelectorAll && postClone.querySelectorAll('.ot-in-nt-inline-badge').forEach((b) => b.remove());
+                    if ((postClone.textContent || '').replace(/[\s\u00A0\u200B]+/g, '') === '') {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        engageNativeJumpLock(1000);
+                        block.nextElementSibling.remove();
+                        placeCaretInBlock(sel, block, true);
+                        syncAfterSplit(ed, block);
+                        ed.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            },
+            true
+        );
+    }
+
+    function createThoughtSpacer(sourceBlock) {
+        const spacer = document.createElement('div');
+        spacer.className = 'lex-thought-spacer';
+        spacer.dataset.thoughtSpacer = 'true';
+        if (sourceBlock && sourceBlock.dataset.bookNum) spacer.dataset.bookNum = sourceBlock.dataset.bookNum;
+        if (sourceBlock && sourceBlock.dataset.bookName) spacer.dataset.bookName = sourceBlock.dataset.bookName;
+        if (sourceBlock && sourceBlock.dataset.chapterNum) spacer.dataset.chapterNum = sourceBlock.dataset.chapterNum;
+        spacer.innerHTML = '<br>';
+        return spacer;
+    }
+
     function splitAnyBrInsideVerseBlocks(ed) {
+        ensureSpacerSupport();
         if (!ed) return false;
         let didSplit = false;
         const blocks = Array.from(ed.children);
         for (let i = 0; i < blocks.length; i++) {
             let block = blocks[i];
-            if (!block || block.tagName !== 'DIV' || block.classList.contains('lex-chapter-banner')) continue;
+            if (
+                !block ||
+                block.tagName !== 'DIV' ||
+                block.classList.contains('lex-chapter-banner') ||
+                block.classList.contains('lex-thought-spacer') ||
+                block.dataset.thoughtSpacer === 'true'
+            ) {
+                continue;
+            }
             let guard = 0;
             while (guard++ < 100) {
                 const br = block.querySelector('br');
@@ -23425,6 +23560,7 @@ function showContextMenu(x, y) {
     }
 
     function performHardwiredBlockSplit(ed) {
+        ensureSpacerSupport();
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return false;
 
@@ -23439,11 +23575,7 @@ function showContextMenu(x, y) {
             }
         }
 
-        let block =
-            range.startContainer.nodeType === 3
-                ? range.startContainer.parentElement
-                : range.startContainer;
-
+        let block = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
         if (block === ed) {
             const childIdx = Math.min(range.startOffset, ed.children.length - 1);
             block = ed.children[childIdx];
@@ -23457,6 +23589,31 @@ function showContextMenu(x, y) {
         }
         if (!block || block.parentElement !== ed || block.classList.contains('lex-chapter-banner')) {
             return false;
+        }
+
+        // Pressing Shift+Enter inside a spacer adds another blank thought-spacer line
+        if (block.classList.contains('lex-thought-spacer') || block.dataset.thoughtSpacer === 'true') {
+            const extraSpacer = createThoughtSpacer(block);
+            block.insertAdjacentElement('afterend', extraSpacer);
+            const spRange = document.createRange();
+            spRange.setStart(extraSpacer, 0);
+            spRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(spRange);
+            ed.focus({ preventScroll: true });
+            syncAfterSplit(ed, null);
+            ed.dispatchEvent(new Event('input', { bubbles: true }));
+            return true;
+        }
+
+        // If cursor is sitting inside an OT badge, snap it right before the badge
+        const inBadge =
+            range.startContainer.nodeType === 3
+                ? range.startContainer.parentElement && range.startContainer.parentElement.closest('.ot-in-nt-inline-badge')
+                : range.startContainer.closest && range.startContainer.closest('.ot-in-nt-inline-badge');
+        if (inBadge && block.contains(inBadge)) {
+            range.setStartBefore(inBadge);
+            range.collapse(true);
         }
 
         const badges = Array.from(block.querySelectorAll('.ot-in-nt-inline-badge'));
@@ -23479,22 +23636,42 @@ function showContextMenu(x, y) {
         const beforeText = (block.textContent || '').trim();
         const afterText = (tailFrag.textContent || '').trim();
 
+        // At the very START or END of a line -> insert a clean blank thought-spacer break!
         if (!beforeText || !afterText) {
             if (tailFrag.childNodes.length > 0) block.appendChild(tailFrag);
             badges.forEach((b) => block.appendChild(b));
-            const restoreRange = document.createRange();
-            if (!beforeText) {
-                restoreRange.setStart(block, 0);
+
+            const spacer = createThoughtSpacer(block);
+            const caretRange = document.createRange();
+
+            if (!beforeText && afterText) {
+                // Cursor at start of line -> insert space ABOVE and push line down
+                block.insertAdjacentElement('beforebegin', spacer);
+                const firstTw = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+                let firstTxt = null;
+                let tn;
+                while ((tn = firstTw.nextNode())) {
+                    if (tn.parentElement && tn.parentElement.closest('.ot-in-nt-inline-badge')) continue;
+                    if (tn.nodeValue && tn.nodeValue.length > 0) { firstTxt = tn; break; }
+                }
+                if (firstTxt) caretRange.setStart(firstTxt, 0);
+                else caretRange.setStart(block, 0);
             } else {
-                const lastTextIdx = Math.max(0, block.childNodes.length - badges.length);
-                restoreRange.setStart(block, lastTextIdx);
+                // Cursor at end of line -> insert space BELOW and move cursor into it
+                block.insertAdjacentElement('afterend', spacer);
+                caretRange.setStart(spacer, 0);
             }
-            restoreRange.collapse(true);
+
+            caretRange.collapse(true);
             sel.removeAllRanges();
-            sel.addRange(restoreRange);
-            return false;
+            sel.addRange(caretRange);
+            ed.focus({ preventScroll: true });
+            syncAfterSplit(ed, !beforeText ? block : null);
+            ed.dispatchEvent(new Event('input', { bubbles: true }));
+            return true;
         }
 
+        // In the middle of a line -> split into two clause blocks
         const newBlock = createSplitClauseBlock(block);
         newBlock.appendChild(tailFrag);
         badges.forEach((b) => newBlock.appendChild(b));
@@ -23524,9 +23701,11 @@ function showContextMenu(x, y) {
         syncAfterSplit(ed, newBlock);
         ed.dispatchEvent(new Event('input', { bubbles: true }));
         return true;
-    }
+    }  	
 
-    // --- 2. CLEAN OT-IN-NT BADGES (ZERO TEXT LEAK) ---
+    // =========================================================================
+    // PART 4: CLEAN OT-IN-NT BADGES (ZERO TEXT LEAK)
+    // =========================================================================
     const LEAKED_OT_REGEX =
         /(?:\s*OT (?:Quote|Allusion|Echo):\s*(?:[1-3]\s+)?[A-Za-z]+(?:\s+[A-Za-z]+){0,3}\s+\d+:\d+(?:[-–,]\s*\d+(?::\d+)?)?(?:\s*[•·]\s*(?:[1-3]\s+)?[A-Za-z]+(?:\s+[A-Za-z]+){0,3}\s+\d+:\d+(?:[-–,]\s*\d+(?::\d+)?)?)*)+/g;
 
@@ -23579,14 +23758,8 @@ function showContextMenu(x, y) {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
-            .lexflow-hide-suggest-before::before {
-                display: none !important;
-                content: none !important;
-            }
-            .lexflow-hide-suggest-after::after {
-                display: none !important;
-                content: none !important;
-            }
+            .lexflow-hide-suggest-before::before { display: none !important; content: none !important; }
+            .lexflow-hide-suggest-after::after { display: none !important; content: none !important; }
             body.lexflow-editing-active .passage-nav-pulse {
                 animation: none !important;
                 background-color: transparent !important;
@@ -23645,17 +23818,11 @@ function showContextMenu(x, y) {
                         quotes[0].tier ||
                         (quotes[0].type && quotes[0].type.toLowerCase().includes('quote') ? 'quote' : 'allusion');
 
-                    let tierClass = 'tier-quote',
-                        iconClass = 'fa-scroll',
-                        tierLabel = 'OT Quote';
+                    let tierClass = 'tier-quote', iconClass = 'fa-scroll', tierLabel = 'OT Quote';
                     if (primaryTier === 'allusion') {
-                        tierClass = 'tier-allusion';
-                        iconClass = 'fa-link';
-                        tierLabel = 'OT Allusion';
+                        tierClass = 'tier-allusion'; iconClass = 'fa-link'; tierLabel = 'OT Allusion';
                     } else if (primaryTier === 'echo') {
-                        tierClass = 'tier-echo';
-                        iconClass = 'fa-water';
-                        tierLabel = 'OT Echo';
+                        tierClass = 'tier-echo'; iconClass = 'fa-water'; tierLabel = 'OT Echo';
                     }
 
                     const badge = document.createElement('span');
@@ -23718,7 +23885,9 @@ function showContextMenu(x, y) {
         }
     } catch (e) {}
 
-    // --- 3. HARD ENGINE-LEVEL SCROLL LOCK + VIEW-TOGGLE ANCHOR PINNING ---
+    // =========================================================================
+    // PART 5: HARD ENGINE-LEVEL SCROLL LOCK + VIEW-TOGGLE ANCHOR PINNING
+    // =========================================================================
     const nativeScrollTopDesc =
         Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop') ||
         Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop');
@@ -23839,7 +24008,6 @@ function showContextMenu(x, y) {
 
         let foundBlock = null;
 
-        // Fast O(1) hit-test just below the toolbar
         if (typeof document.elementsFromPoint === 'function') {
             const sampleXs = [
                 edRect.left + edRect.width * 0.5,
@@ -23872,7 +24040,6 @@ function showContextMenu(x, y) {
             }
         }
 
-        // Binary-search fallback if hit-test missed
         if (!foundBlock) {
             const children = ed.children;
             let lo = 0;
@@ -23943,10 +24110,7 @@ function showContextMenu(x, y) {
             const banner = ed.querySelector(
                 `.lex-chapter-banner[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`
             );
-            if (banner) {
-                anchor.el = banner;
-                return banner;
-            }
+            if (banner) { anchor.el = banner; return banner; }
         }
         if (anchor.bookNum && anchor.chapterNum && anchor.verseNum) {
             const matches = ed.querySelectorAll(
@@ -23962,10 +24126,7 @@ function showContextMenu(x, y) {
             const fallback =
                 ed.querySelector(`.lex-chapter-banner[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`) ||
                 ed.querySelector(`div[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`);
-            if (fallback) {
-                anchor.el = fallback;
-                return fallback;
-            }
+            if (fallback) { anchor.el = fallback; return fallback; }
         }
         return null;
     }
@@ -23981,9 +24142,7 @@ function showContextMenu(x, y) {
         if (!target) return;
 
         const scrollerRect =
-            scroller === document.scrollingElement
-                ? { top: 0 }
-                : scroller.getBoundingClientRect();
+            scroller === document.scrollingElement ? { top: 0 } : scroller.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
         if (targetRect.height === 0 && targetRect.width === 0) return;
 
@@ -23997,7 +24156,6 @@ function showContextMenu(x, y) {
 
     function engageAnchorPin(durationMs = 1500) {
         protectAllEditorScrollers();
-        // If already mid-pin from a rapid double-click, keep the original book/verse anchor
         if (!pinnedAnchor || Date.now() > pinnedAnchorUntil) {
             const captured = captureTopVisibleAnchor();
             if (!captured) return;
@@ -24026,6 +24184,7 @@ function showContextMenu(x, y) {
 
     function isViewLayoutToggle(target) {
         if (!target || target.nodeType !== 1) return false;
+        if (target.closest('#lfFlowOpenBtn, #lfFlowModalOverlay')) return false;
         const ed = getEditor();
         if (ed && ed.contains(target)) return false;
 
@@ -24068,9 +24227,7 @@ function showContextMenu(x, y) {
             try {
                 Object.defineProperty(el, 'scrollTop', {
                     configurable: true,
-                    get() {
-                        return nativeScrollTopDesc.get.call(this);
-                    },
+                    get() { return nativeScrollTopDesc.get.call(this); },
                     set(val) {
                         if (!isInternalRestore && isJsScrollBlocked()) return;
                         nativeScrollTopDesc.set.call(this, val);
@@ -24110,10 +24267,7 @@ function showContextMenu(x, y) {
         let node = ed ? ed.parentElement : null;
         while (node && node !== document.documentElement) {
             const cs = window.getComputedStyle(node);
-            if (
-                /(auto|scroll|overlay)/.test(cs.overflowY || '') ||
-                node.scrollHeight > node.clientHeight + 2
-            ) {
+            if (/(auto|scroll|overlay)/.test(cs.overflowY || '') || node.scrollHeight > node.clientHeight + 2) {
                 protectScroller(node);
             }
             node = node.parentElement;
@@ -24131,11 +24285,7 @@ function showContextMenu(x, y) {
         });
         if (lockedWinY !== null && Math.abs(window.scrollY - lockedWinY) > 5) {
             isInternalRestore = true;
-            try {
-                nativeWinScrollTo(window.scrollX, lockedWinY);
-            } finally {
-                isInternalRestore = false;
-            }
+            try { nativeWinScrollTo(window.scrollX, lockedWinY); } finally { isInternalRestore = false; }
         }
     }
 
@@ -24148,9 +24298,7 @@ function showContextMenu(x, y) {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
             const rect = sel.getRangeAt(0).getBoundingClientRect();
-            if (rect && rect.bottom > window.innerHeight - 100) {
-                caretNearBottom = true;
-            }
+            if (rect && rect.bottom > window.innerHeight - 100) caretNearBottom = true;
         }
 
         protectedScrollers.forEach((el) => {
@@ -24219,7 +24367,9 @@ function showContextMenu(x, y) {
         }
     } catch (e) {}
 
-    // --- 4. SUBORDINATION LINES: MULTI-LAYER CROSS-CHAPTER FILTER & 40% OPACITY ---
+    // =========================================================================
+    // PART 6: SUBORDINATION LINES (CROSS-CHAPTER FILTER & 40% OPACITY)
+    // =========================================================================
     let isFixingLines = false;
     let fixLinesRaf = 0;
 
@@ -24230,26 +24380,18 @@ function showContextMenu(x, y) {
         if (parts.length <= 1) return false;
 
         let ctm;
-        try {
-            ctm = pathEl.getScreenCTM();
-        } catch (e) {
-            return false;
-        }
+        try { ctm = pathEl.getScreenCTM(); } catch (e) { return false; }
         if (!ctm) return false;
 
         if (!pathEl.dataset.lexflowOrigD) pathEl.dataset.lexflowOrigD = rawD;
 
-        let curX = 0,
-            curY = 0;
+        let curX = 0, curY = 0;
         const kept = [];
         let changed = false;
 
         for (let i = 0; i < parts.length; i++) {
             const sub = parts[i].trim();
-            let minX = Infinity,
-                maxX = -Infinity,
-                minY = Infinity,
-                maxY = -Infinity;
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             const recordPt = (x, y) => {
                 const vx = ctm.a * x + ctm.c * y + ctm.e;
                 const vy = ctm.b * x + ctm.d * y + ctm.f;
@@ -24266,50 +24408,28 @@ function showContextMenu(x, y) {
                 const nums = (m[2].match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number);
                 let idx = 0;
                 if (cmd === 'M' || cmd === 'L' || cmd === 'T') {
-                    while (idx + 1 < nums.length) {
-                        curX = nums[idx++];
-                        curY = nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx + 1 < nums.length) { curX = nums[idx++]; curY = nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'm' || cmd === 'l' || cmd === 't') {
-                    while (idx + 1 < nums.length) {
-                        curX += nums[idx++];
-                        curY += nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx + 1 < nums.length) { curX += nums[idx++]; curY += nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'H') {
-                    while (idx < nums.length) {
-                        curX = nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx < nums.length) { curX = nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'h') {
-                    while (idx < nums.length) {
-                        curX += nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx < nums.length) { curX += nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'V') {
-                    while (idx < nums.length) {
-                        curY = nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx < nums.length) { curY = nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'v') {
-                    while (idx < nums.length) {
-                        curY += nums[idx++];
-                        recordPt(curX, curY);
-                    }
+                    while (idx < nums.length) { curY += nums[idx++]; recordPt(curX, curY); }
                 } else if (cmd === 'Q' || cmd === 'S') {
                     while (idx + 3 < nums.length) {
                         recordPt(nums[idx], nums[idx + 1]);
-                        curX = nums[idx + 2];
-                        curY = nums[idx + 3];
+                        curX = nums[idx + 2]; curY = nums[idx + 3];
                         recordPt(curX, curY);
                         idx += 4;
                     }
                 } else if (cmd === 'q' || cmd === 's') {
                     while (idx + 3 < nums.length) {
                         recordPt(curX + nums[idx], curY + nums[idx + 1]);
-                        curX += nums[idx + 2];
-                        curY += nums[idx + 3];
+                        curX += nums[idx + 2]; curY += nums[idx + 3];
                         recordPt(curX, curY);
                         idx += 4;
                     }
@@ -24317,8 +24437,7 @@ function showContextMenu(x, y) {
                     while (idx + 5 < nums.length) {
                         recordPt(nums[idx], nums[idx + 1]);
                         recordPt(nums[idx + 2], nums[idx + 3]);
-                        curX = nums[idx + 4];
-                        curY = nums[idx + 5];
+                        curX = nums[idx + 4]; curY = nums[idx + 5];
                         recordPt(curX, curY);
                         idx += 6;
                     }
@@ -24326,8 +24445,7 @@ function showContextMenu(x, y) {
                     while (idx + 5 < nums.length) {
                         recordPt(curX + nums[idx], curY + nums[idx + 1]);
                         recordPt(curX + nums[idx + 2], curY + nums[idx + 3]);
-                        curX += nums[idx + 4];
-                        curY += nums[idx + 5];
+                        curX += nums[idx + 4]; curY += nums[idx + 5];
                         recordPt(curX, curY);
                         idx += 6;
                     }
@@ -24465,7 +24583,7 @@ function showContextMenu(x, y) {
             }
 
             document.querySelectorAll('svg').forEach((svg) => {
-                if (svg.closest('header, nav, button, [role="dialog"], .modal, #visualAnalyticsMainCanvas')) return;
+                if (svg.closest('header, nav, button, [role="dialog"], .modal, #lfFlowModalOverlay, #visualAnalyticsMainCanvas')) return;
                 if (tfBar && tfBar.contains(svg)) return;
                 const shapes = svg.querySelectorAll('line, path, polyline, rect');
                 if (shapes.length === 0) return;
@@ -24493,24 +24611,17 @@ function showContextMenu(x, y) {
                     }
                 });
 
-                if (hasEditorLine) {
-                    svg.dataset.lexflowLineOverlay = '1';
-                }
+                if (hasEditorLine) svg.dataset.lexflowLineOverlay = '1';
             });
 
             const seen = new Set();
             const checkHtmlLineEl = (el) => {
                 if (!el || seen.has(el)) return;
                 seen.add(el);
-                if (
-                    el === ed ||
-                    el.contains(ed) ||
-                    el.classList.contains('lex-chapter-banner') ||
-                    isDirectVerseBlock(el, ed)
-                ) {
+                if (el === ed || el.contains(ed) || el.classList.contains('lex-chapter-banner') || isDirectVerseBlock(el, ed)) {
                     return;
                 }
-                if (el.closest('header, nav, button, [role="dialog"], .modal, .ot-in-nt-inline-badge')) return;
+                if (el.closest('header, nav, button, [role="dialog"], .modal, #lfFlowModalOverlay, .ot-in-nt-inline-badge')) return;
                 if (tfBar && tfBar.contains(el)) return;
 
                 const idCls = `${el.id || ''} ${typeof el.className === 'string' ? el.className : ''}`;
@@ -24525,8 +24636,7 @@ function showContextMenu(x, y) {
                 if (r.left < edRect.left - 45 || r.right > edRect.right - 50) return;
                 if (r.bottom < edRect.top - 50 || r.top > edRect.bottom + 50) return;
 
-                const hasBg =
-                    cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
+                const hasBg = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
                 const hasVertBorder = parseFloat(cs.borderLeftWidth) > 0 || parseFloat(cs.borderRightWidth) > 0;
                 const isThinBar = r.width <= 12 && (hasBg || hasVertBorder);
                 const isBracket = r.width <= 60 && !hasBg && hasVertBorder;
@@ -24543,10 +24653,8 @@ function showContextMenu(x, y) {
                 if (!root) return;
                 for (let i = 0; i < root.children.length; i++) {
                     const child = root.children[i];
-                    if (child === ed || (tfBar && child === tfBar)) continue;
-                    if (child.tagName === 'DIV' || child.tagName === 'SPAN') {
-                        checkHtmlLineEl(child);
-                    }
+                    if (child === ed || (tfBar && child === tfBar) || child.id === 'lfFlowModalOverlay') continue;
+                    if (child.tagName === 'DIV' || child.tagName === 'SPAN') checkHtmlLineEl(child);
                     if (child.contains(ed)) {
                         walkOverlayContainer(child);
                     } else if (child.children.length > 0 && !child.closest('header, nav, [role="dialog"], .modal')) {
@@ -24557,9 +24665,7 @@ function showContextMenu(x, y) {
 
             const mainEl = getMainScroller();
             walkOverlayContainer(mainEl || (ed && ed.parentElement));
-            if (mainEl && mainEl.parentElement) {
-                walkOverlayContainer(mainEl.parentElement);
-            }
+            if (mainEl && mainEl.parentElement) walkOverlayContainer(mainEl.parentElement);
 
             for (let i = 0; i < ed.children.length; i++) {
                 const ch = ed.children[i];
@@ -24617,7 +24723,9 @@ function showContextMenu(x, y) {
         }
     } catch (e) {}
 
-    // --- 5. EVENT HANDLERS (SHIFT+ENTER, ANCHOR-PINNING & NAVIGATION) ---
+    // =========================================================================
+    // PART 7: GLOBAL EVENT HANDLERS (SHIFT+ENTER, ANCHOR-PINNING & NAVIGATION)
+    // =========================================================================
     window.addEventListener(
         'keydown',
         (e) => {
@@ -24627,7 +24735,7 @@ function showContextMenu(x, y) {
                     engageAnchorPin(1500);
                     return;
                 }
-                if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+                if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT' && !e.target.closest('#lfFlowModalOverlay')) {
                     allowExplicitNavigation(4500);
                 }
                 return;
@@ -24686,6 +24794,7 @@ function showContextMenu(x, y) {
     window.addEventListener(
         'wheel',
         (e) => {
+            if (e.target && e.target.closest && e.target.closest('#lfFlowModalOverlay')) return;
             releaseNativeJumpLock();
             invalidateBannerCache();
             scheduleRemoveAutoSplitAndSuggestions();
@@ -24712,6 +24821,8 @@ function showContextMenu(x, y) {
     document.addEventListener(
         'mousedown',
         (e) => {
+            if (e.target && e.target.closest && e.target.closest('#lfFlowModalOverlay')) return;
+
             for (const sc of protectedScrollers) {
                 const r = sc.getBoundingClientRect();
                 if (e.clientX >= r.right - 20 && e.clientX <= r.right + 2 && e.clientY >= r.top && e.clientY <= r.bottom) {
@@ -24720,7 +24831,6 @@ function showContextMenu(x, y) {
                 }
             }
 
-            // Pin current book/chapter/verse BEFORE any view/layout toggle runs (e.g. Text Flow, Lines & Indents)
             if (isViewLayoutToggle(e.target)) {
                 engageAnchorPin(1500);
                 invalidateBannerCache();
@@ -24760,6 +24870,7 @@ function showContextMenu(x, y) {
     document.addEventListener(
         'click',
         (e) => {
+            if (e.target && e.target.closest && e.target.closest('#lfFlowModalOverlay')) return;
             const btn = e.target && e.target.closest && e.target.closest('button, [role="button"]');
             if (btn && /clear/i.test(btn.textContent || '')) {
                 setTimeout(removeRelationshipSuggestionPills, 0);
@@ -24773,6 +24884,7 @@ function showContextMenu(x, y) {
     document.addEventListener(
         'change',
         (e) => {
+            if (e.target && e.target.closest && e.target.closest('#lfFlowModalOverlay')) return;
             const ed = getEditor();
             if (isViewLayoutToggle(e.target)) {
                 engageAnchorPin(1500);
@@ -24801,6 +24913,1858 @@ function showContextMenu(x, y) {
         true
     );
 
+    // =========================================================================
+    // PART 8: VISUAL FLOWCHART, DISCOURSE GRAMMAR & EDITABLE BIG IDEA STUDIO
+    // =========================================================================
+    const STUDIO_STORAGE_KEY = 'lexflow_flowchart_studio_v1';
+
+    const QUESTION_TAGS = [
+        { id: 'main', simple: 'Main Point', grammar: 'Main Independent Clause', color: '#3730a3', bg: '#eef2ff', border: '#c7d2fe' },
+        { id: 'when', simple: 'When?', grammar: 'Subordinate — Temporal Adverbial', color: '#0369a1', bg: '#e0f2fe', border: '#bae6fd' },
+        { id: 'how', simple: 'How?', grammar: 'Subordinate — Means / Manner', color: '#0f766e', bg: '#ccfbf1', border: '#99f6e4' },
+        { id: 'why', simple: 'Why?', grammar: 'Subordinate — Causal / Ground', color: '#b45309', bg: '#fef3c7', border: '#fde68a' },
+        { id: 'sowhat', simple: 'So What?', grammar: 'Subordinate — Result / Purpose', color: '#047857', bg: '#d1fae5', border: '#a7f3d0' },
+        { id: 'contrast', simple: 'Contrast', grammar: 'Coordinate — Adversative', color: '#be123c', bg: '#ffe4e6', border: '#fecdd3' },
+        { id: 'who', simple: 'Who / What?', grammar: 'Relative / Descriptive Modifier', color: '#6d28d9', bg: '#ede9fe', border: '#ddd6fe' },
+        { id: 'towhom', simple: 'To Whom?', grammar: 'Indirect Object / Recipient', color: '#4338ca', bg: '#e0e7ff', border: '#c7d2fe' },
+        { id: 'where', simple: 'Where?', grammar: 'Locative / Spatial Modifier', color: '#475569', bg: '#f1f5f9', border: '#cbd5e1' },
+        { id: 'detail', simple: 'Detail', grammar: 'Coordinate / Participial Modifier', color: '#475569', bg: '#f8fafc', border: '#cbd5e1' }
+    ];
+
+    const TAG_MAP = {};
+    QUESTION_TAGS.forEach((t) => { TAG_MAP[t.id] = t; });
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function escapeXml(str) { return escapeHtml(str); }
+
+    function toRoman(num) {
+        const pairs = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+        let n = Math.max(1, num);
+        let out = '';
+        for (let i = 0; i < pairs.length; i++) {
+            while (n >= pairs[i][0]) { out += pairs[i][1]; n -= pairs[i][0]; }
+        }
+        return out;
+    }
+
+    function loadStudioStore() {
+        try {
+            const raw = localStorage.getItem(STUDIO_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : { passages: {} };
+        } catch (e) {
+            return { passages: {} };
+        }
+    }
+
+    function saveStudioStore(store) {
+        try { localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify(store)); } catch (e) {}
+    }
+
+    function extractCleanBlockText(block) {
+        if (!block) return '';
+        const clone = block.cloneNode(true);
+        clone.querySelectorAll('.ot-in-nt-inline-badge, [data-lexflow-suggestion-hidden="1"], i, svg, button').forEach((el) => el.remove());
+        return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function inferTagId(text, level) {
+        const t = (text || '').trim();
+        if (level === 0) {
+            if (/^(?:but|yet|however|nevertheless|instead|rather)\b/i.test(t)) return 'contrast';
+            if (/^(?:therefore|so\b|thus|consequently|for this reason|hence)\b/i.test(t)) return 'sowhat';
+            if (/^(?:for|because|since)\b/i.test(t)) return 'why';
+            return 'main';
+        }
+        if (/^(?:but|yet|however|nevertheless|although|though|even though|not\b)/i.test(t)) return 'contrast';
+        if (/^(?:when|after|before|while|until|since\s+(?:the|that|he|she|they)|on\s+many|in\s+these\s+last|in\s+the\s+beginning|at\s+that\s+time|during)\b/i.test(t)) return 'when';
+        if (/^(?:for|because|since|seeing\s+that|inasmuch)\b/i.test(t)) return 'why';
+        if (/^(?:therefore|so\s+that|in\s+order\s+(?:to|that)|that\s+(?:he|she|we|you|they|it)|thus|consequently|resulting)\b/i.test(t)) return 'sowhat';
+        if (/^(?:by|through|with|in\s+many\s+different\s+ways|upholding|having|making|speaking|walking|living)\b/i.test(t)) return 'how';
+        if (/^(?:to\s+(?:us|you|them|him|her|our|the|all|every)|unto)\b/i.test(t)) return 'towhom';
+        if (/^(?:who|whom|whose|which|that\s+is|the\s+one\s+who)\b/i.test(t)) return 'who';
+        if (/^(?:in\s+(?:heaven|earth|christ|him|the\s+world|the\s+city|jerusalem)|at\s+the\s+right\s+hand|above|beneath|upon|on\s+high|into)\b/i.test(t)) return 'where';
+        return 'detail';
+    }
+
+	function detectCurrentVisibleContext() {
+        const ed = getEditor();
+        const mainEl = getMainScroller();
+        if (!ed || !ed.children.length) return null;
+
+        const mainRect = mainEl
+            ? mainEl.getBoundingClientRect()
+            : { top: 64, bottom: window.innerHeight };
+
+        let viewTop = mainRect.top + 12;
+        const tfBar = getThoughtFlowToolbar();
+        if (tfBar) {
+            const tfr = tfBar.getBoundingClientRect();
+            if (tfr.height > 0 && tfr.bottom > viewTop && tfr.bottom < window.innerHeight * 0.65) {
+                viewTop = tfr.bottom + 8;
+            }
+        }
+        const viewBottom = Math.min(mainRect.bottom, window.innerHeight);
+
+        function findVerseBlock(node) {
+            let cur = node && (node.nodeType === 3 ? node.parentElement : node);
+            while (cur && cur !== ed) {
+                if (cur.parentElement === ed && cur.tagName === 'DIV' && cur.dataset.bookNum && cur.dataset.chapterNum) {
+                    return cur;
+                }
+                cur = cur.parentElement;
+            }
+            return null;
+        }
+
+        // 1. Prefer the verse currently containing your cursor (or last edited) if it is visible
+        let activeBlock = null;
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
+            const sb = findVerseBlock(sel.anchorNode);
+            if (sb) {
+                const r = sb.getBoundingClientRect();
+                if (r.bottom > viewTop - 40 && r.top < viewBottom) activeBlock = sb;
+            }
+        }
+        if (
+            !activeBlock &&
+            window.__lexflowLastActiveBlock &&
+            window.__lexflowLastActiveBlock.isConnected &&
+            ed.contains(window.__lexflowLastActiveBlock)
+        ) {
+            const r = window.__lexflowLastActiveBlock.getBoundingClientRect();
+            if (r.bottom > viewTop - 40 && r.top < viewBottom) activeBlock = window.__lexflowLastActiveBlock;
+        }
+
+        // 2. Scan strictly below the toolbar (never stepping backward into the previous book)
+        const children = ed.children;
+        let lo = 0;
+        let hi = children.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (children[mid].getBoundingClientRect().bottom <= viewTop) lo = mid + 1;
+            else hi = mid;
+        }
+
+        const visibleBlocks = [];
+        const chapterTotals = new Map();
+        for (let i = lo; i < children.length; i++) {
+            const ch = children[i];
+            const r = ch.getBoundingClientRect();
+            if (r.top >= viewBottom) break;
+            if (ch.tagName !== 'DIV' || !ch.dataset.bookNum || !ch.dataset.chapterNum) continue;
+            const overlap = Math.max(0, Math.min(r.bottom, viewBottom) - Math.max(r.top, viewTop));
+            if (overlap <= 0) continue;
+            visibleBlocks.push(ch);
+            const key = `${ch.dataset.bookNum}_${ch.dataset.chapterNum}`;
+            const cur = chapterTotals.get(key) || { height: 0, block: ch };
+            cur.height += overlap;
+            chapterTotals.set(key, cur);
+        }
+
+        // 3. Pick active block's chapter, or whichever chapter occupies the most screen space
+        let winningBlock = activeBlock;
+        if (!winningBlock) {
+            let bestHeight = -1;
+            chapterTotals.forEach((info) => {
+                if (info.height > bestHeight) {
+                    bestHeight = info.height;
+                    winningBlock = info.block;
+                }
+            });
+        }
+        if (!winningBlock) {
+            for (let i = lo; i < Math.min(children.length, lo + 12); i++) {
+                const ch = children[i];
+                if (ch.tagName === 'DIV' && ch.dataset.bookNum && ch.dataset.chapterNum) {
+                    winningBlock = ch;
+                    break;
+                }
+            }
+        }
+        if (!winningBlock) return null;
+
+        const bookNum = String(winningBlock.dataset.bookNum);
+        const chapterNum = String(winningBlock.dataset.chapterNum);
+        let bookName = String(winningBlock.dataset.bookName || '');
+        if (!bookName) {
+            const banner = ed.querySelector(`.lex-chapter-banner[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"]`);
+            if (banner && banner.textContent) {
+                bookName = banner.textContent.replace(/\s+\d+\s*$/, '').trim();
+            }
+        }
+        if (!bookName) bookName = 'Passage';
+
+        let firstVisVerse = null;
+        let lastVisVerse = null;
+        visibleBlocks.forEach((b) => {
+            if (
+                !b.classList.contains('lex-chapter-banner') &&
+                String(b.dataset.bookNum) === bookNum &&
+                String(b.dataset.chapterNum) === chapterNum
+            ) {
+                const vn = parseInt(b.dataset.verseNum || '0', 10);
+                if (vn > 0) {
+                    if (firstVisVerse === null || vn < firstVisVerse) firstVisVerse = vn;
+                    if (lastVisVerse === null || vn > lastVisVerse) lastVisVerse = vn;
+                }
+            }
+        });
+
+        const activeVerse =
+            activeBlock && !activeBlock.classList.contains('lex-chapter-banner')
+                ? parseInt(activeBlock.dataset.verseNum || '1', 10) || 1
+                : null;
+        const startVerse = firstVisVerse || activeVerse || 1;
+
+        const chapBlocks = Array.from(
+            ed.querySelectorAll(`div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"]:not(.lex-chapter-banner)`)
+        );
+        let maxVerse = startVerse;
+        let lastIndentedVerse = null;
+        chapBlocks.forEach((b) => {
+            const vn = parseInt(b.dataset.verseNum || '1', 10) || 1;
+            if (vn > maxVerse) maxVerse = vn;
+            const ml = parseFloat(b.style.marginLeft || '0') || 0;
+            if (vn >= startVerse && vn <= startVerse + 8 && (ml > 0 || b.dataset.splitVerse === 'true')) {
+                lastIndentedVerse = Math.max(lastIndentedVerse || vn, vn);
+            }
+        });
+
+        let defaultEnd = lastIndentedVerse
+            ? Math.min(maxVerse, Math.max(lastIndentedVerse, startVerse + 2))
+            : Math.min(maxVerse, Math.max(startVerse + 3, Math.min(lastVisVerse || startVerse + 3, startVerse + 5)));
+        if (activeVerse && activeVerse > defaultEnd) {
+            defaultEnd = Math.min(maxVerse, activeVerse);
+        }
+
+        return { bookNum, bookName, chapterNum, startVerse, endVerse: defaultEnd, maxVerse };
+    }
+
+   function readPassageClauses(bookNum, chapterNum, startVerse, endVerse) {
+        const ed = getEditor();
+        if (!ed) return { nodes: [], roots: [] };
+        const rawBlocks = Array.from(
+            ed.querySelectorAll(`div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"]:not(.lex-chapter-banner):not(.lex-thought-spacer)`)
+        );
+
+        const filtered = [];
+        rawBlocks.forEach((b) => {
+            const vn = parseInt(b.dataset.verseNum || '0', 10);
+            if (vn >= startVerse && vn <= endVerse) {
+                const text = extractCleanBlockText(b);
+                if (!text) return;
+                const marginPx = Math.max(0, Math.round(parseFloat(b.style.marginLeft || '0') || 0));
+                filtered.push({ verseNum: vn, text, marginPx });
+            }
+        });
+
+        const uniqueMargins = Array.from(new Set(filtered.map((f) => f.marginPx))).sort((a, b) => a - b);
+        const levelLookup = {};
+        uniqueMargins.forEach((px, idx) => { levelLookup[px] = idx; });
+
+        const key = `${bookNum}_${chapterNum}:${startVerse}-${endVerse}`;
+        const store = loadStudioStore();
+        const savedEntry = store.passages && store.passages[key];
+        const dirOverrides = (savedEntry && savedEntry.dirOverrides) || {};
+
+        const nodes = filtered.map((f, idx) => {
+            const level = levelLookup[f.marginPx] || 0;
+            return {
+                uid: `n_${idx}`,
+                index: idx,
+                verseNum: f.verseNum,
+                text: f.text,
+                level,
+                defaultTagId: inferTagId(f.text, level),
+                children: [],
+                parentUid: null,
+                attachDir: 'root',
+                canFlipDir: false,
+                code: ''
+            };
+        });
+
+        // Bidirectional hierarchy: subordinate clauses before a shallower head attach DOWNWARD
+        const roots = [];
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            if (node.level === 0) {
+                roots.push(node);
+                continue;
+            }
+
+            let prevParent = null;
+            for (let j = i - 1; j >= 0; j--) {
+                if (nodes[j].level < node.level) {
+                    prevParent = nodes[j];
+                    break;
+                }
+            }
+
+            let nextParent = null;
+            for (let j = i + 1; j < nodes.length; j++) {
+                if (nodes[j].level < node.level) {
+                    nextParent = nodes[j];
+                    break;
+                }
+            }
+
+            if (prevParent && nextParent) {
+                node.canFlipDir = true;
+            }
+
+            const override = dirOverrides[node.uid];
+            let chosen = null;
+            let dir = 'up';
+
+            if (override === 'down' && nextParent) {
+                chosen = nextParent;
+                dir = 'down';
+            } else if (override === 'up' && prevParent) {
+                chosen = prevParent;
+                dir = 'up';
+            } else if (!prevParent && nextParent) {
+                // Pre-posed subordinate clause (no shallower clause above -> leads into clause below)
+                chosen = nextParent;
+                dir = 'down';
+            } else if (prevParent && !nextParent) {
+                chosen = prevParent;
+                dir = 'up';
+            } else if (prevParent && nextParent) {
+                // Closer indentation level wins (e.g. L2 right above L1 attaches down to L1 rather than L0)
+                if (nextParent.level > prevParent.level) {
+                    chosen = nextParent;
+                    dir = 'down';
+                } else {
+                    chosen = prevParent;
+                    dir = 'up';
+                }
+            }
+
+            if (chosen) {
+                node.parentUid = chosen.uid;
+                node.attachDir = dir;
+                chosen.children.push(node);
+            } else {
+                roots.push(node);
+            }
+        }
+
+        // Auto-correct saved default Anchor Truth if it previously grabbed a pre-posed subordinate clause
+        if (savedEntry && !savedEntry.anchorManuallySet && roots.length > 0) {
+            const rootUids = new Set(roots.map((r) => r.uid));
+            if (!rootUids.has(savedEntry.anchorUid)) {
+                savedEntry.anchorUid = roots[0].uid;
+                if (!savedEntry.skeletonEdited) {
+                    savedEntry.skeleton = buildDefaultSkeleton(nodes, savedEntry.anchorUid);
+                }
+                saveStudioStore(store);
+            }
+        }
+
+        function assignCodes(list, prefix) {
+            list.forEach((node, i) => {
+                node.code = prefix ? `${prefix}.${i + 1}` : `${i + 1}.0`;
+                if (node.children.length > 0) assignCodes(node.children, prefix ? `${prefix}.${i + 1}` : `${i + 1}`);
+            });
+        }
+        assignCodes(roots, '');
+
+        return { nodes, roots };
+    }
+
+    function buildDefaultSkeleton(nodes, anchorUid) {
+        const l0 = nodes.filter((n) => n.level === 0);
+        const picked = l0.length > 0 ? l0 : nodes.slice(0, 3);
+        return picked.map((n) => `${n.uid === anchorUid ? '★ ' : ''}(v.${n.verseNum}) ${n.text}`).join('\n');
+    }
+
+    function buildDefaultPoints(nodes, roots, tagOverrides) {
+        const points = [];
+        const getTag = (n) => TAG_MAP[(tagOverrides && tagOverrides[n.uid]) || n.defaultTagId] || TAG_MAP.detail;
+        const l1 = nodes.filter((n) => n.level === 1);
+        const source = l1.length > 0 ? l1 : roots;
+        source.slice(0, 8).forEach((n) => {
+            const tag = getTag(n);
+            const snippet = n.text.length > 88 ? n.text.slice(0, 85).trim() + '…' : n.text;
+            points.push({
+                id: 'pt_' + Math.random().toString(36).slice(2, 8),
+                ref: `v.${n.verseNum}`,
+                tag: tag.simple,
+                text: snippet
+            });
+        });
+        return points;
+    }
+
+    function ensureStudioStyles() {
+        if (document.getElementById('lfFlowStudioStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfFlowStudioStyles';
+        st.textContent = `
+            #lfFlowOpenBtn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 11px;
+                border-radius: 9999px;
+                font-size: 11.5px;
+                font-weight: 600;
+                color: #3730a3;
+                background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+                border: 1px solid #c7d2fe;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                margin-left: auto;
+                white-space: nowrap;
+                box-shadow: 0 1px 2px rgba(55,48,163,0.08);
+            }
+            #lfFlowOpenBtn:hover {
+                background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+                transform: translateY(-0.5px);
+                box-shadow: 0 2px 6px rgba(55,48,163,0.16);
+            }
+            #lfFlowModalOverlay {
+                position: fixed;
+                inset: 0;
+                z-index: 99990;
+                background: rgba(15, 23, 42, 0.52);
+                backdrop-filter: blur(4px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 18px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfFlowModalOverlay.is-open { display: flex; }
+            #lfFlowDialog {
+                width: min(1440px, 96vw);
+                height: min(92vh, 960px);
+                background: #f8fafc;
+                color: #0f172a;
+                border-radius: 16px;
+                box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
+                border: 1px solid #e2e8f0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            .lf-flow-topbar {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 18px;
+                background: #ffffff;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-flow-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 15px;
+                font-weight: 700;
+                color: #1e1b4b;
+                margin-right: 6px;
+            }
+            .lf-seg-group {
+                display: inline-flex;
+                background: #f1f5f9;
+                padding: 3px;
+                border-radius: 9px;
+                border: 1px solid #e2e8f0;
+            }
+            .lf-seg-btn {
+                border: none;
+                background: transparent;
+                padding: 5px 11px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #475569;
+                cursor: pointer;
+                transition: all 0.14s ease;
+            }
+            .lf-seg-btn.active {
+                background: #ffffff;
+                color: #3730a3;
+                box-shadow: 0 1px 3px rgba(15,23,42,0.1);
+            }
+            .lf-range-bar {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 9px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #334155;
+            }
+            .lf-range-bar input[type="number"] {
+                width: 48px;
+                padding: 2px 5px;
+                border: 1px solid #cbd5e1;
+                border-radius: 5px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #0f172a;
+                background: #ffffff;
+                text-align: center;
+            }
+            .lf-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 11px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                border: 1px solid #cbd5e1;
+                background: #ffffff;
+                color: #334155;
+                cursor: pointer;
+                transition: all 0.13s ease;
+            }
+            .lf-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+            .lf-btn-primary { background: #4338ca; color: #ffffff; border-color: #4338ca; }
+            .lf-btn-primary:hover { background: #3730a3; border-color: #3730a3; }
+            .lf-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
+            .lf-export-wrap { position: relative; margin-left: auto; display: inline-flex; gap: 8px; }
+            .lf-export-menu {
+                position: absolute;
+                right: 0;
+                top: calc(100% + 6px);
+                width: 245px;
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 11px;
+                box-shadow: 0 14px 36px rgba(15,23,42,0.18);
+                padding: 6px;
+                display: none;
+                z-index: 50;
+            }
+            .lf-export-menu.open { display: block; }
+            .lf-export-item {
+                width: 100%;
+                text-align: left;
+                background: transparent;
+                border: none;
+                padding: 8px 10px;
+                border-radius: 7px;
+                font-size: 12.5px;
+                font-weight: 500;
+                color: #1e293b;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .lf-export-item:hover { background: #eef2ff; color: #3730a3; }
+            .lf-export-divider { height: 1px; background: #e2e8f0; margin: 5px 4px; }
+            .lf-workspace {
+                flex: 1;
+                display: grid;
+                grid-template-columns: minmax(0, 1.32fr) minmax(350px, 0.95fr);
+                overflow: hidden;
+            }
+            @media (max-width: 980px) {
+                .lf-workspace { grid-template-columns: 1fr; overflow-y: auto; }
+            }
+            .lf-canvas-pane {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                border-right: 1px solid #e2e8f0;
+                background: radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0) 0 0 / 22px 22px, #f8fafc;
+            }
+            .lf-pane-subbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 8px 16px;
+                background: rgba(255,255,255,0.92);
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 11.5px;
+                color: #64748b;
+            }
+            .lf-canvas-scroll { flex: 1; overflow-y: auto; padding: 20px 24px 44px; }
+            .lf-tree-children {
+                margin-left: 26px;
+                padding-left: 18px;
+                border-left: 2px solid rgba(100, 116, 139, 0.35);
+                margin-top: 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .lf-node-wrap { position: relative; }
+            .lf-tree-children > .lf-node-wrap::before {
+                content: '';
+                position: absolute;
+                left: -18px;
+                top: 22px;
+                width: 18px;
+                height: 2px;
+                background: rgba(100, 116, 139, 0.35);
+            }
+            .lf-root-list { display: flex; flex-direction: column; gap: 14px; }
+            .lf-card {
+                background: #ffffff;
+                border: 1.5px solid #cbd5e1;
+                border-radius: 11px;
+                padding: 10px 13px;
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+                transition: border-color 0.14s ease, box-shadow 0.14s ease;
+            }
+            .lf-card:hover { border-color: #94a3b8; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07); }
+            .lf-card.is-anchor {
+                border: 2.5px solid #3730a3;
+                background: linear-gradient(180deg, #eef2ff 0%, #ffffff 42%);
+                box-shadow: 0 6px 20px rgba(55, 48, 163, 0.14);
+            }
+            .lf-card-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+            .lf-star-btn {
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                font-size: 15px;
+                line-height: 1;
+                padding: 1px 3px;
+                color: #cbd5e1;
+                transition: transform 0.12s ease, color 0.12s ease;
+            }
+            .lf-star-btn:hover { transform: scale(1.15); color: #f59e0b; }
+            .lf-star-btn.active { color: #d97706; }
+            .lf-anchor-pill {
+                font-size: 10.5px;
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                background: #3730a3;
+                color: #ffffff;
+                padding: 2px 8px;
+                border-radius: 999px;
+            }
+            .lf-tag-select {
+                appearance: none;
+                -webkit-appearance: none;
+                border-radius: 999px;
+                padding: 2px 9px;
+                font-size: 11px;
+                font-weight: 700;
+                cursor: pointer;
+                border: 1px solid transparent;
+                outline: none;
+            }
+            .lf-code-badge {
+                font-size: 10.5px;
+                font-weight: 700;
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                color: #475569;
+                background: #f1f5f9;
+                border: 1px solid #e2e8f0;
+                border-radius: 5px;
+                padding: 1px 6px;
+            }
+            .lf-vbadge {
+                margin-left: auto;
+                font-size: 10.5px;
+                font-weight: 700;
+                background: #fef9c3;
+                color: #854d0e;
+                border: 1px solid #fde047;
+                border-radius: 5px;
+                padding: 1px 6px;
+            }
+            .lf-collapse-btn {
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                color: #64748b;
+                font-size: 10px;
+                font-weight: 700;
+                border-radius: 5px;
+                padding: 1px 6px;
+                cursor: pointer;
+            }
+            .lf-card-text { font-family: Georgia, "Times New Roman", serif; font-size: 14.5px; line-height: 1.5; color: #0f172a; }
+            .lf-card.is-anchor .lf-card-text { font-size: 15.5px; font-weight: 600; color: #1e1b4b; }
+            .lf-builder-pane { display: flex; flex-direction: column; overflow: hidden; background: #ffffff; }
+            .lf-builder-scroll { flex: 1; overflow-y: auto; padding: 16px 20px 32px; display: flex; flex-direction: column; gap: 16px; }
+            .lf-field-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 11px; padding: 12px 14px; }
+            .lf-field-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+            .lf-field-label { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #3730a3; }
+            .lf-field-hint { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+            .lf-input, .lf-textarea {
+                width: 100%;
+                box-sizing: border-box;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                padding: 8px 10px;
+                font-size: 13px;
+                line-height: 1.45;
+                color: #0f172a;
+                background: #ffffff;
+                font-family: inherit;
+                transition: border-color 0.13s ease, box-shadow 0.13s ease;
+            }
+            .lf-input:focus, .lf-textarea:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12); }
+            .lf-textarea { resize: vertical; min-height: 68px; }
+            .lf-sub-row { display: grid; grid-template-columns: 78px 1fr; gap: 8px; align-items: start; margin-top: 7px; }
+            .lf-sub-row label { font-size: 11.5px; font-weight: 700; color: #475569; padding-top: 8px; }
+            .lf-points-list { display: flex; flex-direction: column; gap: 8px; }
+            .lf-point-row {
+                display: grid;
+                grid-template-columns: 28px 1fr auto;
+                gap: 6px;
+                align-items: start;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 7px 8px;
+            }
+            .lf-point-num { font-weight: 800; font-size: 12px; color: #4338ca; padding-top: 6px; text-align: center; }
+            .lf-point-inputs { display: flex; flex-direction: column; gap: 5px; }
+            .lf-point-meta { display: flex; gap: 6px; }
+            .lf-point-meta input { font-size: 11.5px; padding: 4px 7px; }
+            .lf-point-actions { display: flex; flex-direction: column; gap: 3px; }
+            .lf-icon-btn {
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                color: #64748b;
+                border-radius: 5px;
+                width: 24px;
+                height: 22px;
+                font-size: 11px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .lf-icon-btn:hover { background: #e2e8f0; color: #0f172a; }
+            .lf-icon-btn.del:hover { background: #ffe4e6; color: #be123c; border-color: #fecdd3; }
+            .lf-overview-pane { flex: 1; overflow-y: auto; padding: 22px 28px 40px; background: #f8fafc; display: none; }
+            .lf-overview-pane.active { display: block; }
+            .lf-overview-card {
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 12px;
+                padding: 16px 20px;
+                margin-bottom: 14px;
+                box-shadow: 0 2px 6px rgba(15,23,42,0.04);
+            }
+            .lf-toast {
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1e1b4b;
+                color: #ffffff;
+                padding: 9px 16px;
+                border-radius: 999px;
+                font-size: 12.5px;
+                font-weight: 600;
+                box-shadow: 0 8px 24px rgba(15,23,42,0.3);
+                z-index: 100000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+            .lf-toast.show { opacity: 1; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function showToast(msg) {
+        let t = document.getElementById('lfFlowToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'lfFlowToast';
+            t.className = 'lf-toast';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    let studioState = {
+        bookNum: '58',
+        bookName: 'Hebrews',
+        chapterNum: '1',
+        startVerse: 1,
+        endVerse: 4,
+        maxVerse: 14,
+        mode: 'simple',
+        tab: 'studio',
+        parsed: { nodes: [], roots: [] },
+        collapsed: {}
+    };
+
+    function currentPassageKey() {
+        return `${studioState.bookNum}_${studioState.chapterNum}:${studioState.startVerse}-${studioState.endVerse}`;
+    }
+
+    function currentPassageTitle() {
+        return studioState.startVerse === studioState.endVerse
+            ? `${studioState.bookName} ${studioState.chapterNum}:${studioState.startVerse}`
+            : `${studioState.bookName} ${studioState.chapterNum}:${studioState.startVerse}–${studioState.endVerse}`;
+    }
+
+    function getOrCreatePassageData() {
+        const store = loadStudioStore();
+        const key = currentPassageKey();
+        let entry = store.passages[key];
+        const { nodes, roots } = studioState.parsed;
+
+        if (!entry) {
+            const firstL0 = nodes.find((n) => n.level === 0) || nodes[0] || null;
+            const anchorUid = firstL0 ? firstL0.uid : null;
+            entry = {
+                key,
+                bookNum: studioState.bookNum,
+                bookName: studioState.bookName,
+                chapterNum: studioState.chapterNum,
+                startVerse: studioState.startVerse,
+                endVerse: studioState.endVerse,
+                anchorUid,
+                tagOverrides: {},
+                skeleton: buildDefaultSkeleton(nodes, anchorUid),
+                skeletonEdited: false,
+                exegeticalSubject: '',
+                exegeticalComplement: '',
+                homileticalProposition: '',
+                points: buildDefaultPoints(nodes, roots, {}),
+                pointsEdited: false,
+                updatedAt: Date.now()
+            };
+            store.passages[key] = entry;
+            saveStudioStore(store);
+        } else {
+            if (!entry.anchorUid && nodes.length > 0) {
+                const firstL0 = nodes.find((n) => n.level === 0) || nodes[0];
+                entry.anchorUid = firstL0.uid;
+            }
+            if (!entry.skeletonEdited && !entry.skeleton && nodes.length > 0) {
+                entry.skeleton = buildDefaultSkeleton(nodes, entry.anchorUid);
+            }
+            if (!entry.pointsEdited && (!entry.points || entry.points.length === 0) && nodes.length > 0) {
+                entry.points = buildDefaultPoints(nodes, roots, entry.tagOverrides || {});
+            }
+        }
+        return entry;
+    }
+
+    function updatePassageData(mutator) {
+        const store = loadStudioStore();
+        const key = currentPassageKey();
+        let entry = store.passages[key] || getOrCreatePassageData();
+        mutator(entry);
+        entry.updatedAt = Date.now();
+        store.passages[key] = entry;
+        saveStudioStore(store);
+        const statusEl = document.getElementById('lfSaveIndicator');
+        if (statusEl) {
+            statusEl.textContent = 'Saved';
+            clearTimeout(statusEl._t);
+            statusEl._t = setTimeout(() => { statusEl.textContent = 'Auto-saved'; }, 1200);
+        }
+        return entry;
+    }
+
+    function wrapTextLines(text, maxChars) {
+        const words = String(text || '').split(/\s+/).filter(Boolean);
+        const lines = [];
+        let cur = '';
+        words.forEach((w) => {
+            if (!cur) cur = w;
+            else if ((cur + ' ' + w).length <= maxChars) cur += ' ' + w;
+            else { lines.push(cur); cur = w; }
+        });
+        if (cur) lines.push(cur);
+        return lines.length ? lines : [''];
+    }
+
+    function buildExportSvg({ theme = 'light', includeBigIdea = true } = {}) {
+        const entry = getOrCreatePassageData();
+        const { roots } = studioState.parsed;
+        const isDark = theme === 'dark';
+        const isTransparent = theme === 'transparent';
+
+        const bgFill = isTransparent ? 'none' : isDark ? '#0f172a' : '#f8fafc';
+        const cardFill = isDark ? '#1e293b' : '#ffffff';
+        const cardStroke = isDark ? '#334155' : '#cbd5e1';
+        const anchorFill = isDark ? '#1e1b4b' : '#eef2ff';
+        const anchorStroke = isDark ? '#818cf8' : '#3730a3';
+        const textFill = isDark ? '#f1f5f9' : '#0f172a';
+        const subTextFill = isDark ? '#94a3b8' : '#475569';
+        const lineStroke = isDark ? 'rgba(148,163,184,0.45)' : 'rgba(100,116,139,0.45)';
+
+        const W = 1280;
+        const PAD_X = 48;
+        const INDENT_X = 44;
+        let curY = 44;
+        const svgParts = [];
+
+        svgParts.push(
+            `<text x="${PAD_X}" y="${curY + 24}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="24" font-weight="800" fill="${isDark ? '#e0e7ff' : '#1e1b4b'}">${escapeXml(currentPassageTitle())}</text>`
+        );
+        svgParts.push(
+            `<text x="${W - PAD_X}" y="${curY + 22}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="13" font-weight="600" fill="${subTextFill}">${studioState.mode === 'grammar' ? 'Discourse Grammar Hierarchy' : 'Thought Flow Diagram'}</text>`
+        );
+        curY += 46;
+
+        if (includeBigIdea && entry.homileticalProposition && entry.homileticalProposition.trim()) {
+            const propLines = wrapTextLines(entry.homileticalProposition.trim(), 96);
+            const boxH = 34 + propLines.length * 22;
+            svgParts.push(
+                `<rect x="${PAD_X}" y="${curY}" width="${W - PAD_X * 2}" height="${boxH}" rx="10" fill="${isDark ? '#1e293b' : '#eef2ff'}" stroke="${anchorStroke}" stroke-width="1.5"/>`
+            );
+            svgParts.push(
+                `<text x="${PAD_X + 16}" y="${curY + 20}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="800" letter-spacing="1" fill="${isDark ? '#a5b4fc' : '#3730a3'}">BIG IDEA / PROPOSITION</text>`
+            );
+            propLines.forEach((ln, idx) => {
+                svgParts.push(
+                    `<text x="${PAD_X + 16}" y="${curY + 42 + idx * 22}" font-family="Georgia,serif" font-size="16" font-weight="600" fill="${textFill}">${escapeXml(ln)}</text>`
+                );
+            });
+            curY += boxH + 22;
+        }
+
+        const positioned = [];
+        const connectors = [];
+
+        function layoutNode(node, depth, parentBox) {
+            const x = PAD_X + Math.min(depth, 6) * INDENT_X;
+            const w = Math.max(360, W - x - PAD_X);
+            const isAnchor = node.uid === entry.anchorUid;
+            const tagId = (entry.tagOverrides && entry.tagOverrides[node.uid]) || node.defaultTagId;
+            const tag = TAG_MAP[tagId] || TAG_MAP.detail;
+            const maxChars = Math.max(36, Math.floor((w - 36) / 8.2));
+            const lines = wrapTextLines(node.text, maxChars);
+            const h = 38 + lines.length * 22 + 10;
+            const y = curY;
+            const box = { node, x, y, w, h, depth, isAnchor, tag, lines };
+            positioned.push(box);
+
+            if (parentBox) {
+                connectors.push({ px: parentBox.x + 20, py: parentBox.y + parentBox.h, cx: x, cy: y + 24, color: isDark ? lineStroke : tag.color });
+            }
+
+            curY += h + (depth === 0 ? 14 : 10);
+            if (!studioState.collapsed[node.uid] && node.children.length > 0) {
+                node.children.forEach((ch) => layoutNode(ch, depth + 1, box));
+            }
+        }
+
+        roots.forEach((r) => layoutNode(r, 0, null));
+
+        connectors.forEach((c) => {
+            svgParts.push(
+                `<path d="M ${c.px} ${c.py} L ${c.px} ${c.cy} L ${c.cx} ${c.cy}" fill="none" stroke="${c.color}" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+            );
+            svgParts.push(`<circle cx="${c.cx}" cy="${c.cy}" r="3" fill="${c.color}" fill-opacity="0.65"/>`);
+        });
+
+        positioned.forEach((b) => {
+            const labelText = studioState.mode === 'grammar'
+                ? `L${b.node.level} · ${b.node.code} · ${b.tag.grammar}`
+                : b.tag.simple;
+            const stroke = b.isAnchor ? anchorStroke : cardStroke;
+            const fill = b.isAnchor ? anchorFill : cardFill;
+            const sw = b.isAnchor ? 2.5 : 1.3;
+
+            svgParts.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`);
+
+            let badgeX = b.x + 14;
+            if (b.isAnchor) {
+                svgParts.push(`<rect x="${badgeX}" y="${b.y + 10}" width="124" height="20" rx="10" fill="#3730a3"/>`);
+                svgParts.push(
+                    `<text x="${badgeX + 62}" y="${b.y + 24}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="10.5" font-weight="800" fill="#ffffff">★ ANCHOR TRUTH</text>`
+                );
+                badgeX += 132;
+            }
+
+            const pillW = Math.min(b.w - (badgeX - b.x) - 62, Math.max(76, labelText.length * 6.8 + 18));
+            svgParts.push(
+                `<rect x="${badgeX}" y="${b.y + 10}" width="${pillW}" height="20" rx="10" fill="${isDark ? '#0f172a' : b.tag.bg}" stroke="${isDark ? b.tag.color : b.tag.border}" stroke-width="1"/>`
+            );
+            svgParts.push(
+                `<text x="${badgeX + 9}" y="${b.y + 24}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="700" fill="${isDark ? '#e2e8f0' : b.tag.color}">${escapeXml(labelText)}</text>`
+            );
+
+            svgParts.push(
+                `<rect x="${b.x + b.w - 46}" y="${b.y + 10}" width="34" height="20" rx="5" fill="${isDark ? '#422006' : '#fef9c3'}" stroke="${isDark ? '#a16207' : '#fde047'}" stroke-width="1"/>`
+            );
+            svgParts.push(
+                `<text x="${b.x + b.w - 29}" y="${b.y + 24}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="10.5" font-weight="700" fill="${isDark ? '#fde047' : '#854d0e'}">v${b.node.verseNum}</text>`
+            );
+
+            b.lines.forEach((ln, idx) => {
+                svgParts.push(
+                    `<text x="${b.x + 15}" y="${b.y + 52 + idx * 22}" font-family="Georgia,Times New Roman,serif" font-size="${b.isAnchor ? 15.5 : 14.5}" font-weight="${b.isAnchor ? '700' : '400'}" fill="${textFill}">${escapeXml(ln)}</text>`
+                );
+            });
+        });
+
+        const totalH = Math.max(300, curY + 34);
+        const bgRect = bgFill !== 'none' ? `<rect x="0" y="0" width="${W}" height="${totalH}" fill="${bgFill}"/>` : '';
+        return {
+            width: W,
+            height: totalH,
+            svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${totalH}" viewBox="0 0 ${W} ${totalH}">${bgRect}${svgParts.join('')}</svg>`
+        };
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 200);
+    }
+
+    function exportSvgFile(theme) {
+        const { svg } = buildExportSvg({ theme, includeBigIdea: true });
+        const safeName = currentPassageTitle().replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+        downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `lexflow_${safeName}.svg`);
+        showToast('Vector SVG downloaded!');
+    }
+
+    function exportPngSlide(theme) {
+        const { svg, width, height } = buildExportSvg({ theme, includeBigIdea: true });
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+            const scale = 2;
+            const slideW = Math.max(1920, width * scale);
+            const slideH = Math.max(1080, height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = slideW;
+            canvas.height = slideH;
+            const ctx = canvas.getContext('2d');
+            if (theme !== 'transparent') {
+                ctx.fillStyle = theme === 'dark' ? '#0f172a' : '#f8fafc';
+                ctx.fillRect(0, 0, slideW, slideH);
+            }
+            const fitScale = Math.min((slideW - 80) / width, (slideH - 80) / height);
+            const drawW = width * fitScale;
+            const drawH = height * fitScale;
+            ctx.drawImage(img, (slideW - drawW) / 2, (slideH - drawH) / 2, drawW, drawH);
+            URL.revokeObjectURL(url);
+            canvas.toBlob((pngBlob) => {
+                if (!pngBlob) return;
+                const safeName = currentPassageTitle().replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+                downloadBlob(pngBlob, `lexflow_${safeName}_${theme}.png`);
+                showToast(`PNG Slide (${theme}) downloaded!`);
+            }, 'image/png');
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); showToast('Could not render PNG — try SVG export.'); };
+        img.src = url;
+    }
+
+    function buildMarkdownOutline(entry) {
+        const title = entry.startVerse === entry.endVerse
+            ? `${entry.bookName} ${entry.chapterNum}:${entry.startVerse}`
+            : `${entry.bookName} ${entry.chapterNum}:${entry.startVerse}–${entry.endVerse}`;
+        const lines = [`# ${title}`, ''];
+        if (entry.homileticalProposition && entry.homileticalProposition.trim()) {
+            lines.push(`**Big Idea (Homiletical Proposition):** ${entry.homileticalProposition.trim()}`, '');
+        }
+        if ((entry.exegeticalSubject || '').trim() || (entry.exegeticalComplement || '').trim()) {
+            lines.push('## Exegetical Idea');
+            if (entry.exegeticalSubject.trim()) lines.push(`- **Subject:** ${entry.exegeticalSubject.trim()}`);
+            if (entry.exegeticalComplement.trim()) lines.push(`- **Complement:** ${entry.exegeticalComplement.trim()}`);
+            lines.push('');
+        }
+        if (entry.skeleton && entry.skeleton.trim()) {
+            lines.push('## Grammatical Skeleton', entry.skeleton.trim(), '');
+        }
+        if (entry.points && entry.points.length > 0) {
+            lines.push('## Supporting Outline');
+            entry.points.forEach((pt, idx) => {
+                const meta = [pt.ref, pt.tag].filter(Boolean).join(' · ');
+                lines.push(`${toRoman(idx + 1)}. ${pt.text || '(Untitled point)'}${meta ? ` *(${meta})*` : ''}`);
+            });
+            lines.push('');
+        }
+        return lines.join('\n');
+    }
+
+    function copyOutlineToClipboard() {
+        const md = buildMarkdownOutline(getOrCreatePassageData());
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(md).then(() => showToast('Sermon / Study Outline copied!'));
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = md;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            showToast('Sermon / Study Outline copied!');
+        }
+    }
+
+    function exportPrintableStudySheet() {
+        const entry = getOrCreatePassageData();
+        const { svg } = buildExportSvg({ theme: 'light', includeBigIdea: false });
+        const pointsHtml = (entry.points || [])
+            .map((pt, idx) => {
+                const meta = [pt.ref, pt.tag].filter(Boolean).join(' · ');
+                return `<li><strong>${toRoman(idx + 1)}.</strong> ${escapeHtml(pt.text || '')}${meta ? ` <span class="meta">(${escapeHtml(meta)})</span>` : ''}</li>`;
+            })
+            .join('');
+
+        const win = window.open('', '_blank', 'width=1000,height=850');
+        if (!win) {
+            showToast('Please allow pop-ups to print PDF.');
+            return;
+        }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(currentPassageTitle())} — LexFlow Study Sheet</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 28px 36px; line-height: 1.5; }
+    h1 { font-size: 22px; color: #1e1b4b; margin: 0 0 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+    .diagram { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; background: #f8fafc; margin-bottom: 20px; }
+    .diagram svg { width: 100%; height: auto; display: block; }
+    .sec { margin-bottom: 16px; page-break-inside: avoid; }
+    .sec h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #3730a3; margin: 0 0 6px; }
+    .box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; white-space: pre-wrap; }
+    .big-idea { background: #eef2ff; border-color: #818cf8; font-family: Georgia, serif; font-size: 16px; font-weight: 600; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .meta { color: #64748b; font-size: 12px; }
+    @media print { body { margin: 14mm; } }
+</style>
+</head>
+<body>
+    <h1>${escapeHtml(currentPassageTitle())} — Thought Flow &amp; Big Idea</h1>
+    <div class="diagram">${svg}</div>
+    ${entry.homileticalProposition ? `<div class="sec"><h2>Homiletical Proposition (Big Idea)</h2><div class="box big-idea">${escapeHtml(entry.homileticalProposition)}</div></div>` : ''}
+    ${(entry.exegeticalSubject || entry.exegeticalComplement) ? `<div class="sec"><h2>Exegetical Idea (Then &amp; There)</h2><div class="box"><strong>Subject:</strong> ${escapeHtml(entry.exegeticalSubject || '—')}\n<strong>Complement:</strong> ${escapeHtml(entry.exegeticalComplement || '—')}</div></div>` : ''}
+    ${entry.skeleton ? `<div class="sec"><h2>Grammatical Skeleton</h2><div class="box">${escapeHtml(entry.skeleton)}</div></div>` : ''}
+    ${pointsHtml ? `<div class="sec"><h2>Supporting Outline</h2><ul>${pointsHtml}</ul></div>` : ''}
+</body>
+</html>`);
+        win.document.close();
+        setTimeout(() => {
+            try { win.focus(); win.print(); } catch (e) {}
+        }, 300);
+    }
+
+    function renderTreeNode(node, entry) {
+        const isAnchor = node.uid === entry.anchorUid;
+        const tagId = (entry.tagOverrides && entry.tagOverrides[node.uid]) || node.defaultTagId;
+        const tag = TAG_MAP[tagId] || TAG_MAP.detail;
+        const isCollapsed = Boolean(studioState.collapsed[node.uid]);
+        const hasChildren = node.children.length > 0;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'lf-node-wrap';
+
+        const card = document.createElement('div');
+        card.className = `lf-card${isAnchor ? ' is-anchor' : ''}`;
+
+        const head = document.createElement('div');
+        head.className = 'lf-card-head';
+
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = `lf-star-btn${isAnchor ? ' active' : ''}`;
+        starBtn.title = isAnchor ? 'Anchor Truth of this passage' : 'Set as the 1 Anchor Truth';
+        starBtn.textContent = isAnchor ? '★' : '☆';
+        starBtn.onclick = () => {
+            updatePassageData((d) => {
+                d.anchorUid = node.uid;
+                if (!d.skeletonEdited) d.skeleton = buildDefaultSkeleton(studioState.parsed.nodes, d.anchorUid);
+            });
+            renderStudioBody();
+        };
+        head.appendChild(starBtn);
+
+        if (isAnchor) {
+            const anchorPill = document.createElement('span');
+            anchorPill.className = 'lf-anchor-pill';
+            anchorPill.textContent = 'Anchor Truth';
+            head.appendChild(anchorPill);
+        }
+
+        if (studioState.mode === 'grammar') {
+            const codeBadge = document.createElement('span');
+            codeBadge.className = 'lf-code-badge';
+            codeBadge.textContent = `L${node.level} · ${node.code}`;
+            head.appendChild(codeBadge);
+        }
+
+        const sel = document.createElement('select');
+        sel.className = 'lf-tag-select';
+        sel.style.backgroundColor = tag.bg;
+        sel.style.color = tag.color;
+        sel.style.borderColor = tag.border;
+        sel.title = 'Click to change clause function';
+        QUESTION_TAGS.forEach((opt) => {
+            const o = document.createElement('option');
+            o.value = opt.id;
+            o.textContent = studioState.mode === 'grammar' ? opt.grammar : opt.simple;
+            if (opt.id === tagId) o.selected = true;
+            sel.appendChild(o);
+        });
+        sel.onchange = () => {
+            updatePassageData((d) => {
+                if (!d.tagOverrides) d.tagOverrides = {};
+                d.tagOverrides[node.uid] = sel.value;
+            });
+            renderFlowchartCanvas();
+        };
+        head.appendChild(sel);
+
+        if (hasChildren) {
+            const colBtn = document.createElement('button');
+            colBtn.type = 'button';
+            colBtn.className = 'lf-collapse-btn';
+            colBtn.textContent = isCollapsed ? `+ ${node.children.length} hidden` : `− ${node.children.length}`;
+            colBtn.onclick = () => {
+                studioState.collapsed[node.uid] = !isCollapsed;
+                renderFlowchartCanvas();
+            };
+            head.appendChild(colBtn);
+        }
+
+        const vBadge = document.createElement('span');
+        vBadge.className = 'lf-vbadge';
+        vBadge.textContent = `v${node.verseNum}`;
+        head.appendChild(vBadge);
+
+        const body = document.createElement('div');
+        body.className = 'lf-card-text';
+        body.textContent = node.text;
+
+        card.appendChild(head);
+        card.appendChild(body);
+        wrap.appendChild(card);
+
+        if (hasChildren && !isCollapsed) {
+            const kids = document.createElement('div');
+            kids.className = 'lf-tree-children';
+            node.children.forEach((ch) => kids.appendChild(renderTreeNode(ch, entry)));
+            wrap.appendChild(kids);
+        }
+
+        return wrap;
+    }
+
+    function renderFlowchartCanvas() {
+        const container = document.getElementById('lfFlowCanvasScroll');
+        if (!container) return;
+        const entry = getOrCreatePassageData();
+        const { nodes, roots } = studioState.parsed;
+
+        container.innerHTML = '';
+        if (nodes.length === 0) {
+            container.innerHTML = `<div style="padding:32px;text-align:center;color:#64748b;font-size:14px;">No verses found in ${escapeHtml(currentPassageTitle())}. Adjust the verse range above.</div>`;
+            return;
+        }
+
+        const rootList = document.createElement('div');
+        rootList.className = 'lf-root-list';
+        roots.forEach((r) => rootList.appendChild(renderTreeNode(r, entry)));
+        container.appendChild(rootList);
+
+        const indentedCount = nodes.filter((n) => n.level > 0).length;
+        const metaEl = document.getElementById('lfCanvasMeta');
+        if (metaEl) {
+            metaEl.textContent =
+                indentedCount > 0
+                    ? `${nodes.length} clauses (${indentedCount} indented) · Click ★ to set Anchor Truth`
+                    : `${nodes.length} clauses · Tip: Indent lines with Tab in LexFlow to create visual branches`;
+        }
+    }
+
+    function renderSupportingPoints(entry) {
+        const listEl = document.getElementById('lfPointsList');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        const pts = entry.points || [];
+        if (pts.length === 0) {
+            const empty = document.createElement('div');
+            empty.style.cssText = 'font-size:12px;color:#64748b;padding:6px 2px;';
+            empty.textContent = 'No supporting points yet. Click "+ Add Point" or "Re-draft".';
+            listEl.appendChild(empty);
+            return;
+        }
+
+        pts.forEach((pt, idx) => {
+            const row = document.createElement('div');
+            row.className = 'lf-point-row';
+
+            const num = document.createElement('div');
+            num.className = 'lf-point-num';
+            num.textContent = `${toRoman(idx + 1)}.`;
+
+            const inputsWrap = document.createElement('div');
+            inputsWrap.className = 'lf-point-inputs';
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.className = 'lf-input';
+            textInput.value = pt.text || '';
+            textInput.placeholder = 'Type supporting point in your own words...';
+            textInput.oninput = () => {
+                updatePassageData((d) => {
+                    d.pointsEdited = true;
+                    if (d.points[idx]) d.points[idx].text = textInput.value;
+                });
+            };
+
+            const metaRow = document.createElement('div');
+            metaRow.className = 'lf-point-meta';
+
+            const refInput = document.createElement('input');
+            refInput.type = 'text';
+            refInput.className = 'lf-input';
+            refInput.style.width = '78px';
+            refInput.value = pt.ref || '';
+            refInput.placeholder = 'v.1–2';
+            refInput.oninput = () => {
+                updatePassageData((d) => {
+                    d.pointsEdited = true;
+                    if (d.points[idx]) d.points[idx].ref = refInput.value;
+                });
+            };
+
+            const tagInput = document.createElement('input');
+            tagInput.type = 'text';
+            tagInput.className = 'lf-input';
+            tagInput.value = pt.tag || '';
+            tagInput.placeholder = 'Question / Function (e.g., Why?, How?, So What?)';
+            tagInput.oninput = () => {
+                updatePassageData((d) => {
+                    d.pointsEdited = true;
+                    if (d.points[idx]) d.points[idx].tag = tagInput.value;
+                });
+            };
+
+            metaRow.appendChild(refInput);
+            metaRow.appendChild(tagInput);
+            inputsWrap.appendChild(textInput);
+            inputsWrap.appendChild(metaRow);
+
+            const actions = document.createElement('div');
+            actions.className = 'lf-point-actions';
+
+            const upBtn = document.createElement('button');
+            upBtn.type = 'button';
+            upBtn.className = 'lf-icon-btn';
+            upBtn.textContent = '↑';
+            upBtn.title = 'Move up';
+            upBtn.disabled = idx === 0;
+            upBtn.onclick = () => {
+                const updated = updatePassageData((d) => {
+                    d.pointsEdited = true;
+                    if (idx > 0) {
+                        const tmp = d.points[idx - 1];
+                        d.points[idx - 1] = d.points[idx];
+                        d.points[idx] = tmp;
+                    }
+                });
+                renderSupportingPoints(updated);
+            };
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'lf-icon-btn del';
+            delBtn.textContent = '×';
+            delBtn.title = 'Remove point';
+            delBtn.onclick = () => {
+                const updated = updatePassageData((d) => {
+                    d.pointsEdited = true;
+                    d.points.splice(idx, 1);
+                });
+                renderSupportingPoints(updated);
+            };
+
+            actions.appendChild(upBtn);
+            actions.appendChild(delBtn);
+
+            row.appendChild(num);
+            row.appendChild(inputsWrap);
+            row.appendChild(actions);
+            listEl.appendChild(row);
+        });
+    }
+
+    function renderBuilderPanel() {
+        const entry = getOrCreatePassageData();
+        const titleEl = document.getElementById('lfBuilderTitle');
+        if (titleEl) titleEl.textContent = `Paragraph Builder · ${currentPassageTitle()}`;
+
+        const skelEl = document.getElementById('lfSkeletonInput');
+        if (skelEl) {
+            skelEl.value = entry.skeleton || '';
+            skelEl.oninput = () => {
+                updatePassageData((d) => { d.skeleton = skelEl.value; d.skeletonEdited = true; });
+            };
+        }
+
+        const subjEl = document.getElementById('lfExegSubjectInput');
+        if (subjEl) {
+            subjEl.value = entry.exegeticalSubject || '';
+            subjEl.oninput = () => { updatePassageData((d) => { d.exegeticalSubject = subjEl.value; }); };
+        }
+
+        const compEl = document.getElementById('lfExegCompInput');
+        if (compEl) {
+            compEl.value = entry.exegeticalComplement || '';
+            compEl.oninput = () => { updatePassageData((d) => { d.exegeticalComplement = compEl.value; }); };
+        }
+
+        const propEl = document.getElementById('lfHomPropInput');
+        if (propEl) {
+            propEl.value = entry.homileticalProposition || '';
+            propEl.oninput = () => { updatePassageData((d) => { d.homileticalProposition = propEl.value; }); };
+        }
+
+        renderSupportingPoints(entry);
+    }
+
+    function renderChapterOverview() {
+        const pane = document.getElementById('lfOverviewPane');
+        if (!pane) return;
+        const store = loadStudioStore();
+        const items = Object.values(store.passages || {})
+            .filter((p) => String(p.bookNum) === String(studioState.bookNum) && String(p.chapterNum) === String(studioState.chapterNum))
+            .sort((a, b) => (a.startVerse || 0) - (b.startVerse || 0));
+
+        pane.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
+        header.innerHTML = `<div><h3 style="margin:0;font-size:17px;color:#1e1b4b;">${escapeHtml(studioState.bookName)} ${escapeHtml(studioState.chapterNum)} — Chapter Overview</h3><div style="font-size:12px;color:#64748b;">All saved paragraph Big Ideas and outlines for this chapter</div></div>`;
+        const copyAllBtn = document.createElement('button');
+        copyAllBtn.type = 'button';
+        copyAllBtn.className = 'lf-btn lf-btn-primary';
+        copyAllBtn.textContent = 'Copy Full Chapter Outline';
+        copyAllBtn.onclick = () => {
+            const fullMd = items.map((it) => buildMarkdownOutline(it)).join('\n---\n\n');
+            if (!fullMd) { showToast('No saved paragraphs in this chapter yet.'); return; }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(fullMd).then(() => showToast('Full chapter outline copied!'));
+            }
+        };
+        header.appendChild(copyAllBtn);
+        pane.appendChild(header);
+
+        if (items.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'lf-overview-card';
+            empty.style.color = '#64748b';
+            empty.textContent = 'Save your Exegetical Idea or Homiletical Proposition on any paragraph range to see it stacked here.';
+            pane.appendChild(empty);
+            return;
+        }
+
+        items.forEach((it) => {
+            const card = document.createElement('div');
+            card.className = 'lf-overview-card';
+            const refLabel = it.startVerse === it.endVerse
+                ? `${it.bookName} ${it.chapterNum}:${it.startVerse}`
+                : `${it.bookName} ${it.chapterNum}:${it.startVerse}–${it.endVerse}`;
+
+            const ptsHtml = (it.points || [])
+                .map((pt, i) => `<li style="margin:3px 0;font-size:13px;"><strong>${toRoman(i + 1)}.</strong> ${escapeHtml(pt.text || '')} <span style="color:#64748b;font-size:11.5px;">${escapeHtml([pt.ref, pt.tag].filter(Boolean).join(' · '))}</span></li>`)
+                .join('');
+
+            card.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong style="font-size:15px;color:#3730a3;">${escapeHtml(refLabel)}</strong>
+                    <button type="button" class="lf-btn lf-btn-xs" data-open-range="${it.startVerse}-${it.endVerse}">Edit Paragraph</button>
+                </div>
+                ${it.homileticalProposition ? `<div style="background:#eef2ff;border-left:3px solid #4338ca;padding:8px 12px;border-radius:6px;margin-bottom:8px;font-family:Georgia,serif;font-size:14.5px;font-weight:600;color:#1e1b4b;">${escapeHtml(it.homileticalProposition)}</div>` : ''}
+                ${(it.exegeticalSubject || it.exegeticalComplement) ? `<div style="font-size:12.5px;color:#334155;margin-bottom:8px;"><strong>Exegetical:</strong> ${escapeHtml(it.exegeticalSubject || '')} ${escapeHtml(it.exegeticalComplement || '')}</div>` : ''}
+                ${ptsHtml ? `<ul style="list-style:none;padding:0;margin:6px 0 0;">${ptsHtml}</ul>` : ''}
+            `;
+            const openBtn = card.querySelector('[data-open-range]');
+            if (openBtn) {
+                openBtn.onclick = () => {
+                    studioState.startVerse = it.startVerse;
+                    studioState.endVerse = it.endVerse;
+                    studioState.tab = 'studio';
+                    reloadAndRender();
+                };
+            }
+            pane.appendChild(card);
+        });
+    }
+
+    function renderStudioBody() {
+        const ws = document.getElementById('lfWorkspaceSplit');
+        const ov = document.getElementById('lfOverviewPane');
+        const isOverview = studioState.tab === 'overview';
+        if (ws) ws.style.display = isOverview ? 'none' : 'grid';
+        if (ov) ov.classList.toggle('active', isOverview);
+
+        document.querySelectorAll('[data-lf-mode]').forEach((b) => {
+            b.classList.toggle('active', b.getAttribute('data-lf-mode') === studioState.mode);
+        });
+        document.querySelectorAll('[data-lf-tab]').forEach((b) => {
+            b.classList.toggle('active', b.getAttribute('data-lf-tab') === studioState.tab);
+        });
+
+        const chapLbl = document.getElementById('lfRangeChapLabel');
+        if (chapLbl) chapLbl.textContent = `${studioState.bookName} ${studioState.chapterNum}:`;
+        const sIn = document.getElementById('lfStartVerseIn');
+        const eIn = document.getElementById('lfEndVerseIn');
+        if (sIn) { sIn.value = studioState.startVerse; sIn.max = studioState.maxVerse; }
+        if (eIn) { eIn.value = studioState.endVerse; eIn.max = studioState.maxVerse; }
+
+        if (isOverview) {
+            renderChapterOverview();
+        } else {
+            renderFlowchartCanvas();
+            renderBuilderPanel();
+        }
+    }
+
+    function reloadAndRender() {
+        studioState.parsed = readPassageClauses(
+            studioState.bookNum,
+            studioState.chapterNum,
+            studioState.startVerse,
+            studioState.endVerse
+        );
+        renderStudioBody();
+    }
+
+    function buildModalDOM() {
+        if (document.getElementById('lfFlowModalOverlay')) return;
+        ensureStudioStyles();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'lfFlowModalOverlay';
+        overlay.className = 'modal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+
+        overlay.innerHTML = `
+            <div id="lfFlowDialog">
+                <div class="lf-flow-topbar">
+                    <div class="lf-flow-title">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:#eef2ff;color:#3730a3;font-size:14px;">❖</span>
+                        <span>Flowchart &amp; Big Idea</span>
+                    </div>
+
+                    <div class="lf-seg-group">
+                        <button type="button" class="lf-seg-btn active" data-lf-mode="simple">Simple Flow</button>
+                        <button type="button" class="lf-seg-btn" data-lf-mode="grammar">Discourse Grammar</button>
+                    </div>
+
+                    <div class="lf-range-bar">
+                        <span id="lfRangeChapLabel">Hebrews 1:</span>
+                        <input id="lfStartVerseIn" type="number" min="1" value="1" aria-label="Start verse" />
+                        <span>–</span>
+                        <input id="lfEndVerseIn" type="number" min="1" value="4" aria-label="End verse" />
+                        <button type="button" class="lf-btn lf-btn-xs" id="lfApplyRangeBtn">Apply</button>
+                        <button type="button" class="lf-btn lf-btn-xs" id="lfWholeChapBtn" title="Load entire chapter">Whole Ch.</button>
+                    </div>
+
+                    <div class="lf-seg-group">
+                        <button type="button" class="lf-seg-btn active" data-lf-tab="studio">Workspace</button>
+                        <button type="button" class="lf-seg-btn" data-lf-tab="overview">Chapter Overview</button>
+                    </div>
+
+                    <div class="lf-export-wrap">
+                        <button type="button" class="lf-btn lf-btn-primary" id="lfExportToggleBtn">Export ▾</button>
+                        <div class="lf-export-menu" id="lfExportMenu">
+                            <button type="button" class="lf-export-item" data-lf-exp="png-light"><span>PNG Slide (Light 16:9)</span><span>🖼</span></button>
+                            <button type="button" class="lf-export-item" data-lf-exp="png-dark"><span>PNG Slide (Dark 16:9)</span><span>🌙</span></button>
+                            <button type="button" class="lf-export-item" data-lf-exp="png-transparent"><span>PNG (Transparent BG)</span><span>✨</span></button>
+                            <div class="lf-export-divider"></div>
+                            <button type="button" class="lf-export-item" data-lf-exp="svg-light"><span>Vector Diagram (SVG)</span><span>📐</span></button>
+                            <button type="button" class="lf-export-item" data-lf-exp="print-pdf"><span>Printable Study Sheet (PDF)</span><span>🖨</span></button>
+                            <button type="button" class="lf-export-item" data-lf-exp="copy-md"><span>Copy Sermon Outline</span><span>📋</span></button>
+                        </div>
+                        <button type="button" class="lf-btn" id="lfCloseModalBtn">✕ Close</button>
+                    </div>
+                </div>
+
+                <div class="lf-workspace" id="lfWorkspaceSplit">
+                    <div class="lf-canvas-pane">
+                        <div class="lf-pane-subbar">
+                            <span id="lfCanvasMeta">Click ★ to set Anchor Truth · Click any badge to edit Why? / How? / When? / So What?</span>
+                            <button type="button" class="lf-btn lf-btn-xs" id="lfSyncFlowBtn">↻ Sync from Editor</button>
+                        </div>
+                        <div class="lf-canvas-scroll" id="lfFlowCanvasScroll"></div>
+                    </div>
+
+                    <div class="lf-builder-pane">
+                        <div class="lf-pane-subbar">
+                            <strong id="lfBuilderTitle" style="color:#1e1b4b;font-size:12px;">Paragraph Builder</strong>
+                            <span id="lfSaveIndicator" style="color:#059669;font-weight:600;">Auto-saved</span>
+                        </div>
+                        <div class="lf-builder-scroll">
+                            <div class="lf-field-card">
+                                <div class="lf-field-head">
+                                    <span class="lf-field-label">1. Grammatical Skeleton</span>
+                                    <button type="button" class="lf-btn lf-btn-xs" id="lfRepullSkelBtn" title="Overwrite with Level 0 clauses from Thought Flow">↻ Re-pull from Flow</button>
+                                </div>
+                                <div class="lf-field-hint">Pre-populated from your Level 0 clauses — edit or rewrite freely:</div>
+                                <textarea id="lfSkeletonInput" class="lf-textarea" rows="3" placeholder="Main clauses of the paragraph..."></textarea>
+                            </div>
+
+                            <div class="lf-field-card">
+                                <div class="lf-field-head">
+                                    <span class="lf-field-label">2. Exegetical Idea (Then &amp; There)</span>
+                                </div>
+                                <div class="lf-sub-row">
+                                    <label for="lfExegSubjectInput">Subject</label>
+                                    <input id="lfExegSubjectInput" class="lf-input" type="text" placeholder="What the author is talking about..." />
+                                </div>
+                                <div class="lf-sub-row">
+                                    <label for="lfExegCompInput">Complement</label>
+                                    <textarea id="lfExegCompInput" class="lf-textarea" rows="2" placeholder="What the author says about that subject..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="lf-field-card" style="background:#eef2ff;border-color:#c7d2fe;">
+                                <div class="lf-field-head">
+                                    <span class="lf-field-label">3. Homiletical Proposition (Here &amp; Now)</span>
+                                </div>
+                                <div class="lf-field-hint">One clear, preachable Big Idea for today's audience:</div>
+                                <textarea id="lfHomPropInput" class="lf-textarea" rows="2" placeholder="Because..., we must..."></textarea>
+                            </div>
+
+                            <div class="lf-field-card">
+                                <div class="lf-field-head">
+                                    <span class="lf-field-label">4. Supporting Points (Editable Outline)</span>
+                                    <div style="display:flex;gap:5px;">
+                                        <button type="button" class="lf-btn lf-btn-xs" id="lfRedraftPtsBtn" title="Regenerate draft points from your L1 branches">↻ Re-draft</button>
+                                        <button type="button" class="lf-btn lf-btn-xs lf-btn-primary" id="lfAddPointBtn">+ Add Point</button>
+                                    </div>
+                                </div>
+                                <div class="lf-field-hint">Auto-drafted from your indented branches — edit, reorder, or rewrite any line:</div>
+                                <div class="lf-points-list" id="lfPointsList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lf-overview-pane" id="lfOverviewPane"></div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeModal = () => {
+            overlay.classList.remove('is-open');
+            const m = document.getElementById('lfExportMenu');
+            if (m) m.classList.remove('open');
+        };
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+            const expMenu = document.getElementById('lfExportMenu');
+            if (expMenu && !e.target.closest('.lf-export-wrap')) expMenu.classList.remove('open');
+        });
+
+        document.getElementById('lfCloseModalBtn').onclick = closeModal;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal();
+        });
+
+        overlay.querySelectorAll('[data-lf-mode]').forEach((btn) => {
+            btn.onclick = () => {
+                studioState.mode = btn.getAttribute('data-lf-mode');
+                renderStudioBody();
+            };
+        });
+
+        overlay.querySelectorAll('[data-lf-tab]').forEach((btn) => {
+            btn.onclick = () => {
+                studioState.tab = btn.getAttribute('data-lf-tab');
+                renderStudioBody();
+            };
+        });
+
+        const applyRange = () => {
+            const s = Math.max(1, Math.min(studioState.maxVerse, parseInt(document.getElementById('lfStartVerseIn').value, 10) || 1));
+            const e = Math.max(s, Math.min(studioState.maxVerse, parseInt(document.getElementById('lfEndVerseIn').value, 10) || s));
+            studioState.startVerse = s;
+            studioState.endVerse = e;
+            studioState.collapsed = {};
+            reloadAndRender();
+        };
+
+        document.getElementById('lfApplyRangeBtn').onclick = applyRange;
+        document.getElementById('lfStartVerseIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyRange(); });
+        document.getElementById('lfEndVerseIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyRange(); });
+
+        document.getElementById('lfWholeChapBtn').onclick = () => {
+            studioState.startVerse = 1;
+            studioState.endVerse = studioState.maxVerse;
+            studioState.collapsed = {};
+            reloadAndRender();
+        };
+
+        document.getElementById('lfSyncFlowBtn').onclick = () => {
+            reloadAndRender();
+            showToast('Synced latest indentations from Thought Flow!');
+        };
+
+        document.getElementById('lfRepullSkelBtn').onclick = () => {
+            const entry = getOrCreatePassageData();
+            if (entry.skeletonEdited && entry.skeleton.trim() && !confirm('Replace your edited Grammatical Skeleton with a fresh draft from Thought Flow?')) {
+                return;
+            }
+            const updated = updatePassageData((d) => {
+                d.skeleton = buildDefaultSkeleton(studioState.parsed.nodes, d.anchorUid);
+                d.skeletonEdited = false;
+            });
+            document.getElementById('lfSkeletonInput').value = updated.skeleton;
+            showToast('Grammatical Skeleton refreshed from Flow.');
+        };
+
+        document.getElementById('lfRedraftPtsBtn').onclick = () => {
+            const entry = getOrCreatePassageData();
+            if (entry.pointsEdited && entry.points.length > 0 && !confirm('Replace your edited Supporting Points with a fresh draft from your Level 1 branches?')) {
+                return;
+            }
+            const updated = updatePassageData((d) => {
+                d.points = buildDefaultPoints(studioState.parsed.nodes, studioState.parsed.roots, d.tagOverrides || {});
+                d.pointsEdited = false;
+            });
+            renderSupportingPoints(updated);
+            showToast('Supporting Points re-drafted from Flow.');
+        };
+
+        document.getElementById('lfAddPointBtn').onclick = () => {
+            const updated = updatePassageData((d) => {
+                d.pointsEdited = true;
+                if (!d.points) d.points = [];
+                d.points.push({
+                    id: 'pt_' + Math.random().toString(36).slice(2, 8),
+                    ref: `v.${studioState.startVerse}`,
+                    tag: '',
+                    text: ''
+                });
+            });
+            renderSupportingPoints(updated);
+            const inputs = document.querySelectorAll('#lfPointsList .lf-point-row input[type="text"]');
+            if (inputs.length >= 3) inputs[inputs.length - 3].focus();
+        };
+
+        const expToggle = document.getElementById('lfExportToggleBtn');
+        const expMenu = document.getElementById('lfExportMenu');
+        expToggle.onclick = (e) => {
+            e.stopPropagation();
+            expMenu.classList.toggle('open');
+        };
+        expMenu.querySelectorAll('[data-lf-exp]').forEach((item) => {
+            item.onclick = () => {
+                expMenu.classList.remove('open');
+                const action = item.getAttribute('data-lf-exp');
+                if (action === 'png-light') exportPngSlide('light');
+                else if (action === 'png-dark') exportPngSlide('dark');
+                else if (action === 'png-transparent') exportPngSlide('transparent');
+                else if (action === 'svg-light') exportSvgFile('light');
+                else if (action === 'print-pdf') exportPrintableStudySheet();
+                else if (action === 'copy-md') copyOutlineToClipboard();
+            };
+        });
+    }
+
+    function openFlowchartStudio() {
+        buildModalDOM();
+        const ctx = detectCurrentVisibleContext();
+        if (ctx) {
+            studioState.bookNum = ctx.bookNum;
+            studioState.bookName = ctx.bookName;
+            studioState.chapterNum = ctx.chapterNum;
+            studioState.startVerse = ctx.startVerse;
+            studioState.endVerse = ctx.endVerse;
+            studioState.maxVerse = ctx.maxVerse;
+        }
+        studioState.tab = 'studio';
+        studioState.collapsed = {};
+        reloadAndRender();
+        document.getElementById('lfFlowModalOverlay').classList.add('is-open');
+    }
+
+    function injectStudioButton() {
+        ensureStudioStyles();
+
+        let btn = document.getElementById('lfFlowOpenBtn');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'lfFlowOpenBtn';
+            btn.type = 'button';
+            btn.innerHTML = '<span>❖</span><span>Flowchart &amp; Big Idea</span>';
+            btn.title = 'Open Visual Flowchart, Discourse Grammar & Editable Big Idea Builder';
+            btn.addEventListener('mousedown', (e) => e.stopPropagation());
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openFlowchartStudio();
+            });
+        }
+
+        // Prevent the collapsible toolbar script from hiding this button
+        btn.classList.remove('tf-collapsible-body');
+        btn.style.setProperty('display', 'inline-flex', 'important');
+
+        const tfHeader = document.querySelector('.tf-header-row');
+        const toolbarCard = (tfHeader && tfHeader.parentElement) || getThoughtFlowToolbar();
+
+        if (toolbarCard && toolbarCard.isConnected && toolbarCard.getBoundingClientRect().width > 120) {
+            if (window.getComputedStyle(toolbarCard).position === 'static') {
+                toolbarCard.style.position = 'relative';
+            }
+            btn.style.position = 'absolute';
+            btn.style.top = '7px';
+            btn.style.right = '12px';
+            btn.style.bottom = '';
+            btn.style.marginLeft = '0';
+            btn.style.zIndex = '35';
+            if (btn.parentElement !== toolbarCard) {
+                toolbarCard.appendChild(btn);
+            }
+            return;
+        }
+
+        // Safe visible fallback until the Thought Flow bar finishes initializing
+        btn.style.position = 'fixed';
+        btn.style.top = '';
+        btn.style.bottom = '18px';
+        btn.style.right = '22px';
+        btn.style.zIndex = '9990';
+        if (btn.parentElement !== document.body) {
+            document.body.appendChild(btn);
+        }
+    }
+
+    // =========================================================================
+    // PART 9: INITIALIZATION
+    // =========================================================================
     function initCleanState() {
         scrubDisabledStorage();
         neutralizeDisabledGlobals();
@@ -24809,6 +26773,7 @@ function showContextMenu(x, y) {
         ensureFixStyles();
         protectAllEditorScrollers();
         removeRelationshipSuggestionPills();
+        injectStudioButton();
 
         try {
             if (typeof ensureOtInNtModalAndStylesExist === 'function') ensureOtInNtModalAndStylesExist();
@@ -24818,9 +26783,7 @@ function showContextMenu(x, y) {
         const ed = getEditor();
         if (ed && typeof ResizeObserver !== 'undefined') {
             const ro = new ResizeObserver(() => {
-                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
-                    restorePinnedAnchor();
-                }
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) restorePinnedAnchor();
             });
             ro.observe(ed);
         }
@@ -24828,9 +26791,7 @@ function showContextMenu(x, y) {
         const mainEl = getMainScroller();
         if (mainEl && typeof MutationObserver !== 'undefined') {
             const obs = new MutationObserver((mutations) => {
-                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
-                    restorePinnedAnchor();
-                }
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) restorePinnedAnchor();
                 scheduleRemoveAutoSplitAndSuggestions();
                 if (isFixingLines) return;
                 const curEd = getEditor();
@@ -24853,9 +26814,7 @@ function showContextMenu(x, y) {
 
         if (document.body && typeof MutationObserver !== 'undefined') {
             const uiObs = new MutationObserver((mutations) => {
-                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
-                    restorePinnedAnchor();
-                }
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) restorePinnedAnchor();
                 const hasAdditions = mutations.some((m) => m.addedNodes && m.addedNodes.length > 0);
                 if (hasAdditions) scheduleRemoveAutoSplitAndSuggestions();
             });
@@ -24867,6 +26826,7 @@ function showContextMenu(x, y) {
             neutralizeDisabledGlobals();
             removeAutoSplitClasses();
             removeAutoSplitUI();
+            injectStudioButton();
             invalidateBannerCache();
             protectAllEditorScrollers();
             const curEd = getEditor();
@@ -24874,21 +26834,14 @@ function showContextMenu(x, y) {
                 cleanLeakedOtArtifacts(curEd);
                 splitAnyBrInsideVerseBlocks(curEd);
             }
-            try {
-                if (typeof decorateEditorWithOtInNtBadges === 'function') decorateEditorWithOtInNtBadges();
-            } catch (e) {}
-            try {
-                if (typeof syncOverlayControls === 'function') syncOverlayControls();
-            } catch (e) {}
+            try { if (typeof decorateEditorWithOtInNtBadges === 'function') decorateEditorWithOtInNtBadges(); } catch (e) {}
+            try { if (typeof syncOverlayControls === 'function') syncOverlayControls(); } catch (e) {}
             removeRelationshipSuggestionPills();
             fixSubordinationLines();
         };
 
         runClean();
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-            runClean();
-        }, 180);
+        setTimeout(() => { window.dispatchEvent(new Event('resize')); runClean(); }, 180);
         setTimeout(runClean, 850);
     }
 
@@ -24897,6 +26850,240 @@ function showContextMenu(x, y) {
     } else {
         initCleanState();
     }
+})();
+
+
+	/* === LEXFLOW FIX: HARDWIRED SHIFT+TAB OUTDENT & ACTIVE VERSE TRACKER === */
+(function () {
+    const getEditor = () =>
+        (typeof editor !== 'undefined' && editor) ||
+        document.getElementById('editor') ||
+        document.querySelector('[contenteditable="true"]');
+
+    const getMainScroller = () => document.querySelector('main');
+
+    let learnedStep = null;
+    let learnedUnit = 'px';
+
+    function getDirectVerseBlock(ed, node) {
+        if (!ed || !node) return null;
+        let cur = node.nodeType === 3 ? node.parentElement : node;
+        while (cur && cur !== ed) {
+            if (cur.parentElement === ed && cur.tagName === 'DIV') {
+                return cur.classList.contains('lex-chapter-banner') ? null : cur;
+            }
+            cur = cur.parentElement;
+        }
+        return null;
+    }
+
+    function recordActiveVerseBlock(node) {
+        const ed = getEditor();
+        const blk = getDirectVerseBlock(ed, node);
+        if (blk && blk.dataset.bookNum && blk.dataset.chapterNum) {
+            window.__lexflowLastActiveBlock = blk;
+        }
+    }
+
+    function parseCssLength(val) {
+        const m = String(val || '').trim().match(/^([\d.]+)(px|rem|em)$/i);
+        return m ? { num: parseFloat(m[1]), unit: m[2].toLowerCase() } : null;
+    }
+
+    function detectIndentStep(ed, unit, fallbackVal) {
+        if (learnedStep && learnedStep > 0 && learnedUnit === unit) {
+            return learnedStep;
+        }
+        let minPositive = Infinity;
+        if (ed) {
+            const indented = ed.querySelectorAll('.has-indent, div[style*="margin-left"]');
+            const limit = Math.min(indented.length, 120);
+            for (let i = 0; i < limit; i++) {
+                const parsed = parseCssLength(indented[i].style.marginLeft);
+                if (parsed && parsed.unit === unit && parsed.num > 0 && parsed.num < minPositive) {
+                    minPositive = parsed.num;
+                }
+            }
+        }
+        if (Number.isFinite(minPositive) && minPositive > 0) return minPositive;
+        if (unit === 'rem' || unit === 'em') return 2;
+        if (fallbackVal && fallbackVal > 0 && fallbackVal <= 48) return fallbackVal;
+        return 32;
+    }
+
+    function outdentSingleBlock(ed, block) {
+        if (!block || block.classList.contains('lex-chapter-banner')) return false;
+        let changed = false;
+
+        // 1. Primary: step down inline marginLeft (never merges with previous line)
+        const ml = parseCssLength(block.style.marginLeft);
+        if (ml && ml.num > 0) {
+            const step = detectIndentStep(ed, ml.unit, ml.num);
+            const nextNum = ml.num - step;
+            if (nextNum <= step * 0.25) {
+                block.style.marginLeft = '';
+                block.classList.remove('has-indent', 'parallel-indent');
+            } else {
+                const cleanVal = ml.unit === 'px' ? Math.round(nextNum) : Math.round(nextNum * 100) / 100;
+                block.style.marginLeft = `${cleanVal}${ml.unit}`;
+            }
+            changed = true;
+        } else {
+            // Fallback if indentation uses paddingLeft
+            const pl = parseCssLength(block.style.paddingLeft);
+            if (pl && pl.num > 0) {
+                const step = detectIndentStep(ed, pl.unit, pl.num);
+                const nextNum = pl.num - step;
+                if (nextNum <= step * 0.25) {
+                    block.style.paddingLeft = '';
+                    block.classList.remove('has-indent', 'parallel-indent');
+                } else {
+                    const cleanVal = pl.unit === 'px' ? Math.round(nextNum) : Math.round(nextNum * 100) / 100;
+                    block.style.paddingLeft = `${cleanVal}${pl.unit}`;
+                }
+                changed = true;
+            }
+        }
+
+        // 2. Keep any data-indent / data-level attributes or indent-N classes in sync
+        ['indent', 'indentLevel', 'level'].forEach((attr) => {
+            if (block.dataset && block.dataset[attr] !== undefined) {
+                const cur = parseInt(block.dataset[attr], 10);
+                if (!Number.isNaN(cur) && cur > 0) {
+                    const next = cur - 1;
+                    if (next <= 0) {
+                        delete block.dataset[attr];
+                        block.classList.remove('has-indent', 'parallel-indent');
+                    } else {
+                        block.dataset[attr] = String(next);
+                    }
+                    changed = true;
+                }
+            }
+        });
+
+        Array.from(block.classList).forEach((cls) => {
+            const m = cls.match(/^(indent-|level-)(\d+)$/);
+            if (m) {
+                const cur = parseInt(m[2], 10);
+                if (cur > 0) {
+                    block.classList.remove(cls);
+                    if (cur - 1 > 0) block.classList.add(`${m[1]}${cur - 1}`);
+                    else block.classList.remove('has-indent', 'parallel-indent');
+                    changed = true;
+                }
+            }
+        });
+
+        return changed;
+    }
+
+    function getSelectedVerseBlocks(ed) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return [];
+        const range = sel.getRangeAt(0);
+        const startBlk = getDirectVerseBlock(ed, range.startContainer);
+        const endBlk = getDirectVerseBlock(ed, range.endContainer);
+        if (!startBlk) return endBlk ? [endBlk] : [];
+        if (!endBlk || startBlk === endBlk) return [startBlk];
+
+        const blocks = [];
+        let cur = startBlk;
+        let guard = 0;
+        while (cur && guard++ < 200) {
+            if (cur.tagName === 'DIV' && !cur.classList.contains('lex-chapter-banner')) {
+                blocks.push(cur);
+            }
+            if (cur === endBlk) break;
+            cur = cur.nextElementSibling;
+        }
+        return blocks.length ? blocks : [startBlk];
+    }
+
+    // Track last active verse block for accurate Flowchart opening
+    document.addEventListener('mousedown', (e) => recordActiveVerseBlock(e.target), true);
+    document.addEventListener('keyup', (e) => recordActiveVerseBlock(e.target), true);
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) recordActiveVerseBlock(sel.anchorNode);
+    });
+
+    // Hardwire Shift+Tab to outdent cleanly (and learn LexFlow's exact Tab step size)
+    window.addEventListener(
+        'keydown',
+        (e) => {
+            if (e.key !== 'Tab') return;
+            const ed = getEditor();
+            const targetEl = e.target && (e.target.nodeType === 3 ? e.target.parentElement : e.target);
+            if (!ed || !targetEl || !ed.contains(targetEl)) return;
+            if (targetEl.closest('input, textarea, select, [role="dialog"], .modal, #lfFlowModalOverlay')) return;
+
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) recordActiveVerseBlock(sel.anchorNode);
+
+            // Plain Tab: let LexFlow indent normally, and learn the exact step size it uses
+            if (!e.shiftKey) {
+                const blk = sel && sel.rangeCount > 0 ? getDirectVerseBlock(ed, sel.anchorNode) : null;
+                if (blk) {
+                    const before = parseCssLength(blk.style.marginLeft) || { num: 0, unit: 'px' };
+                    setTimeout(() => {
+                        const after = parseCssLength(blk.style.marginLeft);
+                        if (after && after.num > before.num) {
+                            const delta = after.unit === before.unit ? after.num - before.num : after.num;
+                            if (delta > 0) {
+                                learnedStep = delta;
+                                learnedUnit = after.unit;
+                            }
+                        }
+                    }, 0);
+                }
+                return;
+            }
+
+            // Shift + Tab: intercept before LexFlow/browser so it ONLY outdents and NEVER merges lines
+            if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const blocks = getSelectedVerseBlocks(ed);
+                if (blocks.length === 0) return;
+
+                const mainEl = getMainScroller();
+                const savedScrollTop = mainEl ? mainEl.scrollTop : null;
+                const savedRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+
+                let anyChanged = false;
+                blocks.forEach((b) => {
+                    if (outdentSingleBlock(ed, b)) anyChanged = true;
+                });
+
+                if (savedRange && sel) {
+                    try {
+                        sel.removeAllRanges();
+                        sel.addRange(savedRange);
+                    } catch (err) {}
+                }
+
+                if (anyChanged) {
+                    try { if (typeof refreshDocumentBlockAttributes === 'function') refreshDocumentBlockAttributes(); } catch (err) {}
+                    try { if (typeof syncOverlayControls === 'function') syncOverlayControls(); } catch (err) {}
+                    try { if (typeof scheduleWordCountUpdate === 'function') scheduleWordCountUpdate(); } catch (err) {}
+                    ed.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (mainEl && savedScrollTop !== null) {
+                    [0, 16, 60].forEach((ms) => {
+                        setTimeout(() => {
+                            if (Math.abs(mainEl.scrollTop - savedScrollTop) > 4) {
+                                mainEl.scrollTop = savedScrollTop;
+                            }
+                        }, ms);
+                    });
+                }
+            }
+        },
+        true
+    );
 })();
 	
     </script>
