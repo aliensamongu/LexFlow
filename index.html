@@ -21687,8 +21687,7 @@ function showContextMenu(x, y) {
         };
 
       let isOtInNtBadgesVisible = localStorage.getItem('lexflow_ot_in_nt_badges') !== 'false';
-	ensureOtInNtModalAndStylesExist();
-syncOtInNtToggleSwitchUI();
+	
 
         function syncOtInNtToggleSwitchUI() {
             document.body.classList.toggle('hide-ot-in-nt-badges', !isOtInNtBadgesVisible);
@@ -22410,6 +22409,2496 @@ syncOtInNtToggleSwitchUI();
                 setTimeout(setupCollapsibleBar, 120);
             }
         })();
+
+
+	/* === LEXFLOW FIX: ANCHOR-PINNED TOGGLES, NO AUTO-SPLIT/SUGGESTIONS, SHIFT+ENTER, SCROLL LOCK, OT BADGES & 40% LINES === */
+(function () {
+    // Adjust subordination line visibility here (0.4 = 40%, 0.3 = subtler, 0.5 = darker)
+    const SUBORDINATION_LINE_OPACITY = 0.4;
+
+    const getEditor = () =>
+        (typeof editor !== 'undefined' && editor) ||
+        document.getElementById('editor') ||
+        document.querySelector('[contenteditable="true"]');
+
+    const getMainScroller = () => document.querySelector('main');
+
+    function isInsideMainEditorText(target) {
+        const ed = getEditor();
+        if (!ed) return false;
+        const targetEl = target && (target.nodeType === 3 ? target.parentElement : target);
+        if (targetEl && targetEl.closest && targetEl.closest('input, textarea, select, [role="dialog"], .modal')) {
+            return false;
+        }
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl.closest && activeEl.closest('input, textarea, select, [role="dialog"], .modal')) {
+            return false;
+        }
+        if (targetEl && ed.contains(targetEl)) return true;
+        if (activeEl && ed.contains(activeEl)) return true;
+        return false;
+    }
+
+    function getThoughtFlowToolbar() {
+        const btn =
+            document.getElementById('toggleParallelPaneBtn') ||
+            document.getElementById('toggleOtInNtBadgesBtn') ||
+            document.getElementById('thoughtFlowToolbarToggleBtn');
+        const ed = getEditor();
+        if (!btn) return null;
+        let node = btn.parentElement;
+        let best = node;
+        while (node && node !== document.body) {
+            if (ed && node.contains(ed)) break;
+            best = node;
+            if (node.textContent && node.textContent.includes('Thought Flow Document')) {
+                return node;
+            }
+            node = node.parentElement;
+        }
+        return best;
+    }
+
+    // --- 0A. COMPLETELY REMOVE & DISABLE AUTO-SPLIT VERSES + RELATIONSHIP SUGGESTION PILLS ---
+    const AUTO_SPLIT_RE = /auto[\s_-]*split/i;
+    const AUTO_SPLIT_CONTROL_SEL = 'button, input, select, textarea, [role="switch"], [role="menuitem"]';
+    const SUGGEST_GLOBAL_RE =
+        /(?:conjunction|rel(?:ationship)?|clause).*(?:suggest|hint|ghost|auto[\s_-]*detect)|(?:suggest|hint|auto[\s_-]*detect).*(?:conjunction|rel(?:ationship)?|clause)/i;
+    const REL_SUGGEST_TEXT_RE =
+        /["“'‘][^"”'’]{1,35}["”'’]\s*(?:→|⟶|->|➔|➜|⇒|➝|➞|—|–|-|\s)*[A-Za-z][A-Za-z\s/-]{1,35}\?/;
+    const SUGGEST_META_RE =
+        /(?:conjunction[\s_-]*suggest|rel(?:ationship)?[\s_-]*suggest|suggest(?:ed|ion)?[\s_-]*rel|clause[\s_-]*hint|rel[\s_-]*hint|ghost[\s_-]*rel|accept.*suggest|apply.*suggest)/i;
+
+    function isDisabledStorageKey(key) {
+        return typeof key === 'string' && (AUTO_SPLIT_RE.test(key) || SUGGEST_GLOBAL_RE.test(key));
+    }
+
+    function scrubJsonDisabledFlags(obj) {
+        if (!obj || typeof obj !== 'object') return false;
+        let changed = false;
+        Object.keys(obj).forEach((k) => {
+            if (isDisabledStorageKey(k)) {
+                if (obj[k] !== false) {
+                    obj[k] = false;
+                    changed = true;
+                }
+            } else if (obj[k] && typeof obj[k] === 'object') {
+                if (scrubJsonDisabledFlags(obj[k])) changed = true;
+            }
+        });
+        return changed;
+    }
+
+    function scrubDisabledStorage() {
+        [window.localStorage, window.sessionStorage].forEach((store) => {
+            if (!store) return;
+            try {
+                const keys = [];
+                for (let i = 0; i < store.length; i++) {
+                    const k = store.key(i);
+                    if (k) keys.push(k);
+                }
+                keys.forEach((k) => {
+                    if (isDisabledStorageKey(k)) {
+                        store.setItem(k, 'false');
+                        return;
+                    }
+                    const val = store.getItem(k);
+                    if (
+                        typeof val === 'string' &&
+                        val.length < 200000 &&
+                        val[0] === '{' &&
+                        (AUTO_SPLIT_RE.test(val) || SUGGEST_GLOBAL_RE.test(val))
+                    ) {
+                        try {
+                            const parsed = JSON.parse(val);
+                            if (scrubJsonDisabledFlags(parsed)) {
+                                store.setItem(k, JSON.stringify(parsed));
+                            }
+                        } catch (e) {}
+                    }
+                });
+            } catch (e) {}
+        });
+    }
+
+    (function installStorageGuard() {
+        if (typeof Storage === 'undefined' || !Storage.prototype || Storage.prototype.__lexflowNoAutoSplitV2) return;
+        Storage.prototype.__lexflowNoAutoSplitV2 = true;
+        const origSetItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+            try {
+                if (isDisabledStorageKey(key)) {
+                    return origSetItem.call(this, key, 'false');
+                }
+                if (
+                    typeof value === 'string' &&
+                    value.length < 200000 &&
+                    value[0] === '{' &&
+                    (AUTO_SPLIT_RE.test(value) || SUGGEST_GLOBAL_RE.test(value))
+                ) {
+                    const parsed = JSON.parse(value);
+                    if (scrubJsonDisabledFlags(parsed)) {
+                        return origSetItem.call(this, key, JSON.stringify(parsed));
+                    }
+                }
+            } catch (e) {}
+            return origSetItem.apply(this, arguments);
+        };
+    })();
+
+    function neutralizeDisabledGlobals() {
+        const noopFalse = function () {
+            return false;
+        };
+        const noopNull = function () {
+            return null;
+        };
+
+        try {
+            Object.getOwnPropertyNames(window).forEach((name) => {
+                const isAutoSplit = AUTO_SPLIT_RE.test(name);
+                const isRelSuggest = SUGGEST_GLOBAL_RE.test(name);
+                if (!isAutoSplit && !isRelSuggest) return;
+                if (/lexflowInspect/i.test(name)) return;
+                try {
+                    const val = window[name];
+                    if (typeof val === 'function') {
+                        window[name] = /^(get|detect|find|compute|infer)/i.test(name) ? noopNull : noopFalse;
+                    } else if (typeof val === 'boolean') {
+                        window[name] = false;
+                        try {
+                            Object.defineProperty(window, name, {
+                                configurable: true,
+                                get() {
+                                    return false;
+                                },
+                                set() {}
+                            });
+                        } catch (e) {}
+                    }
+                } catch (e) {}
+            });
+        } catch (e) {}
+
+        try { if (typeof isAutoSplitVersesEnabled !== 'undefined') isAutoSplitVersesEnabled = false; } catch (e) {}
+        try { if (typeof autoSplitVersesEnabled !== 'undefined') autoSplitVersesEnabled = false; } catch (e) {}
+        try { if (typeof isAutoSplitEnabled !== 'undefined') isAutoSplitEnabled = false; } catch (e) {}
+        try { if (typeof autoSplitEnabled !== 'undefined') autoSplitEnabled = false; } catch (e) {}
+        try { if (typeof isAutoSplitActive !== 'undefined') isAutoSplitActive = false; } catch (e) {}
+        try { if (typeof autoSplitActive !== 'undefined') autoSplitActive = false; } catch (e) {}
+        try { if (typeof autoSplitVerses !== 'undefined' && typeof autoSplitVerses === 'boolean') autoSplitVerses = false; } catch (e) {}
+        try { if (typeof autoSplitMode !== 'undefined' && typeof autoSplitMode === 'boolean') autoSplitMode = false; } catch (e) {}
+        try { if (typeof isAutoSplitClausesEnabled !== 'undefined') isAutoSplitClausesEnabled = false; } catch (e) {}
+        try { if (typeof autoSplitClausesEnabled !== 'undefined') autoSplitClausesEnabled = false; } catch (e) {}
+        try { if (typeof isConjunctionSuggestionsEnabled !== 'undefined') isConjunctionSuggestionsEnabled = false; } catch (e) {}
+        try { if (typeof showConjunctionSuggestions !== 'undefined') showConjunctionSuggestions = false; } catch (e) {}
+        try { if (typeof showRelationshipSuggestions !== 'undefined') showRelationshipSuggestions = false; } catch (e) {}
+        try { if (typeof isRelationshipSuggestionsEnabled !== 'undefined') isRelationshipSuggestionsEnabled = false; } catch (e) {}
+    }
+
+    function removeAutoSplitClasses() {
+        const targets = [document.documentElement, document.body, getMainScroller(), getEditor()];
+        targets.forEach((el) => {
+            if (!el || !el.classList) return;
+            Array.from(el.classList).forEach((cls) => {
+                if (AUTO_SPLIT_RE.test(cls)) el.classList.remove(cls);
+            });
+        });
+    }
+
+    function getSafeAutoSplitRemovalTarget(el, ed) {
+        let target = el;
+        let parent = el.parentElement;
+        while (parent && parent !== document.body && parent !== document.documentElement) {
+            if (ed && (parent === ed || parent.contains(ed))) break;
+            if (/^(MAIN|HEADER|NAV|FORM|SECTION|ARTICLE|ASIDE)$/i.test(parent.tagName)) break;
+            const controls = parent.querySelectorAll(AUTO_SPLIT_CONTROL_SEL);
+            const textLen = (parent.textContent || '').trim().length;
+            if (controls.length <= 1 && textLen <= 220) {
+                target = parent;
+                parent = parent.parentElement;
+            } else {
+                break;
+            }
+        }
+        return target;
+    }
+
+    function removeAutoSplitUI() {
+        const ed = getEditor();
+        const toRemove = new Set();
+
+        const attrMatches = (el) => {
+            const meta = [
+                el.id || '',
+                el.getAttribute && (el.getAttribute('name') || ''),
+                el.getAttribute && (el.getAttribute('title') || ''),
+                el.getAttribute && (el.getAttribute('aria-label') || ''),
+                el.getAttribute && (el.getAttribute('onclick') || ''),
+                el.getAttribute && (el.getAttribute('onchange') || ''),
+                el.getAttribute && (el.getAttribute('data-action') || '')
+            ].join(' ');
+            return AUTO_SPLIT_RE.test(meta);
+        };
+
+        document.querySelectorAll('button, input, label, option, a, [role="button"], [role="switch"], [role="menuitem"]').forEach((el) => {
+            if (ed && (el === ed || ed.contains(el))) return;
+            const txt = (el.textContent || '').trim();
+            if (attrMatches(el) || (txt.length > 0 && txt.length <= 140 && AUTO_SPLIT_RE.test(txt))) {
+                if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio')) {
+                    el.checked = false;
+                    el.disabled = true;
+                }
+                el.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((inp) => {
+                    inp.checked = false;
+                    inp.disabled = true;
+                });
+                toRemove.add(getSafeAutoSplitRemovalTarget(el, ed));
+            }
+        });
+
+        document.querySelectorAll('span, p, div, li, dt, h4, h5').forEach((el) => {
+            if (ed && (el === ed || ed.contains(el))) return;
+            if (el.children.length > 2) return;
+            const txt = (el.textContent || '').trim();
+            if (!txt || txt.length > 140 || !AUTO_SPLIT_RE.test(txt)) return;
+
+            const directWrap = el.closest('button, label, li, [role="menuitem"], [role="button"]');
+            const base = directWrap && (!ed || !directWrap.contains(ed)) ? directWrap : el;
+            const target = getSafeAutoSplitRemovalTarget(base, ed);
+            target.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((inp) => {
+                inp.checked = false;
+                inp.disabled = true;
+            });
+            toRemove.add(target);
+        });
+
+        toRemove.forEach((node) => {
+            if (node && node.isConnected && (!ed || (node !== ed && !node.contains(ed)))) {
+                node.remove();
+            }
+        });
+    }
+
+    function isDirectVerseBlock(el, ed) {
+        return Boolean(ed && el && el.parentElement === ed && el.tagName === 'DIV');
+    }
+
+    function looksLikeSuggestionText(txt) {
+        if (!txt || txt.length < 4 || txt.length > 100) return false;
+        if (REL_SUGGEST_TEXT_RE.test(txt)) return true;
+        if (txt.includes('\u{1F4A1}') && (txt.includes('?') || txt.includes('→') || txt.includes('->'))) return true;
+        return false;
+    }
+
+    function elementMatchesSuggestionPill(el, ed, tfBar) {
+        if (!el || el.nodeType !== 1) return false;
+        if (
+            el === ed ||
+            (ed && el.contains(ed)) ||
+            isDirectVerseBlock(el, ed) ||
+            el.classList.contains('lex-chapter-banner') ||
+            el.classList.contains('ot-in-nt-inline-badge')
+        ) {
+            return false;
+        }
+        if (el.closest('header, nav, [role="dialog"], .modal')) return false;
+        if (tfBar && tfBar.contains(el)) return false;
+
+        const txt = (el.textContent || '').trim();
+        if (txt.length > 100) return false;
+
+        if (looksLikeSuggestionText(txt)) return true;
+
+        const meta = [
+            el.id || '',
+            typeof el.className === 'string' ? el.className : '',
+            el.getAttribute('title') || '',
+            el.getAttribute('aria-label') || '',
+            el.getAttribute('onclick') || ''
+        ].join(' ');
+        if (SUGGEST_META_RE.test(meta) && (txt.endsWith('?') || txt.includes('→') || txt.includes('->') || txt.length === 0)) {
+            return true;
+        }
+
+        if (
+            txt.length >= 3 &&
+            el.children.length <= 4 &&
+            Boolean(el.querySelector('i[class*="lightbulb" i], svg[class*="lightbulb" i], i[class*="wand" i], i[class*="sparkle" i]')) &&
+            (txt.endsWith('?') || txt.includes('→') || txt.includes('->'))
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function findSuggestionPillRoot(el, ed) {
+        let cur = el;
+        while (cur && cur.parentElement && cur.parentElement !== document.body && cur.parentElement !== document.documentElement) {
+            const parent = cur.parentElement;
+            if (
+                parent === ed ||
+                parent.contains(ed) ||
+                isDirectVerseBlock(parent, ed) ||
+                parent.classList.contains('lex-chapter-banner') ||
+                /^(MAIN|HEADER|NAV|SECTION|ARTICLE|FORM|UL|OL)$/i.test(parent.tagName)
+            ) {
+                break;
+            }
+            const pTxt = (parent.textContent || '').trim();
+            if (!looksLikeSuggestionText(pTxt) && pTxt !== (cur.textContent || '').trim()) break;
+            const r = parent.getBoundingClientRect();
+            if (r.width > 300 || r.height > 54) break;
+            const siblingControls = Array.from(parent.children).some(
+                (ch) =>
+                    ch !== cur &&
+                    (ch.tagName === 'BUTTON' || ch.tagName === 'A' || ch.hasAttribute('onclick')) &&
+                    !looksLikeSuggestionText((ch.textContent || '').trim())
+            );
+            if (siblingControls) break;
+            cur = parent;
+            if (cur.tagName === 'BUTTON' || cur.tagName === 'A') break;
+        }
+        return cur;
+    }
+
+    function getVisibleEditorBlocks(ed) {
+        if (!ed || !ed.children.length) return [];
+        const children = ed.children;
+        const n = children.length;
+        let lo = 0;
+        let hi = n;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (children[mid].getBoundingClientRect().bottom < -250) lo = mid + 1;
+            else hi = mid;
+        }
+        const vis = [];
+        for (let i = lo; i < n; i++) {
+            const r = children[i].getBoundingClientRect();
+            if (r.top > window.innerHeight + 250) break;
+            vis.push(children[i]);
+        }
+        return vis;
+    }
+
+    function scrubPseudoSuggestionOnEl(el) {
+        if (!el || el.nodeType !== 1) return;
+        if (el.attributes) {
+            const toStrip = [];
+            for (let i = 0; i < el.attributes.length; i++) {
+                const attr = el.attributes[i];
+                if (attr.name.startsWith('data-') && (SUGGEST_META_RE.test(attr.name) || looksLikeSuggestionText(attr.value))) {
+                    toStrip.push(attr.name);
+                }
+            }
+            toStrip.forEach((name) => el.removeAttribute(name));
+        }
+
+        ['::before', '::after'].forEach((pseudo) => {
+            const pcs = window.getComputedStyle(el, pseudo);
+            if (!pcs || !pcs.content || pcs.content === 'none' || pcs.content === 'normal') return;
+            const raw = pcs.content.replace(/^["']|["']$/g, '');
+            if (looksLikeSuggestionText(raw)) {
+                el.classList.add(pseudo === '::before' ? 'lexflow-hide-suggest-before' : 'lexflow-hide-suggest-after');
+            }
+        });
+    }
+
+    let isRemovingPills = false;
+    function removeRelationshipSuggestionPills() {
+        if (isRemovingPills) return;
+        isRemovingPills = true;
+        try {
+            const ed = getEditor();
+            const tfBar = getThoughtFlowToolbar();
+            const pills = new Set();
+
+            if (ed) {
+                ed.querySelectorAll(
+                    'button, span, a, [class*="suggest" i], [class*="hint" i], [class*="pill" i], [contenteditable="false"]'
+                ).forEach((el) => {
+                    if (elementMatchesSuggestionPill(el, ed, tfBar)) {
+                        pills.add(findSuggestionPillRoot(el, ed));
+                    }
+                });
+
+                const visBlocks = getVisibleEditorBlocks(ed);
+                for (let i = 0; i < visBlocks.length; i++) {
+                    const blk = visBlocks[i];
+                    scrubPseudoSuggestionOnEl(blk);
+                    for (let j = 0; j < blk.children.length; j++) {
+                        scrubPseudoSuggestionOnEl(blk.children[j]);
+                    }
+                }
+            }
+
+            const walkOutsideEditor = (root) => {
+                if (!root) return;
+                for (let i = 0; i < root.children.length; i++) {
+                    const child = root.children[i];
+                    if (
+                        child === ed ||
+                        (tfBar && child === tfBar) ||
+                        child.tagName === 'SCRIPT' ||
+                        child.tagName === 'STYLE' ||
+                        child.tagName === 'HEADER' ||
+                        child.tagName === 'NAV'
+                    ) {
+                        continue;
+                    }
+                    if (ed && child.contains(ed)) {
+                        walkOutsideEditor(child);
+                        continue;
+                    }
+                    if (child.closest('[role="dialog"], .modal')) continue;
+
+                    if (elementMatchesSuggestionPill(child, ed, tfBar)) {
+                        pills.add(findSuggestionPillRoot(child, ed));
+                        continue;
+                    }
+                    child.querySelectorAll('button, span, a, div').forEach((sub) => {
+                        if (elementMatchesSuggestionPill(sub, ed, tfBar)) {
+                            pills.add(findSuggestionPillRoot(sub, ed));
+                        }
+                    });
+                }
+            };
+            walkOutsideEditor(document.body);
+
+            pills.forEach((pill) => {
+                if (!pill || !pill.isConnected) return;
+                if (ed && (pill === ed || pill.contains(ed) || isDirectVerseBlock(pill, ed))) return;
+                if (ed && ed.contains(pill)) {
+                    pill.remove();
+                } else {
+                    pill.style.setProperty('display', 'none', 'important');
+                    pill.style.setProperty('visibility', 'hidden', 'important');
+                    pill.style.setProperty('pointer-events', 'none', 'important');
+                    pill.dataset.lexflowSuggestionHidden = '1';
+                }
+            });
+        } finally {
+            isRemovingPills = false;
+        }
+    }
+
+    let autoSplitUiRaf = 0;
+    function scheduleRemoveAutoSplitAndSuggestions() {
+        if (autoSplitUiRaf) return;
+        autoSplitUiRaf = requestAnimationFrame(() => {
+            autoSplitUiRaf = 0;
+            removeAutoSplitClasses();
+            removeAutoSplitUI();
+            removeRelationshipSuggestionPills();
+        });
+    }
+
+    scrubDisabledStorage();
+    neutralizeDisabledGlobals();
+
+    // --- 0B. CHAPTER-BANNER GEOMETRY & CANVAS / PATH2D CROSS-CHAPTER FILTER ---
+    let cachedBannerRects = [];
+    let cachedBannerTs = 0;
+
+    function invalidateBannerCache() {
+        cachedBannerTs = 0;
+    }
+
+    function getChapterBannerRects(forceFresh = false) {
+        const now = Date.now();
+        if (!forceFresh && now - cachedBannerTs < 60 && cachedBannerRects.length > 0) {
+            return cachedBannerRects;
+        }
+        const ed = getEditor();
+        if (!ed) return [];
+        const banners = ed.querySelectorAll('.lex-chapter-banner');
+        const rects = [];
+        for (let i = 0; i < banners.length; i++) {
+            const br = banners[i].getBoundingClientRect();
+            if (br.height > 0) rects.push({ top: br.top, bottom: br.bottom });
+        }
+        cachedBannerRects = rects;
+        cachedBannerTs = now;
+        return rects;
+    }
+
+    function crossesAnyChapterBanner(top, bottom, bannerRects) {
+        if (!bannerRects || !bannerRects.length) return false;
+        let lo = 0;
+        let hi = bannerRects.length;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (bannerRects[mid].bottom - 2 <= top) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo < bannerRects.length && bannerRects[lo].top + 2 < bottom;
+    }
+
+    function isEditorOverlayCanvas(canvas) {
+        if (!canvas || !canvas.isConnected) return false;
+        if (
+            canvas.closest(
+                'header, nav, [role="dialog"], .modal, #visualAnalyticsMainCanvas, [id*="analytics" i], [id*="chart" i]'
+            )
+        ) {
+            return false;
+        }
+        const ed = getEditor();
+        if (!ed) return false;
+        const cr = canvas.getBoundingClientRect();
+        const er = ed.getBoundingClientRect();
+        if (cr.width < 20 || cr.height < 40 || er.width === 0 || er.height === 0) return false;
+        return cr.bottom >= er.top - 50 && cr.top <= er.bottom + 50 && cr.right >= er.left - 60 && cr.left <= er.right + 60;
+    }
+
+    (function installCanvasAndPath2DChapterGuard() {
+        const proto = typeof CanvasRenderingContext2D !== 'undefined' && CanvasRenderingContext2D.prototype;
+        if (!proto || proto.__lexflowChapterGuardV2) return;
+        proto.__lexflowChapterGuardV2 = true;
+
+        const origBeginPath = proto.beginPath;
+        const origMoveTo = proto.moveTo;
+        const origLineTo = proto.lineTo;
+        const origQuadTo = proto.quadraticCurveTo;
+        const origBezierTo = proto.bezierCurveTo;
+        const origRect = proto.rect;
+        const origClosePath = proto.closePath;
+        const origStroke = proto.stroke;
+        const origFill = proto.fill;
+        const origFillRect = proto.fillRect;
+        const origStrokeRect = proto.strokeRect;
+
+        const pathStateMap = new WeakMap();
+        const path2DStateMap = new WeakMap();
+        let isReplaying = false;
+
+        function getTransformMatrix(ctx) {
+            if (typeof ctx.getTransform === 'function') {
+                try {
+                    return ctx.getTransform();
+                } catch (e) {}
+            }
+            return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+        }
+
+        function toPoint(m, x, y) {
+            return {
+                x: m.a * x + m.c * y + m.e,
+                y: m.b * x + m.d * y + m.f
+            };
+        }
+
+        function createSubpath(cmd, pts) {
+            let minX = Infinity,
+                maxX = -Infinity,
+                minY = Infinity,
+                maxY = -Infinity;
+            for (let i = 0; i < pts.length; i++) {
+                const p = pts[i];
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            }
+            return { cmds: [cmd], minX, maxX, minY, maxY };
+        }
+
+        function extendSubpath(sp, cmd, pts) {
+            sp.cmds.push(cmd);
+            for (let i = 0; i < pts.length; i++) {
+                const p = pts[i];
+                if (p.x < sp.minX) sp.minX = p.x;
+                if (p.x > sp.maxX) sp.maxX = p.x;
+                if (p.y < sp.minY) sp.minY = p.y;
+                if (p.y > sp.maxY) sp.maxY = p.y;
+            }
+        }
+
+        function getOrCreateState(map, key) {
+            let st = map.get(key);
+            if (!st) {
+                st = { subpaths: [], current: null };
+                map.set(key, st);
+            }
+            return st;
+        }
+
+        if (typeof Path2D !== 'undefined' && Path2D.prototype && !Path2D.prototype.__lexflowGuard) {
+            Path2D.prototype.__lexflowGuard = true;
+            const pMove = Path2D.prototype.moveTo;
+            const pLine = Path2D.prototype.lineTo;
+            const pQuad = Path2D.prototype.quadraticCurveTo;
+            const pBez = Path2D.prototype.bezierCurveTo;
+            const pRect = Path2D.prototype.rect;
+            const pClose = Path2D.prototype.closePath;
+
+            Path2D.prototype.moveTo = function (x, y) {
+                if (!isReplaying) {
+                    const st = getOrCreateState(path2DStateMap, this);
+                    const sp = createSubpath(['moveTo', x, y], [{ x, y }]);
+                    st.subpaths.push(sp);
+                    st.current = sp;
+                }
+                return pMove.apply(this, arguments);
+            };
+            Path2D.prototype.lineTo = function (x, y) {
+                if (!isReplaying) {
+                    const st = getOrCreateState(path2DStateMap, this);
+                    if (!st.current) {
+                        const sp = createSubpath(['moveTo', x, y], [{ x, y }]);
+                        st.subpaths.push(sp);
+                        st.current = sp;
+                    } else {
+                        extendSubpath(st.current, ['lineTo', x, y], [{ x, y }]);
+                    }
+                }
+                return pLine.apply(this, arguments);
+            };
+            Path2D.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+                if (!isReplaying) {
+                    const st = getOrCreateState(path2DStateMap, this);
+                    if (st.current) extendSubpath(st.current, ['quadraticCurveTo', cpx, cpy, x, y], [{ x: cpx, y: cpy }, { x, y }]);
+                }
+                return pQuad.apply(this, arguments);
+            };
+            Path2D.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+                if (!isReplaying) {
+                    const st = getOrCreateState(path2DStateMap, this);
+                    if (st.current) {
+                        extendSubpath(
+                            st.current,
+                            ['bezierCurveTo', cp1x, cp1y, cp2x, cp2y, x, y],
+                            [{ x: cp1x, y: cp1y }, { x: cp2x, y: cp2y }, { x, y }]
+                        );
+                    }
+                }
+                return pBez.apply(this, arguments);
+            };
+            Path2D.prototype.rect = function (x, y, w, h) {
+                if (!isReplaying) {
+                    const st = getOrCreateState(path2DStateMap, this);
+                    const sp = createSubpath(['rect', x, y, w, h], [{ x, y }, { x: x + w, y: y + h }]);
+                    st.subpaths.push(sp);
+                    st.current = sp;
+                }
+                return pRect.apply(this, arguments);
+            };
+            Path2D.prototype.closePath = function () {
+                if (!isReplaying) {
+                    const st = path2DStateMap.get(this);
+                    if (st && st.current) st.current.cmds.push(['closePath']);
+                }
+                return pClose.apply(this, arguments);
+            };
+        }
+
+        proto.beginPath = function () {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                pathStateMap.set(this, { subpaths: [], current: null });
+            }
+            return origBeginPath.apply(this, arguments);
+        };
+
+        proto.moveTo = function (x, y) {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = getOrCreateState(pathStateMap, this);
+                const pt = toPoint(getTransformMatrix(this), x, y);
+                const sp = createSubpath(['moveTo', x, y], [pt]);
+                st.subpaths.push(sp);
+                st.current = sp;
+            }
+            return origMoveTo.apply(this, arguments);
+        };
+
+        proto.lineTo = function (x, y) {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = getOrCreateState(pathStateMap, this);
+                const pt = toPoint(getTransformMatrix(this), x, y);
+                if (!st.current) {
+                    const sp = createSubpath(['moveTo', x, y], [pt]);
+                    st.subpaths.push(sp);
+                    st.current = sp;
+                } else {
+                    extendSubpath(st.current, ['lineTo', x, y], [pt]);
+                }
+            }
+            return origLineTo.apply(this, arguments);
+        };
+
+        proto.quadraticCurveTo = function (cpx, cpy, x, y) {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = getOrCreateState(pathStateMap, this);
+                if (st.current) {
+                    const m = getTransformMatrix(this);
+                    extendSubpath(st.current, ['quadraticCurveTo', cpx, cpy, x, y], [toPoint(m, cpx, cpy), toPoint(m, x, y)]);
+                }
+            }
+            return origQuadTo.apply(this, arguments);
+        };
+
+        proto.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = getOrCreateState(pathStateMap, this);
+                if (st.current) {
+                    const m = getTransformMatrix(this);
+                    extendSubpath(
+                        st.current,
+                        ['bezierCurveTo', cp1x, cp1y, cp2x, cp2y, x, y],
+                        [toPoint(m, cp1x, cp1y), toPoint(m, cp2x, cp2y), toPoint(m, x, y)]
+                    );
+                }
+            }
+            return origBezierTo.apply(this, arguments);
+        };
+
+        proto.rect = function (x, y, w, h) {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = getOrCreateState(pathStateMap, this);
+                const m = getTransformMatrix(this);
+                const sp = createSubpath(['rect', x, y, w, h], [toPoint(m, x, y), toPoint(m, x + w, y + h)]);
+                st.subpaths.push(sp);
+                st.current = sp;
+            }
+            return origRect.apply(this, arguments);
+        };
+
+        proto.closePath = function () {
+            if (!isReplaying && this.canvas && isEditorOverlayCanvas(this.canvas)) {
+                const st = pathStateMap.get(this);
+                if (st && st.current) st.current.cmds.push(['closePath']);
+            }
+            return origClosePath.apply(this, arguments);
+        };
+
+        function filterAndReplay(ctx, paintFn, paintArgs, isPath2D) {
+            const canvas = ctx.canvas;
+            if (!canvas || canvas.width <= 0 || canvas.height <= 0 || !isEditorOverlayCanvas(canvas)) {
+                return paintFn.apply(ctx, paintArgs);
+            }
+
+            const st = isPath2D ? path2DStateMap.get(paintArgs[0]) : pathStateMap.get(ctx);
+            if (!st || st.subpaths.length === 0) return paintFn.apply(ctx, paintArgs);
+
+            const cr = canvas.getBoundingClientRect();
+            const bannerRects = getChapterBannerRects();
+            const scaleX = cr.width / canvas.width;
+            const scaleY = cr.height / canvas.height;
+            const m = isPath2D ? getTransformMatrix(ctx) : null;
+
+            const kept = [];
+            let blockedAny = false;
+            for (let i = 0; i < st.subpaths.length; i++) {
+                const sp = st.subpaths[i];
+                let minX = sp.minX,
+                    maxX = sp.maxX,
+                    minY = sp.minY,
+                    maxY = sp.maxY;
+                if (m) {
+                    const p1 = toPoint(m, minX, minY);
+                    const p2 = toPoint(m, maxX, maxY);
+                    minX = Math.min(p1.x, p2.x);
+                    maxX = Math.max(p1.x, p2.x);
+                    minY = Math.min(p1.y, p2.y);
+                    maxY = Math.max(p1.y, p2.y);
+                }
+                const viewTop = cr.top + minY * scaleY;
+                const viewBottom = cr.top + maxY * scaleY;
+                const viewW = (maxX - minX) * scaleX;
+                const viewH = viewBottom - viewTop;
+
+                if (viewH >= 8 && viewW <= 90 && crossesAnyChapterBanner(viewTop, viewBottom, bannerRects)) {
+                    blockedAny = true;
+                } else {
+                    kept.push(sp);
+                }
+            }
+
+            if (!blockedAny) return paintFn.apply(ctx, paintArgs);
+
+            isReplaying = true;
+            try {
+                if (isPath2D) {
+                    if (kept.length > 0) {
+                        const filteredPath = new Path2D();
+                        for (let i = 0; i < kept.length; i++) {
+                            const cmds = kept[i].cmds;
+                            for (let j = 0; j < cmds.length; j++) {
+                                const c = cmds[j];
+                                if (c[0] === 'moveTo') filteredPath.moveTo(c[1], c[2]);
+                                else if (c[0] === 'lineTo') filteredPath.lineTo(c[1], c[2]);
+                                else if (c[0] === 'quadraticCurveTo') filteredPath.quadraticCurveTo(c[1], c[2], c[3], c[4]);
+                                else if (c[0] === 'bezierCurveTo') filteredPath.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
+                                else if (c[0] === 'rect') filteredPath.rect(c[1], c[2], c[3], c[4]);
+                                else if (c[0] === 'closePath') filteredPath.closePath();
+                            }
+                        }
+                        const newArgs = Array.from(paintArgs);
+                        newArgs[0] = filteredPath;
+                        return paintFn.apply(ctx, newArgs);
+                    }
+                } else {
+                    origBeginPath.call(ctx);
+                    if (kept.length > 0) {
+                        for (let i = 0; i < kept.length; i++) {
+                            const cmds = kept[i].cmds;
+                            for (let j = 0; j < cmds.length; j++) {
+                                const c = cmds[j];
+                                if (c[0] === 'moveTo') origMoveTo.call(ctx, c[1], c[2]);
+                                else if (c[0] === 'lineTo') origLineTo.call(ctx, c[1], c[2]);
+                                else if (c[0] === 'quadraticCurveTo') origQuadTo.call(ctx, c[1], c[2], c[3], c[4]);
+                                else if (c[0] === 'bezierCurveTo') origBezierTo.call(ctx, c[1], c[2], c[3], c[4], c[5], c[6]);
+                                else if (c[0] === 'rect') origRect.call(ctx, c[1], c[2], c[3], c[4]);
+                                else if (c[0] === 'closePath') origClosePath.call(ctx);
+                            }
+                        }
+                        return paintFn.apply(ctx, paintArgs);
+                    }
+                }
+            } finally {
+                isReplaying = false;
+            }
+        }
+
+        proto.stroke = function () {
+            if (!isReplaying) {
+                const isP2D = typeof Path2D !== 'undefined' && arguments[0] instanceof Path2D;
+                return filterAndReplay(this, origStroke, arguments, isP2D);
+            }
+            return origStroke.apply(this, arguments);
+        };
+
+        proto.fill = function () {
+            if (!isReplaying) {
+                const isP2D = typeof Path2D !== 'undefined' && arguments[0] instanceof Path2D;
+                return filterAndReplay(this, origFill, arguments, isP2D);
+            }
+            return origFill.apply(this, arguments);
+        };
+
+        function shouldBlockCanvasRect(ctx, x, y, w, h) {
+            const canvas = ctx.canvas;
+            if (!canvas || canvas.width <= 0 || canvas.height <= 0 || !isEditorOverlayCanvas(canvas)) return false;
+            const m = getTransformMatrix(ctx);
+            const p1 = toPoint(m, x, y);
+            const p2 = toPoint(m, x + w, y + h);
+            const cr = canvas.getBoundingClientRect();
+            const scaleX = cr.width / canvas.width;
+            const scaleY = cr.height / canvas.height;
+            const viewW = Math.abs(p2.x - p1.x) * scaleX;
+            const viewTop = cr.top + Math.min(p1.y, p2.y) * scaleY;
+            const viewBottom = cr.top + Math.max(p1.y, p2.y) * scaleY;
+            return viewW <= 60 && viewBottom - viewTop >= 8 && crossesAnyChapterBanner(viewTop, viewBottom, getChapterBannerRects());
+        }
+
+        proto.fillRect = function (x, y, w, h) {
+            if (!isReplaying && shouldBlockCanvasRect(this, x, y, w, h)) return;
+            return origFillRect.apply(this, arguments);
+        };
+
+        proto.strokeRect = function (x, y, w, h) {
+            if (!isReplaying && shouldBlockCanvasRect(this, x, y, w, h)) return;
+            return origStrokeRect.apply(this, arguments);
+        };
+    })();
+
+    // --- 1. HARDWIRED SHIFT+ENTER BLOCK SPLIT (PLAIN ENTER DISABLED IN EDITOR) ---
+    function removeEmptyInlineSpans(root) {
+        if (!root) return;
+        root.querySelectorAll('span').forEach((sp) => {
+            if (
+                !sp.classList.contains('ot-in-nt-inline-badge') &&
+                sp.children.length === 0 &&
+                !sp.textContent
+            ) {
+                sp.remove();
+            }
+        });
+    }
+
+    function createSplitClauseBlock(sourceBlock) {
+        const newBlock = document.createElement('div');
+        if (sourceBlock.dataset.bookNum) newBlock.dataset.bookNum = sourceBlock.dataset.bookNum;
+        if (sourceBlock.dataset.bookName) newBlock.dataset.bookName = sourceBlock.dataset.bookName;
+        if (sourceBlock.dataset.chapterNum) newBlock.dataset.chapterNum = sourceBlock.dataset.chapterNum;
+        if (sourceBlock.dataset.verseNum) newBlock.dataset.verseNum = sourceBlock.dataset.verseNum;
+        if (sourceBlock.style.marginLeft) newBlock.style.marginLeft = sourceBlock.style.marginLeft;
+        if (sourceBlock.classList.contains('has-indent')) newBlock.classList.add('has-indent');
+        if (sourceBlock.classList.contains('parallel-indent')) newBlock.classList.add('parallel-indent');
+        return newBlock;
+    }
+
+    function trimLeadingWhitespaceInFragment(frag) {
+        const tw = document.createTreeWalker(frag, NodeFilter.SHOW_TEXT);
+        let firstTxt;
+        while ((firstTxt = tw.nextNode())) {
+            if (firstTxt.nodeValue) {
+                const cleaned = firstTxt.nodeValue.replace(/^[ \t\u00A0]+/, '');
+                firstTxt.nodeValue = cleaned;
+                if (cleaned.length > 0) break;
+            }
+        }
+    }
+
+    function syncAfterSplit(ed, focusBlock) {
+        invalidateBannerCache();
+        if (focusBlock) {
+            try {
+                if (typeof activeThaversClauseBlock !== 'undefined') activeThaversClauseBlock = focusBlock;
+            } catch (e) {}
+            try {
+                if (typeof lastSelectedBlock !== 'undefined') lastSelectedBlock = focusBlock;
+            } catch (e) {}
+        }
+        try {
+            if (typeof refreshDocumentBlockAttributes === 'function') refreshDocumentBlockAttributes();
+        } catch (e) {}
+        try {
+            if (typeof syncOverlayControls === 'function') syncOverlayControls();
+        } catch (e) {}
+        try {
+            if (typeof scheduleWordCountUpdate === 'function') scheduleWordCountUpdate();
+        } catch (e) {}
+        scheduleRemoveAutoSplitAndSuggestions();
+        scheduleFixSubordinationLines();
+        setTimeout(() => {
+            removeRelationshipSuggestionPills();
+            scheduleFixSubordinationLines();
+        }, 50);
+    }
+
+    function splitAnyBrInsideVerseBlocks(ed) {
+        if (!ed) return false;
+        let didSplit = false;
+        const blocks = Array.from(ed.children);
+        for (let i = 0; i < blocks.length; i++) {
+            let block = blocks[i];
+            if (!block || block.tagName !== 'DIV' || block.classList.contains('lex-chapter-banner')) continue;
+            let guard = 0;
+            while (guard++ < 100) {
+                const br = block.querySelector('br');
+                if (!br) break;
+
+                const badges = Array.from(block.querySelectorAll('.ot-in-nt-inline-badge'));
+                badges.forEach((b) => b.remove());
+
+                const afterRange = document.createRange();
+                afterRange.setStartAfter(br);
+                afterRange.setEnd(block, block.childNodes.length);
+                const afterFrag = afterRange.extractContents();
+                br.remove();
+
+                trimLeadingWhitespaceInFragment(afterFrag);
+                removeEmptyInlineSpans(block);
+                removeEmptyInlineSpans(afterFrag);
+
+                const beforeText = (block.textContent || '').trim();
+                const afterText = (afterFrag.textContent || '').trim();
+
+                if (!afterText) {
+                    badges.forEach((b) => block.appendChild(b));
+                    didSplit = true;
+                    continue;
+                }
+                if (!beforeText) {
+                    block.innerHTML = '';
+                    block.appendChild(afterFrag);
+                    badges.forEach((b) => block.appendChild(b));
+                    didSplit = true;
+                    continue;
+                }
+
+                const newBlock = createSplitClauseBlock(block);
+                newBlock.appendChild(afterFrag);
+                badges.forEach((b) => newBlock.appendChild(b));
+                block.insertAdjacentElement('afterend', newBlock);
+                block = newBlock;
+                didSplit = true;
+            }
+        }
+        if (didSplit) {
+            syncAfterSplit(ed, null);
+        }
+        return didSplit;
+    }
+
+    function performHardwiredBlockSplit(ed) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return false;
+
+        const range = sel.getRangeAt(0).cloneRange();
+        if (!ed.contains(range.startContainer)) return false;
+
+        if (!range.collapsed) {
+            if (range.toString().trim() === '') {
+                range.deleteContents();
+            } else {
+                range.collapse(true);
+            }
+        }
+
+        let block =
+            range.startContainer.nodeType === 3
+                ? range.startContainer.parentElement
+                : range.startContainer;
+
+        if (block === ed) {
+            const childIdx = Math.min(range.startOffset, ed.children.length - 1);
+            block = ed.children[childIdx];
+            if (!block) return false;
+            range.setStart(block, 0);
+            range.collapse(true);
+        }
+
+        while (block && block.parentElement !== ed) {
+            block = block.parentElement;
+        }
+        if (!block || block.parentElement !== ed || block.classList.contains('lex-chapter-banner')) {
+            return false;
+        }
+
+        const badges = Array.from(block.querySelectorAll('.ot-in-nt-inline-badge'));
+        badges.forEach((b) => b.remove());
+
+        if (!block.contains(range.startContainer)) {
+            badges.forEach((b) => block.appendChild(b));
+            return false;
+        }
+
+        const tailRange = document.createRange();
+        tailRange.setStart(range.startContainer, range.startOffset);
+        tailRange.setEnd(block, block.childNodes.length);
+        const tailFrag = tailRange.extractContents();
+
+        trimLeadingWhitespaceInFragment(tailFrag);
+        removeEmptyInlineSpans(block);
+        removeEmptyInlineSpans(tailFrag);
+
+        const beforeText = (block.textContent || '').trim();
+        const afterText = (tailFrag.textContent || '').trim();
+
+        if (!beforeText || !afterText) {
+            if (tailFrag.childNodes.length > 0) block.appendChild(tailFrag);
+            badges.forEach((b) => block.appendChild(b));
+            const restoreRange = document.createRange();
+            if (!beforeText) {
+                restoreRange.setStart(block, 0);
+            } else {
+                const lastTextIdx = Math.max(0, block.childNodes.length - badges.length);
+                restoreRange.setStart(block, lastTextIdx);
+            }
+            restoreRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(restoreRange);
+            return false;
+        }
+
+        const newBlock = createSplitClauseBlock(block);
+        newBlock.appendChild(tailFrag);
+        badges.forEach((b) => newBlock.appendChild(b));
+        block.insertAdjacentElement('afterend', newBlock);
+
+        const caretRange = document.createRange();
+        const newTw = document.createTreeWalker(newBlock, NodeFilter.SHOW_TEXT);
+        let caretTextNode = null;
+        let tn;
+        while ((tn = newTw.nextNode())) {
+            if (tn.parentElement && tn.parentElement.closest('.ot-in-nt-inline-badge')) continue;
+            if (tn.nodeValue && tn.nodeValue.length > 0) {
+                caretTextNode = tn;
+                break;
+            }
+        }
+        if (caretTextNode) {
+            caretRange.setStart(caretTextNode, 0);
+        } else {
+            caretRange.setStart(newBlock, 0);
+        }
+        caretRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(caretRange);
+
+        ed.focus({ preventScroll: true });
+        syncAfterSplit(ed, newBlock);
+        ed.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+    }
+
+    // --- 2. CLEAN OT-IN-NT BADGES (ZERO TEXT LEAK) ---
+    const LEAKED_OT_REGEX =
+        /(?:\s*OT (?:Quote|Allusion|Echo):\s*(?:[1-3]\s+)?[A-Za-z]+(?:\s+[A-Za-z]+){0,3}\s+\d+:\d+(?:[-–,]\s*\d+(?::\d+)?)?(?:\s*[•·]\s*(?:[1-3]\s+)?[A-Za-z]+(?:\s+[A-Za-z]+){0,3}\s+\d+:\d+(?:[-–,]\s*\d+(?::\d+)?)?)*)+/g;
+
+    function cleanLeakedOtArtifacts(root) {
+        if (!root) return;
+        root.querySelectorAll('i.fa-scroll, i.fa-link, i.fa-water').forEach((icon) => {
+            if (!icon.closest('.ot-in-nt-inline-badge')) icon.remove();
+        });
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const toClean = [];
+        let n;
+        while ((n = walker.nextNode())) {
+            if (n.parentElement && n.parentElement.closest('.ot-in-nt-inline-badge')) continue;
+            if (/OT (?:Quote|Allusion|Echo):/.test(n.nodeValue || '')) toClean.push(n);
+        }
+        toClean.forEach((node) => {
+            node.nodeValue = node.nodeValue.replace(LEAKED_OT_REGEX, '');
+            const parent = node.parentElement;
+            if (
+                node.nodeValue === '' &&
+                parent &&
+                parent.tagName === 'SPAN' &&
+                !parent.textContent.trim() &&
+                parent.children.length === 0
+            ) {
+                parent.remove();
+            }
+        });
+    }
+
+    function ensureFixStyles() {
+        let st = document.getElementById('lexflowHardFixStyles');
+        if (!st) {
+            st = document.createElement('style');
+            st.id = 'lexflowHardFixStyles';
+            document.head.appendChild(st);
+        }
+        st.textContent = `
+            main, #editor, [contenteditable="true"] { overflow-anchor: none !important; }
+            .ot-in-nt-inline-badge { user-select: none; -webkit-user-select: none; }
+            .ot-in-nt-inline-badge::after { content: attr(data-badge-label); }
+            [data-lexflow-suggestion-hidden="1"],
+            main [class*="conjunction-suggest" i],
+            main [class*="rel-suggest" i],
+            main [class*="suggested-rel" i],
+            main [class*="suggestion-pill" i],
+            #editor [class*="suggest" i],
+            #editor [class*="conjunction-hint" i] {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+            .lexflow-hide-suggest-before::before {
+                display: none !important;
+                content: none !important;
+            }
+            .lexflow-hide-suggest-after::after {
+                display: none !important;
+                content: none !important;
+            }
+            body.lexflow-editing-active .passage-nav-pulse {
+                animation: none !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }
+            #editor .has-indent::before,
+            [contenteditable="true"] .has-indent::before {
+                opacity: ${SUBORDINATION_LINE_OPACITY} !important;
+            }
+            #editor .lexflow-hide-cross-banner-before::before,
+            [contenteditable="true"] .lexflow-hide-cross-banner-before::before {
+                display: none !important;
+                opacity: 0 !important;
+            }
+            #editor .lexflow-hide-cross-banner-after::after,
+            [contenteditable="true"] .lexflow-hide-cross-banner-after::after {
+                display: none !important;
+                opacity: 0 !important;
+            }
+        `;
+    }
+
+    try {
+        if (typeof decorateEditorWithOtInNtBadges === 'function') {
+            const _cleanDecorate = function () {
+                const ed = getEditor();
+                if (!ed) return;
+                if (typeof ensureOtInNtModalAndStylesExist === 'function') ensureOtInNtModalAndStylesExist();
+                ensureFixStyles();
+
+                ed.querySelectorAll('.ot-in-nt-inline-badge').forEach((b) => b.remove());
+                cleanLeakedOtArtifacts(ed);
+                removeRelationshipSuggestionPills();
+
+                const badgesOn =
+                    typeof isOtInNtBadgesVisible !== 'undefined'
+                        ? isOtInNtBadgesVisible
+                        : localStorage.getItem('lexflow_ot_in_nt_badges') !== 'false';
+                if (!badgesOn || typeof otInNtMasterDatabase === 'undefined') return;
+
+                Object.keys(otInNtMasterDatabase).forEach((vKey) => {
+                    const [bNum, cNum, vNum] = vKey.split('_');
+                    const quotes = otInNtMasterDatabase[vKey];
+                    if (!quotes || quotes.length === 0) return;
+
+                    const matchingBlocks = Array.from(
+                        ed.querySelectorAll(
+                            `div[data-book-num="${bNum}"][data-chapter-num="${cNum}"][data-verse-num="${vNum}"]:not(.lex-chapter-banner)`
+                        )
+                    );
+                    if (matchingBlocks.length === 0) return;
+
+                    const targetBlock = matchingBlocks[matchingBlocks.length - 1];
+                    const refSummary = quotes.map((q) => q.otRef).join(' • ');
+                    const primaryTier =
+                        quotes[0].tier ||
+                        (quotes[0].type && quotes[0].type.toLowerCase().includes('quote') ? 'quote' : 'allusion');
+
+                    let tierClass = 'tier-quote',
+                        iconClass = 'fa-scroll',
+                        tierLabel = 'OT Quote';
+                    if (primaryTier === 'allusion') {
+                        tierClass = 'tier-allusion';
+                        iconClass = 'fa-link';
+                        tierLabel = 'OT Allusion';
+                    } else if (primaryTier === 'echo') {
+                        tierClass = 'tier-echo';
+                        iconClass = 'fa-water';
+                        tierLabel = 'OT Echo';
+                    }
+
+                    const badge = document.createElement('span');
+                    badge.className = `ot-in-nt-inline-badge ${tierClass}`;
+                    badge.contentEditable = 'false';
+                    badge.dataset.otNtKey = vKey;
+                    badge.setAttribute('data-badge-label', `${tierLabel}: ${refSummary}`);
+                    badge.title = `${quotes[0].type}: ${refSummary} — Click to compare NT Greek, OT Hebrew (WLC), and English side-by-side!`;
+                    badge.innerHTML = `<i class="fa-solid ${iconClass} text-[10px]" aria-hidden="true"></i>`;
+                    badge.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof openOtInNtModalForVerseKey === 'function') openOtInNtModalForVerseKey(vKey);
+                    };
+                    targetBlock.appendChild(badge);
+                });
+            };
+            decorateEditorWithOtInNtBadges = _cleanDecorate;
+            window.decorateEditorWithOtInNtBadges = _cleanDecorate;
+        }
+    } catch (e) {}
+
+    try {
+        if (typeof toggleOtInNtBadgesVisibility === 'function') {
+            const _origToggleOt = toggleOtInNtBadgesVisibility;
+            const _wrappedToggle = function (...args) {
+                const res = _origToggleOt.apply(this, args);
+                if (typeof decorateEditorWithOtInNtBadges === 'function') decorateEditorWithOtInNtBadges();
+                return res;
+            };
+            toggleOtInNtBadgesVisibility = _wrappedToggle;
+            window.toggleOtInNtBadgesVisibility = _wrappedToggle;
+        }
+    } catch (e) {}
+
+    try {
+        if (typeof captureModifiedChaptersFromDOM === 'function') {
+            const _origCapture = captureModifiedChaptersFromDOM;
+            const _wrappedCapture = function (...args) {
+                const ed = getEditor();
+                const removed = [];
+                if (ed) {
+                    ed.querySelectorAll('.ot-in-nt-inline-badge').forEach((b) => {
+                        removed.push({ parent: b.parentNode, next: b.nextSibling, node: b });
+                        b.remove();
+                    });
+                    cleanLeakedOtArtifacts(ed);
+                    removeRelationshipSuggestionPills();
+                }
+                try {
+                    return _origCapture.apply(this, args);
+                } finally {
+                    removed.forEach(({ parent, next, node }) => {
+                        if (parent && parent.isConnected) parent.insertBefore(node, next);
+                    });
+                }
+            };
+            captureModifiedChaptersFromDOM = _wrappedCapture;
+            window.captureModifiedChaptersFromDOM = _wrappedCapture;
+        }
+    } catch (e) {}
+
+    // --- 3. HARD ENGINE-LEVEL SCROLL LOCK + VIEW-TOGGLE ANCHOR PINNING ---
+    const nativeScrollTopDesc =
+        Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop') ||
+        Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop');
+    const nativeElScrollTo = Element.prototype.scrollTo;
+    const nativeElScroll = Element.prototype.scroll;
+    const nativeElScrollBy = Element.prototype.scrollBy;
+    const nativeScrollIntoView = Element.prototype.scrollIntoView;
+    const nativeWinScrollTo = window.scrollTo.bind(window);
+    const nativeWinScroll = window.scroll.bind(window);
+    const nativeWinScrollBy = window.scrollBy.bind(window);
+    const nativeFocus = HTMLElement.prototype.focus;
+
+    let hasUserInteractedWithEditor = false;
+    let explicitNavAllowedUntil = 0;
+    let parallelSyncAllowedUntil = 0;
+    let nativeJumpLockUntil = 0;
+    let pinnedAnchorUntil = 0;
+    let pinnedAnchor = null;
+    let pinnedAnchorRaf = 0;
+    let isInternalRestore = false;
+    const protectedScrollers = new Set();
+    const lockedScrollPositions = new Map();
+    let lockedWinY = null;
+
+    const VIEW_TOGGLE_RE =
+        /text[\s_-]*flow|lines|indent|subord|label|parallel|side[\s_-]*by[\s_-]*side|ot[\s_-]*in[\s_-]*nt|badge|clause[\s_-]*note|diagram|thought[\s_-]*flow|compact|spacing|font[\s_-]*size|dark[\s_-]*mode|theme|overlay|focus[\s_-]*mode|verse[\s_-]*num|toggle/i;
+    const EXPLICIT_NAV_TEXT_RE = /^(?:go|load\s*text|search|open|jump|reset\s*document)$/i;
+
+    function isJsScrollBlocked() {
+        const now = Date.now();
+        if (now < pinnedAnchorUntil) return true;
+        if (!hasUserInteractedWithEditor) return false;
+        if (now < explicitNavAllowedUntil) return false;
+        if (now < parallelSyncAllowedUntil) return false;
+        return true;
+    }
+
+    function releasePinnedAnchor() {
+        pinnedAnchorUntil = 0;
+        pinnedAnchor = null;
+        if (pinnedAnchorRaf) {
+            cancelAnimationFrame(pinnedAnchorRaf);
+            pinnedAnchorRaf = 0;
+        }
+    }
+
+    function allowExplicitNavigation(durationMs = 4500) {
+        releasePinnedAnchor();
+        nativeJumpLockUntil = 0;
+        explicitNavAllowedUntil = Date.now() + durationMs;
+        if (document.body) document.body.classList.remove('lexflow-editing-active');
+    }
+
+    function markEditorInteraction() {
+        hasUserInteractedWithEditor = true;
+        explicitNavAllowedUntil = 0;
+        if (document.body) document.body.classList.add('lexflow-editing-active');
+        protectAllEditorScrollers();
+    }
+
+    function releaseNativeJumpLock() {
+        nativeJumpLockUntil = 0;
+        releasePinnedAnchor();
+    }
+
+    function getNativeScrollTop(el) {
+        return nativeScrollTopDesc && nativeScrollTopDesc.get ? nativeScrollTopDesc.get.call(el) : el.scrollTop;
+    }
+
+    function setNativeScrollTop(el, val) {
+        isInternalRestore = true;
+        try {
+            if (nativeScrollTopDesc && nativeScrollTopDesc.set) {
+                nativeScrollTopDesc.set.call(el, val);
+            } else {
+                el.scrollTop = val;
+            }
+        } finally {
+            isInternalRestore = false;
+        }
+    }
+
+    function getEditorScroller() {
+        const mainEl = getMainScroller();
+        const ed = getEditor();
+        if (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 2) return mainEl;
+        let node = ed ? ed.parentElement : null;
+        while (node && node !== document.documentElement) {
+            const cs = window.getComputedStyle(node);
+            if (/(auto|scroll|overlay)/.test(cs.overflowY || '') && node.scrollHeight > node.clientHeight + 2) {
+                return node;
+            }
+            node = node.parentElement;
+        }
+        return mainEl || document.scrollingElement;
+    }
+
+    function captureTopVisibleAnchor() {
+        const ed = getEditor();
+        const scroller = getEditorScroller();
+        if (!ed || !scroller || !ed.children.length) return null;
+
+        const scrollerRect =
+            scroller === document.scrollingElement
+                ? { top: 0, bottom: window.innerHeight }
+                : scroller.getBoundingClientRect();
+        const edRect = ed.getBoundingClientRect();
+        if (edRect.width === 0 || edRect.height === 0) return null;
+
+        const tfBar = getThoughtFlowToolbar();
+        let startY = scrollerRect.top + 14;
+        if (tfBar) {
+            const tfr = tfBar.getBoundingClientRect();
+            if (tfr.height > 0 && tfr.bottom > startY && tfr.bottom < window.innerHeight * 0.6) {
+                startY = tfr.bottom + 8;
+            }
+        }
+
+        let foundBlock = null;
+
+        // Fast O(1) hit-test just below the toolbar
+        if (typeof document.elementsFromPoint === 'function') {
+            const sampleXs = [
+                edRect.left + edRect.width * 0.5,
+                edRect.left + Math.min(220, edRect.width * 0.35),
+                edRect.left + Math.min(80, edRect.width * 0.15)
+            ];
+            outer: for (let y = startY; y < Math.min(scrollerRect.bottom - 10, startY + 260); y += 18) {
+                for (let xi = 0; xi < sampleXs.length; xi++) {
+                    const x = sampleXs[xi];
+                    if (x <= 0 || x >= window.innerWidth) continue;
+                    const stack = document.elementsFromPoint(x, y);
+                    for (let si = 0; si < stack.length; si++) {
+                        let node = stack[si];
+                        if (!ed.contains(node) || node === ed) continue;
+                        while (node && node.parentElement !== ed) node = node.parentElement;
+                        if (
+                            node &&
+                            node.parentElement === ed &&
+                            node.tagName === 'DIV' &&
+                            (node.classList.contains('lex-chapter-banner') || node.hasAttribute('data-verse-num'))
+                        ) {
+                            const r = node.getBoundingClientRect();
+                            if (r.height > 0 && r.bottom > scrollerRect.top + 4) {
+                                foundBlock = node;
+                                break outer;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Binary-search fallback if hit-test missed
+        if (!foundBlock) {
+            const children = ed.children;
+            let lo = 0;
+            let hi = children.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                const r = children[mid].getBoundingClientRect();
+                if (r.height === 0 && r.width === 0) {
+                    lo = mid + 1;
+                    continue;
+                }
+                if (r.bottom < startY) lo = mid + 1;
+                else hi = mid;
+            }
+            for (let i = Math.max(0, lo - 2); i < Math.min(children.length, lo + 8); i++) {
+                const ch = children[i];
+                if (ch.tagName !== 'DIV') continue;
+                if (!ch.classList.contains('lex-chapter-banner') && !ch.hasAttribute('data-verse-num')) continue;
+                const r = ch.getBoundingClientRect();
+                if (r.height > 0 && r.bottom >= startY - 12) {
+                    foundBlock = ch;
+                    break;
+                }
+            }
+        }
+
+        if (!foundBlock) return null;
+
+        const isBanner = foundBlock.classList.contains('lex-chapter-banner');
+        const bookNum = foundBlock.dataset.bookNum || '';
+        const chapterNum = foundBlock.dataset.chapterNum || '';
+        const verseNum = foundBlock.dataset.verseNum || '';
+
+        let verseSubIndex = 0;
+        if (!isBanner && bookNum && chapterNum && verseNum) {
+            let prev = foundBlock.previousElementSibling;
+            while (
+                prev &&
+                !prev.classList.contains('lex-chapter-banner') &&
+                prev.dataset.bookNum === bookNum &&
+                prev.dataset.chapterNum === chapterNum &&
+                prev.dataset.verseNum === verseNum
+            ) {
+                verseSubIndex++;
+                prev = prev.previousElementSibling;
+            }
+        }
+
+        return {
+            el: foundBlock,
+            scroller,
+            isBanner,
+            bookNum,
+            chapterNum,
+            verseNum,
+            verseSubIndex,
+            offsetFromScrollerTop: foundBlock.getBoundingClientRect().top - scrollerRect.top
+        };
+    }
+
+    function resolveAnchorElement(ed, anchor) {
+        if (!ed || !anchor) return null;
+        if (anchor.el && anchor.el.isConnected && ed.contains(anchor.el)) {
+            const r = anchor.el.getBoundingClientRect();
+            if (r.height > 0 || r.width > 0) return anchor.el;
+        }
+        if (anchor.isBanner && anchor.bookNum && anchor.chapterNum) {
+            const banner = ed.querySelector(
+                `.lex-chapter-banner[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`
+            );
+            if (banner) {
+                anchor.el = banner;
+                return banner;
+            }
+        }
+        if (anchor.bookNum && anchor.chapterNum && anchor.verseNum) {
+            const matches = ed.querySelectorAll(
+                `div[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"][data-verse-num="${anchor.verseNum}"]:not(.lex-chapter-banner)`
+            );
+            if (matches.length > 0) {
+                const picked = matches[Math.min(anchor.verseSubIndex, matches.length - 1)];
+                anchor.el = picked;
+                return picked;
+            }
+        }
+        if (anchor.bookNum && anchor.chapterNum) {
+            const fallback =
+                ed.querySelector(`.lex-chapter-banner[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`) ||
+                ed.querySelector(`div[data-book-num="${anchor.bookNum}"][data-chapter-num="${anchor.chapterNum}"]`);
+            if (fallback) {
+                anchor.el = fallback;
+                return fallback;
+            }
+        }
+        return null;
+    }
+
+    function restorePinnedAnchor() {
+        if (!pinnedAnchor || Date.now() > pinnedAnchorUntil) return;
+        const ed = getEditor();
+        const scroller =
+            pinnedAnchor.scroller && pinnedAnchor.scroller.isConnected ? pinnedAnchor.scroller : getEditorScroller();
+        if (!ed || !scroller) return;
+
+        const target = resolveAnchorElement(ed, pinnedAnchor);
+        if (!target) return;
+
+        const scrollerRect =
+            scroller === document.scrollingElement
+                ? { top: 0 }
+                : scroller.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        if (targetRect.height === 0 && targetRect.width === 0) return;
+
+        const desiredTop = scrollerRect.top + pinnedAnchor.offsetFromScrollerTop;
+        const delta = targetRect.top - desiredTop;
+        if (Math.abs(delta) > 1.5) {
+            const curTop = getNativeScrollTop(scroller);
+            setNativeScrollTop(scroller, Math.max(0, curTop + delta));
+        }
+    }
+
+    function engageAnchorPin(durationMs = 1500) {
+        protectAllEditorScrollers();
+        // If already mid-pin from a rapid double-click, keep the original book/verse anchor
+        if (!pinnedAnchor || Date.now() > pinnedAnchorUntil) {
+            const captured = captureTopVisibleAnchor();
+            if (!captured) return;
+            pinnedAnchor = captured;
+        }
+        explicitNavAllowedUntil = 0;
+        nativeJumpLockUntil = 0;
+        pinnedAnchorUntil = Date.now() + durationMs;
+
+        const rafUntil = Date.now() + Math.min(durationMs, 420);
+        const pump = () => {
+            pinnedAnchorRaf = 0;
+            if (!pinnedAnchor || Date.now() > pinnedAnchorUntil) return;
+            restorePinnedAnchor();
+            if (Date.now() < rafUntil) {
+                pinnedAnchorRaf = requestAnimationFrame(pump);
+            }
+        };
+        if (pinnedAnchorRaf) cancelAnimationFrame(pinnedAnchorRaf);
+        pinnedAnchorRaf = requestAnimationFrame(pump);
+
+        [0, 30, 80, 160, 280, 480, 750, 1050, 1350].forEach((ms) => {
+            if (ms <= durationMs) setTimeout(restorePinnedAnchor, ms);
+        });
+    }
+
+    function isViewLayoutToggle(target) {
+        if (!target || target.nodeType !== 1) return false;
+        const ed = getEditor();
+        if (ed && ed.contains(target)) return false;
+
+        const tfBar = getThoughtFlowToolbar();
+        const control = target.closest(
+            'button, label, input, [role="switch"], [role="button"], [role="menuitem"], [onclick], li, .cursor-pointer'
+        );
+        const txt = ((control ? control.textContent : target.textContent) || '').trim();
+        if (EXPLICIT_NAV_TEXT_RE.test(txt)) return false;
+
+        if (tfBar && tfBar.contains(target)) {
+            if (target.closest('select, input[type="text"], input[type="search"]')) return false;
+            return true;
+        }
+
+        if (!control) return false;
+        if (control.tagName === 'SELECT' || (control.tagName === 'INPUT' && !['checkbox', 'radio'].includes(control.type))) {
+            return false;
+        }
+
+        const meta = [
+            control.id || '',
+            typeof control.className === 'string' ? control.className : '',
+            control.getAttribute('title') || '',
+            control.getAttribute('aria-label') || '',
+            control.getAttribute('onclick') || '',
+            control.getAttribute('onchange') || '',
+            control.getAttribute('for') || '',
+            txt.length <= 120 ? txt : ''
+        ].join(' ');
+
+        return VIEW_TOGGLE_RE.test(meta);
+    }
+
+    function protectScroller(el) {
+        if (!el || protectedScrollers.has(el)) return;
+        protectedScrollers.add(el);
+
+        if (nativeScrollTopDesc && nativeScrollTopDesc.configurable) {
+            try {
+                Object.defineProperty(el, 'scrollTop', {
+                    configurable: true,
+                    get() {
+                        return nativeScrollTopDesc.get.call(this);
+                    },
+                    set(val) {
+                        if (!isInternalRestore && isJsScrollBlocked()) return;
+                        nativeScrollTopDesc.set.call(this, val);
+                    }
+                });
+            } catch (e) {}
+        }
+
+        el.addEventListener(
+            'scroll',
+            () => {
+                invalidateBannerCache();
+                if (!isInternalRestore && pinnedAnchor && Date.now() < pinnedAnchorUntil) {
+                    restorePinnedAnchor();
+                    return;
+                }
+                scheduleRemoveAutoSplitAndSuggestions();
+                scheduleFixSubordinationLines();
+                if (isInternalRestore || Date.now() > nativeJumpLockUntil) return;
+                const lock = lockedScrollPositions.get(el);
+                if (!lock) return;
+                const cur = getNativeScrollTop(el);
+                if (cur < lock.min || cur > lock.max) {
+                    setNativeScrollTop(el, lock.base);
+                }
+            },
+            { passive: true }
+        );
+    }
+
+    function protectAllEditorScrollers() {
+        const mainEl = getMainScroller();
+        if (mainEl) protectScroller(mainEl);
+        if (document.scrollingElement) protectScroller(document.scrollingElement);
+
+        const ed = getEditor();
+        let node = ed ? ed.parentElement : null;
+        while (node && node !== document.documentElement) {
+            const cs = window.getComputedStyle(node);
+            if (
+                /(auto|scroll|overlay)/.test(cs.overflowY || '') ||
+                node.scrollHeight > node.clientHeight + 2
+            ) {
+                protectScroller(node);
+            }
+            node = node.parentElement;
+        }
+    }
+
+    function enforceNativeJumpLock() {
+        if (Date.now() > nativeJumpLockUntil) return;
+        lockedScrollPositions.forEach((lock, el) => {
+            if (!el || !el.isConnected) return;
+            const cur = getNativeScrollTop(el);
+            if (cur < lock.min || cur > lock.max) {
+                setNativeScrollTop(el, lock.base);
+            }
+        });
+        if (lockedWinY !== null && Math.abs(window.scrollY - lockedWinY) > 5) {
+            isInternalRestore = true;
+            try {
+                nativeWinScrollTo(window.scrollX, lockedWinY);
+            } finally {
+                isInternalRestore = false;
+            }
+        }
+    }
+
+    function engageNativeJumpLock(durationMs = 1500) {
+        protectAllEditorScrollers();
+        lockedScrollPositions.clear();
+        lockedWinY = window.scrollY;
+
+        let caretNearBottom = false;
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            const rect = sel.getRangeAt(0).getBoundingClientRect();
+            if (rect && rect.bottom > window.innerHeight - 100) {
+                caretNearBottom = true;
+            }
+        }
+
+        protectedScrollers.forEach((el) => {
+            const base = getNativeScrollTop(el);
+            lockedScrollPositions.set(el, {
+                base,
+                min: Math.max(0, base - 2),
+                max: base + (caretNearBottom ? 90 : 28)
+            });
+        });
+
+        nativeJumpLockUntil = Date.now() + durationMs;
+        requestAnimationFrame(enforceNativeJumpLock);
+        [0, 16, 50, 120, 260, 500, 900].forEach((ms) => setTimeout(enforceNativeJumpLock, ms));
+    }
+
+    const wrapElScroll = (origFn) =>
+        function (...args) {
+            if (!isInternalRestore && isJsScrollBlocked() && protectedScrollers.has(this)) return;
+            return origFn.apply(this, args);
+        };
+    if (nativeElScrollTo) Element.prototype.scrollTo = wrapElScroll(nativeElScrollTo);
+    if (nativeElScroll) Element.prototype.scroll = wrapElScroll(nativeElScroll);
+    if (nativeElScrollBy) Element.prototype.scrollBy = wrapElScroll(nativeElScrollBy);
+
+    Element.prototype.scrollIntoView = function (...args) {
+        const ed = getEditor();
+        if (isJsScrollBlocked() && ed && (this === ed || ed.contains(this))) return;
+        return nativeScrollIntoView.apply(this, args);
+    };
+
+    window.scrollTo = function (...args) {
+        if (!isInternalRestore && isJsScrollBlocked()) return;
+        return nativeWinScrollTo(...args);
+    };
+    window.scroll = function (...args) {
+        if (!isInternalRestore && isJsScrollBlocked()) return;
+        return nativeWinScroll(...args);
+    };
+    window.scrollBy = function (...args) {
+        if (!isInternalRestore && isJsScrollBlocked()) return;
+        return nativeWinScrollBy(...args);
+    };
+
+    HTMLElement.prototype.focus = function (options) {
+        const ed = getEditor();
+        if (isJsScrollBlocked() && ed && (this === ed || ed.contains(this))) {
+            const opts =
+                options && typeof options === 'object'
+                    ? Object.assign({}, options, { preventScroll: true })
+                    : { preventScroll: true };
+            return nativeFocus.call(this, opts);
+        }
+        return nativeFocus.apply(this, arguments);
+    };
+
+    try {
+        if (typeof scrollToPassageInDocument === 'function') {
+            const _origScrollToPassage = scrollToPassageInDocument;
+            const _guarded = function (...args) {
+                if (isJsScrollBlocked()) return false;
+                return _origScrollToPassage.apply(this, args);
+            };
+            scrollToPassageInDocument = _guarded;
+            window.scrollToPassageInDocument = _guarded;
+        }
+    } catch (e) {}
+
+    // --- 4. SUBORDINATION LINES: MULTI-LAYER CROSS-CHAPTER FILTER & 40% OPACITY ---
+    let isFixingLines = false;
+    let fixLinesRaf = 0;
+
+    function filterSvgMultiPathD(pathEl, bannerRects) {
+        const rawD = pathEl.dataset.lexflowOrigD || pathEl.getAttribute('d') || '';
+        if (!rawD) return false;
+        const parts = rawD.trim().split(/(?=[Mm])/).filter((s) => s.trim().length > 0);
+        if (parts.length <= 1) return false;
+
+        let ctm;
+        try {
+            ctm = pathEl.getScreenCTM();
+        } catch (e) {
+            return false;
+        }
+        if (!ctm) return false;
+
+        if (!pathEl.dataset.lexflowOrigD) pathEl.dataset.lexflowOrigD = rawD;
+
+        let curX = 0,
+            curY = 0;
+        const kept = [];
+        let changed = false;
+
+        for (let i = 0; i < parts.length; i++) {
+            const sub = parts[i].trim();
+            let minX = Infinity,
+                maxX = -Infinity,
+                minY = Infinity,
+                maxY = -Infinity;
+            const recordPt = (x, y) => {
+                const vx = ctm.a * x + ctm.c * y + ctm.e;
+                const vy = ctm.b * x + ctm.d * y + ctm.f;
+                if (vx < minX) minX = vx;
+                if (vx > maxX) maxX = vx;
+                if (vy < minY) minY = vy;
+                if (vy > maxY) maxY = vy;
+            };
+
+            const cmdRegex = /([MmLlHhVvQqCcSsTtZz])([^MmLlHhVvQqCcSsTtZz]*)/g;
+            let m;
+            while ((m = cmdRegex.exec(sub)) !== null) {
+                const cmd = m[1];
+                const nums = (m[2].match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number);
+                let idx = 0;
+                if (cmd === 'M' || cmd === 'L' || cmd === 'T') {
+                    while (idx + 1 < nums.length) {
+                        curX = nums[idx++];
+                        curY = nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'm' || cmd === 'l' || cmd === 't') {
+                    while (idx + 1 < nums.length) {
+                        curX += nums[idx++];
+                        curY += nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'H') {
+                    while (idx < nums.length) {
+                        curX = nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'h') {
+                    while (idx < nums.length) {
+                        curX += nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'V') {
+                    while (idx < nums.length) {
+                        curY = nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'v') {
+                    while (idx < nums.length) {
+                        curY += nums[idx++];
+                        recordPt(curX, curY);
+                    }
+                } else if (cmd === 'Q' || cmd === 'S') {
+                    while (idx + 3 < nums.length) {
+                        recordPt(nums[idx], nums[idx + 1]);
+                        curX = nums[idx + 2];
+                        curY = nums[idx + 3];
+                        recordPt(curX, curY);
+                        idx += 4;
+                    }
+                } else if (cmd === 'q' || cmd === 's') {
+                    while (idx + 3 < nums.length) {
+                        recordPt(curX + nums[idx], curY + nums[idx + 1]);
+                        curX += nums[idx + 2];
+                        curY += nums[idx + 3];
+                        recordPt(curX, curY);
+                        idx += 4;
+                    }
+                } else if (cmd === 'C') {
+                    while (idx + 5 < nums.length) {
+                        recordPt(nums[idx], nums[idx + 1]);
+                        recordPt(nums[idx + 2], nums[idx + 3]);
+                        curX = nums[idx + 4];
+                        curY = nums[idx + 5];
+                        recordPt(curX, curY);
+                        idx += 6;
+                    }
+                } else if (cmd === 'c') {
+                    while (idx + 5 < nums.length) {
+                        recordPt(curX + nums[idx], curY + nums[idx + 1]);
+                        recordPt(curX + nums[idx + 2], curY + nums[idx + 3]);
+                        curX += nums[idx + 4];
+                        curY += nums[idx + 5];
+                        recordPt(curX, curY);
+                        idx += 6;
+                    }
+                }
+            }
+
+            const w = maxX - minX;
+            const h = maxY - minY;
+            if (h >= 8 && w <= 90 && crossesAnyChapterBanner(minY, maxY, bannerRects)) {
+                changed = true;
+            } else {
+                kept.push(sub);
+            }
+        }
+
+        const nextD = kept.join(' ');
+        if (pathEl.getAttribute('d') !== nextD) {
+            pathEl.setAttribute('d', nextD);
+        }
+        return changed || kept.length < parts.length;
+    }
+
+    function getTranslateYFromMatrix(transformStr) {
+        if (!transformStr || transformStr === 'none') return 0;
+        const m2 = transformStr.match(/matrix\(([^)]+)\)/);
+        if (m2) {
+            const vals = m2[1].split(',').map(Number);
+            return vals.length >= 6 && !Number.isNaN(vals[5]) ? vals[5] : 0;
+        }
+        const m3 = transformStr.match(/matrix3d\(([^)]+)\)/);
+        if (m3) {
+            const vals = m3[1].split(',').map(Number);
+            return vals.length >= 14 && !Number.isNaN(vals[13]) ? vals[13] : 0;
+        }
+        return 0;
+    }
+
+    function checkPseudoLineCrossesBanner(blk, pseudo, hideClass, bannerRects) {
+        const pcs = window.getComputedStyle(blk, pseudo);
+        if (!pcs || !pcs.content || pcs.content === 'none' || pcs.display === 'none') {
+            blk.classList.remove(hideClass);
+            return;
+        }
+        const pw = parseFloat(pcs.width);
+        const ph = parseFloat(pcs.height);
+        const bLeft = parseFloat(pcs.borderLeftWidth) || 0;
+        const bRight = parseFloat(pcs.borderRightWidth) || 0;
+        const isLineLike = (!Number.isNaN(pw) && pw <= 24) || bLeft > 0 || bRight > 0;
+        if (!isLineLike || Number.isNaN(ph) || ph < 12) return;
+
+        const br = blk.getBoundingClientRect();
+        const pTop = parseFloat(pcs.top);
+        const pBot = parseFloat(pcs.bottom);
+        const mTop = parseFloat(pcs.marginTop) || 0;
+        const ty = getTranslateYFromMatrix(pcs.transform);
+
+        let lineTop, lineBottom;
+        if (!Number.isNaN(pTop)) {
+            lineTop = br.top + pTop + mTop + ty;
+            lineBottom = lineTop + ph;
+        } else if (!Number.isNaN(pBot)) {
+            lineBottom = br.bottom - pBot + ty;
+            lineTop = lineBottom - ph;
+        } else {
+            return;
+        }
+
+        if (crossesAnyChapterBanner(lineTop, lineBottom, bannerRects)) {
+            blk.classList.add(hideClass);
+        } else {
+            blk.classList.remove(hideClass);
+        }
+    }
+
+    function hideLineElement(el) {
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.dataset.lexflowCrossBannerHidden = '1';
+    }
+
+    function showLineElement(el) {
+        if (el.dataset.lexflowCrossBannerHidden === '1') {
+            el.style.removeProperty('visibility');
+            delete el.dataset.lexflowCrossBannerHidden;
+        }
+        el.style.setProperty('opacity', String(SUBORDINATION_LINE_OPACITY), 'important');
+    }
+
+    function fixSubordinationLines() {
+        const ed = getEditor();
+        if (!ed || isFixingLines) return;
+        isFixingLines = true;
+        try {
+            const edRect = ed.getBoundingClientRect();
+            if (edRect.width === 0 || edRect.height === 0) return;
+
+            const bannerRects = getChapterBannerRects(true);
+            const tfBar = getThoughtFlowToolbar();
+
+            document.querySelectorAll('canvas').forEach((cv) => {
+                if (isEditorOverlayCanvas(cv)) {
+                    cv.style.setProperty('opacity', String(SUBORDINATION_LINE_OPACITY), 'important');
+                }
+            });
+
+            const indentedBlocks = ed.querySelectorAll('.has-indent');
+            for (let i = 0; i < indentedBlocks.length; i++) {
+                const blk = indentedBlocks[i];
+                const br = blk.getBoundingClientRect();
+                if (br.bottom < -300 || br.top > window.innerHeight + 300) continue;
+
+                const cs = window.getComputedStyle(blk);
+                if (parseFloat(cs.borderLeftWidth) > 0 && cs.borderLeftStyle !== 'none') {
+                    if (!blk.dataset.lexflowBaseBorderRgb) {
+                        const m = (cs.borderLeftColor || '').match(
+                            /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/i
+                        );
+                        if (m) {
+                            const baseA = m[4] !== undefined ? parseFloat(m[4]) : 1;
+                            blk.dataset.lexflowBaseBorderRgb = `${m[1]},${m[2]},${m[3]},${baseA}`;
+                        }
+                    }
+                    if (blk.dataset.lexflowBaseBorderRgb) {
+                        const parts = blk.dataset.lexflowBaseBorderRgb.split(',').map(Number);
+                        const alpha = Math.max(0.05, Math.min(1, parts[3] * SUBORDINATION_LINE_OPACITY));
+                        blk.style.setProperty(
+                            'border-left-color',
+                            `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha.toFixed(3)})`,
+                            'important'
+                        );
+                    }
+                }
+                checkPseudoLineCrossesBanner(blk, '::before', 'lexflow-hide-cross-banner-before', bannerRects);
+                checkPseudoLineCrossesBanner(blk, '::after', 'lexflow-hide-cross-banner-after', bannerRects);
+            }
+
+            document.querySelectorAll('svg').forEach((svg) => {
+                if (svg.closest('header, nav, button, [role="dialog"], .modal, #visualAnalyticsMainCanvas')) return;
+                if (tfBar && tfBar.contains(svg)) return;
+                const shapes = svg.querySelectorAll('line, path, polyline, rect');
+                if (shapes.length === 0) return;
+
+                let hasEditorLine = false;
+                shapes.forEach((shape) => {
+                    const r = shape.getBoundingClientRect();
+                    if (r.height < 10) return;
+                    if (r.bottom < edRect.top - 50 || r.top > edRect.bottom + 50) return;
+                    if (r.right < edRect.left - 50 || r.left > edRect.right - 40) return;
+
+                    if (shape.tagName.toLowerCase() === 'path' && (shape.dataset.lexflowOrigD || shape.getAttribute('d') || '').split(/[Mm]/).length > 2) {
+                        hasEditorLine = true;
+                        shape.style.setProperty('opacity', String(SUBORDINATION_LINE_OPACITY), 'important');
+                        filterSvgMultiPathD(shape, bannerRects);
+                        return;
+                    }
+
+                    if (r.width > 90) return;
+                    hasEditorLine = true;
+                    if (crossesAnyChapterBanner(r.top, r.bottom, bannerRects)) {
+                        hideLineElement(shape);
+                    } else {
+                        showLineElement(shape);
+                    }
+                });
+
+                if (hasEditorLine) {
+                    svg.dataset.lexflowLineOverlay = '1';
+                }
+            });
+
+            const seen = new Set();
+            const checkHtmlLineEl = (el) => {
+                if (!el || seen.has(el)) return;
+                seen.add(el);
+                if (
+                    el === ed ||
+                    el.contains(ed) ||
+                    el.classList.contains('lex-chapter-banner') ||
+                    isDirectVerseBlock(el, ed)
+                ) {
+                    return;
+                }
+                if (el.closest('header, nav, button, [role="dialog"], .modal, .ot-in-nt-inline-badge')) return;
+                if (tfBar && tfBar.contains(el)) return;
+
+                const idCls = `${el.id || ''} ${typeof el.className === 'string' ? el.className : ''}`;
+                if (/resizer|splitter|scrollbar|caret/i.test(idCls)) return;
+
+                const cs = window.getComputedStyle(el);
+                if (cs.position !== 'absolute' && cs.position !== 'fixed') return;
+                if (/resize/.test(cs.cursor || '')) return;
+
+                const r = el.getBoundingClientRect();
+                if (r.height < 12 || r.width <= 0 || r.width > 60) return;
+                if (r.left < edRect.left - 45 || r.right > edRect.right - 50) return;
+                if (r.bottom < edRect.top - 50 || r.top > edRect.bottom + 50) return;
+
+                const hasBg =
+                    cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
+                const hasVertBorder = parseFloat(cs.borderLeftWidth) > 0 || parseFloat(cs.borderRightWidth) > 0;
+                const isThinBar = r.width <= 12 && (hasBg || hasVertBorder);
+                const isBracket = r.width <= 60 && !hasBg && hasVertBorder;
+                if (!isThinBar && !isBracket) return;
+
+                if (crossesAnyChapterBanner(r.top, r.bottom, bannerRects)) {
+                    hideLineElement(el);
+                } else {
+                    showLineElement(el);
+                }
+            };
+
+            const walkOverlayContainer = (root) => {
+                if (!root) return;
+                for (let i = 0; i < root.children.length; i++) {
+                    const child = root.children[i];
+                    if (child === ed || (tfBar && child === tfBar)) continue;
+                    if (child.tagName === 'DIV' || child.tagName === 'SPAN') {
+                        checkHtmlLineEl(child);
+                    }
+                    if (child.contains(ed)) {
+                        walkOverlayContainer(child);
+                    } else if (child.children.length > 0 && !child.closest('header, nav, [role="dialog"], .modal')) {
+                        child.querySelectorAll('div, span').forEach(checkHtmlLineEl);
+                    }
+                }
+            };
+
+            const mainEl = getMainScroller();
+            walkOverlayContainer(mainEl || (ed && ed.parentElement));
+            if (mainEl && mainEl.parentElement) {
+                walkOverlayContainer(mainEl.parentElement);
+            }
+
+            for (let i = 0; i < ed.children.length; i++) {
+                const ch = ed.children[i];
+                if (ch.hasAttribute('data-verse-num') || ch.classList.contains('lex-chapter-banner')) continue;
+                checkHtmlLineEl(ch);
+                if (ch.children.length > 0) ch.querySelectorAll('div, span').forEach(checkHtmlLineEl);
+            }
+        } finally {
+            isFixingLines = false;
+        }
+    }
+
+    function scheduleFixSubordinationLines() {
+        if (fixLinesRaf) return;
+        fixLinesRaf = requestAnimationFrame(() => {
+            fixLinesRaf = 0;
+            fixSubordinationLines();
+        });
+    }
+
+    try {
+        if (typeof syncOverlayControls === 'function') {
+            const _origSyncOverlay = syncOverlayControls;
+            const _wrappedSyncOverlay = function (...args) {
+                invalidateBannerCache();
+                const res = _origSyncOverlay.apply(this, args);
+                restorePinnedAnchor();
+                scheduleRemoveAutoSplitAndSuggestions();
+                scheduleFixSubordinationLines();
+                setTimeout(() => {
+                    restorePinnedAnchor();
+                    removeRelationshipSuggestionPills();
+                    scheduleFixSubordinationLines();
+                }, 50);
+                return res;
+            };
+            syncOverlayControls = _wrappedSyncOverlay;
+            window.syncOverlayControls = _wrappedSyncOverlay;
+        }
+    } catch (e) {}
+
+    try {
+        if (typeof refreshDocumentBlockAttributes === 'function') {
+            const _origRefreshAttrs = refreshDocumentBlockAttributes;
+            const _wrappedRefreshAttrs = function (...args) {
+                invalidateBannerCache();
+                const res = _origRefreshAttrs.apply(this, args);
+                restorePinnedAnchor();
+                scheduleRemoveAutoSplitAndSuggestions();
+                scheduleFixSubordinationLines();
+                return res;
+            };
+            refreshDocumentBlockAttributes = _wrappedRefreshAttrs;
+            window.refreshDocumentBlockAttributes = _wrappedRefreshAttrs;
+        }
+    } catch (e) {}
+
+    // --- 5. EVENT HANDLERS (SHIFT+ENTER, ANCHOR-PINNING & NAVIGATION) ---
+    window.addEventListener(
+        'keydown',
+        (e) => {
+            const ed = getEditor();
+            if (!isInsideMainEditorText(e.target)) {
+                if ((e.key === ' ' || e.key === 'Enter') && isViewLayoutToggle(e.target)) {
+                    engageAnchorPin(1500);
+                    return;
+                }
+                if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+                    allowExplicitNavigation(4500);
+                }
+                return;
+            }
+
+            markEditorInteraction();
+
+            const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13;
+            if (isEnter) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat) {
+                    engageNativeJumpLock(1500);
+                    performHardwiredBlockSplit(ed);
+                }
+                return;
+            }
+
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                engageNativeJumpLock(1500);
+                invalidateBannerCache();
+                setTimeout(() => {
+                    removeRelationshipSuggestionPills();
+                    scheduleFixSubordinationLines();
+                }, 40);
+            } else if (e.key === 'Tab') {
+                invalidateBannerCache();
+                setTimeout(() => {
+                    removeRelationshipSuggestionPills();
+                    scheduleFixSubordinationLines();
+                }, 40);
+            } else if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) {
+                releaseNativeJumpLock();
+            }
+        },
+        true
+    );
+
+    window.addEventListener(
+        'beforeinput',
+        (e) => {
+            if (!isInsideMainEditorText(e.target)) return;
+            markEditorInteraction();
+            if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
+            if (e.inputType && e.inputType.includes('delete')) {
+                engageNativeJumpLock(1500);
+            }
+        },
+        true
+    );
+
+    window.addEventListener(
+        'wheel',
+        (e) => {
+            releaseNativeJumpLock();
+            invalidateBannerCache();
+            scheduleRemoveAutoSplitAndSuggestions();
+            scheduleFixSubordinationLines();
+            const mainEl = getMainScroller();
+            if (mainEl && !mainEl.contains(e.target)) {
+                parallelSyncAllowedUntil = Date.now() + 900;
+            }
+        },
+        { passive: true, capture: true }
+    );
+    window.addEventListener('touchstart', releaseNativeJumpLock, { passive: true, capture: true });
+    window.addEventListener(
+        'resize',
+        () => {
+            invalidateBannerCache();
+            restorePinnedAnchor();
+            scheduleRemoveAutoSplitAndSuggestions();
+            scheduleFixSubordinationLines();
+        },
+        { passive: true }
+    );
+
+    document.addEventListener(
+        'mousedown',
+        (e) => {
+            for (const sc of protectedScrollers) {
+                const r = sc.getBoundingClientRect();
+                if (e.clientX >= r.right - 20 && e.clientX <= r.right + 2 && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    releaseNativeJumpLock();
+                    return;
+                }
+            }
+
+            // Pin current book/chapter/verse BEFORE any view/layout toggle runs (e.g. Text Flow, Lines & Indents)
+            if (isViewLayoutToggle(e.target)) {
+                engageAnchorPin(1500);
+                invalidateBannerCache();
+                setTimeout(() => {
+                    restorePinnedAnchor();
+                    removeRelationshipSuggestionPills();
+                    scheduleFixSubordinationLines();
+                }, 40);
+                return;
+            }
+
+            const ed = getEditor();
+            if (ed && ed.contains(e.target)) {
+                markEditorInteraction();
+                invalidateBannerCache();
+                setTimeout(() => {
+                    removeRelationshipSuggestionPills();
+                    scheduleFixSubordinationLines();
+                }, 40);
+                return;
+            }
+
+            const inTopHeader = e.clientY < 74 || Boolean(e.target.closest('header, nav'));
+            const inNavPanel = Boolean(
+                e.target.closest(
+                    '[role="dialog"], .modal, [id*="Modal"], [id*="modal"], [id*="Search"], [id*="search"], [id*="Drawer"], [id*="Sidebar"], [id*="Tools"]'
+                )
+            );
+            const interactive = e.target.closest('button, a, select, [role="button"], [onclick], li, .cursor-pointer');
+            if (interactive && (inTopHeader || inNavPanel)) {
+                allowExplicitNavigation(4500);
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        'click',
+        (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('button, [role="button"]');
+            if (btn && /clear/i.test(btn.textContent || '')) {
+                setTimeout(removeRelationshipSuggestionPills, 0);
+                setTimeout(removeRelationshipSuggestionPills, 60);
+                setTimeout(removeRelationshipSuggestionPills, 200);
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        'change',
+        (e) => {
+            const ed = getEditor();
+            if (isViewLayoutToggle(e.target)) {
+                engageAnchorPin(1500);
+                return;
+            }
+            if (e.target && e.target.tagName === 'SELECT' && (!ed || !ed.contains(e.target))) {
+                allowExplicitNavigation(5500);
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        'input',
+        (e) => {
+            const ed = getEditor();
+            if (isInsideMainEditorText(e.target)) {
+                markEditorInteraction();
+                invalidateBannerCache();
+                cleanLeakedOtArtifacts(ed);
+                splitAnyBrInsideVerseBlocks(ed);
+                scheduleRemoveAutoSplitAndSuggestions();
+                scheduleFixSubordinationLines();
+            }
+        },
+        true
+    );
+
+    function initCleanState() {
+        scrubDisabledStorage();
+        neutralizeDisabledGlobals();
+        removeAutoSplitClasses();
+        removeAutoSplitUI();
+        ensureFixStyles();
+        protectAllEditorScrollers();
+        removeRelationshipSuggestionPills();
+
+        try {
+            if (typeof ensureOtInNtModalAndStylesExist === 'function') ensureOtInNtModalAndStylesExist();
+            if (typeof syncOtInNtToggleSwitchUI === 'function') syncOtInNtToggleSwitchUI();
+        } catch (e) {}
+
+        const ed = getEditor();
+        if (ed && typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(() => {
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
+                    restorePinnedAnchor();
+                }
+            });
+            ro.observe(ed);
+        }
+
+        const mainEl = getMainScroller();
+        if (mainEl && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver((mutations) => {
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
+                    restorePinnedAnchor();
+                }
+                scheduleRemoveAutoSplitAndSuggestions();
+                if (isFixingLines) return;
+                const curEd = getEditor();
+                const shouldRun = mutations.some((m) => {
+                    const t = m.target;
+                    if (!t) return false;
+                    if (t.tagName && /^(svg|path|line|polyline|rect|g|canvas)$/i.test(t.tagName)) return true;
+                    if (!curEd || (t !== curEd && !curEd.contains(t))) return true;
+                    return false;
+                });
+                if (shouldRun) scheduleFixSubordinationLines();
+            });
+            obs.observe(mainEl, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['d', 'y1', 'y2', 'style', 'class']
+            });
+        }
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const uiObs = new MutationObserver((mutations) => {
+                if (pinnedAnchor && Date.now() < pinnedAnchorUntil) {
+                    restorePinnedAnchor();
+                }
+                const hasAdditions = mutations.some((m) => m.addedNodes && m.addedNodes.length > 0);
+                if (hasAdditions) scheduleRemoveAutoSplitAndSuggestions();
+            });
+            uiObs.observe(document.body, { childList: true, subtree: true });
+        }
+
+        const runClean = () => {
+            scrubDisabledStorage();
+            neutralizeDisabledGlobals();
+            removeAutoSplitClasses();
+            removeAutoSplitUI();
+            invalidateBannerCache();
+            protectAllEditorScrollers();
+            const curEd = getEditor();
+            if (curEd) {
+                cleanLeakedOtArtifacts(curEd);
+                splitAnyBrInsideVerseBlocks(curEd);
+            }
+            try {
+                if (typeof decorateEditorWithOtInNtBadges === 'function') decorateEditorWithOtInNtBadges();
+            } catch (e) {}
+            try {
+                if (typeof syncOverlayControls === 'function') syncOverlayControls();
+            } catch (e) {}
+            removeRelationshipSuggestionPills();
+            fixSubordinationLines();
+        };
+
+        runClean();
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+            runClean();
+        }, 180);
+        setTimeout(runClean, 850);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCleanState);
+    } else {
+        initCleanState();
+    }
+})();
+	
     </script>
 </body>
 </html>
