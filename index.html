@@ -27086,6 +27086,1103 @@ function showContextMenu(x, y) {
     );
 })();
 	
+	/* === LEXFLOW EXPANSION: FULL 27-BOOK NT OLD TESTAMENT QUOTES, ALLUSIONS & ECHOES === */
+(function () {
+    const OT_BOOKS = {
+        Gen: [1, 'Genesis'], Exod: [2, 'Exodus'], Lev: [3, 'Leviticus'], Num: [4, 'Numbers'],
+        Deut: [5, 'Deuteronomy'], Josh: [6, 'Joshua'], Judg: [7, 'Judges'], Ruth: [8, 'Ruth'],
+        '1Sam': [9, '1 Samuel'], '2Sam': [10, '2 Samuel'], '1Kgs': [11, '1 Kings'], '2Kgs': [12, '2 Kings'],
+        '1Chr': [13, '1 Chronicles'], '2Chr': [14, '2 Chronicles'], Ezra: [15, 'Ezra'], Neh: [16, 'Nehemiah'],
+        Esth: [17, 'Esther'], Job: [18, 'Job'], Ps: [19, 'Psalm'], Prov: [20, 'Proverbs'],
+        Eccl: [21, 'Ecclesiastes'], Song: [22, 'Song of Solomon'], Isa: [23, 'Isaiah'], Jer: [24, 'Jeremiah'],
+        Lam: [25, 'Lamentations'], Ezek: [26, 'Ezekiel'], Dan: [27, 'Daniel'], Hos: [28, 'Hosea'],
+        Joel: [29, 'Joel'], Amos: [30, 'Amos'], Obad: [31, 'Obadiah'], Jonah: [32, 'Jonah'],
+        Mic: [33, 'Micah'], Nah: [34, 'Nahum'], Hab: [35, 'Habakkuk'], Zeph: [36, 'Zephaniah'],
+        Hag: [37, 'Haggai'], Zech: [38, 'Zechariah'], Mal: [39, 'Malachi']
+    };
+
+    const NT_BOOK_NAMES = {
+        40: 'Matthew', 41: 'Mark', 42: 'Luke', 43: 'John', 44: 'Acts', 45: 'Romans',
+        46: '1 Corinthians', 47: '2 Corinthians', 48: 'Galatians', 49: 'Ephesians',
+        50: 'Philippians', 51: 'Colossians', 52: '1 Thessalonians', 53: '2 Thessalonians',
+        54: '1 Timothy', 55: '2 Timothy', 56: 'Titus', 57: 'Philemon', 58: 'Hebrews',
+        59: 'James', 60: '1 Peter', 61: '2 Peter', 62: '1 John', 63: '2 John',
+        64: '3 John', 65: 'Jude', 66: 'Revelation'
+    };
+
+    // Format: [ntKey, 'otRef|tierCode|themeNote', ...]  (q = Quote, a = Allusion, e = Echo)
+    const FULL_NT_OT_DATA = [
+        // --- 40. MATTHEW ---
+        ['40_1_23', 'Isa 7:14|q|Virgin birth & Immanuel'],
+        ['40_2_6', 'Mic 5:2|q|Ruler born in Bethlehem', '2Sam 5:2|a|Shepherd of Israel'],
+        ['40_2_15', 'Hos 11:1|q|Out of Egypt I called My Son'],
+        ['40_2_18', 'Jer 31:15|q|Rachel weeping for her children'],
+        ['40_3_3', 'Isa 40:3|q|Voice crying in the wilderness'],
+        ['40_3_17', 'Ps 2:7|a|My beloved Son', 'Isa 42:1|a|In whom I am well pleased'],
+        ['40_4_4', 'Deut 8:3|q|Man shall not live on bread alone'],
+        ['40_4_6', 'Ps 91:11-12|q|He will command His angels concerning you'],
+        ['40_4_7', 'Deut 6:16|q|Do not put the Lord your God to the test'],
+        ['40_4_10', 'Deut 6:13|q|Worship the Lord your God and serve Him only'],
+        ['40_4_15', 'Isa 9:1|q|Land of Zebulun and Naphtali'],
+        ['40_4_16', 'Isa 9:2|q|People sitting in darkness have seen a great light'],
+        ['40_5_5', 'Ps 37:11|a|The meek shall inherit the earth'],
+        ['40_5_21', 'Exod 20:13|q|You shall not murder'],
+        ['40_5_27', 'Exod 20:14|q|You shall not commit adultery'],
+        ['40_5_31', 'Deut 24:1|q|Certificate of divorce'],
+        ['40_5_33', 'Lev 19:12|a|Do not swear falsely', 'Num 30:2|a|Keep your vows to the Lord'],
+        ['40_5_38', 'Exod 21:24|q|Eye for eye and tooth for tooth'],
+        ['40_5_43', 'Lev 19:18|q|Love your neighbor'],
+        ['40_7_23', 'Ps 6:8|q|Depart from Me, you workers of lawlessness'],
+        ['40_8_17', 'Isa 53:4|q|He Himself took our infirmities and bore our diseases'],
+        ['40_9_13', 'Hos 6:6|q|I desire mercy, not sacrifice'],
+        ['40_10_35', 'Mic 7:6|a|Household divided'],
+        ['40_11_5', 'Isa 35:5-6|a|Blind see, lame walk', 'Isa 61:1|a|Good news preached to the poor'],
+        ['40_11_10', 'Mal 3:1|q|I will send My messenger ahead of You'],
+        ['40_11_29', 'Jer 6:16|a|You will find rest for your souls'],
+        ['40_12_7', 'Hos 6:6|q|I desire mercy, not sacrifice'],
+        ['40_12_18', 'Isa 42:1|q|Behold My Servant whom I have chosen'],
+        ['40_12_19', 'Isa 42:2|q|He will not quarrel or cry out'],
+        ['40_12_20', 'Isa 42:3|q|A bruised reed He will not break'],
+        ['40_12_21', 'Isa 42:4|q|In His name the nations will put their hope'],
+        ['40_12_40', 'Jonah 1:17|a|Three days and three nights in the belly of the fish'],
+        ['40_13_14', 'Isa 6:9|q|Ever hearing but never understanding'],
+        ['40_13_15', 'Isa 6:10|q|This people’s heart has grown callous'],
+        ['40_13_35', 'Ps 78:2|q|I will open My mouth in parables'],
+        ['40_15_4', 'Exod 20:12|q|Honor your father and mother', 'Exod 21:17|q|Whoever curses father or mother'],
+        ['40_15_8', 'Isa 29:13|q|These people honor Me with their lips'],
+        ['40_15_9', 'Isa 29:13|q|They worship Me in vain; teachings of men'],
+        ['40_18_16', 'Deut 19:15|q|Every matter established by two or three witnesses'],
+        ['40_19_4', 'Gen 1:27|q|Made them male and female'],
+        ['40_19_5', 'Gen 2:24|q|The two will become one flesh'],
+        ['40_19_18', 'Exod 20:13-16|q|Commands of the Decalogue'],
+        ['40_19_19', 'Exod 20:12|q|Honor father and mother', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['40_21_5', 'Zech 9:9|q|Your King comes to you, gentle and riding on a donkey', 'Isa 62:11|a|Say to Daughter Zion'],
+        ['40_21_9', 'Ps 118:25-26|q|Blessed is He who comes in the name of the Lord'],
+        ['40_21_13', 'Isa 56:7|q|My house will be called a house of prayer', 'Jer 7:11|q|A den of robbers'],
+        ['40_21_16', 'Ps 8:2|q|From the lips of children and infants You have ordained praise'],
+        ['40_21_42', 'Ps 118:22-23|q|The stone the builders rejected has become the cornerstone'],
+        ['40_22_24', 'Deut 25:5|q|Levirate marriage law'],
+        ['40_22_32', 'Exod 3:6|q|I am the God of Abraham, Isaac, and Jacob'],
+        ['40_22_37', 'Deut 6:5|q|Love the Lord your God with all your heart'],
+        ['40_22_39', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['40_22_44', 'Ps 110:1|q|The Lord said to my Lord: Sit at My right hand'],
+        ['40_23_39', 'Ps 118:26|q|Blessed is He who comes in the name of the Lord'],
+        ['40_24_15', 'Dan 9:27|a|Abomination of desolation', 'Dan 11:31|a|Desecration of the sanctuary'],
+        ['40_24_29', 'Isa 13:10|a|Sun darkened and stars fall', 'Joel 2:10|a|Cosmic shaking'],
+        ['40_24_30', 'Dan 7:13|a|Son of Man coming on the clouds', 'Zech 12:10|a|Tribes of the earth will mourn'],
+        ['40_26_28', 'Exod 24:8|a|Blood of the covenant', 'Jer 31:31|a|New covenant'],
+        ['40_26_31', 'Zech 13:7|q|I will strike the Shepherd, and the sheep will be scattered'],
+        ['40_26_64', 'Ps 110:1|a|Seated at the right hand of Power', 'Dan 7:13|a|Coming on the clouds of heaven'],
+        ['40_27_9', 'Zech 11:12-13|q|Thirty pieces of silver and the potter’s field', 'Jer 32:6-9|a|Purchase of the field'],
+        ['40_27_35', 'Ps 22:18|a|Divided His garments by casting lots'],
+        ['40_27_43', 'Ps 22:8|a|He trusts in God; let God rescue Him'],
+        ['40_27_46', 'Ps 22:1|q|My God, My God, why have You forsaken Me?'],
+
+        // --- 41. MARK ---
+        ['41_1_2', 'Mal 3:1|q|I will send My messenger ahead of You', 'Exod 23:20|a|Messenger before you on the way'],
+        ['41_1_3', 'Isa 40:3|q|Prepare the way for the Lord'],
+        ['41_1_11', 'Ps 2:7|a|You are My beloved Son', 'Isa 42:1|a|In You I am well pleased'],
+        ['41_4_12', 'Isa 6:9-10|q|Seeing they may see and not perceive'],
+        ['41_7_6', 'Isa 29:13|q|These people honor Me with their lips'],
+        ['41_7_7', 'Isa 29:13|q|Teaching as doctrines the precepts of men'],
+        ['41_7_10', 'Exod 20:12|q|Honor your father and mother', 'Exod 21:17|q|Whoever reviles father or mother'],
+        ['41_9_48', 'Isa 66:24|q|Where their worm does not die and the fire is not quenched'],
+        ['41_10_6', 'Gen 1:27|q|God made them male and female'],
+        ['41_10_7', 'Gen 2:24|q|A man will leave his father and mother'],
+        ['41_10_8', 'Gen 2:24|q|The two will become one flesh'],
+        ['41_10_19', 'Exod 20:12-16|q|Commands of the Decalogue'],
+        ['41_11_9', 'Ps 118:25-26|q|Hosanna! Blessed is He who comes in the name of the Lord'],
+        ['41_11_17', 'Isa 56:7|q|House of prayer for all nations', 'Jer 7:11|q|Den of robbers'],
+        ['41_12_1', 'Isa 5:1-2|a|Parable of the vineyard'],
+        ['41_12_10', 'Ps 118:22|q|The stone the builders rejected has become the cornerstone'],
+        ['41_12_11', 'Ps 118:23|q|This is from the Lord, and it is marvelous in our eyes'],
+        ['41_12_19', 'Deut 25:5|q|Raise up offspring for his brother'],
+        ['41_12_26', 'Exod 3:6|q|I am the God of Abraham, Isaac, and Jacob'],
+        ['41_12_29', 'Deut 6:4|q|Hear, O Israel: The Lord our God, the Lord is One'],
+        ['41_12_30', 'Deut 6:5|q|Love the Lord your God with all your heart'],
+        ['41_12_31', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['41_12_36', 'Ps 110:1|q|The Lord said to my Lord: Sit at My right hand'],
+        ['41_13_14', 'Dan 9:27|a|Abomination of desolation'],
+        ['41_13_24', 'Isa 13:10|a|Sun darkened and moon not giving its light'],
+        ['41_13_26', 'Dan 7:13|a|Son of Man coming in the clouds'],
+        ['41_14_24', 'Exod 24:8|a|My blood of the covenant'],
+        ['41_14_27', 'Zech 13:7|q|I will strike the Shepherd, and the sheep will be scattered'],
+        ['41_14_62', 'Ps 110:1|a|Seated at the right hand of Power', 'Dan 7:13|a|Coming with the clouds of heaven'],
+        ['41_15_24', 'Ps 22:18|a|Dividing His garments by casting lots'],
+        ['41_15_34', 'Ps 22:1|q|My God, My God, why have You forsaken Me?'],
+
+        // --- 42. LUKE ---
+        ['42_1_17', 'Mal 4:5-6|a|Spirit and power of Elijah turning hearts'],
+        ['42_1_46', '1Sam 2:1|e|Echo of Hannah’s song of praise'],
+        ['42_1_52', '1Sam 2:7|e|Brings down rulers and exalts the humble'],
+        ['42_1_53', 'Ps 107:9|e|Satisfies the hungry with good things'],
+        ['42_1_79', 'Isa 9:2|a|Shine on those living in darkness and shadow of death'],
+        ['42_2_23', 'Exod 13:2|q|Every firstborn male consecrated to the Lord'],
+        ['42_2_24', 'Lev 12:8|q|A pair of turtledoves or two young pigeons'],
+        ['42_2_32', 'Isa 42:6|a|A light for revelation to the Gentiles', 'Isa 49:6|a|Light to the nations'],
+        ['42_3_4', 'Isa 40:3|q|Voice of one calling in the wilderness'],
+        ['42_3_5', 'Isa 40:4|q|Every valley filled and mountain brought low'],
+        ['42_3_6', 'Isa 40:5|q|All mankind will see God’s salvation'],
+        ['42_3_22', 'Ps 2:7|a|You are My beloved Son', 'Isa 42:1|a|In You I am well pleased'],
+        ['42_4_4', 'Deut 8:3|q|Man shall not live on bread alone'],
+        ['42_4_8', 'Deut 6:13|q|Worship the Lord your God and serve Him only'],
+        ['42_4_10', 'Ps 91:11|q|He will command His angels concerning You'],
+        ['42_4_11', 'Ps 91:12|q|They will lift You up in their hands'],
+        ['42_4_12', 'Deut 6:16|q|Do not put the Lord your God to the test'],
+        ['42_4_18', 'Isa 61:1|q|The Spirit of the Lord is on Me', 'Isa 58:6|q|Set the oppressed free'],
+        ['42_4_19', 'Isa 61:2|q|Proclaim the year of the Lord’s favor'],
+        ['42_7_22', 'Isa 35:5-6|a|Blind receive sight, lame walk', 'Isa 61:1|a|Good news preached to the poor'],
+        ['42_7_27', 'Mal 3:1|q|I will send My messenger ahead of You'],
+        ['42_8_10', 'Isa 6:9|q|Though seeing, they may not see'],
+        ['42_10_27', 'Deut 6:5|q|Love the Lord your God', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['42_13_27', 'Ps 6:8|q|Depart from Me, all you evildoers'],
+        ['42_13_35', 'Ps 118:26|q|Blessed is He who comes in the name of the Lord'],
+        ['42_18_20', 'Exod 20:12-16|q|Commands of the Decalogue'],
+        ['42_19_38', 'Ps 118:26|q|Blessed is the King who comes in the name of the Lord'],
+        ['42_19_46', 'Isa 56:7|q|My house will be a house of prayer', 'Jer 7:11|q|A den of robbers'],
+        ['42_20_17', 'Ps 118:22|q|The stone the builders rejected has become the cornerstone'],
+        ['42_20_28', 'Deut 25:5|q|Levirate marriage law'],
+        ['42_20_37', 'Exod 3:6|q|The God of Abraham, Isaac, and Jacob'],
+        ['42_20_42', 'Ps 110:1|q|The Lord said to my Lord: Sit at My right hand'],
+        ['42_20_43', 'Ps 110:1|q|Until I make Your enemies a footstool'],
+        ['42_21_27', 'Dan 7:13|a|Son of Man coming in a cloud with power'],
+        ['42_22_20', 'Jer 31:31|a|New covenant in My blood', 'Exod 24:8|a|Blood of the covenant'],
+        ['42_22_37', 'Isa 53:12|q|He was numbered with the transgressors'],
+        ['42_22_69', 'Ps 110:1|a|Seated at the right hand of the power of God', 'Dan 7:13|a|Son of Man enthroned'],
+        ['42_23_30', 'Hos 10:8|q|Say to the mountains, Fall on us'],
+        ['42_23_46', 'Ps 31:5|q|Into Your hands I commit My spirit'],
+
+        // --- 43. JOHN ---
+        ['43_1_1', 'Gen 1:1|e|In the beginning — new creation echo'],
+        ['43_1_14', 'Exod 40:34|e|Dwelt (tabernacled) among us & glory of the Lord'],
+        ['43_1_23', 'Isa 40:3|q|Make straight the way for the Lord'],
+        ['43_1_29', 'Isa 53:7|a|Lamb of God bearing sin', 'Exod 12:3|e|Passover Lamb'],
+        ['43_1_51', 'Gen 28:12|a|Angels ascending and descending on the Son of Man'],
+        ['43_2_17', 'Ps 69:9|q|Zeal for Your house will consume Me'],
+        ['43_3_14', 'Num 21:8-9|a|Moses lifted up the serpent in the wilderness'],
+        ['43_6_31', 'Ps 78:24|q|He gave them bread from heaven to eat', 'Exod 16:4|a|Manna from heaven'],
+        ['43_6_45', 'Isa 54:13|q|They will all be taught by God'],
+        ['43_7_38', 'Zech 14:8|a|Living waters flowing out', 'Isa 58:11|e|Spring whose waters never fail'],
+        ['43_8_17', 'Deut 19:15|q|Testimony of two witnesses is valid'],
+        ['43_8_58', 'Exod 3:14|a|Before Abraham was born, I AM'],
+        ['43_10_11', 'Ezek 34:11-12|a|The Good Shepherd caring for His sheep'],
+        ['43_10_34', 'Ps 82:6|q|I have said, You are gods'],
+        ['43_12_13', 'Ps 118:25-26|q|Hosanna! Blessed is He who comes in the name of the Lord'],
+        ['43_12_15', 'Zech 9:9|q|Do not be afraid, Daughter Zion; your King is coming'],
+        ['43_12_38', 'Isa 53:1|q|Lord, who has believed our message?'],
+        ['43_12_40', 'Isa 6:10|q|He has blinded their eyes and hardened their hearts'],
+        ['43_13_18', 'Ps 41:9|q|He who shared My bread has lifted up his heel against Me'],
+        ['43_15_25', 'Ps 35:19|q|They hated Me without reason', 'Ps 69:4|q|Hated without cause'],
+        ['43_19_24', 'Ps 22:18|q|They divided My garments among them and cast lots'],
+        ['43_19_28', 'Ps 69:21|a|Thirst on the cross'],
+        ['43_19_36', 'Exod 12:46|q|Not one of His bones will be broken', 'Ps 34:20|q|Protects all His bones'],
+        ['43_19_37', 'Zech 12:10|q|They will look on the One they have pierced'],
+
+        // --- 44. ACTS ---
+        ['44_1_20', 'Ps 69:25|q|May his place be deserted', 'Ps 109:8|q|May another take his position'],
+        ['44_2_17', 'Joel 2:28|q|In the last days I will pour out My Spirit'],
+        ['44_2_18', 'Joel 2:29|q|Even on My servants I will pour out My Spirit'],
+        ['44_2_19', 'Joel 2:30|q|Wonders in the heavens above and signs on earth'],
+        ['44_2_20', 'Joel 2:31|q|Sun turned to darkness and moon to blood'],
+        ['44_2_21', 'Joel 2:32|q|Everyone who calls on the name of the Lord will be saved'],
+        ['44_2_25', 'Ps 16:8|q|I saw the Lord always before me'],
+        ['44_2_26', 'Ps 16:9|q|My heart is glad and my tongue rejoices'],
+        ['44_2_27', 'Ps 16:10|q|You will not abandon my soul to Hades'],
+        ['44_2_28', 'Ps 16:11|q|You have made known to me the paths of life'],
+        ['44_2_34', 'Ps 110:1|q|The Lord said to my Lord: Sit at My right hand'],
+        ['44_2_35', 'Ps 110:1|q|Until I make Your enemies a footstool'],
+        ['44_3_22', 'Deut 18:15|q|The Lord God will raise up a prophet like me'],
+        ['44_3_23', 'Deut 18:19|q|Anyone who does not listen will be cut off', 'Lev 23:29|a|Cut off from the people'],
+        ['44_3_25', 'Gen 22:18|q|Through your offspring all peoples on earth will be blessed'],
+        ['44_4_11', 'Ps 118:22|q|The stone you builders rejected has become the cornerstone'],
+        ['44_4_24', 'Exod 20:11|a|Creator of heaven, earth, and sea', 'Ps 146:6|a|Maker of all things'],
+        ['44_4_25', 'Ps 2:1|q|Why do the nations rage and the peoples plot in vain?'],
+        ['44_4_26', 'Ps 2:2|q|Kings of the earth take their stand against the Lord’s Anointed'],
+        ['44_7_3', 'Gen 12:1|q|Leave your country and your people'],
+        ['44_7_6', 'Gen 15:13|q|Your descendants will be strangers in a foreign land 400 years'],
+        ['44_7_7', 'Gen 15:14|q|I will punish the nation they serve', 'Exod 3:12|q|Worship Me in this place'],
+        ['44_7_27', 'Exod 2:14|q|Who made you ruler and judge over us?'],
+        ['44_7_32', 'Exod 3:6|q|I am the God of your fathers, Abraham, Isaac, and Jacob'],
+        ['44_7_33', 'Exod 3:5|q|Take off your sandals, for the place is holy ground'],
+        ['44_7_34', 'Exod 3:7-8|q|I have indeed seen the oppression of My people'],
+        ['44_7_37', 'Deut 18:15|q|God will raise up for you a prophet like me'],
+        ['44_7_40', 'Exod 32:1|q|Make us gods who will go before us'],
+        ['44_7_42', 'Amos 5:25|q|Did you bring Me sacrifices forty years in the wilderness?'],
+        ['44_7_43', 'Amos 5:26-27|q|I will send you into exile beyond Babylon'],
+        ['44_7_49', 'Isa 66:1|q|Heaven is My throne, and the earth is My footstool'],
+        ['44_7_50', 'Isa 66:2|q|Has not My hand made all these things?'],
+        ['44_8_32', 'Isa 53:7|q|Led like a sheep to the slaughter'],
+        ['44_8_33', 'Isa 53:8|q|In His humiliation He was deprived of justice'],
+        ['44_13_22', '1Sam 13:14|a|A man after My own heart', 'Ps 89:20|a|I have found David My servant'],
+        ['44_13_33', 'Ps 2:7|q|You are My Son; today I have begotten You'],
+        ['44_13_34', 'Isa 55:3|q|I will give you the holy and sure blessings promised to David'],
+        ['44_13_35', 'Ps 16:10|q|You will not let Your Holy One see decay'],
+        ['44_13_41', 'Hab 1:5|q|Look, you scoffers, wonder and perish'],
+        ['44_13_47', 'Isa 49:6|q|I have made you a light for the Gentiles'],
+        ['44_15_16', 'Amos 9:11|q|I will rebuild David’s fallen tent'],
+        ['44_15_17', 'Amos 9:12|q|That the rest of mankind may seek the Lord'],
+        ['44_23_5', 'Exod 22:28|q|Do not speak evil about the ruler of your people'],
+        ['44_28_26', 'Isa 6:9|q|Ever hearing but never understanding'],
+        ['44_28_27', 'Isa 6:10|q|This people’s heart has become calloused'],
+
+        // --- 45. ROMANS ---
+        ['45_1_17', 'Hab 2:4|q|The righteous will live by faith'],
+        ['45_2_6', 'Ps 62:12|q|God will repay each person according to what they have done', 'Prov 24:12|q|Repay according to works'],
+        ['45_2_24', 'Isa 52:5|q|God’s name is blasphemed among the Gentiles because of you'],
+        ['45_3_4', 'Ps 51:4|q|So that You may be proved right when You speak'],
+        ['45_3_10', 'Ps 14:1|q|There is no one righteous, not even one', 'Eccl 7:20|a|Not a righteous person on earth'],
+        ['45_3_11', 'Ps 14:2|q|There is no one who understands or seeks God'],
+        ['45_3_12', 'Ps 14:3|q|All have turned away; no one does good'],
+        ['45_3_13', 'Ps 5:9|q|Their throats are open graves', 'Ps 140:3|q|Poison of vipers is on their lips'],
+        ['45_3_14', 'Ps 10:7|q|Their mouths are full of cursing and bitterness'],
+        ['45_3_15', 'Isa 59:7|q|Their feet are swift to shed blood'],
+        ['45_3_16', 'Isa 59:7|q|Ruin and misery mark their ways'],
+        ['45_3_17', 'Isa 59:8|q|The way of peace they do not know'],
+        ['45_3_18', 'Ps 36:1|q|There is no fear of God before their eyes'],
+        ['45_3_20', 'Ps 143:2|a|No one will be declared righteous in His sight'],
+        ['45_4_3', 'Gen 15:6|q|Abraham believed God, and it was credited to him as righteousness'],
+        ['45_4_7', 'Ps 32:1|q|Blessed are those whose transgressions are forgiven'],
+        ['45_4_8', 'Ps 32:2|q|Blessed is the one whose sin the Lord will never count against them'],
+        ['45_4_17', 'Gen 17:5|q|I have made you a father of many nations'],
+        ['45_4_18', 'Gen 15:5|q|So shall your offspring be'],
+        ['45_7_7', 'Exod 20:17|q|You shall not covet'],
+        ['45_8_36', 'Ps 44:22|q|For Your sake we face death all day long'],
+        ['45_9_7', 'Gen 21:12|q|Through Isaac your offspring will be reckoned'],
+        ['45_9_9', 'Gen 18:10|q|At the appointed time I will return, and Sarah will have a son'],
+        ['45_9_12', 'Gen 25:23|q|The older will serve the younger'],
+        ['45_9_13', 'Mal 1:2-3|q|Jacob I loved, but Esau I hated'],
+        ['45_9_15', 'Exod 33:19|q|I will have mercy on whom I have mercy'],
+        ['45_9_17', 'Exod 9:16|q|I raised you up for this very purpose, to display My power'],
+        ['45_9_20', 'Isa 29:16|a|Shall what is formed say to the Potter?', 'Isa 45:9|a|Clay questioning the Potter'],
+        ['45_9_25', 'Hos 2:23|q|I will call them My people who are not My people'],
+        ['45_9_26', 'Hos 1:10|q|They will be called children of the living God'],
+        ['45_9_27', 'Isa 10:22|q|Only the remnant will be saved'],
+        ['45_9_28', 'Isa 10:23|q|The Lord will carry out His sentence with speed and finality'],
+        ['45_9_29', 'Isa 1:9|q|Unless the Lord Almighty had left us descendants'],
+        ['45_9_33', 'Isa 28:16|q|I lay in Zion a stone', 'Isa 8:14|q|A stone of stumbling and rock of offense'],
+        ['45_10_5', 'Lev 18:5|q|The person who does these things will live by them'],
+        ['45_10_6', 'Deut 30:12|q|Who will ascend into heaven?'],
+        ['45_10_7', 'Deut 30:13|q|Who will descend into the deep?'],
+        ['45_10_8', 'Deut 30:14|q|The word is near you; it is in your mouth and in your heart'],
+        ['45_10_11', 'Isa 28:16|q|Anyone who believes in Him will never be put to shame'],
+        ['45_10_13', 'Joel 2:32|q|Everyone who calls on the name of the Lord will be saved'],
+        ['45_10_15', 'Isa 52:7|q|How beautiful are the feet of those who bring good news'],
+        ['45_10_16', 'Isa 53:1|q|Lord, who has believed our message?'],
+        ['45_10_18', 'Ps 19:4|q|Their voice has gone out into all the earth'],
+        ['45_10_19', 'Deut 32:21|q|I will make you envious by those who are not a nation'],
+        ['45_10_20', 'Isa 65:1|q|I was found by those who did not seek Me'],
+        ['45_10_21', 'Isa 65:2|q|All day long I have held out My hands to a disobedient people'],
+        ['45_11_3', '1Kgs 19:10|q|Lord, they have killed Your prophets'],
+        ['45_11_4', '1Kgs 19:18|q|I have reserved for Myself seven thousand who have not bowed to Baal'],
+        ['45_11_8', 'Deut 29:4|q|Eyes that could not see and ears that could not hear', 'Isa 29:10|q|Spirit of stupor'],
+        ['45_11_9', 'Ps 69:22|q|May their table become a snare and a trap'],
+        ['45_11_10', 'Ps 69:23|q|May their eyes be darkened so they cannot see'],
+        ['45_11_26', 'Isa 59:20|q|The Deliverer will come from Zion'],
+        ['45_11_27', 'Isa 59:21|q|This is My covenant with them', 'Isa 27:9|q|When I take away their sins'],
+        ['45_11_34', 'Isa 40:13|q|Who has known the mind of the Lord?'],
+        ['45_11_35', 'Job 41:11|q|Who has ever given to God, that God should repay them?'],
+        ['45_12_19', 'Deut 32:35|q|It is Mine to avenge; I will repay'],
+        ['45_12_20', 'Prov 25:21-22|q|If your enemy is hungry, feed him'],
+        ['45_13_9', 'Exod 20:13-17|q|Commands of the Decalogue', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['45_14_11', 'Isa 45:23|q|Every knee will bow before Me; every tongue will confess'],
+        ['45_15_3', 'Ps 69:9|q|The insults of those who insult You have fallen on Me'],
+        ['45_15_9', 'Ps 18:49|q|I will praise You among the Gentiles', '2Sam 22:50|q|Sing praises to Your name'],
+        ['45_15_10', 'Deut 32:43|q|Rejoice, you Gentiles, with His people'],
+        ['45_15_11', 'Ps 117:1|q|Praise the Lord, all you Gentiles'],
+        ['45_15_12', 'Isa 11:10|q|The Root of Jesse will spring up; in Him the Gentiles will hope'],
+        ['45_15_21', 'Isa 52:15|q|Those who were not told about Him will see'],
+
+        // --- 46. 1 CORINTHIANS ---
+        ['46_1_19', 'Isa 29:14|q|I will destroy the wisdom of the wise'],
+        ['46_1_31', 'Jer 9:24|q|Let the one who boasts boast in the Lord'],
+        ['46_2_9', 'Isa 64:4|q|What no eye has seen, what no ear has heard'],
+        ['46_2_16', 'Isa 40:13|q|Who has known the mind of the Lord so as to instruct Him?'],
+        ['46_3_19', 'Job 5:13|q|He catches the wise in their craftiness'],
+        ['46_3_20', 'Ps 94:11|q|The Lord knows that the thoughts of the wise are futile'],
+        ['46_5_7', 'Exod 12:21|a|Christ, our Passover Lamb, has been sacrificed'],
+        ['46_5_13', 'Deut 17:7|q|Expel the wicked person from among you'],
+        ['46_6_16', 'Gen 2:24|q|The two will become one flesh'],
+        ['46_9_9', 'Deut 25:4|q|Do not muzzle an ox while it is treading out the grain'],
+        ['46_10_7', 'Exod 32:6|q|The people sat down to eat and drink and got up to revel'],
+        ['46_10_26', 'Ps 24:1|q|The earth is the Lord’s, and everything in it'],
+        ['46_14_21', 'Isa 28:11-12|q|With other tongues and through the lips of foreigners I will speak'],
+        ['46_15_25', 'Ps 110:1|a|Reign until He has put all enemies under His feet'],
+        ['46_15_27', 'Ps 8:6|q|He has put everything under His feet'],
+        ['46_15_32', 'Isa 22:13|q|Let us eat and drink, for tomorrow we die'],
+        ['46_15_45', 'Gen 2:7|q|The first man Adam became a living being'],
+        ['46_15_54', 'Isa 25:8|q|Death has been swallowed up in victory'],
+        ['46_15_55', 'Hos 13:14|q|Where, O death, is your victory? Where, O death, is your sting?'],
+
+        // --- 47. 2 CORINTHIANS ---
+        ['47_3_3', 'Jer 31:33|a|Written on tablets of human hearts', 'Ezek 36:26|a|Heart of flesh'],
+        ['47_3_13', 'Exod 34:33|a|Moses putting a veil over his face'],
+        ['47_4_6', 'Gen 1:3|a|Let light shine out of darkness', 'Isa 9:2|e|Light shining in darkness'],
+        ['47_4_13', 'Ps 116:10|q|I believed; therefore I have spoken'],
+        ['47_6_2', 'Isa 49:8|q|In the time of My favor I heard you; in the day of salvation I helped you'],
+        ['47_6_16', 'Lev 26:12|q|I will live with them and walk among them', 'Ezek 37:27|q|I will be their God'],
+        ['47_6_17', 'Isa 52:11|q|Come out from them and be separate', 'Ezek 20:34|a|I will receive you'],
+        ['47_6_18', '2Sam 7:14|q|I will be a Father to you', 'Isa 43:6|a|My sons and daughters'],
+        ['47_8_15', 'Exod 16:18|q|The one who gathered much did not have too much'],
+        ['47_9_7', 'Prov 22:8|e|God loves a cheerful giver (LXX)'],
+        ['47_9_9', 'Ps 112:9|q|They have freely scattered their gifts to the poor'],
+        ['47_10_17', 'Jer 9:24|q|Let the one who boasts boast in the Lord'],
+        ['47_13_1', 'Deut 19:15|q|Every matter established by two or three witnesses'],
+
+        // --- 48. GALATIANS ---
+        ['48_2_16', 'Ps 143:2|a|By works of the law no one will be justified'],
+        ['48_3_6', 'Gen 15:6|q|Abraham believed God, and it was credited to him as righteousness'],
+        ['48_3_8', 'Gen 12:3|q|All nations will be blessed through you', 'Gen 18:18|q|Blessing to the nations'],
+        ['48_3_10', 'Deut 27:26|q|Cursed is everyone who does not continue to do everything written in the Law'],
+        ['48_3_11', 'Hab 2:4|q|The righteous will live by faith'],
+        ['48_3_12', 'Lev 18:5|q|The person who does these things will live by them'],
+        ['48_3_13', 'Deut 21:23|q|Cursed is everyone who is hung on a pole'],
+        ['48_3_16', 'Gen 12:7|q|To your offspring (Seed)', 'Gen 22:18|a|Promise to the Seed'],
+        ['48_4_27', 'Isa 54:1|q|Be glad, barren woman, you who never bore a child'],
+        ['48_4_30', 'Gen 21:10|q|Get rid of the slave woman and her son'],
+        ['48_5_14', 'Lev 19:18|q|Love your neighbor as yourself'],
+
+        // --- 49. EPHESIANS ---
+        ['49_1_20', 'Ps 110:1|a|Seated Him at His right hand in the heavenly realms'],
+        ['49_1_22', 'Ps 8:6|q|God placed all things under His feet'],
+        ['49_2_17', 'Isa 57:19|a|Peace to you who were far away and peace to those who were near', 'Isa 52:7|e|Proclaiming peace'],
+        ['49_4_8', 'Ps 68:18|q|When He ascended on high, He took many captives and gave gifts'],
+        ['49_4_25', 'Zech 8:16|a|Speak truthfully to your neighbor'],
+        ['49_4_26', 'Ps 4:4|q|In your anger do not sin'],
+        ['49_5_14', 'Isa 60:1|a|Arise, shine', 'Isa 26:19|e|Wake up from the dead'],
+        ['49_5_31', 'Gen 2:24|q|A man will leave his father and mother and become one flesh'],
+        ['49_6_2', 'Exod 20:12|q|Honor your father and mother', 'Deut 5:16|q|First commandment with a promise'],
+        ['49_6_3', 'Exod 20:12|q|That it may go well with you and you may enjoy long life', 'Deut 5:16|q|Long life on the earth'],
+        ['49_6_14', 'Isa 11:5|a|Belt of truth', 'Isa 59:17|a|Breastplate of righteousness'],
+        ['49_6_15', 'Isa 52:7|a|Feet fitted with the readiness of the gospel of peace'],
+        ['49_6_17', 'Isa 59:17|a|Helmet of salvation', 'Isa 49:2|e|Mouth like a sharpened sword'],
+
+        // --- 50. PHILIPPIANS ---
+        ['50_1_19', 'Job 13:16|a|This will turn out for my deliverance (verbatim LXX)'],
+        ['50_2_10', 'Isa 45:23|a|At the name of Jesus every knee should bow'],
+        ['50_2_11', 'Isa 45:23|a|Every tongue confess that Jesus Christ is Lord'],
+        ['50_2_15', 'Deut 32:5|a|Crooked and warped generation', 'Dan 12:3|e|Shine like stars'],
+        ['50_4_18', 'Exod 29:18|e|Fragrant offering, an acceptable sacrifice', 'Ezek 20:41|e|Pleasing aroma'],
+
+        // --- 51. COLOSSIANS ---
+        ['51_1_15', 'Ps 89:27|e|Firstborn over all creation', 'Gen 1:26|e|Image of God'],
+        ['51_2_22', 'Isa 29:13|a|Human commands and teachings'],
+        ['51_3_1', 'Ps 110:1|a|Christ is seated at the right hand of God'],
+        ['51_3_10', 'Gen 1:26-27|e|Renewed in knowledge in the image of its Creator'],
+
+        // --- 52. 1 THESSALONIANS ---
+        ['52_2_4', 'Jer 11:20|e|God who tests our hearts'],
+        ['52_4_5', 'Ps 79:6|e|Nations that do not know God', 'Jer 10:25|e|Peoples who do not know You'],
+        ['52_4_6', 'Ps 94:1|e|The Lord is an avenger'],
+        ['52_4_8', 'Ezek 36:27|e|God who gives you His Holy Spirit', 'Ezek 37:14|e|Put My Spirit in you'],
+        ['52_5_8', 'Isa 59:17|a|Breastplate of faith and love, helmet of the hope of salvation'],
+
+        // --- 53. 2 THESSALONIANS ---
+        ['53_1_8', 'Isa 66:15|a|Coming in blazing fire', 'Jer 10:25|a|Vengeance on those who do not know God'],
+        ['53_1_9', 'Isa 2:10|a|Shut out from the presence of the Lord and splendor of His might', 'Isa 2:19|a|Glory of His majesty'],
+        ['53_1_10', 'Ps 89:7|e|Glorified in His holy people', 'Ps 68:35|e|Marveled at among His saints'],
+        ['53_1_12', 'Isa 66:5|e|Name of the Lord glorified'],
+        ['53_2_4', 'Dan 11:36|a|Exalts himself over everything called God', 'Ezek 28:2|a|Sets himself up in God’s temple'],
+        ['53_2_8', 'Isa 11:4|a|Overthrow with the breath of His mouth'],
+
+        // --- 54. 1 TIMOTHY ---
+        ['54_2_13', 'Gen 2:7|a|Adam was formed first', 'Gen 2:22|a|Then Eve'],
+        ['54_2_14', 'Gen 3:6|a|The woman was deceived', 'Gen 3:13|a|The serpent deceived me'],
+        ['54_5_18', 'Deut 25:4|q|Do not muzzle an ox while it is treading out the grain'],
+        ['54_5_19', 'Deut 19:15|a|Accusation supported by two or three witnesses'],
+        ['54_6_15', 'Deut 10:17|e|King of kings and Lord of lords', 'Dan 2:47|e|Lord of kings'],
+
+        // --- 55. 2 TIMOTHY ---
+        ['55_2_19', 'Num 16:5|q|The Lord knows those who are His', 'Isa 26:13|e|Everyone who confesses the name of the Lord'],
+        ['55_3_8', 'Exod 7:11|a|Magicians opposing Moses in Egypt'],
+        ['55_4_14', 'Ps 62:12|a|The Lord will repay him for what he has done', 'Prov 24:12|a|Repay according to works'],
+        ['55_4_17', 'Ps 22:21|e|Delivered from the lion’s mouth', 'Dan 6:22|e|Shut the mouths of the lions'],
+
+        // --- 56. TITUS ---
+        ['56_2_14', 'Ps 130:8|a|Redeem us from all wickedness', 'Exod 19:5|a|A people that are His very own', 'Ezek 37:23|e|Cleanse and save His people'],
+        ['56_3_5', 'Ezek 36:25-27|e|Washing of rebirth and renewal by the Holy Spirit'],
+
+        // --- 57. PHILEMON ---
+        ['57_1_15', 'Gen 45:5|e|Providence in temporary separation (echo of Joseph)'],
+        ['57_1_16', 'Deut 15:12-17|e|No longer merely a servant, but a beloved brother', 'Lev 25:39-43|e|Treat as a brother'],
+
+        // --- 58. HEBREWS (COMPREHENSIVE) ---
+        ['58_1_3', 'Ps 110:1|a|Sat down at the right hand of the Majesty in heaven'],
+        ['58_1_5', 'Ps 2:7|q|You are My Son; today I have begotten You', '2Sam 7:14|q|I will be His Father, and He will be My Son'],
+        ['58_1_6', 'Deut 32:43|q|Let all God’s angels worship Him', 'Ps 97:7|q|Worship Him, all you gods/angels'],
+        ['58_1_7', 'Ps 104:4|q|He makes His angels winds, His servants flames of fire'],
+        ['58_1_8', 'Ps 45:6|q|Your throne, O God, will last for ever and ever'],
+        ['58_1_9', 'Ps 45:7|q|You have loved righteousness and hated wickedness'],
+        ['58_1_10', 'Ps 102:25|q|In the beginning, Lord, You laid the foundations of the earth'],
+        ['58_1_11', 'Ps 102:26|q|They will perish, but You remain'],
+        ['58_1_12', 'Ps 102:27|q|You remain the same, and Your years will never end'],
+        ['58_1_13', 'Ps 110:1|q|Sit at My right hand until I make Your enemies a footstool'],
+        ['58_2_6', 'Ps 8:4|q|What is mankind that You are mindful of them?'],
+        ['58_2_7', 'Ps 8:5|q|You made them a little lower than the angels'],
+        ['58_2_8', 'Ps 8:6|q|You put everything under their feet'],
+        ['58_2_12', 'Ps 22:22|q|I will declare Your name to My brothers and sisters'],
+        ['58_2_13', 'Isa 8:17|q|I will put My trust in Him', 'Isa 8:18|q|Here am I, and the children God has given Me'],
+        ['58_3_2', 'Num 12:7|a|Moses was faithful in all God’s house'],
+        ['58_3_5', 'Num 12:7|a|Moses faithful as a servant in all God’s house'],
+        ['58_3_7', 'Ps 95:7|q|Today, if you hear His voice'],
+        ['58_3_8', 'Ps 95:8|q|Do not harden your hearts as in the rebellion'],
+        ['58_3_9', 'Ps 95:9|q|Where your ancestors tested and tried Me'],
+        ['58_3_10', 'Ps 95:10|q|For forty years I was angry with that generation'],
+        ['58_3_11', 'Ps 95:11|q|So I declared on oath in My anger, They shall never enter My rest'],
+        ['58_3_15', 'Ps 95:7-8|q|Today, if you hear His voice, do not harden your hearts'],
+        ['58_4_3', 'Ps 95:11|q|They shall never enter My rest'],
+        ['58_4_4', 'Gen 2:2|q|On the seventh day God rested from all His works'],
+        ['58_4_5', 'Ps 95:11|q|They shall never enter My rest'],
+        ['58_4_7', 'Ps 95:7-8|q|Today, if you hear His voice, do not harden your hearts'],
+        ['58_5_5', 'Ps 2:7|q|You are My Son; today I have begotten You'],
+        ['58_5_6', 'Ps 110:4|q|You are a priest forever, in the order of Melchizedek'],
+        ['58_6_14', 'Gen 22:17|q|I will surely bless you and give you many descendants'],
+        ['58_7_1', 'Gen 14:17-20|a|Melchizedek king of Salem meeting Abraham'],
+        ['58_7_17', 'Ps 110:4|q|You are a priest forever, in the order of Melchizedek'],
+        ['58_7_21', 'Ps 110:4|q|The Lord has sworn and will not change His mind'],
+        ['58_8_5', 'Exod 25:40|q|See to it that you make everything according to the pattern shown on the mountain'],
+        ['58_8_8', 'Jer 31:31|q|The days are coming when I will make a new covenant'],
+        ['58_8_9', 'Jer 31:32|q|Not like the covenant I made with their ancestors'],
+        ['58_8_10', 'Jer 31:33|q|I will put My laws in their minds and write them on their hearts'],
+        ['58_8_11', 'Jer 31:34|q|No longer will they teach their neighbor, saying, Know the Lord'],
+        ['58_8_12', 'Jer 31:34|q|I will forgive their wickedness and remember their sins no more'],
+        ['58_9_20', 'Exod 24:8|q|This is the blood of the covenant, which God has commanded you to keep'],
+        ['58_10_5', 'Ps 40:6|q|Sacrifice and offering You did not desire, but a body You prepared for Me'],
+        ['58_10_6', 'Ps 40:6|q|With burnt offerings and sin offerings You were not pleased'],
+        ['58_10_7', 'Ps 40:7-8|q|Here I am—it is written about Me in the scroll—I have come to do Your will'],
+        ['58_10_12', 'Ps 110:1|a|Sat down at the right hand of God'],
+        ['58_10_13', 'Ps 110:1|a|Waiting for His enemies to be made His footstool'],
+        ['58_10_16', 'Jer 31:33|q|I will put My laws in their hearts and write them on their minds'],
+        ['58_10_17', 'Jer 31:34|q|Their sins and lawless acts I will remember no more'],
+        ['58_10_28', 'Deut 17:6|a|Put to death on the testimony of two or three witnesses'],
+        ['58_10_30', 'Deut 32:35|q|It is Mine to avenge; I will repay', 'Deut 32:36|q|The Lord will judge His people'],
+        ['58_10_37', 'Hab 2:3|q|He who is coming will come and will not delay', 'Isa 26:20|a|In just a little while'],
+        ['58_10_38', 'Hab 2:4|q|My righteous one will live by faith'],
+        ['58_11_4', 'Gen 4:4|a|Abel’s better sacrifice'],
+        ['58_11_5', 'Gen 5:24|a|Enoch taken up without seeing death'],
+        ['58_11_7', 'Gen 6:13-22|a|Noah building the ark in holy fear'],
+        ['58_11_8', 'Gen 12:1-4|a|Abraham obeying the call to go out'],
+        ['58_11_12', 'Gen 22:17|a|Descendants as numerous as the stars and sand'],
+        ['58_11_18', 'Gen 21:12|q|It is through Isaac that your offspring will be reckoned'],
+        ['58_11_21', 'Gen 47:31|a|Jacob worshiping as he leaned on the top of his staff'],
+        ['58_11_31', 'Josh 2:1-21|a|Rahab welcoming the spies'],
+        ['58_12_5', 'Prov 3:11|q|My son, do not make light of the Lord’s discipline'],
+        ['58_12_6', 'Prov 3:12|q|The Lord disciplines the one He loves'],
+        ['58_12_12', 'Isa 35:3|a|Strengthen your feeble arms and weak knees'],
+        ['58_12_13', 'Prov 4:26|a|Make level paths for your feet'],
+        ['58_12_15', 'Deut 29:18|a|See that no bitter root grows up to cause trouble'],
+        ['58_12_18', 'Exod 19:12-19|a|Sinai: fire, darkness, gloom, storm', 'Deut 4:11|a|Mountain burning with fire'],
+        ['58_12_20', 'Exod 19:12-13|q|If even an animal touches the mountain, it must be stoned'],
+        ['58_12_21', 'Deut 9:19|q|Moses said, I am trembling with fear'],
+        ['58_12_26', 'Hag 2:6|q|Once more I will shake not only the earth but also the heavens'],
+        ['58_12_29', 'Deut 4:24|q|Our God is a consuming fire'],
+        ['58_13_5', 'Deut 31:6|q|Never will I leave you; never will I forsake you', 'Josh 1:5|q|I will never leave or forsake you'],
+        ['58_13_6', 'Ps 118:6|q|The Lord is my helper; I will not be afraid'],
+        ['58_13_11', 'Lev 16:27|a|Bodies of Day of Atonement sacrifices burned outside the camp'],
+        ['58_13_15', 'Hos 14:2|e|Fruit of lips that openly profess His name', 'Ps 50:14|e|Sacrifice of praise'],
+        ['58_13_20', 'Zech 9:11|a|Blood of the eternal covenant', 'Isa 63:11|e|Great Shepherd brought up'],
+
+        // --- 59. JAMES ---
+        ['59_1_10', 'Isa 40:6-7|a|Pass away like a wild flower'],
+        ['59_1_11', 'Isa 40:7-8|a|Scorching heat withers the grass'],
+        ['59_2_8', 'Lev 19:18|q|Love your neighbor as yourself'],
+        ['59_2_11', 'Exod 20:13-14|q|Do not commit adultery; do not murder'],
+        ['59_2_21', 'Gen 22:9|a|Abraham offering Isaac on the altar'],
+        ['59_2_23', 'Gen 15:6|q|Abraham believed God, and it was credited to him as righteousness', 'Isa 41:8|a|Called God’s friend'],
+        ['59_2_25', 'Josh 2:1-15|a|Rahab sheltering the messengers'],
+        ['59_4_5', 'Exod 20:5|e|God’s jealous longing', 'Gen 6:3-5|e|Spirit dwelling within'],
+        ['59_4_6', 'Prov 3:34|q|God opposes the proud but shows favor to the humble'],
+        ['59_5_4', 'Deut 24:14-15|a|Withheld wages crying out', 'Isa 5:9|e|Ears of the Lord Almighty'],
+        ['59_5_11', 'Job 1:21-22|a|Perseverance of Job', 'Ps 103:8|a|The Lord is full of compassion and mercy'],
+        ['59_5_17', '1Kgs 17:1|a|Elijah praying that it would not rain'],
+        ['59_5_20', 'Prov 10:12|a|Cover over a multitude of sins'],
+
+        // --- 60. 1 PETER ---
+        ['60_1_16', 'Lev 11:44|q|Be holy, because I am holy', 'Lev 19:2|q|Call to holiness'],
+        ['60_1_18', 'Isa 52:3|a|Redeemed not with perishable silver or gold'],
+        ['60_1_19', 'Exod 12:5|a|Lamb without blemish or defect', 'Isa 53:7|a|Suffering Lamb'],
+        ['60_1_24', 'Isa 40:6-7|q|All people are like grass, and all their glory like the flowers'],
+        ['60_1_25', 'Isa 40:8|q|The word of the Lord endures forever'],
+        ['60_2_3', 'Ps 34:8|q|You have tasted that the Lord is good'],
+        ['60_2_6', 'Isa 28:16|q|I lay a stone in Zion, a chosen and precious cornerstone'],
+        ['60_2_7', 'Ps 118:22|q|The stone the builders rejected has become the cornerstone'],
+        ['60_2_8', 'Isa 8:14|q|A stone that causes people to stumble and a rock that makes them fall'],
+        ['60_2_9', 'Exod 19:6|a|A royal priesthood, a holy nation', 'Isa 43:20-21|a|Chosen people declaring His praises'],
+        ['60_2_10', 'Hos 2:23|a|Once you were not a people, now you are the people of God', 'Hos 1:10|a|Received mercy'],
+        ['60_2_22', 'Isa 53:9|q|He committed no sin, and no deceit was found in His mouth'],
+        ['60_2_24', 'Isa 53:4-5|a|By His wounds you have been healed', 'Isa 53:12|a|Bore our sins'],
+        ['60_2_25', 'Isa 53:6|a|Like sheep going astray'],
+        ['60_3_10', 'Ps 34:12-13|q|Whoever would love life must keep their tongue from evil'],
+        ['60_3_11', 'Ps 34:14|q|Turn from evil and do good; seek peace and pursue it'],
+        ['60_3_12', 'Ps 34:15-16|q|The eyes of the Lord are on the righteous'],
+        ['60_3_14', 'Isa 8:12|q|Do not fear their threats; do not be frightened'],
+        ['60_3_15', 'Isa 8:13|q|In your hearts revere Christ as Lord'],
+        ['60_3_20', 'Gen 6:14-22|a|Noah’s ark and the flood'],
+        ['60_3_22', 'Ps 110:1|a|At God’s right hand with angels in submission'],
+        ['60_4_8', 'Prov 10:12|q|Love covers over a multitude of sins'],
+        ['60_4_14', 'Isa 11:2|a|The Spirit of glory and of God rests on you'],
+        ['60_4_18', 'Prov 11:31|q|If it is hard for the righteous to be saved, what will become of the ungodly?'],
+        ['60_5_5', 'Prov 3:34|q|God opposes the proud but shows favor to the humble'],
+        ['60_5_7', 'Ps 55:22|a|Cast all your anxiety on Him'],
+
+        // --- 61. 2 PETER ---
+        ['61_1_17', 'Ps 2:7|a|This is My Son', 'Isa 42:1|a|Whom I love; with Him I am well pleased'],
+        ['61_2_5', 'Gen 6:8|a|Protected Noah', 'Gen 7:11|a|Flood on the ungodly world'],
+        ['61_2_6', 'Gen 19:24-25|a|Sodom and Gomorrah burned to ashes'],
+        ['61_2_15', 'Num 22:5-7|a|Way of Balaam son of Beor'],
+        ['61_2_22', 'Prov 26:11|q|A dog returns to its vomit'],
+        ['61_3_5', 'Gen 1:6-9|a|Earth formed out of water and by water'],
+        ['61_3_8', 'Ps 90:4|a|With the Lord a day is like a thousand years'],
+        ['61_3_12', 'Isa 34:4|a|Heavens dissolved by fire'],
+        ['61_3_13', 'Isa 65:17|a|New heaven and a new earth', 'Isa 66:22|a|New creation where righteousness dwells'],
+
+        // --- 62. 1 JOHN ---
+        ['62_1_5', 'Ps 27:1|e|God is light', 'Isa 60:19|e|The Lord will be your everlasting light'],
+        ['62_2_2', 'Lev 16:15-17|e|Atone/propitiation for sin'],
+        ['62_2_27', 'Jer 31:34|e|You do not need anyone to teach you (New Covenant anointing)'],
+        ['62_3_5', 'Isa 53:9|e|In Him is no sin'],
+        ['62_3_12', 'Gen 4:8|a|Cain murdering his brother Abel'],
+        ['62_4_12', 'Exod 33:20|e|No one has ever seen God'],
+        ['62_5_3', 'Deut 10:12-13|e|Love for God is keeping His commands'],
+
+        // --- 63. 2 JOHN ---
+        ['63_1_5', 'Lev 19:18|e|Command to love one another'],
+        ['63_1_8', 'Ruth 2:12|e|That you may receive a full reward (LXX echo)'],
+
+        // --- 64. 3 JOHN ---
+        ['64_1_11', 'Ps 34:14|e|Do not imitate what is evil but what is good', 'Ps 37:27|e|Turn from evil and do good'],
+
+        // --- 65. JUDE ---
+        ['65_1_5', 'Num 14:29-35|a|Destroyed those who did not believe after the Exodus'],
+        ['65_1_6', 'Gen 6:1-4|a|Angels who did not keep their positions of authority'],
+        ['65_1_7', 'Gen 19:4-25|a|Sodom and Gomorrah'],
+        ['65_1_9', 'Zech 3:2|a|The Lord rebuke you!'],
+        ['65_1_11', 'Gen 4:8|a|Way of Cain', 'Num 22:5|a|Balaam’s error', 'Num 16:1-35|a|Korah’s rebellion'],
+        ['65_1_12', 'Ezek 34:2|a|Shepherds who feed only themselves', 'Prov 25:14|e|Clouds without rain'],
+        ['65_1_13', 'Isa 57:20|a|Wild waves of the sea foaming up their shame'],
+        ['65_1_23', 'Zech 3:2|a|Snatch others from the fire', 'Amos 4:11|a|Brand plucked from the burning'],
+
+        // --- 66. REVELATION ---
+        ['66_1_4', 'Exod 3:14|a|Him who is, and who was, and who is to come'],
+        ['66_1_5', 'Ps 89:27|a|Firstborn and ruler of the kings of the earth', 'Ps 89:37|a|Faithful witness'],
+        ['66_1_6', 'Exod 19:6|a|Made us to be a kingdom and priests'],
+        ['66_1_7', 'Dan 7:13|a|Coming with the clouds', 'Zech 12:10|a|Those who pierced Him will mourn'],
+        ['66_1_8', 'Isa 44:6|a|First and the Last', 'Exod 3:14|a|Who is, was, and is to come'],
+        ['66_1_13', 'Dan 7:13|a|One like a Son of Man', 'Dan 10:5|a|Robe with a golden sash'],
+        ['66_1_14', 'Dan 7:9|a|Hair white like wool', 'Dan 10:6|a|Eyes like blazing fire'],
+        ['66_1_15', 'Ezek 1:24|a|Voice like rushing waters', 'Ezek 43:2|a|Sound of many waters'],
+        ['66_1_16', 'Isa 49:2|a|Sharp sword coming from His mouth'],
+        ['66_1_17', 'Isa 44:6|a|I am the First and the Last', 'Dan 10:9-10|a|Fell at His feet as though dead'],
+        ['66_2_7', 'Gen 2:9|a|Tree of life in the paradise of God'],
+        ['66_2_14', 'Num 25:1-2|a|Stumbling block of Balaam and Balak', 'Num 31:16|a|Balaam’s counsel'],
+        ['66_2_17', 'Exod 16:14-15|a|Hidden manna', 'Isa 62:2|a|A new name'],
+        ['66_2_20', '1Kgs 16:31|a|Jezebel', '2Kgs 9:22|a|Idolatry and sorceries of Jezebel'],
+        ['66_2_23', 'Jer 17:10|a|I search hearts and minds', 'Ps 62:12|a|Repay each according to deeds'],
+        ['66_2_27', 'Ps 2:9|q|He will rule them with an iron scepter and dash them to pieces like pottery'],
+        ['66_3_7', 'Isa 22:22|a|Key of David: what He opens no one can shut'],
+        ['66_3_9', 'Isa 45:14|a|Fall down at your feet', 'Isa 60:14|a|Acknowledge that I have loved you'],
+        ['66_3_19', 'Prov 3:12|a|Those whom I love I rebuke and discipline'],
+        ['66_4_2', 'Isa 6:1|a|Throne in heaven', 'Ezek 1:26|a|One seated on the throne'],
+        ['66_4_3', 'Ezek 1:28|a|Rainbow encircling the throne'],
+        ['66_4_6', 'Ezek 1:5|a|Four living creatures', 'Ezek 1:22|a|Sea of glass like crystal'],
+        ['66_4_7', 'Ezek 1:10|a|Lion, ox, man, flying eagle'],
+        ['66_4_8', 'Isa 6:2-3|a|Six wings; Holy, holy, holy is the Lord God Almighty'],
+        ['66_5_1', 'Ezek 2:9-10|a|Scroll written on both sides'],
+        ['66_5_5', 'Gen 49:9|a|Lion of the tribe of Judah', 'Isa 11:1|a|Root of David', 'Isa 11:10|a|Root of Jesse'],
+        ['66_5_6', 'Isa 53:7|a|Lamb looking as if slain', 'Zech 4:10|a|Seven eyes of the Lord'],
+        ['66_5_10', 'Exod 19:6|a|Kingdom and priests to serve our God'],
+        ['66_5_11', 'Dan 7:10|a|Thousands upon thousands and ten thousand times ten thousand'],
+        ['66_6_2', 'Zech 6:1-6|a|Four colored horses patrolling the earth'],
+        ['66_6_12', 'Joel 2:31|a|Sun turned black and moon like blood', 'Isa 50:3|a|Heavens clothed in sackcloth'],
+        ['66_6_13', 'Isa 34:4|a|Stars fell like figs from a fig tree'],
+        ['66_6_14', 'Isa 34:4|a|Heavens receded like a scroll being rolled up'],
+        ['66_6_15', 'Isa 2:19|a|Hid in caves and among the rocks'],
+        ['66_6_16', 'Hos 10:8|a|Called to the mountains and rocks, Fall on us'],
+        ['66_6_17', 'Joel 2:11|a|Great day of wrath — who can withstand it?', 'Mal 3:2|a|Who can endure the day of His coming?'],
+        ['66_7_3', 'Ezek 9:4|a|Seal on the foreheads of God’s servants'],
+        ['66_7_16', 'Isa 49:10|a|Never again will they hunger or thirst, nor will the sun beat down'],
+        ['66_7_17', 'Isa 25:8|a|God will wipe away every tear from their eyes', 'Ps 23:2|a|Lead them to springs of living water'],
+        ['66_8_7', 'Exod 9:24-25|a|Hail and fire', 'Joel 2:30|a|Blood and fire'],
+        ['66_8_8', 'Jer 51:25|a|Burning mountain thrown into the sea', 'Exod 7:20|a|Water turned to blood'],
+        ['66_9_3', 'Exod 10:12-15|a|Plague of locusts', 'Joel 2:4-10|a|Locust army'],
+        ['66_10_9', 'Ezek 3:1-3|a|Eating the scroll sweet as honey'],
+        ['66_11_1', 'Ezek 40:3|a|Measuring rod to measure the temple'],
+        ['66_11_4', 'Zech 4:3|a|Two olive trees', 'Zech 4:14|a|Two lampstands before the Lord'],
+        ['66_11_15', 'Dan 2:44|a|Eternal kingdom of God', 'Dan 7:14|a|He will reign forever and ever'],
+        ['66_12_1', 'Gen 37:9|e|Sun, moon, and twelve stars'],
+        ['66_12_5', 'Ps 2:9|a|Rule all the nations with an iron scepter', 'Isa 66:7|e|Birth of the male child'],
+        ['66_12_9', 'Gen 3:1-15|a|That ancient serpent called the devil'],
+        ['66_13_1', 'Dan 7:3|a|Beast coming out of the sea', 'Dan 7:7|a|Ten horns'],
+        ['66_13_2', 'Dan 7:4-6|a|Leopard, bear, and lion'],
+        ['66_13_5', 'Dan 7:8|a|Mouth uttering proud words', 'Dan 7:25|a|Time, times, and half a time (42 months)'],
+        ['66_13_7', 'Dan 7:21|a|Wage war against God’s holy people and conquer them'],
+        ['66_13_10', 'Jer 15:2|a|Destined for captivity / killed by the sword'],
+        ['66_14_8', 'Isa 21:9|a|Fallen! Fallen is Babylon the Great', 'Jer 51:8|a|Sudden fall of Babylon'],
+        ['66_14_10', 'Ps 75:8|a|Cup of His wrath poured full strength', 'Isa 51:17|a|Cup of fury'],
+        ['66_14_14', 'Dan 7:13|a|One like a Son of Man seated on the cloud'],
+        ['66_14_15', 'Joel 3:13|a|Take your sickle and reap, for the harvest is ripe'],
+        ['66_14_20', 'Isa 63:3|a|Treading the winepress of wrath', 'Joel 3:13|a|Winepress is full'],
+        ['66_15_3', 'Exod 15:1|a|Song of Moses', 'Deut 32:4|a|Just and true are Your ways', 'Ps 111:2|a|Great and marvelous are Your deeds'],
+        ['66_15_4', 'Ps 86:9|a|All nations will come and worship before You', 'Jer 10:7|a|Who will not fear You?'],
+        ['66_15_8', 'Exod 40:34-35|a|Temple filled with glory so no one could enter', 'Isa 6:4|a|Temple filled with smoke'],
+        ['66_16_2', 'Exod 9:10|a|Plague of festering sores'],
+        ['66_16_4', 'Exod 7:19-20|a|Rivers and springs turned to blood'],
+        ['66_16_13', 'Exod 8:5-6|a|Plague of frogs'],
+        ['66_17_1', 'Jer 51:13|a|Babylon sitting by many waters'],
+        ['66_17_4', 'Jer 51:7|a|Golden cup in Babylon’s hand'],
+        ['66_18_2', 'Isa 21:9|a|Fallen is Babylon', 'Isa 13:21|a|Haunt of wild creatures'],
+        ['66_18_4', 'Jer 51:45|a|Come out of her, My people', 'Isa 48:20|a|Flee from Babylon'],
+        ['66_18_7', 'Isa 47:7-8|a|I sit enthroned as queen; I am not a widow'],
+        ['66_19_2', 'Deut 32:43|a|Avenged the blood of His servants', '2Kgs 9:7|a|Avenging the blood of the prophets'],
+        ['66_19_13', 'Isa 63:1-3|a|Robe dipped in blood'],
+        ['66_19_15', 'Ps 2:9|a|Rule with an iron scepter', 'Isa 11:4|a|Strike the nations with the rod of His mouth', 'Isa 63:3|a|Winepress of God’s fury'],
+        ['66_19_16', 'Deut 10:17|a|Lord of lords', 'Dan 2:47|a|King of kings'],
+        ['66_19_17', 'Ezek 39:17-20|a|Birds summoned to the great supper of God'],
+        ['66_20_8', 'Ezek 38:2|a|Gog and Magog', 'Ezek 39:1|a|Gathered for battle'],
+        ['66_20_11', 'Dan 7:9|a|Great white throne'],
+        ['66_20_12', 'Dan 7:10|a|Books were opened', 'Ps 62:12|a|Judged according to what they had done'],
+        ['66_21_1', 'Isa 65:17|a|A new heaven and a new earth', 'Isa 66:22|a|New heavens and new earth'],
+        ['66_21_3', 'Ezek 37:27|a|God’s dwelling place is now among the people', 'Lev 26:11-12|a|They will be His people'],
+        ['66_21_4', 'Isa 25:8|a|Wipe every tear from their eyes; no more death', 'Isa 65:19|a|No more weeping or crying'],
+        ['66_21_6', 'Isa 55:1|a|Water of life without cost', 'Isa 44:6|a|Alpha and Omega, Beginning and End'],
+        ['66_21_7', '2Sam 7:14|a|I will be their God and they will be My children'],
+        ['66_21_10', 'Ezek 40:2|a|Carried to a great and high mountain to see the city'],
+        ['66_21_12', 'Ezek 48:31-34|a|Twelve gates with the names of the twelve tribes'],
+        ['66_21_23', 'Isa 60:19|a|No need of sun or moon, for the glory of God gives it light'],
+        ['66_21_24', 'Isa 60:3|a|Nations will walk by its light and kings bring their splendor'],
+        ['66_21_25', 'Isa 60:11|a|Its gates will never be shut'],
+        ['66_22_1', 'Ezek 47:1|a|River of the water of life flowing from the throne', 'Zech 14:8|a|Living water flowing out'],
+        ['66_22_2', 'Ezek 47:12|a|Tree of life bearing fruit every month; leaves for healing', 'Gen 2:9|a|Tree of life restored'],
+        ['66_22_3', 'Zech 14:11|a|No longer will there be any curse', 'Gen 3:17|e|Reversal of the Eden curse'],
+        ['66_22_5', 'Isa 60:19|a|No more night; the Lord God will give them light', 'Dan 7:18|a|Reign forever and ever'],
+        ['66_22_12', 'Isa 40:10|a|My reward is with Me', 'Isa 62:11|a|His reward is with Him'],
+        ['66_22_13', 'Isa 44:6|a|I am the Alpha and the Omega, the First and the Last'],
+        ['66_22_16', 'Isa 11:1|a|Root and Offspring of David', 'Num 24:17|a|Bright Morning Star'],
+        ['66_22_17', 'Isa 55:1|a|Let the one who is thirsty take the free gift of the water of life']
+    ];
+
+    const getEditor = () =>
+        (typeof editor !== 'undefined' && editor) ||
+        document.getElementById('editor') ||
+        document.querySelector('[contenteditable="true"]');
+
+    function parseOtRefSpec(spec) {
+        const parts = spec.split('|');
+        const rawRef = (parts[0] || '').trim();
+        const tierCode = (parts[1] || 'a').trim().toLowerCase();
+        const note = (parts[2] || '').trim();
+
+        const m = rawRef.match(/^([1-3]?[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?$/);
+        if (!m) return null;
+
+        const bookInfo = OT_BOOKS[m[1]];
+        if (!bookInfo) return null;
+
+        const otBookNum = bookInfo[0];
+        const otBookName = bookInfo[1];
+        const otChapter = parseInt(m[2], 10);
+        const otStartVerse = parseInt(m[3], 10);
+        const otEndVerse = m[4] ? parseInt(m[4], 10) : otStartVerse;
+        const verseRange = otEndVerse > otStartVerse ? `${otStartVerse}–${otEndVerse}` : String(otStartVerse);
+        const otRef = `${otBookName} ${otChapter}:${verseRange}`;
+
+        const tier = tierCode === 'q' ? 'quote' : tierCode === 'e' ? 'echo' : 'allusion';
+        const type = tier === 'quote' ? 'Direct OT Quotation' : tier === 'echo' ? 'OT Echo' : 'OT Allusion';
+
+        return {
+            otRef,
+            type,
+            tier,
+            note,
+            otBookNum,
+            otBookName,
+            otChapter,
+            otStartVerse,
+            otEndVerse,
+            __expandedEntry: true
+        };
+    }
+
+    function readLiveVersesFromEditor(bookNum, chapterNum, startVerse, endVerse) {
+        const ed = getEditor();
+        if (!ed) return '';
+        const chunks = [];
+        for (let v = startVerse; v <= endVerse; v++) {
+            const blocks = ed.querySelectorAll(
+                `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${v}"]:not(.lex-chapter-banner):not(.lex-thought-spacer)`
+            );
+            if (!blocks.length) continue;
+            const verseParts = [];
+            blocks.forEach((b) => {
+                const clone = b.cloneNode(true);
+                clone.querySelectorAll('.ot-in-nt-inline-badge, [data-lexflow-suggestion-hidden="1"], i, svg, button').forEach((n) => n.remove());
+                const t = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) verseParts.push(t);
+            });
+            if (verseParts.length) {
+                chunks.push(endVerse > startVerse ? `[v.${v}] ${verseParts.join(' ')}` : verseParts.join(' '));
+            }
+        }
+        return chunks.join(' ');
+    }
+
+    function normalizeRefForDedup(refStr) {
+        return String(refStr || '')
+            .toLowerCase()
+            .replace(/\bpsalms\b/g, 'psalm')
+            .replace(/[–—]/g, '-')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function mergeFullNtDatabase() {
+        if (typeof otInNtMasterDatabase === 'undefined') {
+            window.otInNtMasterDatabase = {};
+        }
+        const db = typeof otInNtMasterDatabase !== 'undefined' ? otInNtMasterDatabase : window.otInNtMasterDatabase;
+
+        // Inspect one existing starter entry so we match its exact field names if the native modal uses them
+        let sampleEntry = null;
+        const existingKeys = Object.keys(db);
+        for (let i = 0; i < existingKeys.length; i++) {
+            const arr = db[existingKeys[i]];
+            if (Array.isArray(arr) && arr.length > 0 && arr[0] && !arr[0].__expandedEntry) {
+                sampleEntry = arr[0];
+                break;
+            }
+        }
+
+        let addedCount = 0;
+        FULL_NT_OT_DATA.forEach((row) => {
+            const vKey = row[0];
+            if (!Array.isArray(db[vKey])) db[vKey] = [];
+            const existingArr = db[vKey];
+
+            for (let i = 1; i < row.length; i++) {
+                const parsed = parseOtRefSpec(row[i]);
+                if (!parsed) continue;
+
+                const normNew = normalizeRefForDedup(parsed.otRef);
+                const alreadyExists = existingArr.some((item) => {
+                    if (!item) return false;
+                    const normOld = normalizeRefForDedup(item.otRef);
+                    if (normOld === normNew) return true;
+                    // Also skip duplicate same-chapter same-start-verse (e.g. Psalm 2:7 vs Psalms 2:7)
+                    if (normOld.startsWith(normNew.split('-')[0]) || normNew.startsWith(normOld.split('-')[0])) {
+                        return true;
+                    }
+                    return false;
+                });
+                if (alreadyExists) continue;
+
+                // Build object compatible with native LexFlow schemas
+                const entryObj = {
+                    otRef: parsed.otRef,
+                    type: parsed.type,
+                    tier: parsed.tier,
+                    otBookNum: parsed.otBookNum,
+                    otBook: parsed.otBookName,
+                    otBookName: parsed.otBookName,
+                    otChapter: parsed.otChapter,
+                    otChap: parsed.otChapter,
+                    otVerse: parsed.otStartVerse,
+                    otStartVerse: parsed.otStartVerse,
+                    otEndVerse: parsed.otEndVerse,
+                    note: parsed.note,
+                    notes: parsed.note,
+                    explanation: parsed.note,
+                    summary: parsed.note,
+                    commentary: parsed.note,
+                    __expandedEntry: true
+                };
+
+                // Match any additional custom keys from starter entries with safe defaults
+                if (sampleEntry) {
+                    Object.keys(sampleEntry).forEach((k) => {
+                        if (entryObj[k] === undefined) {
+                            if (/booknum|otb/i.test(k) && typeof sampleEntry[k] === 'number') entryObj[k] = parsed.otBookNum;
+                            else if (/chap/i.test(k) && typeof sampleEntry[k] === 'number') entryObj[k] = parsed.otChapter;
+                            else if (/verse/i.test(k) && typeof sampleEntry[k] === 'number') entryObj[k] = parsed.otStartVerse;
+                            else if (/note|desc|reason|context|theme|comment/i.test(k)) entryObj[k] = parsed.note;
+                            else if (/ref/i.test(k)) entryObj[k] = parsed.otRef;
+                            else if (typeof sampleEntry[k] === 'string') entryObj[k] = '';
+                        }
+                    });
+                }
+
+                existingArr.push(entryObj);
+                addedCount++;
+            }
+        });
+
+        window.__lexflowOtInNtExpandedCount = addedCount;
+        console.log(`[LexFlow] Full 27-Book OT-in-NT expansion loaded: +${addedCount} links across ${Object.keys(db).length} NT verses.`);
+    }
+
+    // --- FAST SINGLE-PASS BADGE RENDERER (ZERO LAG WITH 400+ VERSES) ---
+    function installFastOtBadgeDecorator() {
+        const fastDecorate = function () {
+            const ed = getEditor();
+            if (!ed) return;
+            try { if (typeof ensureOtInNtModalAndStylesExist === 'function') ensureOtInNtModalAndStylesExist(); } catch (e) {}
+
+            ed.querySelectorAll('.ot-in-nt-inline-badge').forEach((b) => b.remove());
+
+            const badgesOn =
+                typeof isOtInNtBadgesVisible !== 'undefined'
+                    ? isOtInNtBadgesVisible
+                    : localStorage.getItem('lexflow_ot_in_nt_badges') !== 'false';
+            const db = typeof otInNtMasterDatabase !== 'undefined' ? otInNtMasterDatabase : window.otInNtMasterDatabase;
+            if (!badgesOn || !db) return;
+
+            // Single linear scan over NT blocks in #editor (~3ms total instead of 400x querySelectorAll)
+            const lastBlockByKey = new Map();
+            const children = ed.children;
+            for (let i = 0; i < children.length; i++) {
+                const ch = children[i];
+                if (ch.tagName !== 'DIV') continue;
+                const ds = ch.dataset;
+                if (!ds || !ds.bookNum || !ds.chapterNum || !ds.verseNum) continue;
+                if (parseInt(ds.bookNum, 10) < 40) continue;
+                if (ch.classList.contains('lex-chapter-banner') || ch.classList.contains('lex-thought-spacer')) continue;
+                const key = `${ds.bookNum}_${ds.chapterNum}_${ds.verseNum}`;
+                if (db[key] && db[key].length > 0) {
+                    lastBlockByKey.set(key, ch);
+                }
+            }
+
+            lastBlockByKey.forEach((targetBlock, vKey) => {
+                const quotes = db[vKey];
+                if (!quotes || quotes.length === 0) return;
+
+                const refSummary = quotes.map((q) => q.otRef).join(' • ');
+                const primaryTier =
+                    quotes[0].tier ||
+                    (quotes[0].type && quotes[0].type.toLowerCase().includes('quote') ? 'quote' : 'allusion');
+
+                let tierClass = 'tier-quote', iconClass = 'fa-scroll', tierLabel = 'OT Quote';
+                if (primaryTier === 'allusion') {
+                    tierClass = 'tier-allusion'; iconClass = 'fa-link'; tierLabel = 'OT Allusion';
+                } else if (primaryTier === 'echo') {
+                    tierClass = 'tier-echo'; iconClass = 'fa-water'; tierLabel = 'OT Echo';
+                }
+
+                const badge = document.createElement('span');
+                badge.className = `ot-in-nt-inline-badge ${tierClass}`;
+                badge.contentEditable = 'false';
+                badge.dataset.otNtKey = vKey;
+                badge.setAttribute('data-badge-label', `${tierLabel}: ${refSummary}`);
+                badge.title = `${quotes[0].type}: ${refSummary} — Click to compare NT & OT side-by-side`;
+                badge.innerHTML = `<i class="fa-solid ${iconClass} text-[10px]" aria-hidden="true"></i>`;
+                badge.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openExpandedOtComparison(vKey);
+                };
+                targetBlock.appendChild(badge);
+            });
+        };
+
+        try { decorateEditorWithOtInNtBadges = fastDecorate; } catch (e) {}
+        window.decorateEditorWithOtInNtBadges = fastDecorate;
+    }
+
+    // --- SMART COMPARISON MODAL (USES NATIVE MODAL FOR ORIGINAL RICH ENTRIES, LIVE 66-BOOK MODAL FOR EXPANDED) ---
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function ensureExpandedModalStyles() {
+        if (document.getElementById('lfOtExpModalStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfOtExpModalStyles';
+        st.textContent = `
+            #lfOtExpOverlay {
+                position: fixed; inset: 0; z-index: 99995;
+                background: rgba(15, 23, 42, 0.54); backdrop-filter: blur(4px);
+                display: none; align-items: center; justify-content: center; padding: 18px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfOtExpOverlay.open { display: flex; }
+            #lfOtExpCard {
+                width: min(860px, 95vw); max-height: 88vh; overflow: hidden;
+                background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
+                box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
+                display: flex; flex-direction: column;
+            }
+            .lf-ot-head {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-ot-body { padding: 18px 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+            .lf-ot-ntbox {
+                background: #eef2ff; border: 1.5px solid #c7d2fe; border-radius: 11px; padding: 13px 16px;
+            }
+            .lf-ot-item {
+                background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 11px; padding: 13px 16px;
+            }
+            .lf-ot-pill {
+                display: inline-block; font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+                letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px;
+            }
+            .lf-ot-pill.quote { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+            .lf-ot-pill.allusion { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+            .lf-ot-pill.echo { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+            .lf-ot-scripture { font-family: Georgia, "Times New Roman", serif; font-size: 15.5px; line-height: 1.6; color: #0f172a; margin-top: 7px; }
+            .lf-ot-note { font-size: 12.5px; color: #475569; margin-top: 6px; font-style: italic; }
+            .lf-ot-jump {
+                border: 1px solid #c7d2fe; background: #ffffff; color: #3730a3;
+                font-size: 11.5px; font-weight: 600; border-radius: 7px; padding: 4px 10px; cursor: pointer;
+            }
+            .lf-ot-jump:hover { background: #eef2ff; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function jumpToOtPassage(bookNum, chapterNum, verseNum) {
+        const overlay = document.getElementById('lfOtExpOverlay');
+        if (overlay) overlay.classList.remove('open');
+        const ed = getEditor();
+        if (!ed) return;
+        const target = ed.querySelector(
+            `div[data-book-num="${bookNum}"][data-chapter-num="${chapterNum}"][data-verse-num="${verseNum}"]:not(.lex-chapter-banner)`
+        );
+        if (!target) return;
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            const targetTop = target.getBoundingClientRect().top - mainEl.getBoundingClientRect().top + mainEl.scrollTop - 110;
+            const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop') || Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop');
+            if (desc && desc.set) desc.set.call(mainEl, Math.max(0, targetTop));
+            else mainEl.scrollTop = Math.max(0, targetTop);
+        }
+    }
+
+    const nativeOpenOtModal = typeof openOtInNtModalForVerseKey === 'function' ? openOtInNtModalForVerseKey : null;
+
+    function openExpandedOtComparison(vKey) {
+        const db = typeof otInNtMasterDatabase !== 'undefined' ? otInNtMasterDatabase : window.otInNtMasterDatabase;
+        const quotes = db && db[vKey];
+        if (!quotes || !quotes.length) return;
+
+        // If all entries on this verse are original starter entries (with hardcoded Greek/Hebrew), use native modal
+        const allNative = quotes.every((q) => q && !q.__expandedEntry);
+        if (allNative && nativeOpenOtModal) {
+            try {
+                nativeOpenOtModal(vKey);
+                return;
+            } catch (e) {}
+        }
+
+        // Hydrate live OT & NT English text from the user's loaded 66-book Bible
+        ensureExpandedModalStyles();
+        let overlay = document.getElementById('lfOtExpOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'lfOtExpOverlay';
+            overlay.className = 'modal';
+            overlay.setAttribute('role', 'dialog');
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+            document.body.appendChild(overlay);
+        }
+
+        const [ntB, ntC, ntV] = vKey.split('_').map((x) => parseInt(x, 10));
+        const ntRef = `${NT_BOOK_NAMES[ntB] || 'NT'} ${ntC}:${ntV}`;
+        const ntText = readLiveVersesFromEditor(ntB, ntC, ntV, ntV);
+
+        const otCardsHtml = quotes
+            .map((q, idx) => {
+                const tier = q.tier || 'allusion';
+                const tierLabel = tier === 'quote' ? 'OT Quote' : tier === 'echo' ? 'OT Echo' : 'OT Allusion';
+                const otText =
+                    (q.otBookNum && q.otChapter && q.otStartVerse
+                        ? readLiveVersesFromEditor(q.otBookNum, q.otChapter, q.otStartVerse, q.otEndVerse || q.otStartVerse)
+                        : '') ||
+                    q.otText ||
+                    q.otEnglish ||
+                    '';
+                const noteText = q.note || q.notes || q.explanation || q.summary || '';
+                const jumpBtn =
+                    q.otBookNum && q.otChapter && q.otStartVerse
+                        ? `<button type="button" class="lf-ot-jump" data-ot-jump="${idx}">Jump to ${escapeHtml(q.otRef)} →</button>`
+                        : '';
+                return `
+                    <div class="lf-ot-item">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="lf-ot-pill ${tier}">${tierLabel}</span>
+                                <strong style="font-size:15px;color:#1e1b4b;">${escapeHtml(q.otRef)}</strong>
+                            </div>
+                            ${jumpBtn}
+                        </div>
+                        <div class="lf-ot-scripture">${escapeHtml(otText || '(Load full 66-book Bible to view OT text inline)')}</div>
+                        ${noteText ? `<div class="lf-ot-note">${escapeHtml(noteText)}</div>` : ''}
+                    </div>
+                `;
+            })
+            .join('');
+
+        const hasNativeOption = quotes.some((q) => q && !q.__expandedEntry) && nativeOpenOtModal;
+
+        overlay.innerHTML = `
+            <div id="lfOtExpCard">
+                <div class="lf-ot-head">
+                    <div>
+                        <strong style="font-size:16px;color:#1e1b4b;">OT-in-NT Comparison · ${escapeHtml(ntRef)}</strong>
+                        <div style="font-size:11.5px;color:#64748b;">${quotes.length} Old Testament connection${quotes.length === 1 ? '' : 's'} linked to this verse</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        ${hasNativeOption ? '<button type="button" class="lf-ot-jump" id="lfOtNativeModalBtn">Hebrew / Greek View</button>' : ''}
+                        <button type="button" class="lf-ot-jump" id="lfOtCloseBtn" style="color:#334155;border-color:#cbd5e1;">✕ Close</button>
+                    </div>
+                </div>
+                <div class="lf-ot-body">
+                    <div class="lf-ot-ntbox">
+                        <div style="font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#3730a3;">New Testament · ${escapeHtml(ntRef)}</div>
+                        <div class="lf-ot-scripture">${escapeHtml(ntText)}</div>
+                    </div>
+                    ${otCardsHtml}
+                </div>
+            </div>
+        `;
+
+        overlay.querySelector('#lfOtCloseBtn').onclick = () => overlay.classList.remove('open');
+        const nativeBtn = overlay.querySelector('#lfOtNativeModalBtn');
+        if (nativeBtn && nativeOpenOtModal) {
+            nativeBtn.onclick = () => {
+                overlay.classList.remove('open');
+                nativeOpenOtModal(vKey);
+            };
+        }
+        overlay.querySelectorAll('[data-ot-jump]').forEach((btn) => {
+            btn.onclick = () => {
+                const q = quotes[parseInt(btn.getAttribute('data-ot-jump'), 10)];
+                if (q && q.otBookNum) jumpToOtPassage(q.otBookNum, q.otChapter, q.otStartVerse || 1);
+            };
+        });
+
+        overlay.classList.add('open');
+    }
+
+    function initFullNtOtExpansion() {
+        mergeFullNtDatabase();
+        installFastOtBadgeDecorator();
+        if (typeof decorateEditorWithOtInNtBadges === 'function') {
+            decorateEditorWithOtInNtBadges();
+            setTimeout(decorateEditorWithOtInNtBadges, 250);
+            setTimeout(decorateEditorWithOtInNtBadges, 1000);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFullNtOtExpansion);
+    } else {
+        initFullNtOtExpansion();
+    }
+})();
+
     </script>
 </body>
 </html>
