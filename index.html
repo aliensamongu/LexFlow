@@ -30812,6 +30812,2980 @@ function showContextMenu(x, y) {
     }
 })();
 
+	/* === LEXFLOW ADD-ON: EXACT CATSS HEBREW (MT) <-> GREEK (LXX) WORD ALIGNMENT & 3-WAY SYNC === */
+(function () {
+    const CCAT_PARALLEL_URL = 'https://ccat.sas.upenn.edu/gopher/text/religion/biblical/parallel/';
+    const CCAT_DECLARATION_URL = 'https://ccat.sas.upenn.edu/gopher/text/religion/biblical/parallel/00.user-declaration.txt';
+
+    const IDB_NAME = 'LexFlow_CATSS_Parallel_v1';
+    const IDB_STORE = 'books';
+    const IDB_META = 'meta';
+
+    const OT_BOOK_NAMES = {
+        1: 'Genesis', 2: 'Exodus', 3: 'Leviticus', 4: 'Numbers', 5: 'Deuteronomy',
+        6: 'Joshua', 7: 'Judges', 8: 'Ruth', 9: '1 Samuel', 10: '2 Samuel',
+        11: '1 Kings', 12: '2 Kings', 13: '1 Chronicles', 14: '2 Chronicles', 15: 'Ezra',
+        16: 'Nehemiah', 17: 'Esther', 18: 'Job', 19: 'Psalm', 20: 'Proverbs',
+        21: 'Ecclesiastes', 22: 'Song of Solomon', 23: 'Isaiah', 24: 'Jeremiah', 25: 'Lamentations',
+        26: 'Ezekiel', 27: 'Daniel', 28: 'Hosea', 29: 'Joel', 30: 'Amos',
+        31: 'Obadiah', 32: 'Jonah', 33: 'Micah', 34: 'Nahum', 35: 'Habakkuk',
+        36: 'Zephaniah', 37: 'Haggai', 38: 'Zechariah', 39: 'Malachi'
+    };
+
+    const BOOK_ALIASES = {
+        gen: 1, genesis: 1, ge: 1, gn: 1,
+        exod: 2, exodus: 2, ex: 2, exo: 2,
+        lev: 3, leviticus: 3, le: 3, lv: 3,
+        num: 4, numbers: 4, nu: 4, nm: 4,
+        deut: 5, deuteronomy: 5, dt: 5, deu: 5,
+        josh: 6, joshua: 6, jos: 6, josha: 6, joshb: 6,
+        judg: 7, judges: 7, jdg: 7, judga: 7, judgb: 7,
+        ruth: 8, ru: 8, rut: 8,
+        '1sam': 9, '1sa': 9, '1kgdms': 9, '1reg': 9, '1sam1kgdms': 9, '1samk': 9,
+        '2sam': 10, '2sa': 10, '2kgdms': 10, '2reg': 10, '2sam2kgdms': 10,
+        '1kgs': 11, '1ki': 11, '1kings': 11, '3kgdms': 11, '3reg': 11, '1kgs3kgdms': 11,
+        '2kgs': 12, '2ki': 12, '2kings': 12, '4kgdms': 12, '4reg': 12, '2kgs4kgdms': 12,
+        '1chr': 13, '1ch': 13, '1chron': 13, '1par': 13,
+        '2chr': 14, '2ch': 14, '2chron': 14, '2par': 14,
+        ezra: 15, ezr: 15, '2esd': 15, '2esdr': 15, esdrb: 15,
+        neh: 16, nehemiah: 16, ne: 16,
+        esth: 17, esther: 17, est: 17,
+        job: 18, jb: 18,
+        ps: 19, psa: 19, pss: 19, psalm: 19, psalms: 19,
+        prov: 20, proverbs: 20, pr: 20, pro: 20,
+        eccl: 21, ecclesiastes: 21, ecc: 21, qoh: 21, qoheleth: 21,
+        song: 22, cant: 22, sos: 22, sng: 22, canticles: 22,
+        isa: 23, isaiah: 23, is: 23,
+        jer: 24, jeremiah: 24, je: 24, jr: 24,
+        lam: 25, lamentations: 25, la: 25,
+        ezek: 26, ezekiel: 26, eze: 26, ezk: 26,
+        dan: 27, daniel: 27, da: 27, dn: 27, danog: 27, danth: 27,
+        hos: 28, hosea: 28, ho: 28,
+        joel: 29, jl: 29, joe: 29,
+        amos: 30, am: 30, amo: 30,
+        obad: 31, obadiah: 31, ob: 31,
+        jonah: 32, jon: 32, jnh: 32,
+        mic: 33, micah: 33, mi: 33,
+        nah: 34, nahum: 34, na: 34,
+        hab: 35, habakkuk: 35, hb: 35,
+        zeph: 36, zephaniah: 36, zep: 36,
+        hag: 37, haggai: 37, hg: 37,
+        zech: 38, zechariah: 38, zec: 38,
+        mal: 39, malachi: 39, ml: 39
+    };
+
+    // Michigan-Claremont / CCAT ASCII Hebrew -> Unicode
+    const CCAT_HEB_MAP = {
+        ')': 'א', B: 'ב', G: 'ג', D: 'ד', H: 'ה', W: 'ו', Z: 'ז', X: 'ח', '+': 'ט',
+        Y: 'י', K: 'כ', L: 'ל', M: 'מ', N: 'נ', S: 'ס', '(': 'ע', P: 'פ', C: 'צ',
+        Q: 'ק', R: 'ר', '$': 'ש', '&': 'ש', '#': 'ש', T: 'ת'
+    };
+    const HEB_FINAL_MAP = { 'כ': 'ך', 'מ': 'ם', 'נ': 'ן', 'פ': 'ף', 'צ': 'ץ' };
+    const HEB_UNFINAL_MAP = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+
+    // TLG Greek Betacode -> Unicode
+    const BETACODE_MAP = {
+        A: 'α', B: 'β', G: 'γ', D: 'δ', E: 'ε', Z: 'ζ', H: 'η', Q: 'θ',
+        I: 'ι', K: 'κ', L: 'λ', M: 'μ', N: 'ν', C: 'ξ', O: 'ο', P: 'π',
+        R: 'ρ', S: 'σ', T: 'τ', U: 'υ', F: 'φ', X: 'χ', Y: 'ψ', W: 'ω'
+    };
+
+    const supportsCssHighlights = typeof CSS !== 'undefined' && Boolean(CSS.highlights) && typeof Highlight !== 'undefined';
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function normalizeGreek(str) {
+        return String(str || '')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/ς/g, 'σ').replace(/[^α-ω]/g, '');
+    }
+
+    function normalizeHebrewConsonants(str) {
+        let out = '';
+        const s = String(str || '').replace(/[\u0591-\u05C7]/g, '');
+        for (let i = 0; i < s.length; i++) {
+            const ch = s[i];
+            if (ch >= '\u05D0' && ch <= '\u05EA') {
+                out += HEB_UNFINAL_MAP[ch] || ch;
+            }
+        }
+        return out;
+    }
+
+    function toFinalHebrewDisplay(rawHeb, hasTrailingSlash) {
+        if (!rawHeb) return '';
+        if (hasTrailingSlash) return rawHeb + '־';
+        const last = rawHeb[rawHeb.length - 1];
+        return HEB_FINAL_MAP[last] ? rawHeb.slice(0, -1) + HEB_FINAL_MAP[last] : rawHeb;
+    }
+
+    function ccatHebrewToUnicode(rawChunk) {
+        // Strip braces/notes first; preserve slash awareness
+        let clean = String(rawChunk || '').replace(/\{[^}]*\}/g, ' ').replace(/<[^>]*>/g, ' ').trim();
+        // If Ketiv/Qere (*), keep first form before whitespace or split cleanly
+        const hasTrailingSlash = /\/\s*$/.test(clean);
+        let out = '';
+        for (let i = 0; i < clean.length; i++) {
+            const ch = clean[i];
+            if (CCAT_HEB_MAP[ch]) out += CCAT_HEB_MAP[ch];
+            else if (ch === '-' || ch === '\u05BE') out += '־';
+            else if (ch === ' ') out += ' ';
+        }
+        out = out.replace(/\s+/g, ' ').trim();
+        if (!out) return '';
+        const words = out.split(' ').map((w, idx, arr) =>
+            toFinalHebrewDisplay(w, hasTrailingSlash && idx === arr.length - 1)
+        );
+        return words.join(' ');
+    }
+
+    function betacodeToGreekWords(rawChunk) {
+        const cleaned = String(rawChunk || '')
+            .replace(/\{[^}]*\}/g, ' ')
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\[[^\]]*\]/g, ' ')
+            .trim();
+        if (!cleaned || /^[-+.=~?]+$/.test(cleaned)) return [];
+
+        const rawTokens = cleaned.split(/\s+/).filter(Boolean);
+        const words = [];
+        rawTokens.forEach((tok) => {
+            if (/^[-+.=~?@%#]+$/.test(tok)) return;
+            const upper = tok.toUpperCase();
+            let grk = '';
+            for (let i = 0; i < upper.length; i++) {
+                const mapped = BETACODE_MAP[upper[i]];
+                if (mapped) grk += mapped;
+            }
+            if (grk) {
+                const display = grk.endsWith('σ') ? grk.slice(0, -1) + 'ς' : grk;
+                words.push({ display, key: grk });
+            }
+        });
+        return words;
+    }
+
+    function resolveBookFromName(raw) {
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        // Strip leading digits + dot/underscore like "01.Genesis.par" or "19.Psalms.par"
+        const base = s.replace(/\.[^.]+$/, '').replace(/^\d+[._-\s]+/, '');
+        const key = base.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (BOOK_ALIASES[key]) return BOOK_ALIASES[key];
+        // Handle "1Sam/1Kgdms"
+        const firstPart = base.split(/[\/,(]/)[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (BOOK_ALIASES[firstPart]) return BOOK_ALIASES[firstPart];
+        const mPrefix = key.match(/^([1-4]?[a-z]+)/);
+        if (mPrefix && BOOK_ALIASES[mPrefix[1]]) return BOOK_ALIASES[mPrefix[1]];
+        return null;
+    }
+
+    // --- 1. INDEXEDDB CACHE FOR CATSS PARALLEL ALIGNMENT ---
+    let idbPromise = null;
+    const catssMemCache = new Map();
+    let cachedBookNums = new Set();
+    let tableModeActive = false;
+
+    function openIdb() {
+        if (idbPromise) return idbPromise;
+        idbPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open(IDB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+                if (!db.objectStoreNames.contains(IDB_META)) db.createObjectStore(IDB_META);
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return idbPromise;
+    }
+
+    async function idbGet(store, key) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbPut(store, key, val) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            const req = tx.objectStore(store).put(val, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbGetAllKeys() {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const req = tx.objectStore(IDB_STORE).getAllKeys();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbClearAll() {
+        const db = await openIdb();
+        catssMemCache.clear();
+        cachedBookNums.clear();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([IDB_STORE, IDB_META], 'readwrite');
+            tx.objectStore(IDB_STORE).clear();
+            tx.objectStore(IDB_META).clear();
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async function refreshCachedBookList() {
+        try {
+            const keys = await idbGetAllKeys();
+            cachedBookNums = new Set(keys.map((k) => parseInt(k, 10)).filter((n) => n >= 1 && n <= 39));
+        } catch (e) {}
+        updateCatssStatusBadges();
+    }
+
+    async function getCatssBook(bookNum) {
+        const b = parseInt(bookNum, 10);
+        if (!b || b < 1 || b > 39) return null;
+        if (catssMemCache.has(b)) return catssMemCache.get(b);
+        const data = await idbGet(IDB_STORE, b);
+        if (data) catssMemCache.set(b, data);
+        return data || null;
+    }
+
+    // --- 2. MULTI-FILE ZIP UNPACKER FOR .ZIP ARCHIVES OF .PAR FILES ---
+    async function unzipParFilesFromBuffer(arrayBuffer) {
+        const bytes = new Uint8Array(arrayBuffer);
+        const dv = new DataView(arrayBuffer);
+        const dec = new TextDecoder('utf-8');
+
+        let eocd = -1;
+        const minOffset = Math.max(0, bytes.length - 65557);
+        for (let i = bytes.length - 22; i >= minOffset; i--) {
+            if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+        }
+        if (eocd === -1) throw new Error('Invalid ZIP file');
+
+        const cdSize = dv.getUint32(eocd + 12, true);
+        const cdOffset = dv.getUint32(eocd + 16, true);
+        const cdEnd = Math.min(bytes.length, cdOffset + cdSize);
+
+        const files = [];
+        let pos = cdOffset;
+        while (pos + 46 <= cdEnd) {
+            if (dv.getUint32(pos, true) !== 0x02014b50) break;
+            const method = dv.getUint16(pos + 10, true);
+            const compSize = dv.getUint32(pos + 20, true);
+            const nameLen = dv.getUint16(pos + 28, true);
+            const extraLen = dv.getUint16(pos + 30, true);
+            const commentLen = dv.getUint16(pos + 32, true);
+            const lhOffset = dv.getUint32(pos + 42, true);
+            const fileName = dec.decode(bytes.subarray(pos + 46, pos + 46 + nameLen));
+            pos += 46 + nameLen + extraLen + commentLen;
+
+            if (fileName.endsWith('/') || fileName.startsWith('__MACOSX/')) continue;
+            if (/readme|declaration|status|manual/i.test(fileName)) continue;
+            if (!/\.(par|txt|mlxx)$/i.test(fileName)) continue;
+
+            const lh = lhOffset;
+            if (dv.getUint32(lh, true) !== 0x04034b50) continue;
+            const lhNameLen = dv.getUint16(lh + 26, true);
+            const lhExtraLen = dv.getUint16(lh + 28, true);
+            const dataStart = lh + 30 + lhNameLen + lhExtraLen;
+            const compBytes = bytes.subarray(dataStart, dataStart + compSize);
+
+            let text = '';
+            if (method === 0) {
+                text = dec.decode(compBytes);
+            } else if (method === 8 && typeof DecompressionStream !== 'undefined') {
+                const ds = new DecompressionStream('deflate-raw');
+                const stream = new Blob([compBytes]).stream().pipeThrough(ds);
+                text = await new Response(stream).text();
+            }
+            if (text) files.push({ fileName: fileName.split('/').pop(), text });
+        }
+        return files;
+    }
+
+    // --- 3. OFFICIAL CATSS .PAR PARSER (HEBREW COL A <-> GREEK COL B) ---
+    function parseCatssParText(rawText, fileName) {
+        const defaultBook = resolveBookFromName(fileName);
+        const lines = String(rawText || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+
+        const books = {}; // books[bookNum][chap][verse] = [ { h, hk, hg, g, gk, f, n }, ... ]
+        let curBook = defaultBook;
+        let curChap = 0;
+        let curVerse = 0;
+        let altChap = 0;
+        let altVerse = 0;
+        let hebGroupIdx = 0;
+        let prevEndedWithSlash = false;
+        let rowCount = 0;
+
+        const pushRow = (b, c, v, rowObj) => {
+            if (!b || !c || !v) return;
+            if (!books[b]) books[b] = {};
+            if (!books[b][c]) books[b][c] = {};
+            if (!books[b][c][v]) books[b][c][v] = [];
+            books[b][c][v].push(rowObj);
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            const rawLine = lines[i];
+            if (!rawLine || !rawLine.trim()) continue;
+            const trimmed = rawLine.trim();
+
+            // Detect verse header: e.g. "Gen 1:1", "1Sam 2:10", "Ps 110(109):1", "Exod 36:8(37:1)"
+            if (!rawLine.startsWith('\t') && !rawLine.startsWith('  ')) {
+                const hdr = trimmed.match(/^([1-4]?\s*[A-Za-z][A-Za-z0-9/.-]*)\s+(\d+)(?:\((\d+)\))?:(\d+)(?:\((\d+)\))?/);
+                if (hdr) {
+                    const resolvedB = resolveBookFromName(hdr[1]) || defaultBook;
+                    if (resolvedB) {
+                        curBook = resolvedB;
+                        curChap = parseInt(hdr[2], 10);
+                        curVerse = parseInt(hdr[4], 10);
+                        altChap = hdr[3] ? parseInt(hdr[3], 10) : 0;
+                        altVerse = hdr[5] ? parseInt(hdr[5], 10) : 0;
+                        hebGroupIdx = 0;
+                        prevEndedWithSlash = false;
+                        continue;
+                    }
+                }
+                // Bare "1:1" chapter:verse header
+                const bareHdr = trimmed.match(/^(\d+):(\d+)$/);
+                if (bareHdr && curBook) {
+                    curChap = parseInt(bareHdr[1], 10);
+                    curVerse = parseInt(bareHdr[2], 10);
+                    altChap = 0; altVerse = 0;
+                    hebGroupIdx = 0; prevEndedWithSlash = false;
+                    continue;
+                }
+            }
+
+            if (!curBook || !curChap || !curVerse) continue;
+
+            // Split into Column A (Hebrew MT) and Column B (Greek LXX)
+            let colA = '', colB = '';
+            if (rawLine.includes('\t')) {
+                const tabIdx = rawLine.indexOf('\t');
+                colA = rawLine.slice(0, tabIdx).trim();
+                colB = rawLine.slice(tabIdx + 1).replace(/\t+/g, ' ').trim();
+            } else {
+                const multiSpace = rawLine.match(/^(\S.*?)\s{2,}(.+)$/);
+                if (multiSpace) {
+                    colA = multiSpace[1].trim();
+                    colB = multiSpace[2].trim();
+                } else {
+                    // Single column line (could be Hebrew-only or Greek-only)
+                    continue;
+                }
+            }
+
+            // Collect CATSS text-critical notes ({...} or =retroversion)
+            const notes = [];
+            const braceNotesA = colA.match(/\{[^}]+\}/g);
+            if (braceNotesA) notes.push(...braceNotesA);
+            const braceNotesB = colB.match(/\{[^}]+\}/g);
+            if (braceNotesB) notes.push(...braceNotesB);
+
+            let mainA = colA;
+            const eqMatch = colA.match(/=(.+)$/);
+            if (eqMatch) {
+                const retro = ccatHebrewToUnicode(eqMatch[1]);
+                notes.push(retro ? `Vorlage: ${retro}` : `=${eqMatch[1].trim()}`);
+                mainA = colA.slice(0, eqMatch.index).trim();
+            }
+
+            const isHebEmpty = !mainA || /^[-+.=~?]+$/.test(mainA.replace(/\{[^}]*\}/g, '').trim());
+            const isGrkEmpty = !colB || /^[-+.=~?]+$/.test(colB.replace(/\{[^}]*\}/g, '').trim());
+
+            const hebUni = isHebEmpty ? '' : ccatHebrewToUnicode(mainA);
+            const hebKey = normalizeHebrewConsonants(hebUni);
+            const endsWithSlash = !isHebEmpty && /\/\s*$/.test(mainA.replace(/\{[^}]*\}/g, '').trim());
+
+            const grkList = isGrkEmpty ? [] : betacodeToGreekWords(colB);
+            const grkDisp = grkList.map((x) => x.display).join(' ');
+            const grkKeys = grkList.map((x) => x.key);
+
+            if (!hebUni && !grkKeys.length) continue;
+
+            let hg = -1;
+            if (hebKey) {
+                if (!prevEndedWithSlash && (hebGroupIdx > 0 || books[curBook]?.[curChap]?.[curVerse]?.some((r) => r.hg >= 0))) {
+                    // Advance to next full Hebrew word group
+                    const existing = books[curBook]?.[curChap]?.[curVerse] || [];
+                    const maxHg = existing.reduce((mx, r) => Math.max(mx, r.hg), -1);
+                    hg = maxHg + 1;
+                } else {
+                    const existing = books[curBook]?.[curChap]?.[curVerse] || [];
+                    const maxHg = existing.reduce((mx, r) => Math.max(mx, r.hg), 0);
+                    hg = maxHg;
+                }
+                hebGroupIdx = hg;
+                prevEndedWithSlash = endsWithSlash;
+            } else {
+                // LXX plus line does not break an in-progress Hebrew prefix? Keep flag safe
+            }
+
+            let flag = '';
+            if (!hebKey && grkKeys.length) flag = 'plus';
+            else if (hebKey && !grkKeys.length) flag = 'minus';
+            else if (eqMatch) flag = 'vorlage';
+
+            const rowObj = {
+                h: hebUni,
+                hk: hebKey,
+                hg,
+                g: grkDisp,
+                gk: grkKeys,
+                f: flag,
+                n: notes.join(' ')
+            };
+
+            pushRow(curBook, curChap, curVerse, rowObj);
+            // If header carried a parenthetical alternate versification (e.g. Ps 110(109):1), index under both!
+            if (altChap > 0 && (altChap !== curChap || (altVerse > 0 && altVerse !== curVerse))) {
+                pushRow(curBook, altChap, altVerse || curVerse, rowObj);
+            }
+            rowCount++;
+        }
+
+        return { books, rowCount };
+    }
+
+    // --- 4. VERSIFICATION + VERSE ALIGNMENT RESOLUTION ---
+    function mapLxxToEnglishRef(b, c, v) {
+        if (b !== 19) return { b, c, v };
+        if (c <= 8 || c >= 148) return { b, c, v };
+        if (c === 9) return v <= 21 ? { b: 19, c: 9, v } : { b: 19, c: 10, v: v - 21 };
+        if (c >= 10 && c <= 112) return { b: 19, c: c + 1, v };
+        if (c === 113) return v <= 8 ? { b: 19, c: 114, v } : { b: 19, c: 115, v: v - 8 };
+        if (c === 114) return { b: 19, c: 116, v };
+        if (c === 115) return { b: 19, c: 116, v: v + 9 };
+        if (c >= 116 && c <= 145) return { b: 19, c: c + 1, v };
+        if (c === 146) return { b: 19, c: 147, v };
+        if (c === 147) return { b: 19, c: 147, v: v + 11 };
+        return { b, c, v };
+    }
+
+    function getCatssVerseRows(bookData, bookNum, lxxChap, lxxVerse) {
+        if (!bookData) return null;
+        // 1. Direct match (matches LXX versification or non-Psalm OT books)
+        if (bookData[lxxChap] && bookData[lxxChap][lxxVerse]) return bookData[lxxChap][lxxVerse];
+        // 2. Try MT/English versification (CATSS Psalms often keyed by MT Psalm number)
+        const eng = mapLxxToEnglishRef(bookNum, lxxChap, lxxVerse);
+        if (bookData[eng.c] && bookData[eng.c][eng.v]) return bookData[eng.c][eng.v];
+        // 3. Superscription +/-1 verse fallback for Psalms
+        if (bookNum === 19) {
+            if (bookData[eng.c] && bookData[eng.c][eng.v - 1]) return bookData[eng.c][eng.v - 1];
+            if (bookData[eng.c] && bookData[eng.c][eng.v + 1]) return bookData[eng.c][eng.v + 1];
+        }
+        return null;
+    }
+
+    // Order-preserving alignment of CATSS Greek tokens -> exact DOM indices in the Rahlfs 1935 LXX verse
+    function alignCatssRowsToDomGreek(catssRows, domGreekKeys) {
+        if (!catssRows || !catssRows.length) return { rowToDomIdxs: [], domIdxToRows: new Map() };
+
+        const rowToDomIdxs = catssRows.map(() => []);
+        const domIdxToRows = new Map();
+        let cursor = 0;
+
+        for (let rIdx = 0; rIdx < catssRows.length; rIdx++) {
+            const gks = catssRows[rIdx].gk || [];
+            for (let k = 0; k < gks.length; k++) {
+                const target = gks[k];
+                if (!target) continue;
+
+                let matchedDom = -1;
+                const lookMax = Math.min(domGreekKeys.length - 1, cursor + 5);
+
+                // Exact match within small lookahead window
+                for (let d = cursor; d <= lookMax; d++) {
+                    if (domGreekKeys[d] === target) { matchedDom = d; break; }
+                }
+                // Prefix / elision / movable-nu fallback (e.g. εποιησε vs εποιησεν, δ vs δε)
+                if (matchedDom === -1) {
+                    const pLen = Math.min(3, target.length);
+                    for (let d = cursor; d <= Math.min(domGreekKeys.length - 1, cursor + 3); d++) {
+                        const cand = domGreekKeys[d];
+                        if (!cand) continue;
+                        if (
+                            (target.length >= 3 && cand.startsWith(target.slice(0, pLen))) ||
+                            (cand.length >= 3 && target.startsWith(cand.slice(0, Math.min(3, cand.length)))) ||
+                            (target.length <= 2 && cand.startsWith(target[0]))
+                        ) {
+                            matchedDom = d;
+                            break;
+                        }
+                    }
+                }
+
+                if (matchedDom !== -1) {
+                    rowToDomIdxs[rIdx].push(matchedDom);
+                    if (!domIdxToRows.has(matchedDom)) domIdxToRows.set(matchedDom, []);
+                    domIdxToRows.get(matchedDom).push(rIdx);
+                    cursor = matchedDom + 1;
+                }
+            }
+        }
+        return { rowToDomIdxs, domIdxToRows };
+    }
+
+    function getFullHebrewGroupInfo(catssRows, groupIdx) {
+        if (groupIdx < 0) return null;
+        const rows = catssRows.filter((r) => r.hg === groupIdx);
+        if (!rows.length) return null;
+        const parts = rows.map((r) => r.h).filter(Boolean);
+        const fullDisplay = parts.join('').replace(/־(?=[^\s])/g, '');
+        const fullConsonants = normalizeHebrewConsonants(fullDisplay);
+        return { rows, parts, fullDisplay, fullConsonants };
+    }
+
+    // --- 5. LOCATE LEXFLOW'S BUILT-IN HEBREW SIDE-BY-SIDE WORDS (ZERO DOM MUTATION) ---
+    function findHebrewWordRangesInPage(targetBook, targetChap, targetVerse, targetConsonants, targetGroupIdx) {
+        const eng = mapLxxToEnglishRef(targetBook, targetChap, targetVerse);
+        const candidates = [];
+
+        // Scan visible elements outside #lfLxxDrawer that hold Hebrew Unicode text
+        const hebRoots = [];
+        const allVerseTagged = document.querySelectorAll(
+            `[data-book-num="${eng.b}"][data-chapter-num="${eng.c}"][data-verse-num="${eng.v}"], ` +
+            `[data-book="${eng.b}"][data-chapter="${eng.c}"][data-verse="${eng.v}"], ` +
+            `[data-verse-num="${eng.v}"], [data-verse="${eng.v}"]`
+        );
+        allVerseTagged.forEach((el) => {
+            if (el.closest('#lfLxxDrawer, #lfOtExpOverlay, #lfFlowModalOverlay')) return;
+            if (/[\u05D0-\u05EA]/.test(el.textContent || '')) {
+                const r = el.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) hebRoots.push(el);
+            }
+        });
+
+        // Fallback: if Hebrew side-by-side pane doesn't use data-verse attributes, scan visible Hebrew containers by verse number
+        if (!hebRoots.length) {
+            const containers = document.querySelectorAll('div, p, li, tr, span');
+            for (let i = 0; i < containers.length; i++) {
+                const el = containers[i];
+                if (el.closest('#lfLxxDrawer, #lfOtExpOverlay, #lfFlowModalOverlay, script, style')) continue;
+                if (el.children.length > 40) continue;
+                const txt = el.textContent || '';
+                if (!/[\u05D0-\u05EA]/.test(txt) || txt.length > 900) continue;
+                const r = el.getBoundingClientRect();
+                if (r.width === 0 || r.height === 0) continue;
+                const leadNum = txt.trim().match(/^(?:v\.?\s*)?(\d{1,3})\b/);
+                if (leadNum && parseInt(leadNum[1], 10) === eng.v) {
+                    hebRoots.push(el);
+                }
+            }
+        }
+
+        if (!hebRoots.length) return [];
+
+        // Collect every Hebrew word Range (splitting on spaces & Maqqef ־) inside the matched verse container(s)
+        const hebTokens = [];
+        const seenNodes = new Set();
+        hebRoots.forEach((root) => {
+            const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = tw.nextNode())) {
+                if (seenNodes.has(node)) continue;
+                seenNodes.add(node);
+                const val = node.nodeValue || '';
+                if (!/[\u05D0-\u05EA]/.test(val)) continue;
+                const re = /[\u0591-\u05F4]+/g;
+                let m;
+                while ((m = re.exec(val)) !== null) {
+                    // Split further on Maqqef (\u05BE) if needed, keeping full chunk too
+                    const chunk = m[0];
+                    const cons = normalizeHebrewConsonants(chunk);
+                    if (!cons) continue;
+                    hebTokens.push({
+                        raw: chunk,
+                        cons,
+                        node,
+                        start: m.index,
+                        end: m.index + chunk.length,
+                        idx: hebTokens.length
+                    });
+                }
+            }
+        });
+
+        if (!hebTokens.length || !targetConsonants) return [];
+
+        // Score by exact consonantal match + positional proximity to targetGroupIdx
+        for (let i = 0; i < hebTokens.length; i++) {
+            const t = hebTokens[i];
+            let score = 0;
+            if (t.cons === targetConsonants) score = 10;
+            else if (t.cons.includes(targetConsonants) && targetConsonants.length >= 2) score = 7;
+            else if (targetConsonants.includes(t.cons) && t.cons.length >= 2) score = 6;
+            if (score > 0) {
+                const dist = targetGroupIdx >= 0 ? Math.abs(i - targetGroupIdx) : 0;
+                candidates.push({ tok: t, score: score - dist * 0.35 });
+            }
+        }
+
+        if (!candidates.length) return [];
+        candidates.sort((a, b) => b.score - a.score);
+        const best = candidates[0].tok;
+        try {
+            const r = document.createRange();
+            r.setStart(best.node, best.start);
+            r.setEnd(best.node, best.end);
+            return [{ range: r, raw: best.raw }];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function setHebrewHighlight(kind, rangeObjs) {
+        const name = kind === 'pin' ? 'lf-catss-heb-pin' : 'lf-catss-heb-hover';
+        if (supportsCssHighlights) {
+            if (!rangeObjs || !rangeObjs.length) CSS.highlights.delete(name);
+            else {
+                try { CSS.highlights.set(name, new Highlight(...rangeObjs.map((x) => x.range))); } catch (e) {}
+            }
+        }
+    }
+
+    // --- 6. BIDIRECTIONAL SYNC: LXX WORD <-> HEBREW SIDE-BY-SIDE & INSPECTOR ---
+    function getDrawerBookChap() {
+        const bSel = document.getElementById('lfLxxBookSel');
+        const cSel = document.getElementById('lfLxxChapSel');
+        return {
+            bookNum: bSel ? parseInt(bSel.value, 10) : 0,
+            chapNum: cSel ? parseInt(cSel.value, 10) : 0
+        };
+    }
+
+    function isSyncHighlightEnabled() {
+        const btn = document.getElementById('lfLxxCrossHlBtn');
+        return !btn || btn.classList.contains('active');
+    }
+
+    async function handleLxxWordInteraction(wordEl, mode) {
+        const verseRow = wordEl.closest('.lf-lxx-verse-row');
+        if (!verseRow) return;
+        const { bookNum, chapNum } = getDrawerBookChap();
+        const lxxVerse = parseInt(verseRow.dataset.lxxVerse || '0', 10);
+        if (!bookNum || !chapNum || !lxxVerse) return;
+
+        const bookData = await getCatssBook(bookNum);
+        if (!bookData) return;
+
+        const catssRows = getCatssVerseRows(bookData, bookNum, chapNum, lxxVerse);
+        if (!catssRows || !catssRows.length) return;
+
+        const wordEls = Array.from(verseRow.querySelectorAll('.lf-lxx-word'));
+        const domIdx = wordEls.indexOf(wordEl);
+        if (domIdx < 0) return;
+
+        const domGreekKeys = wordEls.map((el) => normalizeGreek(el.querySelector('.lf-lxx-grk')?.textContent || ''));
+        const { rowToDomIdxs, domIdxToRows } = alignCatssRowsToDomGreek(catssRows, domGreekKeys);
+        const matchedRowIdxs = domIdxToRows.get(domIdx) || [];
+        if (!matchedRowIdxs.length) {
+            if (mode === 'hover') setHebrewHighlight('hover', []);
+            return;
+        }
+
+        const primaryRow = catssRows[matchedRowIdxs[0]];
+        const groupInfo = primaryRow.hg >= 0 ? getFullHebrewGroupInfo(catssRows, primaryRow.hg) : null;
+
+        // Highlight sibling Greek words translated from the SAME Hebrew word (e.g. ὁ + θεὸς from אֱלֹהִים)
+        const sibCls = mode === 'pin' ? 'catss-heb-sibling-pin' : 'catss-heb-sibling-hover';
+        document.querySelectorAll(`.${sibCls}`).forEach((el) => el.classList.remove(sibCls));
+        if (groupInfo) {
+            catssRows.forEach((r, ri) => {
+                if (r.hg === primaryRow.hg) {
+                    (rowToDomIdxs[ri] || []).forEach((di) => {
+                        if (wordEls[di]) wordEls[di].classList.add(sibCls);
+                    });
+                }
+            });
+        }
+
+        // Sync-highlight exact Hebrew word in LexFlow's Side-by-Side Hebrew pane
+        let matchedHebSpans = [];
+        if (isSyncHighlightEnabled() && groupInfo && groupInfo.fullConsonants) {
+            matchedHebSpans = findHebrewWordRangesInPage(bookNum, chapNum, lxxVerse, groupInfo.fullConsonants, primaryRow.hg);
+            setHebrewHighlight(mode, matchedHebSpans);
+        } else if (mode === 'hover') {
+            setHebrewHighlight('hover', []);
+        }
+
+        // On click (pin), inject the Exact CATSS Hebrew Alignment card into the LXX bottom inspector
+        if (mode === 'pin') {
+            const inspector = document.getElementById('lfLxxInspector');
+            if (inspector) {
+                setTimeout(() => {
+                    const prev = inspector.querySelector('#lfCatssAlignBanner');
+                    if (prev) prev.remove();
+
+                    const banner = document.createElement('div');
+                    banner.id = 'lfCatssAlignBanner';
+                    banner.className = 'lf-catss-align-banner';
+
+                    if (primaryRow.f === 'plus') {
+                        banner.innerHTML = `
+                            <span class="lf-catss-flag plus">+ LXX Plus</span>
+                            <span style="font-size:12px;color:#334155;">No direct Masoretic Hebrew equivalent in CATSS alignment${primaryRow.n ? ` · <em>${escapeHtml(primaryRow.n)}</em>` : ''}</span>
+                        `;
+                    } else {
+                        const pointedHeb = matchedHebSpans.length ? matchedHebSpans[0].raw : (groupInfo ? groupInfo.fullDisplay : primaryRow.h);
+                        const partDetail = groupInfo && groupInfo.parts.length > 1
+                            ? ` <span style="font-size:11px;color:#64748b;">(exact element: <span dir="rtl" style="font-family:'SBL Hebrew','Ezra SIL',serif;font-size:14px;color:#0f172a;">${escapeHtml(primaryRow.h)}</span>)</span>`
+                            : '';
+                        banner.innerHTML = `
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <span class="lf-catss-flag exact">MT ↔ LXX Exact</span>
+                                    <span dir="rtl" style="font-family:'SBL Hebrew','Ezra SIL','Times New Roman',serif;font-size:21px;font-weight:700;color:#7c2d12;line-height:1.2;">${escapeHtml(pointedHeb)}</span>
+                                    ${partDetail}
+                                </div>
+                                ${primaryRow.n ? `<span style="font-size:11px;color:#9a3412;font-style:italic;">${escapeHtml(primaryRow.n)}</span>` : ''}
+                            </div>
+                        `;
+                    }
+                    inspector.appendChild(banner);
+                }, 0);
+            }
+        }
+    }
+
+    // Reverse direction: Hover or Click a HEBREW word in LexFlow's Side-by-Side pane -> light up EXACT Greek LXX word(s)
+    let hebHoverRaf = 0;
+    let lastHebSig = '';
+
+    async function handlePageHebrewInteraction(clientX, clientY, isPinClick) {
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open') || !isSyncHighlightEnabled()) return;
+
+        const { bookNum, chapNum } = getDrawerBookChap();
+        if (!bookNum || !chapNum || !cachedBookNums.has(bookNum)) return;
+
+        let caretRange = null;
+        if (document.caretRangeFromPoint) caretRange = document.caretRangeFromPoint(clientX, clientY);
+        else if (document.caretPositionFromPoint) {
+            const p = document.caretPositionFromPoint(clientX, clientY);
+            if (p && p.offsetNode) {
+                caretRange = document.createRange();
+                caretRange.setStart(p.offsetNode, p.offset);
+            }
+        }
+        if (!caretRange || !caretRange.startContainer || caretRange.startContainer.nodeType !== 3) return;
+
+        const textNode = caretRange.startContainer;
+        if (textNode.parentElement && textNode.parentElement.closest('#lfLxxDrawer')) return;
+        const val = textNode.nodeValue || '';
+        if (!/[\u05D0-\u05EA]/.test(val)) return;
+
+        const off = caretRange.startOffset;
+        let s = off, e = off;
+        while (s > 0 && /[\u0591-\u05F4]/.test(val[s - 1])) s--;
+        while (e < val.length && /[\u0591-\u05F4]/.test(val[e])) e++;
+        const rawHeb = val.slice(s, e);
+        const consKey = normalizeHebrewConsonants(rawHeb);
+        if (!consKey) return;
+
+        const sig = `${bookNum}_${chapNum}_${s}_${consKey}`;
+        if (!isPinClick && sig === lastHebSig) return;
+        lastHebSig = sig;
+
+        // Detect verse number from ancestor data attribute or leading number
+        let verseNum = 0;
+        let cur = textNode.parentElement;
+        while (cur && cur !== document.body) {
+            const vAttr = cur.dataset && (cur.dataset.verseNum || cur.dataset.verse);
+            if (vAttr && /^\d+$/.test(vAttr)) { verseNum = parseInt(vAttr, 10); break; }
+            const txt = (cur.textContent || '').trim();
+            if (txt.length < 900) {
+                const m = txt.match(/^(?:v\.?\s*)?(\d{1,3})\b/);
+                if (m && cur.querySelectorAll('div, p').length <= 4) { verseNum = parseInt(m[1], 10); break; }
+            }
+            cur = cur.parentElement;
+        }
+        if (!verseNum) return;
+
+        const bookData = await getCatssBook(bookNum);
+        const catssRows = getCatssVerseRows(bookData, bookNum, chapNum, verseNum);
+        if (!catssRows || !catssRows.length) return;
+
+        // Find matching Hebrew group in CATSS rows
+        const groupMap = new Map();
+        catssRows.forEach((r, ri) => {
+            if (r.hg < 0) return;
+            if (!groupMap.has(r.hg)) groupMap.set(r.hg, []);
+            groupMap.get(r.hg).push(ri);
+        });
+
+        let bestGroup = -1;
+        let bestScore = 0;
+        groupMap.forEach((rowIdxs, hg) => {
+            const info = getFullHebrewGroupInfo(catssRows, hg);
+            if (!info) return;
+            let sc = 0;
+            if (info.fullConsonants === consKey) sc = 10;
+            else if (info.fullConsonants.includes(consKey) && consKey.length >= 2) sc = 7;
+            else if (consKey.includes(info.fullConsonants) && info.fullConsonants.length >= 2) sc = 6;
+            if (sc > bestScore) { bestScore = sc; bestGroup = hg; }
+        });
+
+        if (bestGroup < 0) return;
+
+        // Highlight hovered/clicked Hebrew word in page
+        try {
+            const hr = document.createRange();
+            hr.setStart(textNode, s);
+            hr.setEnd(textNode, e);
+            setHebrewHighlight(isPinClick ? 'pin' : 'hover', [{ range: hr, raw: rawHeb }]);
+        } catch (err) {}
+
+        // Highlight exact translated Greek word(s) inside #lfLxxDrawer
+        const body = document.getElementById('lfLxxDrawerBody');
+        if (!body) return;
+        const verseRow = body.querySelector(`.lf-lxx-verse-row[data-lxx-verse="${verseNum}"]`);
+        if (!verseRow) return;
+
+        const wordEls = Array.from(verseRow.querySelectorAll('.lf-lxx-word'));
+        const domGreekKeys = wordEls.map((el) => normalizeGreek(el.querySelector('.lf-lxx-grk')?.textContent || ''));
+        const { rowToDomIdxs } = alignCatssRowsToDomGreek(catssRows, domGreekKeys);
+
+        const cls = isPinClick ? 'catss-heb-sibling-pin' : 'catss-heb-sibling-hover';
+        body.querySelectorAll(`.${cls}`).forEach((el) => el.classList.remove(cls));
+
+        const matchedGrkEls = [];
+        const groupRowIdxs = groupMap.get(bestGroup) || [];
+        groupRowIdxs.forEach((ri) => {
+            (rowToDomIdxs[ri] || []).forEach((di) => {
+                if (wordEls[di]) {
+                    wordEls[di].classList.add(cls);
+                    matchedGrkEls.push(wordEls[di]);
+                }
+            });
+        });
+
+        if (isPinClick && matchedGrkEls.length) {
+            matchedGrkEls[0].click();
+            const br = body.getBoundingClientRect();
+            const vr = verseRow.getBoundingClientRect();
+            if (vr.top < br.top || vr.bottom > br.bottom) {
+                verseRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }
+
+    // --- 7. INLINE MT <-> LXX PARALLEL TABLE VIEW INSIDE THE DRAWER ---
+    async function renderParallelTableView() {
+        const body = document.getElementById('lfLxxDrawerBody');
+        if (!body) return;
+        const { bookNum, chapNum } = getDrawerBookChap();
+        const bookData = await getCatssBook(bookNum);
+
+        if (!bookData) {
+            body.innerHTML = `
+                <div style="text-align:center;padding:28px 14px;">
+                    <strong style="font-size:14.5px;color:#7c2d12;">No CATSS Alignment Loaded for ${escapeHtml(OT_BOOK_NAMES[bookNum] || 'this book')}</strong>
+                    <p style="font-size:12.5px;color:#475569;margin:8px 0 14px;line-height:1.5;">
+                        Click <strong>MT↔LXX</strong> above to import the free official CATSS <code>.par</code> file for ${escapeHtml(OT_BOOK_NAMES[bookNum] || 'this book')} (or all 39 books at once).
+                    </p>
+                    <button type="button" class="lf-lxx-btn teal" id="lfCatssOpenImpFromTable">Open MT↔LXX Importer</button>
+                </div>
+            `;
+            const b = body.querySelector('#lfCatssOpenImpFromTable');
+            if (b) b.onclick = () => openCatssManagerModal();
+            return;
+        }
+
+        const chapData = bookData[chapNum] || bookData[mapLxxToEnglishRef(bookNum, chapNum, 1).c];
+        if (!chapData) {
+            body.innerHTML = `<div style="padding:24px;text-align:center;color:#64748b;">Chapter ${chapNum} not found in cached CATSS alignment.</div>`;
+            return;
+        }
+
+        const verses = Object.keys(chapData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
+        const frag = document.createDocumentFragment();
+
+        verses.forEach((vNum) => {
+            const rows = chapData[vNum] || [];
+            const card = document.createElement('div');
+            card.className = 'lf-catss-vblock';
+            const rowsHtml = rows.map((r) => {
+                const flagHtml = r.f === 'plus'
+                    ? '<span class="lf-catss-flag plus">+ LXX</span>'
+                    : r.f === 'minus'
+                    ? '<span class="lf-catss-flag minus">− MT</span>'
+                    : r.f === 'vorlage'
+                    ? '<span class="lf-catss-flag vorlage">Vorlage</span>'
+                    : '';
+                return `
+                    <tr>
+                        <td dir="rtl" class="lf-catss-col-heb">${escapeHtml(r.h || '—')}</td>
+                        <td class="lf-catss-col-grk">${escapeHtml(r.g || '—')}</td>
+                        <td class="lf-catss-col-note">${flagHtml}${r.n ? ` <span>${escapeHtml(r.n)}</span>` : ''}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="lf-catss-vhead">${escapeHtml(OT_BOOK_NAMES[bookNum] || '')} ${chapNum}:${vNum}</div>
+                <table class="lf-catss-table">
+                    <thead><tr><th style="text-align:right;">Hebrew (MT)</th><th>Greek (LXX)</th><th>Notes</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            `;
+            frag.appendChild(card);
+        });
+
+        body.innerHTML = '';
+        body.appendChild(frag);
+    }
+
+    // --- 8. CATSS PARALLEL IMPORTER & STATUS MODAL ---
+    function openCatssManagerModal() {
+        ensureCatssStyles();
+        let overlay = document.getElementById('lfCatssModalOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'lfCatssModalOverlay';
+            overlay.className = 'modal';
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+            document.body.appendChild(overlay);
+        }
+
+        const loadedList = Array.from(cachedBookNums).sort((a, b) => a - b).map((n) => OT_BOOK_NAMES[n]).join(', ');
+
+        overlay.innerHTML = `
+            <div class="lf-catss-modal-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fff7ed;border-bottom:1px solid #fed7aa;">
+                    <div>
+                        <strong style="font-size:15.5px;color:#7c2d12;">Exact Hebrew (MT) ↔ Greek (LXX) Word Alignment</strong>
+                        <div style="font-size:11.5px;color:#9a3412;">CATSS Parallel Database (Tov &amp; Kraft, UPenn CCAT) · Offline IndexedDB</div>
+                    </div>
+                    <button type="button" class="lf-lxx-btn" id="lfCatssCloseBtn">✕</button>
+                </div>
+                <div style="padding:16px 18px 20px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:#1e293b;overflow-y:auto;">
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;line-height:1.55;">
+                        <strong>Step 1 — Free Non-Commercial Official Files:</strong><br/>
+                        Open UPenn CCAT’s official <a href="${CCAT_PARALLEL_URL}" target="_blank" rel="noopener" style="color:#0f766e;font-weight:700;">CATSS Parallel Directory</a> and save any <code>.par</code> book files you want (e.g., <code>01.Genesis.par</code>, <code>19.Psalms.par</code>, <code>23.Isaiah.par</code>, or all 39 books). For personal/ministry use, please review the <a href="${CCAT_DECLARATION_URL}" target="_blank" rel="noopener" style="color:#0f766e;font-weight:600;">CCAT User Declaration</a>.
+                    </div>
+                    <div style="background:#f0fdfa;border:1.5px dashed #14b8a6;border-radius:10px;padding:16px;text-align:center;">
+                        <strong style="color:#0f766e;display:block;margin-bottom:6px;">Step 2 — Import &amp; Cache Offline in LexFlow</strong>
+                        <div style="font-size:12px;color:#475569;margin-bottom:12px;">Select one <code>.par</code> file, all 39 <code>.par</code> files at once, or a <code>.zip</code> archive.</div>
+                        <input type="file" id="lfCatssFileInput" accept=".par,.txt,.zip" multiple style="display:none;" />
+                        <button type="button" class="lf-lxx-btn teal" id="lfCatssPickFilesBtn" style="padding:8px 16px;font-size:13px;">⬆ Select CATSS .par / .zip File(s)</button>
+                        <div id="lfCatssImportStatus" style="margin-top:10px;font-size:12px;color:#0f766e;font-weight:600;"></div>
+                    </div>
+                    <div style="font-size:12px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 13px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <strong>Cached Alignment Books (${cachedBookNums.size} / 39):</strong>
+                            ${cachedBookNums.size > 0 ? '<button type="button" class="lf-lxx-btn" id="lfCatssWipeBtn" style="font-size:11px;color:#be123c;">Clear Cache</button>' : ''}
+                        </div>
+                        <div style="line-height:1.45;color:#64748b;">${loadedList ? escapeHtml(loadedList) : 'None loaded yet. Once imported, hovering or clicking any Greek LXX word or Hebrew Side-by-Side word highlights its exact counterpart.'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        overlay.querySelector('#lfCatssCloseBtn').onclick = () => overlay.classList.remove('open');
+        const fileInput = overlay.querySelector('#lfCatssFileInput');
+        const statusEl = overlay.querySelector('#lfCatssImportStatus');
+        overlay.querySelector('#lfCatssPickFilesBtn').onclick = () => fileInput.click();
+
+        const wipeBtn = overlay.querySelector('#lfCatssWipeBtn');
+        if (wipeBtn) {
+            wipeBtn.onclick = async () => {
+                if (!confirm('Clear all cached CATSS Hebrew-Greek alignments?')) return;
+                await idbClearAll();
+                await refreshCachedBookList();
+                openCatssManagerModal();
+            };
+        }
+
+        fileInput.onchange = async (e) => {
+            const picked = Array.from(e.target.files || []);
+            if (!picked.length) return;
+            statusEl.style.color = '#0f766e';
+            statusEl.textContent = `Reading ${picked.length} file(s)...`;
+
+            let totalBooksSaved = 0;
+            let totalRows = 0;
+            try {
+                for (let i = 0; i < picked.length; i++) {
+                    const f = picked[i];
+                    const items = /\.zip$/i.test(f.name)
+                        ? await unzipParFilesFromBuffer(await f.arrayBuffer())
+                        : [{ fileName: f.name, text: await f.text() }];
+
+                    for (let j = 0; j < items.length; j++) {
+                        statusEl.textContent = `Parsing ${items[j].fileName}...`;
+                        const parsed = parseCatssParText(items[j].text, items[j].fileName);
+                        const bNums = Object.keys(parsed.books).map((k) => parseInt(k, 10));
+                        for (let bi = 0; bi < bNums.length; bi++) {
+                            const bNum = bNums[bi];
+                            await idbPut(IDB_STORE, bNum, parsed.books[bNum]);
+                            catssMemCache.set(bNum, parsed.books[bNum]);
+                            totalBooksSaved++;
+                        }
+                        totalRows += parsed.rowCount;
+                    }
+                }
+                await refreshCachedBookList();
+                statusEl.textContent = `✓ Imported ${totalBooksSaved} book(s) (${totalRows.toLocaleString()} exact MT↔LXX alignments) offline!`;
+                if (tableModeActive) renderParallelTableView();
+                setTimeout(() => openCatssManagerModal(), 900);
+            } catch (err) {
+                statusEl.style.color = '#be123c';
+                statusEl.textContent = `Import error: ${err.message}`;
+            }
+        };
+
+        overlay.classList.add('open');
+    }
+
+    // --- 9. STYLES, CONTROLS INJECTION & KUDOS ATTRIBUTION ---
+    function ensureCatssStyles() {
+        if (document.getElementById('lfCatssParallelStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfCatssParallelStyles';
+        st.textContent = `
+            ::highlight(lf-catss-heb-hover) {
+                background-color: rgba(251, 146, 60, 0.42);
+                color: inherit;
+            }
+            ::highlight(lf-catss-heb-pin) {
+                background-color: rgba(234, 88, 12, 0.30);
+                color: inherit;
+            }
+            .lf-lxx-word.catss-heb-sibling-hover {
+                background: #ffedd5 !important;
+                box-shadow: 0 0 0 1.5px #f97316;
+            }
+            .lf-lxx-word.catss-heb-sibling-pin {
+                background: #fed7aa !important;
+                box-shadow: 0 0 0 1.5px #ea580c;
+            }
+            .lf-catss-align-banner {
+                margin-top: 8px; padding: 7px 10px; border-radius: 8px;
+                background: #fff7ed; border: 1px solid #fdba74;
+            }
+            .lf-catss-flag {
+                display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase;
+                letter-spacing: 0.04em; padding: 1.5px 7px; border-radius: 999px;
+            }
+            .lf-catss-flag.exact { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
+            .lf-catss-flag.plus { background: #ccfbf1; color: #0f766e; border: 1px solid #5eead4; }
+            .lf-catss-flag.minus { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+            .lf-catss-flag.vorlage { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+            #lfCatssModalOverlay {
+                position: fixed; inset: 0; z-index: 100050;
+                background: rgba(15, 23, 42, 0.54); backdrop-filter: blur(4px);
+                display: none; align-items: center; justify-content: center; padding: 18px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfCatssModalOverlay.open { display: flex; }
+            .lf-catss-modal-card {
+                width: min(620px, 95vw); max-height: 86vh; background: #ffffff;
+                border-radius: 16px; border: 1.5px solid #fdba74; overflow: hidden;
+                box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
+                display: flex; flex-direction: column;
+            }
+            .lf-catss-vblock { margin-bottom: 14px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+            .lf-catss-vhead {
+                background: #f8fafc; padding: 5px 10px; font-size: 11.5px; font-weight: 800;
+                color: #0f766e; border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-catss-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            .lf-catss-table th {
+                font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+                color: #64748b; background: #ffffff; padding: 4px 8px; border-bottom: 1px solid #f1f5f9; text-align: left;
+            }
+            .lf-catss-table td { padding: 5px 8px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+            .lf-catss-table tr:hover td { background: #fff7ed; }
+            .lf-catss-col-heb { font-family: "SBL Hebrew", "Ezra SIL", "Times New Roman", serif; font-size: 18px; color: #7c2d12; text-align: right; width: 34%; }
+            .lf-catss-col-grk { font-family: "SBL Greek", "Gentium Plus", Georgia, serif; font-size: 16px; color: #0f172a; width: 38%; }
+            .lf-catss-col-note { font-size: 11px; color: #64748b; width: 28%; }
+            #lfCatssKudosCard {
+                margin-top: 10px; padding: 13px 15px; border-radius: 12px;
+                border: 1.5px solid rgba(234, 88, 12, 0.30);
+                background: linear-gradient(135deg, rgba(255, 247, 237, 0.95) 0%, rgba(254, 243, 199, 0.72) 100%);
+                color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: left;
+            }
+            #lfCatssKudosCard a { color: #9a3412; font-weight: 600; text-decoration: underline; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function updateCatssStatusBadges() {
+        const mgrBtn = document.getElementById('lfCatssMgrBtn');
+        if (mgrBtn) {
+            mgrBtn.textContent = cachedBookNums.size > 0 ? `MT↔LXX (${cachedBookNums.size})` : 'MT↔LXX';
+            mgrBtn.classList.toggle('active', cachedBookNums.size > 0);
+        }
+    }
+
+    function injectDrawerCatssControls() {
+        const controls = document.querySelector('#lfLxxDrawer .lf-lxx-controls');
+        if (!controls || document.getElementById('lfCatssMgrBtn')) return;
+        ensureCatssStyles();
+
+        const mgrBtn = document.createElement('button');
+        mgrBtn.type = 'button';
+        mgrBtn.id = 'lfCatssMgrBtn';
+        mgrBtn.className = 'lf-lxx-btn';
+        mgrBtn.title = 'Load official CATSS Parallel MT–LXX alignment (.par / .zip) for exact Hebrew-Greek word linking';
+        mgrBtn.textContent = cachedBookNums.size > 0 ? `MT↔LXX (${cachedBookNums.size})` : 'MT↔LXX';
+        mgrBtn.classList.toggle('active', cachedBookNums.size > 0);
+        mgrBtn.onclick = () => openCatssManagerModal();
+
+        const tblBtn = document.createElement('button');
+        tblBtn.type = 'button';
+        tblBtn.id = 'lfCatssTableBtn';
+        tblBtn.className = 'lf-lxx-btn';
+        tblBtn.title = 'Toggle line-by-line Hebrew (MT) ↔ Greek (LXX) alignment table';
+        tblBtn.textContent = 'Table';
+        tblBtn.onclick = () => {
+            tableModeActive = !tableModeActive;
+            tblBtn.classList.toggle('active', tableModeActive);
+            if (tableModeActive) {
+                renderParallelTableView();
+            } else {
+                const cSel = document.getElementById('lfLxxChapSel');
+                if (cSel) cSel.dispatchEvent(new Event('change'));
+            }
+        };
+
+        controls.appendChild(mgrBtn);
+        controls.appendChild(tblBtn);
+
+        // Keep Table view in sync when book/chapter changes
+        const bSel = document.getElementById('lfLxxBookSel');
+        const cSel = document.getElementById('lfLxxChapSel');
+        if (bSel) bSel.addEventListener('change', () => { if (tableModeActive) setTimeout(renderParallelTableView, 60); });
+        if (cSel) cSel.addEventListener('change', () => { if (tableModeActive) setTimeout(renderParallelTableView, 60); });
+
+        // Delegate hover & click on Greek words inside #lfLxxDrawerBody for exact CATSS Hebrew alignment
+        const body = document.getElementById('lfLxxDrawerBody');
+        if (body && !body.__lfCatssBound) {
+            body.__lfCatssBound = true;
+            body.addEventListener('mouseover', (e) => {
+                const w = e.target && e.target.closest && e.target.closest('.lf-lxx-word');
+                if (w) handleLxxWordInteraction(w, 'hover');
+            });
+            body.addEventListener('mouseleave', () => {
+                setHebrewHighlight('hover', []);
+                document.querySelectorAll('.catss-heb-sibling-hover').forEach((el) => el.classList.remove('catss-heb-sibling-hover'));
+            });
+            body.addEventListener('click', (e) => {
+                const w = e.target && e.target.closest && e.target.closest('.lf-lxx-word');
+                if (w) handleLxxWordInteraction(w, 'pin');
+            });
+        }
+    }
+
+    function injectCatssKudosCard() {
+        const lxxCard = document.getElementById('lfLxxKudosCard');
+        if (!lxxCard || document.getElementById('lfCatssKudosCard')) return;
+        ensureCatssStyles();
+
+        const card = document.createElement('div');
+        card.id = 'lfCatssKudosCard';
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:14px;color:#7c2d12;">א↔α Parallel Aligned MT–LXX Database (CATSS)</strong>
+                <span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#ffedd5;color:#9a3412;border:1px solid #fdba74;">Non-Commercial Scholarly Data</span>
+            </div>
+            <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#334155;">
+                Exact word-for-word Hebrew (Masoretic Text) to Greek (Septuagint) alignment powered by the
+                <a href="${CCAT_PARALLEL_URL}" target="_blank" rel="noopener">CATSS Parallel Aligned Hebrew–Greek Jewish Scriptures</a>
+                directed by <strong>Emanuel Tov</strong> (Jerusalem) and <strong>Robert A. Kraft</strong> (Philadelphia) via
+                <strong>CCAT</strong> (Center for Computer Analysis of Texts, University of Pennsylvania).
+            </p>
+            <p style="margin:0;font-size:11.5px;line-height:1.45;color:#475569;">
+                With gratitude to <strong>TLG (Thesaurus Linguae Graecae)</strong> and <strong>UBS (United Bible Societies)</strong> for derivative permissions. Imported locally by the user for free, non-commercial biblical study.
+            </p>
+        `;
+        lxxCard.insertAdjacentElement('afterend', card);
+    }
+
+    function bindPageHebrewListeners() {
+        if (window.__lfCatssPageHebBound) return;
+        window.__lfCatssPageHebBound = true;
+
+        document.addEventListener('mousemove', (e) => {
+            const drawer = document.getElementById('lfLxxDrawer');
+            if (!drawer || !drawer.classList.contains('open') || !cachedBookNums.size) return;
+            if (e.target && e.target.closest && e.target.closest('#lfLxxDrawer')) return;
+            const x = e.clientX, y = e.clientY;
+            if (hebHoverRaf) return;
+            hebHoverRaf = requestAnimationFrame(() => {
+                hebHoverRaf = 0;
+                handlePageHebrewInteraction(x, y, false);
+            });
+        }, { passive: true });
+
+        document.addEventListener('click', (e) => {
+            const drawer = document.getElementById('lfLxxDrawer');
+            if (!drawer || !drawer.classList.contains('open') || !cachedBookNums.size) return;
+            if (e.target && e.target.closest && e.target.closest('#lfLxxDrawer')) return;
+            handlePageHebrewInteraction(e.clientX, e.clientY, true);
+        }, true);
+    }
+
+    function initCatssAddon() {
+        ensureCatssStyles();
+        refreshCachedBookList();
+        bindPageHebrewListeners();
+        injectDrawerCatssControls();
+        injectCatssKudosCard();
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => {
+                injectDrawerCatssControls();
+                injectCatssKudosCard();
+            });
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCatssAddon);
+    } else {
+        initCatssAddon();
+    }
+})();
+
+	/* === LEXFLOW FIX: NATIVE KUDOS CARDS (ELIRAN WONG + CATSS) === */
+(function () {
+    const REPO_URL = 'https://github.com/eliranwong/LXX-Rahlfs-1935';
+    const CCAT_URL = 'https://ccat.sas.upenn.edu/gopher/text/religion/biblical/parallel/';
+
+    function createNativeCreditCards() {
+        const cardStyle = [
+            'background:rgba(255,255,255,0.92)',
+            'border:1.5px solid rgba(148,163,184,0.34)',
+            'border-radius:14px',
+            'padding:16px 18px',
+            'box-shadow:0 2px 10px rgba(15,23,42,0.05)',
+            'text-align:left',
+            'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+            'box-sizing:border-box'
+        ].join(';');
+
+        const lxxCard = document.createElement('div');
+        lxxCard.id = 'lfKudosLxxCardNative';
+        lxxCard.style.cssText = cardStyle;
+        lxxCard.innerHTML = `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px;">
+                <strong style="font-size:15px;color:#0f172a;line-height:1.3;">Tagged Septuagint (LXX — Rahlfs 1935)</strong>
+                <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#ccfbf1;color:#0f766e;text-decoration:none;white-space:nowrap;">GitHub ↗</a>
+            </div>
+            <div style="font-size:12.5px;font-weight:600;color:#0f766e;margin-bottom:8px;">
+                Eliran Wong (LXX-Rahlfs-1935) &amp; <a href="https://marvel.bible/" target="_blank" rel="noopener noreferrer" style="color:#0f766e;text-decoration:underline;">Marvel.Bible</a> • Open-Source Greek OT
+            </div>
+            <p style="margin:0;font-size:13px;line-height:1.55;color:#334155;">
+                Provides the accented Rahlfs 1935 Greek Septuagint text, lexemes, English glosses, Strong’s mappings, and SBL transliteration—built upon Alfred Rahlfs’ critical text, CATSS/CCAT morphological tagging, and James Tauber’s morphology patches.
+            </p>
+        `;
+
+        const catssCard = document.createElement('div');
+        catssCard.id = 'lfKudosCatssCardNative';
+        catssCard.style.cssText = cardStyle;
+        catssCard.innerHTML = `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px;">
+                <strong style="font-size:15px;color:#0f172a;line-height:1.3;">Parallel Aligned MT–LXX Database (CATSS)</strong>
+                <a href="${CCAT_URL}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#ffedd5;color:#9a3412;text-decoration:none;white-space:nowrap;">UPenn CCAT ↗</a>
+            </div>
+            <div style="font-size:12.5px;font-weight:600;color:#b45309;margin-bottom:8px;">
+                Emanuel Tov, Robert A. Kraft &amp; CCAT (UPenn) • Non-Commercial Scholarship
+            </div>
+            <p style="margin:0;font-size:13px;line-height:1.55;color:#334155;">
+                Provides the exact word-for-word Hebrew (Masoretic Text) to Greek (Septuagint) parallel alignment database, with gratitude to TLG (Thesaurus Linguae Graecae) and UBS (United Bible Societies). Imported locally by users for free, non-commercial study.
+            </p>
+        `;
+
+        return { lxxCard, catssCard };
+    }
+
+    function findGrammarCard() {
+        const nodes = document.querySelectorAll('h1, h2, h3, h4, h5, strong, div, p, span');
+        let heading = null;
+        for (let i = 0; i < nodes.length; i++) {
+            const el = nodes[i];
+            if (el.closest('#lfLxxDrawer, #lfFlowModalOverlay, #lfOtExpOverlay, #lfCatssModalOverlay, script, style')) continue;
+            const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (/^Online Biblical Grammar & Layperson Pedagogy Resources$/i.test(txt)) {
+                if (!heading || heading.contains(el)) heading = el;
+            }
+        }
+        if (!heading) return null;
+
+        let cur = heading.parentElement;
+        while (cur && cur !== document.body) {
+            const txt = cur.textContent || '';
+            if (/Bill Mounce/i.test(txt) && !/Thayer|Berean Standard Bible|OpenScriptures/i.test(txt)) {
+                const parentTxt = cur.parentElement ? (cur.parentElement.textContent || '') : '';
+                if (/Thayer|Berean Standard Bible|OpenScriptures/i.test(parentTxt)) {
+                    return cur;
+                }
+            }
+            cur = cur.parentElement;
+        }
+        return null;
+    }
+
+    function injectNativeKudosCards() {
+        if (document.getElementById('lfKudosLxxCardNative')) return;
+
+        const grammarCard = findGrammarCard();
+        if (!grammarCard || !grammarCard.parentElement) return;
+
+        // Clean up any older injected wrappers
+        ['lfKudosVerifiedBundle', 'lfLxxKudosCard', 'lfCatssKudosCard'].forEach((id) => {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+        });
+
+        const parent = grammarCard.parentElement;
+        const { lxxCard, catssCard } = createNativeCreditCards();
+
+        const parentCs = window.getComputedStyle(parent);
+        const parentIsGrid =
+            parentCs.display === 'grid' ||
+            /grid-cols-2/i.test(parent.className || '');
+
+        if (parentIsGrid) {
+            parent.insertBefore(lxxCard, grammarCard);
+            parent.insertBefore(catssCard, grammarCard);
+            return;
+        }
+
+        const prev = grammarCard.previousElementSibling;
+        if (
+            prev &&
+            /Thayer|Berean Standard Bible/i.test(prev.textContent || '') &&
+            (window.getComputedStyle(prev).display === 'grid' || /grid-cols-2/i.test(prev.className || ''))
+        ) {
+            prev.appendChild(lxxCard);
+            prev.appendChild(catssCard);
+            return;
+        }
+
+        const row = document.createElement('div');
+        row.id = 'lfKudosNativeRow';
+        row.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px;';
+        row.appendChild(lxxCard);
+        row.appendChild(catssCard);
+        parent.insertBefore(row, grammarCard);
+    }
+
+    function initNativeKudos() {
+        injectNativeKudosCards();
+        setTimeout(injectNativeKudosCards, 250);
+        setTimeout(injectNativeKudosCards, 1000);
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('button, a, [role="button"]');
+            if (btn && /kudos|credit/i.test(btn.textContent || '')) {
+                setTimeout(injectNativeKudosCards, 20);
+                setTimeout(injectNativeKudosCards, 150);
+            }
+        }, true);
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => {
+                if (!document.getElementById('lfKudosLxxCardNative')) injectNativeKudosCards();
+            });
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNativeKudos);
+    } else {
+        initNativeKudos();
+    }
+})();
+
+	/* === LEXFLOW ADD-ON: TOOLS -> LEXICON & RESEARCH -> "MT-LXX BOOKS" EXTERNAL LINK === */
+(function () {
+    const LINK_ID = 'lfToolsMtLxxLink';
+    const LINK_TITLE = 'MT-LXX Books';
+    const LINK_SUBTITLE = 'Download individual CATSS .par alignment files (UPenn CCAT)';
+    const MT_LXX_URL = 'https://ccat.sas.upenn.edu/gopher/text/religion/biblical/parallel/';
+
+    function findLexiconResearchHeading() {
+        const nodes = document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span, p, strong, dt, li, label');
+        let best = null;
+        for (let i = 0; i < nodes.length; i++) {
+            const el = nodes[i];
+            if (el.closest('#lfLxxDrawer, #lfFlowModalOverlay, #lfOtExpOverlay, #lfCatssModalOverlay, #editor, script, style')) continue;
+            const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (txt.length > 52 || !/lexicon\s*(?:&|and)\s*research/i.test(txt)) continue;
+            if (!best || best.contains(el)) best = el;
+        }
+        if (!best) return null;
+
+        // Walk up out of any inner <span> so we land on the actual section header element
+        let heading = best;
+        while (
+            heading.parentElement &&
+            heading.parentElement !== document.body &&
+            (heading.parentElement.textContent || '').replace(/\s+/g, ' ').trim().length <= 56 &&
+            !heading.parentElement.querySelector('a, button')
+        ) {
+            heading = heading.parentElement;
+        }
+        return heading;
+    }
+
+    function updateClonedLinkContent(linkEl) {
+        linkEl.removeAttribute('onclick');
+        linkEl.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+        linkEl.href = MT_LXX_URL;
+        linkEl.target = '_blank';
+        linkEl.rel = 'noopener noreferrer';
+        linkEl.title = 'Open UPenn CCAT Parallel MT–LXX directory to download individual book (.par) files';
+
+        const textNodes = [];
+        const tw = document.createTreeWalker(linkEl, NodeFilter.SHOW_TEXT);
+        let tn;
+        while ((tn = tw.nextNode())) {
+            if (tn.parentElement && tn.parentElement.closest('svg')) continue;
+            const trimmed = (tn.nodeValue || '').trim();
+            if (trimmed) textNodes.push({ node: tn, text: trimmed });
+        }
+
+        const wordNodes = [];
+        textNodes.forEach((item) => {
+            if (/^[↗→›»▸]+$/.test(item.text)) return;
+            if (!/[A-Za-z0-9]/.test(item.text) && item.text.length <= 4) {
+                item.node.nodeValue = '📚';
+                return;
+            }
+            wordNodes.push(item);
+        });
+
+        if (wordNodes.length >= 2) {
+            wordNodes[0].node.nodeValue = LINK_TITLE;
+            wordNodes[1].node.nodeValue = LINK_SUBTITLE;
+            for (let i = 2; i < wordNodes.length; i++) wordNodes[i].node.nodeValue = '';
+        } else if (wordNodes.length === 1) {
+            const orig = wordNodes[0].text;
+            const hasArrow = /[↗→]/.test(orig);
+            const hasLeadingSymbol = /^[^\x00-\x7F]+/.test(orig);
+            wordNodes[0].node.nodeValue = `${hasLeadingSymbol ? '📚 ' : ''}${LINK_TITLE}${hasArrow ? ' ↗' : ''}`;
+        } else {
+            linkEl.textContent = `${LINK_TITLE} ↗`;
+        }
+    }
+
+    function buildLinkFromTemplate(templateEl) {
+        if (!templateEl) {
+            const fallback = document.createElement('a');
+            fallback.id = LINK_ID;
+            fallback.href = MT_LXX_URL;
+            fallback.target = '_blank';
+            fallback.rel = 'noopener noreferrer';
+            fallback.title = LINK_SUBTITLE;
+            fallback.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;margin-top:4px;border-radius:9px;text-decoration:none;color:#0f766e;background:rgba(240,253,250,0.9);border:1px solid rgba(15,118,110,0.22);font-size:13px;font-weight:600;';
+            fallback.innerHTML = `<span>📚 ${LINK_TITLE}</span><span style="opacity:0.7;">↗</span>`;
+            return fallback;
+        }
+
+        if (templateEl.tagName === 'LI') {
+            const li = templateEl.cloneNode(true);
+            li.id = LINK_ID;
+            let a = li.querySelector('a');
+            if (!a) {
+                const btn = li.querySelector('button');
+                a = document.createElement('a');
+                if (btn) {
+                    a.className = btn.className;
+                    a.style.cssText = btn.style.cssText;
+                    a.innerHTML = btn.innerHTML;
+                    btn.replaceWith(a);
+                } else {
+                    li.innerHTML = '';
+                    li.appendChild(a);
+                }
+            }
+            a.style.textDecoration = 'none';
+            updateClonedLinkContent(a);
+            return li;
+        }
+
+        if (templateEl.tagName === 'A') {
+            const a = templateEl.cloneNode(true);
+            a.id = LINK_ID;
+            updateClonedLinkContent(a);
+            return a;
+        }
+
+        // Convert a sibling <button> template into a true external <a> link with identical classes
+        const a = document.createElement('a');
+        a.id = LINK_ID;
+        a.className = templateEl.className;
+        a.style.cssText = templateEl.style.cssText;
+        a.style.textDecoration = 'none';
+        a.innerHTML = templateEl.innerHTML;
+        updateClonedLinkContent(a);
+        return a;
+    }
+
+    function injectMtLxxToolsLink() {
+        if (document.getElementById(LINK_ID)) return;
+
+        const heading = findLexiconResearchHeading();
+        if (!heading) return;
+
+        // Case 1: Dedicated container immediately following the "Lexicon & Research" heading
+        const nextEl = heading.nextElementSibling;
+        if (nextEl && !/^(A|BUTTON)$/i.test(nextEl.tagName)) {
+            const items = nextEl.querySelectorAll(':scope > li, :scope > a, :scope > button');
+            if (items.length > 0) {
+                const newEl = buildLinkFromTemplate(items[items.length - 1]);
+                nextEl.appendChild(newEl);
+                return;
+            }
+        }
+
+        // Case 2: Flat sibling items under the same parent container
+        let lastSectionItem = null;
+        let cur = heading.nextElementSibling;
+        while (cur) {
+            const isItem = /^(A|BUTTON|LI)$/i.test(cur.tagName);
+            const wrappedLink = !isItem && cur.children.length <= 2 ? cur.querySelector('a, button') : null;
+            if (isItem) {
+                lastSectionItem = cur;
+            } else if (wrappedLink) {
+                lastSectionItem = wrappedLink;
+            } else {
+                // Reached the next section header or divider
+                break;
+            }
+            cur = cur.nextElementSibling;
+        }
+
+        if (lastSectionItem) {
+            const anchorTarget = lastSectionItem.parentElement === heading.parentElement ? lastSectionItem : lastSectionItem.closest('div, li') || lastSectionItem;
+            const newEl = buildLinkFromTemplate(lastSectionItem);
+            anchorTarget.insertAdjacentElement('afterend', newEl);
+            return;
+        }
+
+        // Fallback: insert directly after the heading
+        heading.insertAdjacentElement('afterend', buildLinkFromTemplate(null));
+    }
+
+    function initMtLxxToolsLink() {
+        injectMtLxxToolsLink();
+        setTimeout(injectMtLxxToolsLink, 300);
+        setTimeout(injectMtLxxToolsLink, 1000);
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('button, [role="button"]');
+            if (btn && /tools/i.test(btn.textContent || '')) {
+                setTimeout(injectMtLxxToolsLink, 25);
+                setTimeout(injectMtLxxToolsLink, 150);
+            }
+        }, true);
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => {
+                if (!document.getElementById(LINK_ID)) injectMtLxxToolsLink();
+            });
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMtLxxToolsLink);
+    } else {
+        initMtLxxToolsLink();
+    }
+})();
+
+	/* === LEXFLOW PATCH: UNSTICK CLICK-OFF FIX + 3-COLUMN PARALLEL STUDIO (ENGLISH | HEBREW | LXX) === */
+(function () {
+    const LXX_IDB_NAME = 'LexFlow_LXX_Rahlfs1935_v3';
+    const CATSS_IDB_NAME = 'LexFlow_CATSS_Parallel_v1';
+    const WLC_IDB_NAME = 'LexFlow_OSHB_WLC_v1';
+    const FONT_SCALE_KEY = 'lexflow_lxx_font_scale_v1';
+
+    const OT_BOOKS = [
+        [1, 'Genesis', 'Gen'], [2, 'Exodus', 'Exod'], [3, 'Leviticus', 'Lev'], [4, 'Numbers', 'Num'], [5, 'Deuteronomy', 'Deut'],
+        [6, 'Joshua', 'Josh'], [7, 'Judges', 'Judg'], [8, 'Ruth', 'Ruth'], [9, '1 Samuel', '1Sam'], [10, '2 Samuel', '2Sam'],
+        [11, '1 Kings', '1Kgs'], [12, '2 Kings', '2Kgs'], [13, '1 Chronicles', '1Chr'], [14, '2 Chronicles', '2Chr'], [15, 'Ezra', 'Ezra'],
+        [16, 'Nehemiah', 'Neh'], [17, 'Esther', 'Esth'], [18, 'Job', 'Job'], [19, 'Psalm', 'Ps'], [20, 'Proverbs', 'Prov'],
+        [21, 'Ecclesiastes', 'Eccl'], [22, 'Song of Solomon', 'Song'], [23, 'Isaiah', 'Isa'], [24, 'Jeremiah', 'Jer'], [25, 'Lamentations', 'Lam'],
+        [26, 'Ezekiel', 'Ezek'], [27, 'Daniel', 'Dan'], [28, 'Hosea', 'Hos'], [29, 'Joel', 'Joel'], [30, 'Amos', 'Amos'],
+        [31, 'Obadiah', 'Obad'], [32, 'Jonah', 'Jonah'], [33, 'Micah', 'Mic'], [34, 'Nahum', 'Nah'], [35, 'Habakkuk', 'Hab'],
+        [36, 'Zephaniah', 'Zeph'], [37, 'Haggai', 'Hag'], [38, 'Zechariah', 'Zech'], [39, 'Malachi', 'Mal']
+    ];
+    const BOOK_BY_NUM = {};
+    OT_BOOKS.forEach(([n, name, osis]) => { BOOK_BY_NUM[n] = { n, name, osis }; });
+
+    const HEB_UNFINAL = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+
+    const GRK_SYN = {
+        εν: ['in', 'into', 'on', 'at', 'by', 'with', 'among'],
+        και: ['and', 'also', 'even', 'then', 'but'],
+        δε: ['but', 'and', 'now', 'yet', 'then'],
+        γαρ: ['for', 'because', 'since'],
+        οτι: ['that', 'for', 'because'],
+        εις: ['into', 'to', 'toward', 'for'],
+        εκ: ['from', 'out', 'of'], εξ: ['from', 'out', 'of'], απο: ['from', 'away', 'of'],
+        προς: ['to', 'toward', 'with', 'against'],
+        επι: ['on', 'upon', 'over', 'above', 'surface'],
+        επανω: ['over', 'above', 'upon', 'surface'],
+        υπο: ['under', 'beneath', 'below'], υποκατω: ['under', 'beneath', 'below'],
+        μεσον: ['between', 'midst', 'middle'], ανα: ['between', 'among'],
+        ο: ['the'], η: ['the'], το: ['the'],
+        αρχη: ['beginning', 'start', 'first', 'origin'],
+        ποιεω: ['make', 'made', 'create', 'created', 'do', 'did', 'done', 'form', 'formed'],
+        κτιζω: ['create', 'created', 'make', 'made'],
+        θεος: ['god', 'gods', 'lord'], κυριος: ['lord', 'master'],
+        ουρανος: ['heaven', 'heavens', 'sky', 'skies'],
+        γη: ['earth', 'land', 'ground', 'soil'],
+        αορατος: ['formless', 'unseen', 'invisible', 'empty'],
+        ακατασκευαστος: ['void', 'empty', 'unformed'],
+        σκοτος: ['darkness', 'dark'], αβυσσος: ['deep', 'abyss'],
+        πνευμα: ['spirit', 'wind', 'breath'],
+        επιφερω: ['hover', 'hovering', 'move', 'moving', 'swept'],
+        υδωρ: ['water', 'waters'],
+        λεγω: ['say', 'said', 'speak', 'spoke', 'tell', 'told'],
+        ειπον: ['say', 'said', 'speak', 'spoke', 'tell', 'told'],
+        γινομαι: ['be', 'become', 'became', 'was', 'were', 'came', 'let', 'there'],
+        ειμι: ['be', 'is', 'am', 'are', 'was', 'were', 'been'],
+        φως: ['light'],
+        οραω: ['see', 'saw', 'seen', 'look', 'behold'], ειδον: ['see', 'saw', 'seen'],
+        καλος: ['good', 'fine', 'beautiful'], αγαθος: ['good', 'kind'],
+        διαχωριζω: ['separate', 'separated', 'divide', 'divided'],
+        καλεω: ['call', 'called', 'name', 'named'],
+        ημερα: ['day', 'days'], νυξ: ['night', 'nights'],
+        εσπερα: ['evening'], πρωι: ['morning'],
+        μια: ['one', 'first'], πρωτος: ['first'], δευτερος: ['second'], τριτος: ['third'],
+        στερεωμα: ['expanse', 'firmament', 'vault', 'sky'],
+        συναγω: ['gather', 'gathered', 'collect'],
+        τοπος: ['place'], ξηρος: ['dry', 'land'], θαλασσα: ['sea', 'seas'],
+        ανθρωπος: ['man', 'men', 'mankind', 'human', 'people'],
+        υιος: ['son', 'sons', 'child', 'children'],
+        καρδια: ['heart', 'hearts'], ψυχη: ['soul', 'life', 'living', 'creature', 'creatures'],
+        λογος: ['word', 'words'], ονομα: ['name', 'names'], φωνη: ['voice', 'sound'],
+        διδωμι: ['give', 'gave', 'given', 'put', 'set'],
+        λαμβανω: ['take', 'took', 'taken', 'receive'],
+        ερχομαι: ['come', 'came', 'go', 'went'],
+        γινωσκω: ['know', 'knew', 'known'], ακουω: ['hear', 'heard', 'listen']
+    };
+
+    const IRREG_EN = {
+        made: 'make', created: 'create', said: 'say', spoke: 'speak', spoken: 'speak',
+        told: 'tell', saw: 'see', seen: 'see', was: 'be', were: 'be', is: 'be', are: 'be',
+        became: 'become', came: 'come', went: 'go', gave: 'give', given: 'give',
+        took: 'take', taken: 'take', had: 'have', did: 'do', done: 'do',
+        knew: 'know', heard: 'hear', hovering: 'hover', separated: 'separate',
+        divided: 'divide', called: 'call', named: 'name', gathered: 'gather',
+        waters: 'water', heavens: 'heaven', skies: 'sky', days: 'day', nights: 'night',
+        men: 'man', children: 'child', feet: 'foot', seas: 'sea', trees: 'tree', seeds: 'seed'
+    };
+
+    const EN_STOP = new Set(['a', 'an', 'of', 'to', 'the', 'be', 'is', 'am', 'are', 'was', 'were', 'it', 'its']);
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function normGreek(s) {
+        return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/ς/g, 'σ').replace(/[^α-ω]/g, '');
+    }
+
+    function normHeb(s) {
+        let out = '';
+        const clean = String(s || '').replace(/[\u0591-\u05C7]/g, '');
+        for (let i = 0; i < clean.length; i++) {
+            const c = clean[i];
+            if (c >= '\u05D0' && c <= '\u05EA') out += HEB_UNFINAL[c] || c;
+        }
+        return out;
+    }
+
+    function stemEn(word) {
+        const w = String(word || '').toLowerCase().replace(/[^a-z']/g, '').replace(/^'+|'+$/g, '');
+        if (!w) return '';
+        if (IRREG_EN[w]) return IRREG_EN[w];
+        if (w.length > 5 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+        if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
+        if (w.length > 4 && w.endsWith('ed')) return w.slice(0, -2);
+        if (w.length > 4 && w.endsWith('es') && !w.endsWith('tes') && !w.endsWith('les')) return w.slice(0, -2);
+        if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us') && !w.endsWith('is')) return w.slice(0, -1);
+        return w;
+    }
+
+    function getEditorEl() {
+        return (typeof editor !== 'undefined' && editor) || document.getElementById('editor') || document.querySelector('[contenteditable="true"]');
+    }
+
+    // =========================================================================
+    // PART 1: FIX "STUCK" HIGHLIGHTS & RANDOM-WORD JUMPS ON CLICKING OFF
+    // =========================================================================
+    function clearAllPinnedAndHovered() {
+        if (typeof CSS !== 'undefined' && CSS.highlights) {
+            ['lf-lxx-en-hover', 'lf-lxx-en-pin', 'lf-catss-heb-hover', 'lf-catss-heb-pin'].forEach((k) => {
+                try { CSS.highlights.delete(k); } catch (e) {}
+            });
+        }
+        ['lfLxxFallbackHoverLayer', 'lfLxxFallbackPinLayer'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        });
+        document.querySelectorAll(
+            '#lfLxxDrawer .selected, #lfLxxDrawer .lemma-match, #lfLxxDrawer .xref-hover, #lfLxxDrawer .catss-heb-sibling-pin, #lfLxxDrawer .catss-heb-sibling-hover'
+        ).forEach((el) => {
+            el.classList.remove('selected', 'lemma-match', 'xref-hover', 'catss-heb-sibling-pin', 'catss-heb-sibling-hover');
+        });
+        const insp = document.getElementById('lfLxxInspector');
+        if (insp) insp.classList.remove('open');
+        const tip = document.getElementById('lfLxxFloatTip');
+        if (tip) tip.classList.remove('open');
+    }
+
+    function clearHoverOnly() {
+        if (typeof CSS !== 'undefined' && CSS.highlights) {
+            ['lf-lxx-en-hover', 'lf-catss-heb-hover'].forEach((k) => {
+                try { CSS.highlights.delete(k); } catch (e) {}
+            });
+        }
+        const fLayer = document.getElementById('lfLxxFallbackHoverLayer');
+        if (fLayer) fLayer.innerHTML = '';
+        document.querySelectorAll('#lfLxxDrawer .xref-hover, #lfLxxDrawer .catss-heb-sibling-hover').forEach((el) => {
+            el.classList.remove('xref-hover', 'catss-heb-sibling-hover');
+        });
+    }
+
+    // Checks if (x, y) is truly inside an actual word (NOT empty whitespace/margin!)
+    function isPointDirectlyOnTextWord(clientX, clientY) {
+        let range = null;
+        if (document.caretRangeFromPoint) {
+            range = document.caretRangeFromPoint(clientX, clientY);
+        } else if (document.caretPositionFromPoint) {
+            const pos = document.caretPositionFromPoint(clientX, clientY);
+            if (pos && pos.offsetNode) {
+                range = document.createRange();
+                range.setStart(pos.offsetNode, pos.offset);
+            }
+        }
+        if (!range || !range.startContainer || range.startContainer.nodeType !== 3) return null;
+
+        const node = range.startContainer;
+        const text = node.nodeValue || '';
+        const off = range.startOffset;
+        const wordCharRe = /[A-Za-z'’\-\u0591-\u05F4\u0370-\u03FF\u1F00-\u1FFF]/;
+
+        let s = off, e = off;
+        if (s > 0 && !wordCharRe.test(text[s] || '') && wordCharRe.test(text[s - 1] || '')) {
+            s--;
+            e = s;
+        }
+        while (s > 0 && wordCharRe.test(text[s - 1])) s--;
+        while (e < text.length && wordCharRe.test(text[e])) e++;
+        if (e <= s) return null;
+
+        try {
+            const wr = document.createRange();
+            wr.setStart(node, s);
+            wr.setEnd(node, e);
+            const rects = wr.getClientRects();
+            const pad = 4;
+            for (let i = 0; i < rects.length; i++) {
+                const r = rects[i];
+                if (clientX >= r.left - pad && clientX <= r.right + pad && clientY >= r.top - pad && clientY <= r.bottom + pad) {
+                    return { node, start: s, end: e, text: text.slice(s, e) };
+                }
+            }
+        } catch (err) {}
+        return null;
+    }
+
+    let lastEditorPinKey = '';
+
+    // Window capture phase runs BEFORE document capture phase — stops blank-space clicks from jumping!
+    window.addEventListener('click', (e) => {
+        // Ignore clicks inside our 3-Way Studio overlay (handled separately)
+        if (e.target && e.target.closest && e.target.closest('#lfTriStudioOverlay')) return;
+
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open')) return;
+
+        // 1. Clicking inside the LXX drawer body
+        if (e.target && e.target.closest && e.target.closest('#lfLxxDrawerBody')) {
+            const wordEl = e.target.closest('.lf-lxx-word');
+            if (!wordEl) {
+                // Clicked blank space between verses/margins inside drawer -> cleanly unpin
+                clearAllPinnedAndHovered();
+                lastEditorPinKey = '';
+                return;
+            }
+            if (wordEl.classList.contains('selected')) {
+                // Clicking the already-pinned word again toggles it OFF
+                clearAllPinnedAndHovered();
+                lastEditorPinKey = '';
+                e.stopPropagation();
+                return;
+            }
+            // Switching to a new Greek word -> wipe previous sibling pins cleanly first
+            lastEditorPinKey = '';
+            document.querySelectorAll('#lfLxxDrawer .catss-heb-sibling-pin, #lfLxxDrawer .lemma-match').forEach((el) => {
+                el.classList.remove('catss-heb-sibling-pin', 'lemma-match');
+            });
+            return;
+        }
+
+        // 2. Clicking inside the bottom inspector (allow its dismiss button, ignore text selection)
+        if (e.target && e.target.closest && e.target.closest('#lfLxxInspector')) return;
+
+        // 3. Clicking inside the main editor or side-by-side Hebrew pane
+        const ed = getEditorEl();
+        const inEditor = ed && ed.contains(e.target);
+        const isUiControl = e.target && e.target.closest && e.target.closest('button, a, input, select, .ot-in-nt-inline-badge, #lfLxxDrawer, .modal');
+
+        if (!isUiControl) {
+            const hitWord = isPointDirectlyOnTextWord(e.clientX, e.clientY);
+            if (!hitWord) {
+                // Clicked blank margin/whitespace! Unpin everything and block old document handlers from jumping
+                clearAllPinnedAndHovered();
+                lastEditorPinKey = '';
+                if (inEditor) e.stopPropagation();
+                return;
+            }
+            if (inEditor) {
+                const key = `${hitWord.start}_${hitWord.text}`;
+                if (key === lastEditorPinKey) {
+                    clearAllPinnedAndHovered();
+                    lastEditorPinKey = '';
+                    e.stopPropagation();
+                    return;
+                }
+                lastEditorPinKey = key;
+                document.querySelectorAll('#lfLxxDrawer .catss-heb-sibling-pin, #lfLxxDrawer .lemma-match').forEach((el) => {
+                    el.classList.remove('catss-heb-sibling-pin', 'lemma-match');
+                });
+            }
+        }
+    }, true);
+
+    window.addEventListener('mousemove', (e) => {
+        if (e.target && e.target.closest && e.target.closest('#lfTriStudioOverlay')) return;
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open')) return;
+        const ed = getEditorEl();
+        if (ed && ed.contains(e.target)) {
+            if (!isPointDirectlyOnTextWord(e.clientX, e.clientY)) {
+                clearHoverOnly();
+                e.stopPropagation();
+            }
+        }
+    }, true);
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const tri = document.getElementById('lfTriStudioOverlay');
+        if (tri && tri.classList.contains('open')) {
+            if (triState.pinned) {
+                clearTriPin();
+            } else {
+                closeTriStudio();
+            }
+            return;
+        }
+        clearAllPinnedAndHovered();
+        lastEditorPinKey = '';
+    });
+
+    function addInspectorClearButton() {
+        const insp = document.getElementById('lfLxxInspector');
+        if (!insp || !insp.classList.contains('open') || insp.querySelector('#lfLxxInspDismissBtn')) return;
+        insp.style.position = 'relative';
+        const btn = document.createElement('button');
+        btn.id = 'lfLxxInspDismissBtn';
+        btn.type = 'button';
+        btn.textContent = '✕';
+        btn.title = 'Unpin word & clear highlight (Esc)';
+        btn.style.cssText = 'position:absolute;top:7px;right:9px;border:1px solid #99f6e4;background:#ffffff;color:#0f766e;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;cursor:pointer;';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            clearAllPinnedAndHovered();
+            lastEditorPinKey = '';
+        };
+        insp.appendChild(btn);
+    }
+
+    // =========================================================================
+    // PART 2: DATA LOADERS (INDEXEDDB LXX + CATSS + WLC POINTED HEBREW + BSB)
+    // =========================================================================
+    const memLxx = new Map();
+    const memCatss = new Map();
+    const memWlc = new Map();
+    const memBsbApi = new Map();
+
+    async function readIdbBook(dbName, bookNum) {
+        try {
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open(dbName, 1);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('books')) d.createObjectStore('books');
+                    if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            const data = await new Promise((resolve, reject) => {
+                const tx = db.transaction('books', 'readonly');
+                const req = tx.objectStore('books').get(bookNum);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+            db.close();
+            return data;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function writeIdbBook(dbName, bookNum, val) {
+        try {
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open(dbName, 1);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('books')) d.createObjectStore('books');
+                    if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction('books', 'readwrite');
+                tx.objectStore('books').put(val, bookNum);
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => reject(tx.error);
+            });
+            db.close();
+        } catch (e) {}
+    }
+
+    async function getLxxBook(bookNum) {
+        if (memLxx.has(bookNum)) return memLxx.get(bookNum);
+        const data = await readIdbBook(LXX_IDB_NAME, bookNum);
+        if (data) memLxx.set(bookNum, data);
+        return data;
+    }
+
+    async function getCatssBook(bookNum) {
+        if (memCatss.has(bookNum)) return memCatss.get(bookNum);
+        const data = await readIdbBook(CATSS_IDB_NAME, bookNum);
+        if (data) memCatss.set(bookNum, data);
+        return data;
+    }
+
+    // Fetch & cache vocalized Westminster Leningrad Codex (OpenScriptures morphhb, CC BY 4.0)
+    async function getWlcBook(bookNum) {
+        if (memWlc.has(bookNum)) return memWlc.get(bookNum);
+        const cached = await readIdbBook(WLC_IDB_NAME, bookNum);
+        if (cached) {
+            memWlc.set(bookNum, cached);
+            return cached;
+        }
+        const info = BOOK_BY_NUM[bookNum];
+        if (!info) return null;
+
+        const urls = [
+            `https://raw.githubusercontent.com/openscriptures/morphhb/master/wlc/${info.osis}.xml`,
+            `https://cdn.jsdelivr.net/gh/openscriptures/morphhb@master/wlc/${info.osis}.xml`
+        ];
+        let xmlText = '';
+        for (let i = 0; i < urls.length; i++) {
+            try {
+                const res = await fetch(urls[i]);
+                if (res.ok) { xmlText = await res.text(); break; }
+            } catch (e) {}
+        }
+        if (!xmlText) return null;
+
+        const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+        const verseEls = doc.querySelectorAll('verse[osisID]');
+        const parsed = {};
+
+        verseEls.forEach((vEl) => {
+            const osisId = vEl.getAttribute('osisID') || '';
+            const parts = osisId.split('.');
+            if (parts.length < 3) return;
+            const c = parseInt(parts[1], 10);
+            const v = parseInt(parts[2], 10);
+            if (!c || !v) return;
+
+            const words = [];
+            const wNodes = vEl.querySelectorAll('w');
+            wNodes.forEach((wEl) => {
+                if (wEl.closest('note') || wEl.closest('[type="x-ketiv"]')) return;
+                const raw = (wEl.textContent || '').replace(/\//g, '').trim();
+                if (!raw) return;
+                const nextSib = wEl.nextElementSibling;
+                const hasMaqqef = Boolean(nextSib && nextSib.tagName.toLowerCase() === 'seg' && nextSib.getAttribute('type') === 'x-maqqef');
+                const lemma = (wEl.getAttribute('lemma') || '').trim();
+                const morph = (wEl.getAttribute('morph') || '').trim();
+                words.push([raw, lemma, morph, hasMaqqef ? 1 : 0]);
+            });
+
+            if (words.length) {
+                if (!parsed[c]) parsed[c] = {};
+                parsed[c][v] = words;
+            }
+        });
+
+        if (Object.keys(parsed).length > 0) {
+            memWlc.set(bookNum, parsed);
+            await writeIdbBook(WLC_IDB_NAME, bookNum, parsed);
+            return parsed;
+        }
+        return null;
+    }
+
+    // Read English BSB chapter from #editor first, or fetch cleanly from bolls.life if switching books
+    async function getEnglishBsbChapter(bookNum, chapNum) {
+        const out = {};
+        const ed = getEditorEl();
+        if (ed) {
+            const blocks = ed.querySelectorAll(
+                `div[data-book-num="${bookNum}"][data-chapter-num="${chapNum}"][data-verse-num]:not(.lex-chapter-banner):not(.lex-thought-spacer)`
+            );
+            blocks.forEach((blk) => {
+                const v = parseInt(blk.dataset.verseNum, 10);
+                if (!v) return;
+                const clone = blk.cloneNode(true);
+                clone.querySelectorAll('.ot-in-nt-inline-badge, sup, .verse-num').forEach((n) => n.remove());
+                const txt = (clone.textContent || '').replace(/^\s*\d+\s+/, '').replace(/\s+/g, ' ').trim();
+                if (txt) out[v] = out[v] ? `${out[v]} ${txt}` : txt;
+            });
+        }
+        if (Object.keys(out).length > 0) return out;
+
+        const key = `${bookNum}_${chapNum}`;
+        if (memBsbApi.has(key)) return memBsbApi.get(key);
+        try {
+            const res = await fetch(`https://bolls.life/get-text/BSB/${bookNum}/${chapNum}/`);
+            if (res.ok) {
+                const arr = await res.json();
+                if (Array.isArray(arr)) {
+                    arr.forEach((row) => {
+                        if (row && row.verse && row.text) {
+                            out[row.verse] = String(row.text).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+                        }
+                    });
+                    if (Object.keys(out).length > 0) memBsbApi.set(key, out);
+                }
+            }
+        } catch (e) {}
+        return out;
+    }
+
+    function mapEngToLxx(b, c, v) {
+        if (b !== 19) return { b, c, v };
+        if (c <= 8 || c >= 148) return { b, c, v };
+        if (c === 9) return { b: 19, c: 9, v };
+        if (c === 10) return { b: 19, c: 9, v: v + 21 };
+        if (c >= 11 && c <= 113) return { b: 19, c: c - 1, v };
+        if (c === 114) return { b: 19, c: 113, v };
+        if (c === 115) return { b: 19, c: 113, v: v + 8 };
+        if (c === 116) return v <= 9 ? { b: 19, c: 114, v } : { b: 19, c: 115, v: v - 9 };
+        if (c >= 117 && c <= 146) return { b: 19, c: c - 1, v };
+        if (c === 147) return v <= 11 ? { b: 19, c: 146, v } : { b: 19, c: 147, v: v - 11 };
+        return { b, c, v };
+    }
+
+    function decodeHebrewMorph(code) {
+        const s = String(code || '').trim();
+        if (!s) return '';
+        const parts = s.replace(/^[HA]/, '').split('/');
+        const STEMS = { q: 'Qal', N: 'Niphal', p: 'Piel', P: 'Pual', h: 'Hiphil', H: 'Hophal', t: 'Hithpael' };
+        const FORMS = { p: 'Perfect', i: 'Imperfect', w: 'Wayyiqtol', v: 'Imperative', r: 'Active Participle', s: 'Passive Participle', a: 'Infinitive Absolute', c: 'Infinitive Construct' };
+        const LABELS = [];
+        parts.forEach((p) => {
+            if (!p) return;
+            const c0 = p[0];
+            if (c0 === 'C') LABELS.push('Conjunction');
+            else if (c0 === 'R') LABELS.push('Preposition');
+            else if (c0 === 'T') LABELS.push(p[1] === 'd' ? 'Definite Article' : p[1] === 'o' ? 'Direct Object Marker' : 'Particle');
+            else if (c0 === 'N') LABELS.push(p[1] === 'p' ? 'Proper Noun' : 'Noun');
+            else if (c0 === 'A') LABELS.push('Adjective');
+            else if (c0 === 'P') LABELS.push('Pronoun');
+            else if (c0 === 'D') LABELS.push('Adverb');
+            else if (c0 === 'S') LABELS.push('Pronominal Suffix');
+            else if (c0 === 'V') {
+                const bits = ['Verb'];
+                if (STEMS[p[1]]) bits.push(STEMS[p[1]]);
+                if (FORMS[p[2]]) bits.push(FORMS[p[2]]);
+                LABELS.push(bits.join(' '));
+            }
+        });
+        return LABELS.length ? LABELS.join(' + ') : s;
+    }
+
+    function decodeGreekMorph(rawCode) {
+        const code = String(rawCode || '').trim();
+        if (!code) return '';
+        const norm = code.toUpperCase().replace(/[^A-Z0-9-]/g, ' ').replace(/\s+/g, ' ').trim();
+        const parts = norm.split(/[\s-]+/).filter(Boolean);
+        const basePos = (parts[0] || '').replace(/\d+$/, '');
+        const tail = parts.slice(1).join('');
+        const CASES = { N: 'Nominative', G: 'Genitive', D: 'Dative', A: 'Accusative', V: 'Vocative' };
+        const NUMS = { S: 'Singular', P: 'Plural', D: 'Dual' };
+        const GENS = { M: 'Masculine', F: 'Feminine', N: 'Neuter' };
+        const TENSES = { P: 'Present', I: 'Imperfect', F: 'Future', A: 'Aorist', X: 'Perfect', Y: 'Pluperfect' };
+        const VOICES = { A: 'Active', M: 'Middle', P: 'Passive', D: 'Middle/Passive', E: 'Middle/Passive' };
+        const MOODS = { I: 'Indicative', S: 'Subjunctive', O: 'Optative', D: 'Imperative', M: 'Imperative', N: 'Infinitive', P: 'Participle' };
+        const POS = { N: 'Noun', A: 'Adjective', RA: 'Article', RP: 'Pronoun', RD: 'Demonstrative', RR: 'Relative', P: 'Preposition', C: 'Conjunction', D: 'Adverb', X: 'Particle', T: 'Article' };
+        const cng = (str) => {
+            const out = [];
+            if (!str) return out;
+            if (CASES[str[0]]) out.push(CASES[str[0]]);
+            if (NUMS[str[1]]) out.push(NUMS[str[1]]);
+            if (GENS[str[2]]) out.push(GENS[str[2]]);
+            return out;
+        };
+        if (basePos === 'V') {
+            const out = ['Verb'];
+            let v = tail.startsWith('2') ? tail.slice(1) : tail;
+            let i = 0;
+            if (TENSES[v[i]]) { out.push(TENSES[v[i]]); i++; }
+            if (VOICES[v[i]]) { out.push(VOICES[v[i]]); i++; }
+            if (MOODS[v[i]]) {
+                const m = MOODS[v[i]]; out.push(m); i++;
+                const rest = v.slice(i);
+                if (m === 'Participle') out.push(...cng(rest));
+                else if (/^[123][SPD]/.test(rest)) {
+                    out.push(`${rest[0] === '1' ? '1st' : rest[0] === '2' ? '2nd' : '3rd'} Person`);
+                    if (NUMS[rest[1]]) out.push(NUMS[rest[1]]);
+                }
+            }
+            return out.join(' · ');
+        }
+        const pl = POS[basePos] || POS[basePos[0]];
+        return pl ? [pl, ...cng(tail)].join(' · ') : code;
+    }
+
+    // =========================================================================
+    // PART 3: 3-WAY ALIGNMENT GRAPH (ENGLISH <-> HEBREW <-> GREEK PER VERSE)
+    // =========================================================================
+    function buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows) {
+        // Links:
+        //   hebToGrk[hIdx] = Set(gIdx), grkToHeb[gIdx] = Set(hIdx)
+        //   grkToEn[gIdx]  = Set(eIdx), enToGrk[eIdx]  = Set(gIdx)
+        //   hebMeta[hIdx]  = { catssRows: [], flag, notes }
+        //   grkMeta[gIdx]  = { catssRows: [], flag, notes }
+        const hebToGrk = hebWords.map(() => new Set());
+        const grkToHeb = grkTuples.map(() => new Set());
+        const grkToEn = grkTuples.map(() => new Set());
+        const enToGrk = enWords.map(() => new Set());
+        const hebMeta = hebWords.map(() => ({ notes: [], flag: '' }));
+        const grkMeta = grkTuples.map(() => ({ notes: [], flag: '' }));
+
+        // 1. Exact Hebrew <-> Greek alignment via CATSS .par rows
+        if (catssRows && catssRows.length) {
+            // A) Align CATSS Greek tokens -> grkTuples[]
+            const domGrkKeys = grkTuples.map((t) => normGreek(t[0]));
+            const rowToGrk = catssRows.map(() => []);
+            let gCur = 0;
+            for (let ri = 0; ri < catssRows.length; ri++) {
+                const gks = catssRows[ri].gk || [];
+                for (let k = 0; k < gks.length; k++) {
+                    const tgt = gks[k];
+                    if (!tgt) continue;
+                    let hit = -1;
+                    for (let d = gCur; d <= Math.min(domGrkKeys.length - 1, gCur + 5); d++) {
+                        if (domGrkKeys[d] === tgt) { hit = d; break; }
+                    }
+                    if (hit === -1) {
+                        const p = tgt.slice(0, Math.min(3, tgt.length));
+                        for (let d = gCur; d <= Math.min(domGrkKeys.length - 1, gCur + 3); d++) {
+                            const cand = domGrkKeys[d];
+                            if (cand && ((tgt.length >= 3 && cand.startsWith(p)) || (cand.length >= 3 && tgt.startsWith(cand.slice(0, 3))) || (tgt.length <= 2 && cand.startsWith(tgt[0])))) {
+                                hit = d; break;
+                            }
+                        }
+                    }
+                    if (hit !== -1) {
+                        rowToGrk[ri].push(hit);
+                        if (catssRows[ri].f && !grkMeta[hit].flag) grkMeta[hit].flag = catssRows[ri].f;
+                        if (catssRows[ri].n && !grkMeta[hit].notes.includes(catssRows[ri].n)) grkMeta[hit].notes.push(catssRows[ri].n);
+                        gCur = hit + 1;
+                    }
+                }
+            }
+
+            // B) Group CATSS rows by Hebrew word group (hg) & align to pointed WLC hebWords[]
+            const groupOrder = [];
+            const groupRows = new Map();
+            catssRows.forEach((r, ri) => {
+                if (r.hg < 0) return;
+                if (!groupRows.has(r.hg)) { groupRows.set(r.hg, []); groupOrder.push(r.hg); }
+                groupRows.get(r.hg).push(ri);
+            });
+
+            const wlcCons = hebWords.map((w) => normHeb(w[0]));
+            let hCur = 0;
+            groupOrder.forEach((hg) => {
+                const rIdxs = groupRows.get(hg);
+                const fullCons = normHeb(rIdxs.map((ri) => catssRows[ri].h).join(''));
+                if (!fullCons) return;
+
+                let hit = -1;
+                for (let h = hCur; h <= Math.min(wlcCons.length - 1, hCur + 4); h++) {
+                    if (wlcCons[h] === fullCons) { hit = h; break; }
+                }
+                if (hit === -1) {
+                    for (let h = hCur; h <= Math.min(wlcCons.length - 1, hCur + 3); h++) {
+                        if (wlcCons[h] && (wlcCons[h].includes(fullCons) || fullCons.includes(wlcCons[h]))) {
+                            hit = h; break;
+                        }
+                    }
+                }
+                if (hit === -1 && hCur < wlcCons.length) {
+                    // Fallback when Ketiv/Qere differs slightly in spelling
+                    hit = hCur;
+                }
+
+                if (hit !== -1) {
+                    rIdxs.forEach((ri) => {
+                        const r = catssRows[ri];
+                        if (r.f && !hebMeta[hit].flag) hebMeta[hit].flag = r.f;
+                        if (r.n && !hebMeta[hit].notes.includes(r.n)) hebMeta[hit].notes.push(r.n);
+                        rowToGrk[ri].forEach((gi) => {
+                            hebToGrk[hit].add(gi);
+                            grkToHeb[gi].add(hit);
+                        });
+                    });
+                    hCur = hit + 1;
+                }
+            });
+        }
+
+        // 2. Greek <-> English alignment via gloss + synonym bridge
+        const enParsed = enWords.map((raw, idx) => {
+            const lower = raw.toLowerCase().replace(/[^a-z']/g, '');
+            return { raw, lower, stem: stemEn(lower), idx };
+        });
+
+        const getTerms = (tuple) => {
+            const [w, l, m, g] = tuple;
+            const set = new Set();
+            if (g) {
+                String(g).replace(/\([^)]*\)/g, ' ').split(/[,;/|]+/).forEach((part) => {
+                    part.trim().toLowerCase().replace(/^to\s+/, '').split(/\s+/).forEach((tok) => {
+                        const clean = tok.replace(/[^a-z']/g, '');
+                        if (clean) { set.add(clean); const st = stemEn(clean); if (st) set.add(st); }
+                    });
+                });
+            }
+            const nl = normGreek(l);
+            const nw = normGreek(w);
+            if (nl && GRK_SYN[nl]) GRK_SYN[nl].forEach((t) => { set.add(t); set.add(stemEn(t)); });
+            if (nw && GRK_SYN[nw]) GRK_SYN[nw].forEach((t) => { set.add(t); set.add(stemEn(t)); });
+            if (/^RA\b|^T\b/i.test(m || '')) set.add('the');
+            return set;
+        };
+
+        const scorePair = (tuple, gi, eObj) => {
+            const terms = getTerms(tuple);
+            if (!terms.size || !eObj.lower) return 0;
+            let base = 0;
+            if (terms.has(eObj.lower)) base = EN_STOP.has(eObj.lower) ? 1.5 : 4.2;
+            else if (eObj.stem && terms.has(eObj.stem)) base = EN_STOP.has(eObj.lower) ? 1.2 : 3.5;
+            else if (eObj.stem.length >= 4) {
+                for (const t of terms) {
+                    if (t.length >= 4 && (eObj.stem.startsWith(t) || t.startsWith(eObj.stem))) { base = 2.4; break; }
+                }
+            }
+            if (!base) return 0;
+            const gPos = grkTuples.length > 1 ? gi / (grkTuples.length - 1) : 0.5;
+            const ePos = enParsed.length > 1 ? eObj.idx / (enParsed.length - 1) : 0.5;
+            return base + Math.max(0, 1.15 - Math.abs(gPos - ePos) * 1.4);
+        };
+
+        // Pass A: non-articles first
+        grkTuples.forEach((tuple, gi) => {
+            const isArt = /^RA\b|^T\b/i.test(tuple[2] || '') || normGreek(tuple[1]) === 'ο';
+            if (isArt) return;
+            let best = null;
+            enParsed.forEach((eObj) => {
+                const sc = scorePair(tuple, gi, eObj);
+                if (sc > 0 && (!best || sc > best.sc)) best = { ei: eObj.idx, sc };
+            });
+            if (best) {
+                grkToEn[gi].add(best.ei);
+                enToGrk[best.ei].add(gi);
+            }
+        });
+
+        // Pass B: articles anchor to "the" right before their governed noun
+        grkTuples.forEach((tuple, gi) => {
+            const isArt = /^RA\b|^T\b/i.test(tuple[2] || '') || normGreek(tuple[1]) === 'ο';
+            if (!isArt || gi + 1 >= grkTuples.length) return;
+            const nextEn = Array.from(grkToEn[gi + 1]);
+            if (nextEn.length) {
+                const head = nextEn[0];
+                if (head > 0 && enParsed[head - 1].lower === 'the') {
+                    grkToEn[gi].add(head - 1);
+                    enToGrk[head - 1].add(gi);
+                }
+            }
+        });
+
+        // Helper: given a clicked/hovered token in ANY column, compute the full 3-way highlight set
+        function resolveTriad(lang, idx) {
+            const enSet = new Set();
+            const hebSet = new Set();
+            const grkSet = new Set();
+
+            if (lang === 'heb') {
+                hebSet.add(idx);
+                (hebToGrk[idx] || []).forEach((gi) => {
+                    grkSet.add(gi);
+                    (grkToEn[gi] || []).forEach((ei) => enSet.add(ei));
+                });
+            } else if (lang === 'grk') {
+                grkSet.add(idx);
+                (grkToHeb[idx] || []).forEach((hi) => {
+                    hebSet.add(hi);
+                    // Also show sibling Greek words from the same Hebrew word
+                    (hebToGrk[hi] || []).forEach((sgi) => {
+                        grkSet.add(sgi);
+                        (grkToEn[sgi] || []).forEach((ei) => enSet.add(ei));
+                    });
+                });
+                (grkToEn[idx] || []).forEach((ei) => enSet.add(ei));
+            } else if (lang === 'en') {
+                enSet.add(idx);
+                (enToGrk[idx] || []).forEach((gi) => {
+                    grkSet.add(gi);
+                    (grkToHeb[gi] || []).forEach((hi) => {
+                        hebSet.add(hi);
+                        (hebToGrk[hi] || []).forEach((sgi) => grkSet.add(sgi));
+                    });
+                });
+            }
+            return { enSet, hebSet, grkSet };
+        }
+
+        return { hebMeta, grkMeta, resolveTriad };
+    }
+
+    // =========================================================================
+    // PART 4: 3-COLUMN PARALLEL STUDIO UI (ENGLISH | HEBREW | GREEK LXX)
+    // =========================================================================
+    const triState = {
+        bookNum: 1,
+        chapter: 1,
+        glosses: true,
+        morph: true,
+        syncHl: true,
+        pinned: null, // { verse, lang, idx }
+        verseStore: new Map() // verse -> { enWords, hebWords, grkTuples, graph, rowEl }
+    };
+
+    function getCurrentFontScale() {
+        try {
+            const s = parseFloat(localStorage.getItem(FONT_SCALE_KEY));
+            if (s >= 0.75 && s <= 1.8) return s;
+        } catch (e) {}
+        return 1.0;
+    }
+
+    function setSharedFontScale(val) {
+        const clamped = Math.max(0.75, Math.min(1.8, Math.round(val * 100) / 100));
+        try { localStorage.setItem(FONT_SCALE_KEY, String(clamped)); } catch (e) {}
+        const tri = document.getElementById('lfTriStudioOverlay');
+        if (tri) tri.style.setProperty('--lf-tri-scale', String(clamped));
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (drawer) drawer.style.setProperty('--lf-lxx-scale', String(clamped));
+        const r1 = document.getElementById('lfTriFontReadout');
+        if (r1) r1.textContent = `${Math.round(clamped * 100)}%`;
+        const r2 = document.getElementById('lfLxxFontReadout');
+        if (r2) r2.textContent = `${Math.round(clamped * 100)}%`;
+    }
+
+    function ensureTriStyles() {
+        if (document.getElementById('lfTriStudioStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfTriStudioStyles';
+        st.textContent = `
+            #lfTriOpenBtn {
+                border: 1px solid #5eead4;
+                background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 700;
+                border-radius: 7px;
+                padding: 4px 8px;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+            #lfTriOpenBtn:hover { filter: brightness(1.08); }
+            #lfTriStudioOverlay {
+                position: fixed; inset: 14px; z-index: 100030;
+                background: rgba(255, 255, 255, 0.97);
+                backdrop-filter: blur(12px);
+                border: 1.5px solid #99f6e4; border-radius: 18px;
+                box-shadow: 0 28px 80px rgba(15, 23, 42, 0.34);
+                display: none; flex-direction: column; overflow: hidden;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfTriStudioOverlay.open { display: flex; }
+            .lf-tri-topbar {
+                display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+                padding: 11px 16px;
+                background: linear-gradient(135deg, #f0fdfa 0%, #fff7ed 52%, #eef2ff 100%);
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-tri-colheads {
+                display: grid; grid-template-columns: 1fr 1fr 1.15fr;
+                background: #f8fafc; border-bottom: 1.5px solid #e2e8f0;
+                font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+            }
+            .lf-tri-colheads > div { padding: 7px 14px; border-right: 1px solid #e2e8f0; }
+            .lf-tri-colheads > div:last-child { border-right: none; }
+            .lf-tri-body { flex: 1; overflow-y: auto; background: #ffffff; }
+            .lf-tri-vrow {
+                display: grid; grid-template-columns: 1fr 1fr 1.15fr;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .lf-tri-vrow:nth-child(even) { background: rgba(248, 250, 252, 0.55); }
+            .lf-tri-cell {
+                padding: 10px 14px; border-right: 1px solid #f1f5f9; line-height: 1.85;
+            }
+            .lf-tri-cell:last-child { border-right: none; }
+            .lf-tri-cell.heb-col { direction: rtl; text-align: right; }
+            .lf-tri-vbadge {
+                display: inline-block; min-width: 22px; font-size: calc(10.5px * var(--lf-tri-scale, 1));
+                font-weight: 800; color: #0f766e; background: #f0fdfa; border: 1px solid #99f6e4;
+                border-radius: 5px; text-align: center; padding: 0 4px; margin-right: 6px;
+                line-height: 1.55; vertical-align: middle;
+            }
+            .lf-tri-cell.heb-col .lf-tri-vbadge { margin-right: 0; margin-left: 7px; color: #9a3412; background: #fff7ed; border-color: #fdba74; }
+            .lf-tri-tok {
+                display: inline-block; padding: 1px 3px; margin: 1px 1px; border-radius: 5px;
+                cursor: pointer; transition: background 0.09s ease, box-shadow 0.09s ease;
+                vertical-align: top;
+            }
+            .lf-tri-tok.en-tok {
+                font-family: Georgia, "Times New Roman", serif;
+                font-size: calc(15.5px * var(--lf-tri-scale, 1));
+                color: #1e293b; line-height: 1.5;
+            }
+            .lf-tri-tok.heb-tok {
+                font-family: "SBL Hebrew", "Ezra SIL", "Times New Roman", serif;
+                font-size: calc(22px * var(--lf-tri-scale, 1));
+                color: #7c2d12; line-height: 1.4; padding: 1px 4px;
+            }
+            .lf-tri-tok.grk-tok {
+                display: inline-flex; flex-direction: column; align-items: center;
+                padding: 2px 4px; margin: 1px 1.5px;
+            }
+            .lf-tri-grk-w {
+                font-family: "SBL Greek", "Gentium Plus", Georgia, serif;
+                font-size: calc(17.5px * var(--lf-tri-scale, 1));
+                color: #0f172a; line-height: 1.3;
+            }
+            .lf-tri-grk-g {
+                font-size: calc(10px * var(--lf-tri-scale, 1));
+                color: #475569; line-height: 1.2; max-width: calc(116px * var(--lf-tri-scale, 1));
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            }
+            .lf-tri-grk-m {
+                font-size: calc(9px * var(--lf-tri-scale, 1));
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                color: #0f766e; line-height: 1.15;
+            }
+            #lfTriStudioOverlay.no-gloss .lf-tri-grk-g { display: none; }
+            #lfTriStudioOverlay.no-morph .lf-tri-grk-m { display: none; }
+            .lf-tri-tok.tri-hover {
+                background: #fef3c7 !important;
+                box-shadow: 0 0 0 1.5px #f59e0b;
+            }
+            .lf-tri-tok.heb-tok.tri-hover {
+                background: #ffedd5 !important;
+                box-shadow: 0 0 0 1.5px #f97316;
+            }
+            .lf-tri-tok.tri-pin {
+                background: #ccfbf1 !important;
+                box-shadow: 0 0 0 1.5px #0d9488;
+            }
+            .lf-tri-tok.heb-tok.tri-pin {
+                background: #fed7aa !important;
+                box-shadow: 0 0 0 1.5px #ea580c;
+            }
+            .lf-tri-inspector {
+                display: none; border-top: 1.5px solid #99f6e4;
+                background: linear-gradient(90deg, #f8fafc 0%, #fff7ed 50%, #f0fdfa 100%);
+                padding: 10px 16px; position: relative;
+            }
+            .lf-tri-inspector.open { display: block; }
+            .lf-tri-insp-grid {
+                display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+                padding-right: 30px; font-size: calc(12.5px * var(--lf-tri-scale, 1));
+            }
+            .lf-tri-insp-box {
+                background: rgba(255,255,255,0.88); border: 1px solid #e2e8f0;
+                border-radius: 10px; padding: 8px 11px;
+            }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function clearTriClass(cls) {
+        const body = document.getElementById('lfTriBody');
+        if (!body) return;
+        body.querySelectorAll(`.${cls}`).forEach((el) => el.classList.remove(cls));
+    }
+
+    function clearTriPin() {
+        triState.pinned = null;
+        clearTriClass('tri-pin');
+        const insp = document.getElementById('lfTriInspector');
+        if (insp) insp.classList.remove('open');
+    }
+
+    function applyTriHighlight(verseNum, lang, idx, mode) {
+        const entry = triState.verseStore.get(verseNum);
+        if (!entry) return null;
+        const cls = mode === 'pin' ? 'tri-pin' : 'tri-hover';
+        clearTriClass(cls);
+
+        const triad = triState.syncHl
+            ? entry.graph.resolveTriad(lang, idx)
+            : {
+                enSet: lang === 'en' ? new Set([idx]) : new Set(),
+                hebSet: lang === 'heb' ? new Set([idx]) : new Set(),
+                grkSet: lang === 'grk' ? new Set([idx]) : new Set()
+            };
+
+        const row = entry.rowEl;
+        triad.enSet.forEach((i) => {
+            const el = row.querySelector(`.lf-tri-tok.en-tok[data-i="${i}"]`);
+            if (el) el.classList.add(cls);
+        });
+        triad.hebSet.forEach((i) => {
+            const el = row.querySelector(`.lf-tri-tok.heb-tok[data-i="${i}"]`);
+            if (el) el.classList.add(cls);
+        });
+        triad.grkSet.forEach((i) => {
+            const el = row.querySelector(`.lf-tri-tok.grk-tok[data-i="${i}"]`);
+            if (el) el.classList.add(cls);
+        });
+        return triad;
+    }
+
+    function renderTriInspector(verseNum, triad) {
+        const insp = document.getElementById('lfTriInspector');
+        const entry = triState.verseStore.get(verseNum);
+        if (!insp || !entry || !triad) return;
+
+        const enPicked = Array.from(triad.enSet).sort((a, b) => a - b).map((i) => entry.enWords[i]).filter(Boolean);
+        const hebPicked = Array.from(triad.hebSet).sort((a, b) => a - b).map((i) => ({ w: entry.hebWords[i], meta: entry.graph.hebMeta[i] })).filter((x) => x.w);
+        const grkPicked = Array.from(triad.grkSet).sort((a, b) => a - b).map((i) => ({ t: entry.grkTuples[i], meta: entry.graph.grkMeta[i] })).filter((x) => x.t);
+
+        const enHtml = enPicked.length
+            ? `<div style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:#0f172a;">“${escapeHtml(enPicked.join(' '))}”</div>
+               <div style="font-size:11.5px;color:#64748b;margin-top:3px;">${escapeHtml(BOOK_BY_NUM[triState.bookNum]?.name || '')} ${triState.chapter}:${verseNum} (BSB)</div>`
+            : `<span style="color:#94a3b8;font-size:12px;">No direct English token matched</span>`;
+
+        const hebHtml = hebPicked.length
+            ? hebPicked.map(({ w, meta }) => `
+                <div style="margin-bottom:4px;">
+                    <span dir="rtl" style="font-family:'SBL Hebrew','Ezra SIL',serif;font-size:21px;font-weight:700;color:#7c2d12;">${escapeHtml(w[0])}</span>
+                    ${w[1] ? `<span style="margin-left:6px;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:#ffedd5;color:#9a3412;">H${escapeHtml(w[1])}</span>` : ''}
+                    ${w[2] ? `<div style="font-size:11px;color:#475569;"><code>${escapeHtml(w[2])}</code> — ${escapeHtml(decodeHebrewMorph(w[2]))}</div>` : ''}
+                    ${meta && meta.notes.length ? `<div style="font-size:11px;color:#9a3412;font-style:italic;">${escapeHtml(meta.notes.join(' '))}</div>` : ''}
+                </div>
+            `).join('')
+            : `<span style="color:#0f766e;font-size:12px;font-weight:600;">+ LXX Plus (no direct Hebrew word in CATSS)</span>`;
+
+        const grkHtml = grkPicked.length
+            ? grkPicked.map(({ t, meta }) => `
+                <div style="margin-bottom:4px;">
+                    <span style="font-family:'SBL Greek',Georgia,serif;font-size:18px;font-weight:700;color:#0f172a;">${escapeHtml(t[0])}</span>
+                    ${t[1] ? ` <span style="font-size:12.5px;color:#475569;">(${escapeHtml(t[1])})</span>` : ''}
+                    ${t[4] ? `<span style="margin-left:5px;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:#ccfbf1;color:#0f766e;">${escapeHtml(t[4])}</span>` : ''}
+                    ${t[3] ? `<div style="font-size:12px;color:#334155;"><strong>Gloss:</strong> ${escapeHtml(t[3])}</div>` : ''}
+                    ${t[2] ? `<div style="font-size:11px;color:#0f766e;"><code>${escapeHtml(t[2])}</code> — ${escapeHtml(decodeGreekMorph(t[2]))}</div>` : ''}
+                    ${meta && meta.notes.length ? `<div style="font-size:11px;color:#9a3412;font-style:italic;">${escapeHtml(meta.notes.join(' '))}</div>` : ''}
+                </div>
+            `).join('')
+            : `<span style="color:#991b1b;font-size:12px;font-weight:600;">− MT Minus (no direct Greek word in CATSS)</span>`;
+
+        insp.innerHTML = `
+            <button type="button" id="lfTriInspClose" title="Unpin (Esc)" style="position:absolute;top:8px;right:10px;border:1px solid #cbd5e1;background:#ffffff;color:#334155;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;cursor:pointer;">✕</button>
+            <div class="lf-tri-insp-grid">
+                <div class="lf-tri-insp-box">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:4px;">English (BSB)</div>
+                    ${enHtml}
+                </div>
+                <div class="lf-tri-insp-box" style="border-color:#fed7aa;">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#9a3412;margin-bottom:4px;">Hebrew (MT — WLC / CATSS)</div>
+                    ${hebHtml}
+                </div>
+                <div class="lf-tri-insp-box" style="border-color:#99f6e4;">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#0f766e;margin-bottom:4px;">Greek (LXX — Rahlfs 1935)</div>
+                    ${grkHtml}
+                </div>
+            </div>
+        `;
+        insp.querySelector('#lfTriInspClose').onclick = () => clearTriPin();
+        insp.classList.add('open');
+    }
+
+    async function renderTriStudioChapter() {
+        const body = document.getElementById('lfTriBody');
+        const chapSel = document.getElementById('lfTriChapSel');
+        const bookSel = document.getElementById('lfTriBookSel');
+        const catssBanner = document.getElementById('lfTriCatssBadge');
+        if (!body) return;
+
+        clearTriPin();
+        triState.verseStore.clear();
+        if (bookSel) bookSel.value = String(triState.bookNum);
+
+        body.innerHTML = `<div style="padding:36px;text-align:center;color:#475569;font-size:13.5px;">Loading <strong>${escapeHtml(BOOK_BY_NUM[triState.bookNum]?.name || '')} ${triState.chapter}</strong> (BSB + Pointed WLC Hebrew + Tagged LXX)...</div>`;
+
+        // Clear memoized CATSS in case user just imported a new .par book
+        memCatss.delete(triState.bookNum);
+
+        const [lxxBook, catssBook, wlcBook] = await Promise.all([
+            getLxxBook(triState.bookNum),
+            getCatssBook(triState.bookNum),
+            getWlcBook(triState.bookNum)
+        ]);
+
+        // Populate chapter dropdown from WLC or LXX
+        const chapSource = wlcBook || lxxBook || {};
+        const chaps = Object.keys(chapSource).map((k) => parseInt(k, 10)).filter((n) => n > 0).sort((a, b) => a - b);
+        if (chaps.length && !chaps.includes(triState.chapter)) triState.chapter = chaps[0];
+        if (chapSel) {
+            chapSel.innerHTML = (chaps.length ? chaps : [1]).map((c) => `<option value="${c}"${c === triState.chapter ? ' selected' : ''}>Ch. ${c}</option>`).join('');
+        }
+
+        if (catssBanner) {
+            if (catssBook) {
+                catssBanner.textContent = `✓ CATSS Exact MT↔LXX Active`;
+                catssBanner.style.background = '#ffedd5';
+                catssBanner.style.color = '#9a3412';
+                catssBanner.style.borderColor = '#fdba74';
+            } else {
+                catssBanner.textContent = `+ Import CATSS .par for ${BOOK_BY_NUM[triState.bookNum]?.name || 'Book'}`;
+                catssBanner.style.background = '#f8fafc';
+                catssBanner.style.color = '#64748b';
+                catssBanner.style.borderColor = '#cbd5e1';
+            }
+        }
+
+        const enChap = await getEnglishBsbChapter(triState.bookNum, triState.chapter);
+        const wlcChap = (wlcBook && wlcBook[triState.chapter]) || {};
+
+        // Collect sorted verse numbers
+        const vSet = new Set();
+        Object.keys(enChap).forEach((v) => vSet.add(parseInt(v, 10)));
+        Object.keys(wlcChap).forEach((v) => vSet.add(parseInt(v, 10)));
+        const lxxChapStart = mapEngToLxx(triState.bookNum, triState.chapter, 1).c;
+        if (lxxBook && lxxBook[lxxChapStart]) {
+            Object.keys(lxxBook[lxxChapStart]).forEach((v) => vSet.add(parseInt(v, 10)));
+        }
+        const verses = Array.from(vSet).filter((v) => v > 0).sort((a, b) => a - b);
+
+        if (!verses.length) {
+            body.innerHTML = `<div style="padding:36px;text-align:center;color:#64748b;">No verse data found for this chapter. Make sure Tagged LXX is synced first.</div>`;
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        verses.forEach((vNum) => {
+            const enText = enChap[vNum] || '';
+            const enWords = enText ? enText.split(/\s+/).filter(Boolean) : [];
+
+            const mappedLxx = mapEngToLxx(triState.bookNum, triState.chapter, vNum);
+            const grkTuples = (lxxBook && lxxBook[mappedLxx.c] && lxxBook[mappedLxx.c][mappedLxx.v]) || [];
+
+            // Resolve CATSS rows for this verse (check MT numbering first, then LXX numbering)
+            let catssRows = null;
+            if (catssBook) {
+                catssRows = (catssBook[triState.chapter] && catssBook[triState.chapter][vNum]) ||
+                    (catssBook[mappedLxx.c] && catssBook[mappedLxx.c][mappedLxx.v]) || null;
+            }
+
+            // Use pointed WLC Hebrew if available; fall back cleanly to CATSS Hebrew groups if offline
+            let hebWords = wlcChap[vNum] || [];
+            if (!hebWords.length && catssRows && catssRows.length) {
+                const groups = new Map();
+                catssRows.forEach((r) => {
+                    if (r.hg < 0 || !r.h) return;
+                    if (!groups.has(r.hg)) groups.set(r.hg, []);
+                    groups.get(r.hg).push(r.h);
+                });
+                hebWords = Array.from(groups.values()).map((parts) => [parts.join('').replace(/־(?=[^\s])/g, ''), '', '', 0]);
+            }
+
+            const graph = buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows);
+
+            const rowEl = document.createElement('div');
+            rowEl.className = 'lf-tri-vrow';
+            rowEl.dataset.v = String(vNum);
+
+            // Column 1: English (BSB)
+            const enCell = document.createElement('div');
+            enCell.className = 'lf-tri-cell en-col';
+            enCell.innerHTML = `<span class="lf-tri-vbadge">${vNum}</span>`;
+            enWords.forEach((w, i) => {
+                const sp = document.createElement('span');
+                sp.className = 'lf-tri-tok en-tok';
+                sp.dataset.lang = 'en';
+                sp.dataset.v = String(vNum);
+                sp.dataset.i = String(i);
+                sp.textContent = w;
+                enCell.appendChild(sp);
+                enCell.appendChild(document.createTextNode(' '));
+            });
+
+            // Column 2: Hebrew (MT)
+            const hebCell = document.createElement('div');
+            hebCell.className = 'lf-tri-cell heb-col';
+            hebCell.innerHTML = `<span class="lf-tri-vbadge">${vNum}</span>`;
+            hebWords.forEach((wTuple, i) => {
+                const sp = document.createElement('span');
+                sp.className = 'lf-tri-tok heb-tok';
+                sp.dataset.lang = 'heb';
+                sp.dataset.v = String(vNum);
+                sp.dataset.i = String(i);
+                sp.textContent = wTuple[0];
+                hebCell.appendChild(sp);
+                hebCell.appendChild(document.createTextNode(wTuple[3] ? '־' : ' '));
+            });
+
+            // Column 3: Greek (LXX)
+            const grkCell = document.createElement('div');
+            grkCell.className = 'lf-tri-cell grk-col';
+            grkCell.innerHTML = `<span class="lf-tri-vbadge">${mappedLxx.v}</span>`;
+            grkTuples.forEach((t, i) => {
+                const sp = document.createElement('span');
+                sp.className = 'lf-tri-tok grk-tok';
+                sp.dataset.lang = 'grk';
+                sp.dataset.v = String(vNum);
+                sp.dataset.i = String(i);
+                sp.innerHTML = `
+                    <span class="lf-tri-grk-w">${escapeHtml(t[0])}</span>
+                    ${t[3] ? `<span class="lf-tri-grk-g">${escapeHtml(t[3])}</span>` : ''}
+                    ${t[2] ? `<span class="lf-tri-grk-m">${escapeHtml(t[2])}</span>` : ''}
+                `;
+                grkCell.appendChild(sp);
+            });
+
+            rowEl.appendChild(enCell);
+            rowEl.appendChild(hebCell);
+            rowEl.appendChild(grkCell);
+            frag.appendChild(rowEl);
+
+            triState.verseStore.set(vNum, { enWords, hebWords, grkTuples, graph, rowEl });
+        });
+
+        body.innerHTML = '';
+        body.appendChild(frag);
+    }
+
+    function ensureTriStudioDOM() {
+        if (document.getElementById('lfTriStudioOverlay')) return;
+        ensureTriStyles();
+
+        const ov = document.createElement('div');
+        ov.id = 'lfTriStudioOverlay';
+        ov.className = 'modal';
+        ov.innerHTML = `
+            <div class="lf-tri-topbar">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <strong style="font-size:15px;color:#0f766e;">◫ 3-Way Parallel Studio</strong>
+                    <select id="lfTriBookSel" class="lf-lxx-select">
+                        ${OT_BOOKS.map(([n, name]) => `<option value="${n}">${escapeHtml(name)}</option>`).join('')}
+                    </select>
+                    <select id="lfTriChapSel" class="lf-lxx-select"></select>
+                    <button type="button" class="lf-lxx-btn active" id="lfTriGlossBtn">Glosses: On</button>
+                    <button type="button" class="lf-lxx-btn active" id="lfTriMorphBtn">Morph: On</button>
+                    <button type="button" class="lf-lxx-btn active" id="lfTriSyncBtn">Sync-HL: On</button>
+                    <button type="button" class="lf-lxx-btn" id="lfTriCatssBadge" title="Open CATSS MT↔LXX importer"></button>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="lf-lxx-font-group" title="Adjust font size across all 3 columns">
+                        <button type="button" class="lf-lxx-font-btn" id="lfTriFontDec">A−</button>
+                        <span class="lf-lxx-font-readout" id="lfTriFontReadout">100%</span>
+                        <button type="button" class="lf-lxx-font-btn" id="lfTriFontInc">A+</button>
+                    </div>
+                    <button type="button" class="lf-lxx-btn" id="lfTriCloseBtn">✕ Close</button>
+                </div>
+            </div>
+            <div class="lf-tri-colheads">
+                <div style="color:#334155;">English — Berean Standard Bible (BSB)</div>
+                <div style="color:#9a3412;text-align:right;">Hebrew — Masoretic Text (WLC / CATSS)</div>
+                <div style="color:#0f766e;">Greek — Tagged Septuagint (Rahlfs 1935)</div>
+            </div>
+            <div class="lf-tri-body" id="lfTriBody"></div>
+            <div class="lf-tri-inspector" id="lfTriInspector"></div>
+        `;
+        document.body.appendChild(ov);
+        setSharedFontScale(getCurrentFontScale());
+
+        ov.querySelector('#lfTriCloseBtn').onclick = () => closeTriStudio();
+        ov.querySelector('#lfTriBookSel').onchange = (e) => {
+            triState.bookNum = parseInt(e.target.value, 10);
+            triState.chapter = 1;
+            renderTriStudioChapter();
+        };
+        ov.querySelector('#lfTriChapSel').onchange = (e) => {
+            triState.chapter = parseInt(e.target.value, 10);
+            renderTriStudioChapter();
+        };
+
+        const gBtn = ov.querySelector('#lfTriGlossBtn');
+        gBtn.onclick = () => {
+            triState.glosses = !triState.glosses;
+            gBtn.textContent = triState.glosses ? 'Glosses: On' : 'Glosses: Off';
+            gBtn.classList.toggle('active', triState.glosses);
+            ov.classList.toggle('no-gloss', !triState.glosses);
+        };
+        const mBtn = ov.querySelector('#lfTriMorphBtn');
+        mBtn.onclick = () => {
+            triState.morph = !triState.morph;
+            mBtn.textContent = triState.morph ? 'Morph: On' : 'Morph: Off';
+            mBtn.classList.toggle('active', triState.morph);
+            ov.classList.toggle('no-morph', !triState.morph);
+        };
+        const sBtn = ov.querySelector('#lfTriSyncBtn');
+        sBtn.onclick = () => {
+            triState.syncHl = !triState.syncHl;
+            sBtn.textContent = triState.syncHl ? 'Sync-HL: On' : 'Sync-HL: Off';
+            sBtn.classList.toggle('active', triState.syncHl);
+            if (!triState.syncHl) { clearTriClass('tri-hover'); clearTriPin(); }
+        };
+        ov.querySelector('#lfTriCatssBadge').onclick = () => {
+            const mgr = document.getElementById('lfCatssMgrBtn');
+            if (mgr) mgr.click();
+        };
+        ov.querySelector('#lfTriFontDec').onclick = () => setSharedFontScale(getCurrentFontScale() - 0.1);
+        ov.querySelector('#lfTriFontInc').onclick = () => setSharedFontScale(getCurrentFontScale() + 0.1);
+        ov.querySelector('#lfTriFontReadout').onclick = () => setSharedFontScale(1.0);
+
+        // Delegated hover & click inside #lfTriBody — clicking blank space or same word cleanly unpins!
+        const body = ov.querySelector('#lfTriBody');
+        body.addEventListener('mouseover', (e) => {
+            const tok = e.target && e.target.closest && e.target.closest('.lf-tri-tok');
+            if (!tok) { clearTriClass('tri-hover'); return; }
+            applyTriHighlight(parseInt(tok.dataset.v, 10), tok.dataset.lang, parseInt(tok.dataset.i, 10), 'hover');
+        });
+        body.addEventListener('mouseleave', () => clearTriClass('tri-hover'));
+        body.addEventListener('click', (e) => {
+            const tok = e.target && e.target.closest && e.target.closest('.lf-tri-tok');
+            if (!tok) {
+                clearTriPin();
+                return;
+            }
+            const v = parseInt(tok.dataset.v, 10);
+            const lang = tok.dataset.lang;
+            const i = parseInt(tok.dataset.i, 10);
+            if (triState.pinned && triState.pinned.v === v && triState.pinned.lang === lang && triState.pinned.i === i) {
+                clearTriPin();
+                return;
+            }
+            triState.pinned = { v, lang, i };
+            const triad = applyTriHighlight(v, lang, i, 'pin');
+            renderTriInspector(v, triad);
+        });
+    }
+
+    function openTriStudio() {
+        ensureTriStudioDOM();
+        // Sync to whatever book/chapter is active in the LXX drawer
+        const bSel = document.getElementById('lfLxxBookSel');
+        const cSel = document.getElementById('lfLxxChapSel');
+        if (bSel && bSel.value) triState.bookNum = parseInt(bSel.value, 10);
+        if (cSel && cSel.value) triState.chapter = parseInt(cSel.value, 10);
+
+        const ov = document.getElementById('lfTriStudioOverlay');
+        setSharedFontScale(getCurrentFontScale());
+        ov.classList.add('open');
+        renderTriStudioChapter();
+    }
+
+    function closeTriStudio() {
+        clearTriPin();
+        const ov = document.getElementById('lfTriStudioOverlay');
+        if (ov) ov.classList.remove('open');
+    }
+
+    // Inject the "◫ 3-Way" button into the LXX drawer header
+    function injectTriButton() {
+        ensureTriStyles();
+        const halfBtn = document.getElementById('lfLxxHalfSnapBtn');
+        if (halfBtn && halfBtn.parentElement && !document.getElementById('lfTriOpenBtn')) {
+            const btn = document.createElement('button');
+            btn.id = 'lfTriOpenBtn';
+            btn.type = 'button';
+            btn.textContent = '◫ 3-Way';
+            btn.title = 'Open 3-Column Parallel Studio (English BSB | Hebrew MT | Greek LXX) with Sync Highlighting';
+            btn.onclick = () => openTriStudio();
+            const fontGrp = document.getElementById('lfLxxFontGroup');
+            halfBtn.parentElement.insertBefore(btn, fontGrp || halfBtn);
+        }
+        addInspectorClearButton();
+    }
+
+    function init() {
+        injectTriButton();
+        setTimeout(injectTriButton, 300);
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => {
+                injectTriButton();
+                // Auto-refresh 3-Way Studio if user imports a new CATSS .par book while it's open
+                const ov = document.getElementById('lfTriStudioOverlay');
+                const catssModal = document.getElementById('lfCatssModalOverlay');
+                if (ov && ov.classList.contains('open') && catssModal && !catssModal.classList.contains('open')) {
+                    const mgrBtn = document.getElementById('lfCatssMgrBtn');
+                    const sig = mgrBtn ? mgrBtn.textContent : '';
+                    if (ov.dataset.lastCatssSig && ov.dataset.lastCatssSig !== sig) {
+                        ov.dataset.lastCatssSig = sig;
+                        renderTriStudioChapter();
+                    } else if (!ov.dataset.lastCatssSig) {
+                        ov.dataset.lastCatssSig = sig;
+                    }
+                }
+            });
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        }
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+
+
     </script>
 </body>
 </html>
