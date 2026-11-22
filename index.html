@@ -28466,6 +28466,2352 @@ function showContextMenu(x, y) {
     );
 })();
 
+
+	/* === LEXFLOW CONNECTOR: TAGGED LXX (RAHLFS 1935) + RESIZABLE SPLIT + GREEK-ENGLISH CROSS-HIGHLIGHT + KUDOS === */
+(function () {
+    const REPO_OWNER = 'eliranwong';
+    const REPO_NAME = 'LXX-Rahlfs-1935';
+    const REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
+    const TREE_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/master?recursive=1`;
+    const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/master/`;
+    const CDN_BASE = `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@master/`;
+
+    const IDB_NAME = 'LexFlow_LXX_Rahlfs1935_v3';
+    const IDB_STORE = 'books';
+    const IDB_META_STORE = 'meta';
+    const WIDTH_STORE_KEY = 'lexflow_lxx_drawer_width_v1';
+
+    const OT_BOOK_LIST = [
+        [1, 'Genesis'], [2, 'Exodus'], [3, 'Leviticus'], [4, 'Numbers'], [5, 'Deuteronomy'],
+        [6, 'Joshua'], [7, 'Judges'], [8, 'Ruth'], [9, '1 Samuel'], [10, '2 Samuel'],
+        [11, '1 Kings'], [12, '2 Kings'], [13, '1 Chronicles'], [14, '2 Chronicles'], [15, 'Ezra'],
+        [16, 'Nehemiah'], [17, 'Esther'], [18, 'Job'], [19, 'Psalm'], [20, 'Proverbs'],
+        [21, 'Ecclesiastes'], [22, 'Song of Solomon'], [23, 'Isaiah'], [24, 'Jeremiah'], [25, 'Lamentations'],
+        [26, 'Ezekiel'], [27, 'Daniel'], [28, 'Hosea'], [29, 'Joel'], [30, 'Amos'],
+        [31, 'Obadiah'], [32, 'Jonah'], [33, 'Micah'], [34, 'Nahum'], [35, 'Habakkuk'],
+        [36, 'Zephaniah'], [37, 'Haggai'], [38, 'Zechariah'], [39, 'Malachi']
+    ];
+
+    const BOOK_ALIAS_MAP = {
+        gen: 1, genesis: 1, ge: 1, gn: 1,
+        exod: 2, exodus: 2, ex: 2, exo: 2,
+        lev: 3, leviticus: 3, le: 3, lv: 3,
+        num: 4, numbers: 4, nu: 4, nm: 4, nb: 4,
+        deut: 5, deuteronomy: 5, dt: 5, deu: 5,
+        josh: 6, joshua: 6, jos: 6, josha: 6, joshb: 6,
+        judg: 7, judges: 7, jdg: 7, jg: 7, judga: 7, judgb: 7,
+        ruth: 8, ru: 8, rut: 8, rth: 8,
+        '1sam': 9, '1sa': 9, '1sm': 9, '1kgdms': 9, '1reg': 9, '1kdms': 9, '1bas': 9, '1rgns': 9, isam: 9,
+        '2sam': 10, '2sa': 10, '2sm': 10, '2kgdms': 10, '2reg': 10, '2kdms': 10, '2bas': 10, '2rgns': 10, iisam: 10,
+        '1kgs': 11, '1ki': 11, '1kings': 11, '3kgdms': 11, '3reg': 11, '3kdms': 11, '3bas': 11, '3rgns': 11, '1kg': 11, ikgs: 11,
+        '2kgs': 12, '2ki': 12, '2kings': 12, '4kgdms': 12, '4reg': 12, '4kdms': 12, '4bas': 12, '4rgns': 12, '2kg': 12, iikgs: 12,
+        '1chr': 13, '1ch': 13, '1chron': 13, '1par': 13, ichr: 13,
+        '2chr': 14, '2ch': 14, '2chron': 14, '2par': 14, iichr: 14,
+        ezra: 15, ezr: 15, '2esd': 15, '2esdr': 15, esdrb: 15,
+        neh: 16, nehemiah: 16, ne: 16,
+        esth: 17, esther: 17, est: 17, es: 17,
+        job: 18, jb: 18,
+        ps: 19, psa: 19, pss: 19, psalm: 19, psalms: 19,
+        prov: 20, proverbs: 20, pr: 20, pro: 20, prv: 20,
+        eccl: 21, ecclesiastes: 21, ecc: 21, ec: 21, qoh: 21, qoheleth: 21,
+        song: 22, cant: 22, sos: 22, sng: 22, ss: 22, songofsolomon: 22,
+        isa: 23, isaiah: 23, is: 23,
+        jer: 24, jeremiah: 24, je: 24, jr: 24,
+        lam: 25, lamentations: 25, la: 25,
+        ezek: 26, ezekiel: 26, eze: 26, ezk: 26,
+        dan: 27, daniel: 27, da: 27, dn: 27, danog: 27, danth: 27,
+        hos: 28, hosea: 28, ho: 28,
+        joel: 29, jl: 29, joe: 29, jol: 29,
+        amos: 30, am: 30, amo: 30,
+        obad: 31, obadiah: 31, ob: 31, oba: 31,
+        jonah: 32, jon: 32, jnh: 32,
+        mic: 33, micah: 33, mi: 33,
+        nah: 34, nahum: 34, na: 34, nam: 34,
+        hab: 35, habakkuk: 35, hb: 35,
+        zeph: 36, zephaniah: 36, zep: 36, zp: 36,
+        hag: 37, haggai: 37, hg: 37,
+        zech: 38, zechariah: 38, zec: 38, zc: 38,
+        mal: 39, malachi: 39, ml: 39
+    };
+
+    const BOOK_NAME_BY_NUM = {};
+    OT_BOOK_LIST.forEach(([num, name]) => { BOOK_NAME_BY_NUM[num] = name; });
+
+    // Core accent-stripped LXX Greek -> English synonym bridge (catches BSB wording differences like ποιεω -> created)
+    const GREEK_SYNONYM_MAP = {
+        εν: ['in', 'into', 'on', 'at', 'by', 'with', 'among', 'within'],
+        και: ['and', 'also', 'even', 'then', 'but'],
+        δε: ['but', 'and', 'now', 'yet', 'then'],
+        γαρ: ['for', 'because', 'since'],
+        οτι: ['that', 'for', 'because', 'since'],
+        εις: ['into', 'to', 'toward', 'for', 'unto'],
+        εκ: ['from', 'out', 'of', 'off'],
+        εξ: ['from', 'out', 'of', 'off'],
+        απο: ['from', 'away', 'of', 'off'],
+        προς: ['to', 'toward', 'with', 'unto', 'against'],
+        επι: ['on', 'upon', 'over', 'above', 'at', 'to', 'surface'],
+        δια: ['through', 'by', 'because', 'for'],
+        μετα: ['with', 'after', 'among'],
+        περι: ['about', 'concerning', 'around', 'for'],
+        υπο: ['under', 'beneath', 'by', 'below'],
+        υποκατω: ['under', 'beneath', 'below'],
+        επανω: ['over', 'above', 'upon', 'surface'],
+        ανα: ['between', 'among', 'up'],
+        μεσον: ['between', 'midst', 'middle', 'among'],
+        ου: ['not', 'no', 'never'], ουκ: ['not', 'no'], ουχ: ['not', 'no'], μη: ['not', 'no', 'never'],
+        ο: ['the'], η: ['the'], το: ['the'],
+        αυτος: ['he', 'him', 'his', 'she', 'her', 'it', 'its', 'they', 'them', 'their', 'self', 'same'],
+        ουτος: ['this', 'these', 'that', 'those'],
+        εκεινος: ['that', 'those'],
+        εγω: ['i', 'me', 'my', 'mine', 'we', 'us', 'our'],
+        συ: ['you', 'your', 'yours', 'thou', 'thee', 'thy'],
+        ος: ['who', 'whom', 'whose', 'which', 'that'],
+        τις: ['who', 'what', 'which', 'someone', 'anyone', 'any'],
+        πας: ['all', 'every', 'whole', 'everything', 'everyone'],
+        αρχη: ['beginning', 'start', 'first', 'origin', 'ruler', 'chief'],
+        ποιεω: ['make', 'made', 'create', 'created', 'do', 'did', 'done', 'form', 'formed', 'work', 'build', 'built'],
+        κτιζω: ['create', 'created', 'make', 'made'],
+        πλαζω: ['form', 'formed', 'fashion'], πλασσω: ['form', 'formed', 'fashion', 'shape'],
+        θεος: ['god', 'gods', 'lord'],
+        κυριος: ['lord', 'master', 'sir'],
+        ουρανος: ['heaven', 'heavens', 'sky', 'skies'],
+        γη: ['earth', 'land', 'ground', 'soil', 'country'],
+        αορατος: ['formless', 'unseen', 'invisible', 'empty'],
+        ακατασκευαστος: ['void', 'empty', 'unformed', 'waste'],
+        σκοτος: ['darkness', 'dark', 'gloom'],
+        αβυσσος: ['deep', 'abyss', 'depths'],
+        πνευμα: ['spirit', 'wind', 'breath'],
+        επιφερω: ['hover', 'hovering', 'move', 'moving', 'swept'],
+        υδωρ: ['water', 'waters'],
+        λεγω: ['say', 'said', 'speak', 'spoke', 'spoken', 'tell', 'told', 'declare'],
+        ειπον: ['say', 'said', 'speak', 'spoke', 'tell', 'told'],
+        λαλεω: ['speak', 'spoke', 'spoken', 'talk', 'say', 'said'],
+        γινομαι: ['be', 'become', 'became', 'was', 'were', 'came', 'happen', 'happened', 'let', 'there'],
+        ειμι: ['be', 'is', 'am', 'are', 'was', 'were', 'been'],
+        φως: ['light', 'daylight'],
+        οραω: ['see', 'saw', 'seen', 'look', 'looked', 'behold', 'appear'],
+        ειδον: ['see', 'saw', 'seen', 'look', 'behold'],
+        καλος: ['good', 'fine', 'beautiful', 'fair'],
+        αγαθος: ['good', 'kind', 'right'],
+        διαχωριζω: ['separate', 'separated', 'divide', 'divided'],
+        καλεω: ['call', 'called', 'name', 'named', 'summon'],
+        ημερα: ['day', 'days', 'time'],
+        νυξ: ['night', 'nights'],
+        εσπερα: ['evening', 'dusk'],
+        πρωι: ['morning', 'dawn', 'early'],
+        εις_num: ['one', 'first'],
+        μια: ['one', 'first'],
+        πρωτος: ['first', 'former'],
+        δευτερος: ['second'],
+        τριτος: ['third'],
+        στερεωμα: ['expanse', 'firmament', 'vault', 'dome', 'sky'],
+        συναγω: ['gather', 'gathered', 'collect', 'assemble'],
+        τοπος: ['place', 'spot', 'location'],
+        ξηρος: ['dry', 'land', 'ground'],
+        θαλασσα: ['sea', 'seas', 'ocean'],
+        βλαστανω: ['sprout', 'produce', 'bring', 'grow'],
+        βοτανη: ['vegetation', 'plants', 'herb', 'herbs', 'grass'],
+        σπερμα: ['seed', 'seeds', 'offspring', 'descendants'],
+        ξυλον: ['tree', 'trees', 'wood'],
+        καρπος: ['fruit', 'fruits', 'produce'],
+        γενος: ['kind', 'kinds', 'species', 'family'],
+        ανθρωπος: ['man', 'men', 'mankind', 'human', 'people', 'person'],
+        υιος: ['son', 'sons', 'child', 'children'],
+        πατηρ: ['father', 'fathers', 'ancestors'],
+        μητηρ: ['mother'],
+        αδελφος: ['brother', 'brothers', 'sisters'],
+        βασιλευς: ['king', 'kings', 'ruler'],
+        βασιλεια: ['kingdom', 'reign'],
+        αγγελος: ['angel', 'angels', 'messenger', 'messengers'],
+        προφητης: ['prophet', 'prophets'],
+        ιερευς: ['priest', 'priests'],
+        λαος: ['people', 'peoples', 'nation'],
+        εθνος: ['nation', 'nations', 'gentiles', 'peoples'],
+        οικος: ['house', 'household', 'home', 'temple'],
+        πολις: ['city', 'cities', 'town'],
+        οδος: ['way', 'ways', 'road', 'path', 'paths'],
+        λογος: ['word', 'words', 'message', 'speech', 'matter'],
+        ονομα: ['name', 'names'],
+        καρδια: ['heart', 'hearts', 'mind'],
+        ψυχη: ['soul', 'life', 'living', 'being', 'creature', 'creatures'],
+        χειρ: ['hand', 'hands', 'power'],
+        δεξιος: ['right'],
+        οφθαλμος: ['eye', 'eyes'],
+        στομα: ['mouth'],
+        φωνη: ['voice', 'sound'],
+        αιμα: ['blood'],
+        σαρξ: ['flesh', 'body', 'mankind'],
+        διδωμι: ['give', 'gave', 'given', 'grant', 'put', 'set'],
+        λαμβανω: ['take', 'took', 'taken', 'receive', 'received'],
+        ερχομαι: ['come', 'came', 'go', 'went', 'enter'],
+        πορευομαι: ['go', 'went', 'walk', 'walked', 'travel'],
+        εχω: ['have', 'has', 'had', 'hold', 'possess'],
+        γινωσκω: ['know', 'knew', 'known', 'understand'],
+        ακουω: ['hear', 'heard', 'listen', 'listened', 'obey'],
+        γραφω: ['write', 'wrote', 'written'],
+        καθημαι: ['sit', 'sat', 'seated', 'dwell'],
+        ιστημι: ['stand', 'stood', 'establish', 'set'],
+        αγαπαω: ['love', 'loved'], αγαπη: ['love'],
+        δικαιοσυνη: ['righteousness', 'justice'], δικαιος: ['righteous', 'just'],
+        αμαρτια: ['sin', 'sins'],
+        ειρηνη: ['peace'],
+        δοξα: ['glory', 'splendor', 'honor'],
+        δυναμις: ['power', 'might', 'strength', 'army'],
+        σοφια: ['wisdom'],
+        χαρις: ['grace', 'favor'],
+        ελεος: ['mercy', 'lovingkindness', 'compassion', 'steadfast'],
+        αληθεια: ['truth', 'faithfulness'],
+        σωτηρια: ['salvation', 'deliverance'], σωζω: ['save', 'saved', 'deliver', 'rescue'],
+        πιστις: ['faith', 'faithfulness', 'trust'], πιστευω: ['believe', 'believed', 'trust', 'trusted'],
+        αιων: ['forever', 'eternal', 'age', 'ages', 'everlasting'],
+        μεγας: ['great', 'large', 'mighty', 'loud'],
+        πολυς: ['many', 'much', 'great', 'abundant'],
+        αγιος: ['holy', 'sacred', 'saints'],
+        ζωη: ['life'], ζαω: ['live', 'lived', 'living', 'alive'],
+        θανατος: ['death'], αποθνησκω: ['die', 'died', 'dead'],
+        πυρ: ['fire', 'flame'],
+        θρονος: ['throne'],
+        εχθρος: ['enemy', 'enemies', 'foe'],
+        υποποδιον: ['footstool'],
+        πους: ['foot', 'feet']
+    };
+
+    const IRREGULAR_EN_BASES = {
+        made: 'make', making: 'make', created: 'create', creating: 'create',
+        said: 'say', saying: 'say', spoke: 'speak', spoken: 'speak', speaking: 'speak',
+        told: 'tell', telling: 'tell', saw: 'see', seen: 'see', seeing: 'see',
+        was: 'be', were: 'be', is: 'be', am: 'be', are: 'be', been: 'be', being: 'be',
+        became: 'become', becoming: 'become', came: 'come', coming: 'come',
+        went: 'go', gone: 'go', going: 'go', gave: 'give', given: 'give', giving: 'give',
+        took: 'take', taken: 'take', taking: 'take', had: 'have', has: 'have', having: 'have',
+        did: 'do', done: 'do', doing: 'do', knew: 'know', known: 'know',
+        heard: 'hear', hearing: 'hear', sat: 'sit', sitting: 'sit', seated: 'sit',
+        stood: 'stand', standing: 'stand', wrote: 'write', written: 'write',
+        brought: 'bring', sent: 'send', found: 'find', kept: 'keep', held: 'hold',
+        left: 'leave', rose: 'rise', risen: 'rise', shone: 'shine', fell: 'fall', fallen: 'fall',
+        men: 'man', children: 'child', feet: 'foot', peoples: 'people',
+        waters: 'water', heavens: 'heaven', skies: 'sky', days: 'day', nights: 'night',
+        gods: 'god', kings: 'king', sons: 'son', hands: 'hand', eyes: 'eye',
+        words: 'word', nations: 'nation', enemies: 'enemy', trees: 'tree', seeds: 'seed',
+        plants: 'plant', herbs: 'herb', seas: 'sea', creatures: 'creature',
+        hovering: 'hover', separated: 'separate', dividing: 'divide', divided: 'divide',
+        called: 'call', named: 'name', gathered: 'gather', sprouted: 'sprout', produced: 'produce'
+    };
+
+    const EN_STOPWORDS = new Set(['a', 'an', 'of', 'to', 'the', 'be', 'is', 'am', 'are', 'was', 'were', 'it', 'its']);
+
+    const getEditor = () =>
+        (typeof editor !== 'undefined' && editor) ||
+        document.getElementById('editor') ||
+        document.querySelector('[contenteditable="true"]');
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function stripHtmlTags(str) {
+        return String(str || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function normalizeGreek(str) {
+        return String(str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/ς/g, 'σ')
+            .replace(/[^α-ω]/g, '');
+    }
+
+    function stemEnglish(word) {
+        const w = String(word || '').toLowerCase().replace(/[^a-z']/g, '').replace(/^'+|'+$/g, '');
+        if (!w) return '';
+        if (IRREGULAR_EN_BASES[w]) return IRREGULAR_EN_BASES[w];
+        if (w.length > 5 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+        if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
+        if (w.length > 4 && w.endsWith('ed')) return w.slice(0, -2);
+        if (w.length > 4 && w.endsWith('es') && !w.endsWith('tes') && !w.endsWith('les')) return w.slice(0, -2);
+        if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us') && !w.endsWith('is')) return w.slice(0, -1);
+        return w;
+    }
+
+    // --- 1. INDEXEDDB OFFLINE CACHE ---
+    let idbPromise = null;
+    const bookMemCache = new Map();
+    let morphDescMap = {};
+    let lxxReady = false;
+    let activeSyncPromise = null;
+    let lastSyncDiagnostic = '';
+
+    try { indexedDB.deleteDatabase('LexFlow_LXX_Rahlfs1935_v1'); } catch (e) {}
+    try { indexedDB.deleteDatabase('LexFlow_LXX_Rahlfs1935_v2'); } catch (e) {}
+
+    function openIdb() {
+        if (idbPromise) return idbPromise;
+        idbPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open(IDB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+                if (!db.objectStoreNames.contains(IDB_META_STORE)) db.createObjectStore(IDB_META_STORE);
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return idbPromise;
+    }
+
+    async function idbGet(storeName, key) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readonly');
+            const req = tx.objectStore(storeName).get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbPut(storeName, key, val) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            const req = tx.objectStore(storeName).put(val, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbClearAll() {
+        const db = await openIdb();
+        bookMemCache.clear();
+        morphDescMap = {};
+        lxxReady = false;
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([IDB_STORE, IDB_META_STORE], 'readwrite');
+            tx.objectStore(IDB_STORE).clear();
+            tx.objectStore(IDB_META_STORE).clear();
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async function getCachedBook(bookNum) {
+        const bNum = parseInt(bookNum, 10);
+        if (bookMemCache.has(bNum)) return bookMemCache.get(bNum);
+        const data = await idbGet(IDB_STORE, bNum);
+        if (data) bookMemCache.set(bNum, data);
+        return data || null;
+    }
+
+    async function checkIfCached() {
+        try {
+            const meta = await idbGet(IDB_META_STORE, 'status');
+            if (meta && meta.ready && meta.bookCount > 0) {
+                lxxReady = true;
+                const savedMorph = await idbGet(IDB_META_STORE, 'morphDesc');
+                if (savedMorph) morphDescMap = savedMorph;
+                return meta;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // --- 2. PURE-JS ZIP READER ---
+    async function unzipTextFromBuffer(arrayBuffer) {
+        const bytes = new Uint8Array(arrayBuffer);
+        const dv = new DataView(arrayBuffer);
+        const dec = new TextDecoder('utf-8');
+
+        let eocd = -1;
+        const minOffset = Math.max(0, bytes.length - 65557);
+        for (let i = bytes.length - 22; i >= minOffset; i--) {
+            if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+        }
+        if (eocd === -1) throw new Error('Invalid ZIP archive');
+
+        const cdSize = dv.getUint32(eocd + 12, true);
+        const cdOffset = dv.getUint32(eocd + 16, true);
+        const cdEnd = Math.min(bytes.length, cdOffset + cdSize);
+
+        let chosen = null;
+        let pos = cdOffset;
+        while (pos + 46 <= cdEnd) {
+            if (dv.getUint32(pos, true) !== 0x02014b50) break;
+            const method = dv.getUint16(pos + 10, true);
+            const compSize = dv.getUint32(pos + 20, true);
+            const uncompSize = dv.getUint32(pos + 24, true);
+            const nameLen = dv.getUint16(pos + 28, true);
+            const extraLen = dv.getUint16(pos + 30, true);
+            const commentLen = dv.getUint16(pos + 32, true);
+            const lhOffset = dv.getUint32(pos + 42, true);
+            const fileName = dec.decode(bytes.subarray(pos + 46, pos + 46 + nameLen));
+            pos += 46 + nameLen + extraLen + commentLen;
+
+            if (fileName.endsWith('/') || fileName.startsWith('__MACOSX/')) continue;
+            const isData = /\.(csv|tsv|txt)$/i.test(fileName);
+            if (!chosen || (isData && uncompSize > (chosen.uncompSize || 0))) {
+                chosen = { method, compSize, uncompSize, lhOffset, fileName };
+            }
+        }
+        if (!chosen) throw new Error('ZIP contains no readable file');
+
+        const lh = chosen.lhOffset;
+        if (dv.getUint32(lh, true) !== 0x04034b50) throw new Error('Invalid ZIP local header');
+        const lhNameLen = dv.getUint16(lh + 26, true);
+        const lhExtraLen = dv.getUint16(lh + 28, true);
+        const dataStart = lh + 30 + lhNameLen + lhExtraLen;
+        const compBytes = bytes.subarray(dataStart, dataStart + chosen.compSize);
+
+        if (chosen.method === 0) return dec.decode(compBytes);
+        if (chosen.method === 8) {
+            if (typeof DecompressionStream === 'undefined') {
+                throw new Error('Browser lacks DecompressionStream — please update Chrome');
+            }
+            const ds = new DecompressionStream('deflate-raw');
+            const stream = new Blob([compBytes]).stream().pipeThrough(ds);
+            return await new Response(stream).text();
+        }
+        throw new Error(`Unsupported ZIP method: ${chosen.method}`);
+    }
+
+    async function fetchRepoTextFile(relPath) {
+        const urls = [RAW_BASE + relPath, CDN_BASE + relPath];
+        let lastErr = null;
+        for (let i = 0; i < urls.length; i++) {
+            try {
+                const res = await fetch(urls[i]);
+                if (!res.ok) throw new Error(`HTTP ${res.status} (${relPath})`);
+                if (/\.zip$/i.test(relPath)) {
+                    const buf = await res.arrayBuffer();
+                    return await unzipTextFromBuffer(buf);
+                }
+                return await res.text();
+            } catch (err) {
+                lastErr = err;
+            }
+        }
+        throw lastErr || new Error(`Failed to fetch ${relPath}`);
+    }
+
+    // --- 3. <GRK> XML TAG EXTRACTOR + UNIVERSAL CSV/TSV PARSER ---
+    function extractGrkTokensFromString(rawStr) {
+        const str = String(rawStr || '');
+        if (!str.includes('<grk')) return null;
+        const out = [];
+        const re = /<grk\b([^>]*)>([\s\S]*?)<\/grk>/gi;
+        let m;
+        while ((m = re.exec(str)) !== null) {
+            const attrs = m[1] || '';
+            const word = stripHtmlTags(m[2] || '');
+            if (!word) continue;
+            const idAttr = (attrs.match(/\bid\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const lexAttr = (attrs.match(/\blex\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const morphAttr = (attrs.match(/\bmorph\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const glossAttr = (attrs.match(/\bgloss\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const strongAttr = (attrs.match(/\bstrong(?:s)?\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const numIdMatch = idAttr.match(/\d+/);
+            const numId = numIdMatch ? parseInt(numIdMatch[0], 10) : null;
+            out.push({ word, idAttr, numId, lexAttr, morphAttr, glossAttr, strongAttr });
+        }
+        return out.length ? out : null;
+    }
+
+    function parseDelimitedRow(line, delim) {
+        if (delim === '\t') return line.split('\t').map((c) => c.trim().replace(/^"(.*)"$/, '$1'));
+        if (!line.includes('"')) return line.split(delim).map((c) => c.trim());
+        const out = [];
+        let cur = '';
+        let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+                else inQ = !inQ;
+            } else if (ch === delim && !inQ) {
+                out.push(cur.trim());
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        out.push(cur.trim());
+        return out;
+    }
+
+    function detectDelimiter(sampleLines) {
+        const candidates = ['\t', ',', ';', '|'];
+        let best = '\t';
+        let bestScore = -1;
+        candidates.forEach((d) => {
+            let total = 0;
+            sampleLines.forEach((ln) => {
+                const cleanLn = ln.replace(/<[^>]+>/g, '');
+                for (let i = 0; i < cleanLn.length; i++) if (cleanLn[i] === d) total++;
+            });
+            const weight = d === '\t' ? 1.5 : 1.0;
+            if (total > 0 && total * weight > bestScore) {
+                bestScore = total * weight;
+                best = d;
+            }
+        });
+        return bestScore > 0 ? best : ',';
+    }
+
+    function stripWrap(s) {
+        return String(s || '').trim().replace(/^[〔\[\(<"'`]+|[〕\]\)>"'`]+$/g, '').trim();
+    }
+
+    function resolveBookNum(rawBook) {
+        const s = stripWrap(rawBook);
+        if (!s) return null;
+        if (/^\d+$/.test(s)) {
+            const n = parseInt(s, 10);
+            return n >= 1 && n <= 39 ? n : null;
+        }
+        const cleaned = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (BOOK_ALIAS_MAP[cleaned]) return BOOK_ALIAS_MAP[cleaned];
+        const noZero = cleaned.replace(/^0+/, '');
+        if (BOOK_ALIAS_MAP[noZero]) return BOOK_ALIAS_MAP[noZero];
+        const bNumMatch = cleaned.match(/^b0?(\d{1,2})$/);
+        if (bNumMatch) {
+            const n = parseInt(bNumMatch[1], 10);
+            return n >= 1 && n <= 39 ? n : null;
+        }
+        const prefixNum = cleaned.match(/^\d{1,2}([1-4]?[a-z]+)$/);
+        if (prefixNum && BOOK_ALIAS_MAP[prefixNum[1]]) return BOOK_ALIAS_MAP[prefixNum[1]];
+        const alphaPrefix = cleaned.match(/^([1-4]?[a-z]+)/);
+        if (alphaPrefix && BOOK_ALIAS_MAP[alphaPrefix[1]]) return BOOK_ALIAS_MAP[alphaPrefix[1]];
+        return null;
+    }
+
+    function parseRefFromRow(cols) {
+        if (!cols || !cols.length) return null;
+        const firstWid = /^\d+$/.test(stripWrap(cols[0])) ? parseInt(stripWrap(cols[0]), 10) : null;
+
+        for (let i = 0; i < cols.length; i++) {
+            const rawCell = cols[i] || '';
+            if (rawCell.includes('<grk') || /[\u0370-\u03FF\u1F00-\u1FFF]/.test(rawCell)) continue;
+            const cell = stripWrap(rawCell);
+            if (!cell) continue;
+
+            const bcvTag = cell.match(/^B(\d{1,2})C(\d{1,3})V(\d{1,3})/i);
+            if (bcvTag) {
+                const b = parseInt(bcvTag[1], 10), c = parseInt(bcvTag[2], 10), v = parseInt(bcvTag[3], 10);
+                if (b >= 1 && b <= 39 && c > 0 && v > 0) return { wid: i > 0 ? firstWid : null, b, c, v, refColEnd: i };
+            }
+
+            if (/^\d{7,8}$/.test(cell)) {
+                const padded = cell.padStart(8, '0');
+                const b = parseInt(padded.slice(0, 2), 10);
+                const c = parseInt(padded.slice(2, 5), 10);
+                const v = parseInt(padded.slice(5, 8), 10);
+                if (b >= 1 && b <= 39 && c >= 1 && c <= 151 && v >= 1 && v <= 180) {
+                    return { wid: i > 0 ? firstWid : null, b, c, v, refColEnd: i };
+                }
+            }
+
+            const combo = cell.match(/(?:^|[\s\[〔(])([1-4]?\s*[A-Za-z]+|\d{1,2})[\s._:/-]+(\d{1,3})[:._/-](\d{1,3})/);
+            if (combo) {
+                const b = resolveBookNum(combo[1]);
+                const c = parseInt(combo[2], 10);
+                const v = parseInt(combo[3], 10);
+                if (b && c > 0 && c <= 155 && v > 0 && v <= 180) {
+                    return { wid: i > 0 ? firstWid : null, b, c, v, refColEnd: i };
+                }
+            }
+        }
+
+        for (let i = 0; i < cols.length - 1; i++) {
+            if ((cols[i] || '').includes('<grk')) continue;
+            const b = resolveBookNum(cols[i]);
+            if (!b) continue;
+            const cv = stripWrap(cols[i + 1]).match(/^(\d{1,3})[:._/-](\d{1,3})/);
+            if (cv) {
+                const c = parseInt(cv[1], 10), v = parseInt(cv[2], 10);
+                if (c > 0 && c <= 155 && v > 0 && v <= 180) {
+                    return { wid: i > 0 ? firstWid : null, b, c, v, refColEnd: i + 1 };
+                }
+            }
+        }
+
+        for (let pass = 0; pass < 2; pass++) {
+            for (let i = 0; i <= cols.length - 3; i++) {
+                if ((cols[i] || '').includes('<grk')) continue;
+                const rawB = stripWrap(cols[i]);
+                if (pass === 0 && /^\d+$/.test(rawB)) continue;
+                if (pass === 1 && !/^\d+$/.test(rawB)) continue;
+                if (pass === 1 && i === 0 && cols.length >= 4 && /^\d+$/.test(stripWrap(cols[3]))) continue;
+                const b = resolveBookNum(rawB);
+                const rawC = stripWrap(cols[i + 1]);
+                const rawV = stripWrap(cols[i + 2]);
+                if (b && /^\d{1,3}$/.test(rawC) && /^\d{1,3}[a-z]?$/i.test(rawV)) {
+                    const c = parseInt(rawC, 10), v = parseInt(rawV, 10);
+                    if (c > 0 && c <= 155 && v > 0 && v <= 180) {
+                        return { wid: i > 0 ? firstWid : null, b, c, v, refColEnd: i + 2 };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function looksLikeHeader(cols) {
+        const joined = cols.join(' ').toLowerCase();
+        if (joined.includes('<grk') || /[\u0370-\u03FF\u1F00-\u1FFF]/.test(joined)) return false;
+        return /(?:^|\s)(id|word|book|chap|verse|ref|morph|lexeme|lemma|gloss|strong|translit|text|bcv)(?:\s|$)/i.test(joined) &&
+            !parseRefFromRow(cols);
+    }
+
+    function extractPayloadColumn(cols, preferGreek) {
+        if (cols.length === 1) return { wid: null, val: cols[0].trim() };
+        const hasId = /^\d+$/.test(stripWrap(cols[0]));
+        const wid = hasId ? parseInt(stripWrap(cols[0]), 10) : null;
+        if (preferGreek) {
+            for (let i = 0; i < cols.length; i++) {
+                if (cols[i].includes('<grk') || /[\u0370-\u03FF\u1F00-\u1FFF]/.test(cols[i])) {
+                    return { wid, val: cols[i].trim() };
+                }
+            }
+        }
+        return { wid, val: (cols[hasId ? 1 : cols.length - 1] || cols[cols.length - 1] || '').trim() };
+    }
+
+    function parseEnrichmentLayer(rawText, kind) {
+        const out = { arr: [], byNumId: new Map(), dict: new Map(), extraStrongs: new Map(), extraGloss: new Map() };
+        if (!rawText) return out;
+        const lines = rawText.replace(/^\uFEFF/, '').split(/\r?\n/);
+        const nonEmpty = [];
+        for (let i = 0; i < lines.length; i++) {
+            const ln = lines[i].trim();
+            if (ln) nonEmpty.push(ln);
+        }
+        if (!nonEmpty.length) return out;
+
+        const delim = detectDelimiter(nonEmpty.slice(0, 15));
+        const startIdx = looksLikeHeader(parseDelimitedRow(nonEmpty[0], delim)) ? 1 : 0;
+
+        for (let i = startIdx; i < nonEmpty.length; i++) {
+            const cols = parseDelimitedRow(nonEmpty[i], delim);
+            if (!cols.length) continue;
+
+            const keys = [];
+            let numId = null;
+            const c0 = stripWrap(cols[0]);
+            if (/^L\d+$/i.test(c0) || /^lxx\d+$/i.test(c0)) {
+                keys.push(c0, c0.toUpperCase(), c0.toLowerCase());
+                const mNum = c0.match(/\d+/);
+                if (mNum && /^lxx/i.test(c0)) numId = parseInt(mNum[0], 10);
+            } else if (/^\d+$/.test(c0)) {
+                numId = parseInt(c0, 10);
+                keys.push(`L${c0}`, `lxx${c0}`);
+            } else if (c0 && cols.length >= 2) {
+                keys.push(stripHtmlTags(c0));
+            }
+
+            for (let k = 1; k < cols.length; k++) {
+                const ck = stripWrap(cols[k]);
+                if (/^L\d+$/i.test(ck)) keys.push(ck, ck.toUpperCase());
+                else if (/^lxx\d+$/i.test(ck)) {
+                    keys.push(ck, ck.toLowerCase());
+                    const mNum = ck.match(/\d+/);
+                    if (mNum && numId === null) numId = parseInt(mNum[0], 10);
+                }
+            }
+
+            let val = '';
+            if (cols.length === 1) {
+                val = stripHtmlTags(cols[0]);
+            } else if (kind === 'lex') {
+                for (let k = 0; k < cols.length; k++) {
+                    if (/[\u0370-\u03FF\u1F00-\u1FFF]/.test(cols[k])) { val = stripHtmlTags(cols[k]); break; }
+                }
+                if (!val) val = stripHtmlTags(cols[1] || cols[cols.length - 1]);
+                for (let k = 1; k < cols.length; k++) {
+                    const ck = stripHtmlTags(cols[k]);
+                    if (!ck || ck === val || /^L\d+$/i.test(ck) || /^lxx\d+$/i.test(ck)) continue;
+                    if (/^[GH]\d{1,5}[a-z]?$/i.test(ck)) {
+                        keys.forEach((key) => out.extraStrongs.set(key, ck.toUpperCase()));
+                    } else if (/[A-Za-z]{2,}/.test(ck) && !/[\u0370-\u03FF\u1F00-\u1FFF]/.test(ck) && !/^[A-Z0-9._-]{1,12}$/.test(ck)) {
+                        keys.forEach((key) => { if (!out.extraGloss.has(key)) out.extraGloss.set(key, ck); });
+                    }
+                }
+            } else if (kind === 'gloss') {
+                for (let k = 1; k < cols.length; k++) {
+                    const ck = stripHtmlTags(cols[k]);
+                    if (!ck || /^L\d+$/i.test(ck) || /^lxx\d+$/i.test(ck) || /^\d+$/.test(ck)) continue;
+                    if (/[\u0370-\u03FF\u1F00-\u1FFF]/.test(ck)) continue;
+                    val = ck;
+                    break;
+                }
+                if (!val) val = stripHtmlTags(cols[cols.length - 1]);
+            } else if (kind === 'strongs') {
+                for (let k = 0; k < cols.length; k++) {
+                    const ck = stripHtmlTags(cols[k]);
+                    if (/^[GH]\d{1,5}[a-z]?$/i.test(ck)) { val = ck.toUpperCase(); break; }
+                }
+                if (!val) val = stripHtmlTags(cols[cols.length - 1]);
+            } else {
+                val = stripHtmlTags(cols[cols.length - 1]);
+            }
+
+            if (val) {
+                out.arr.push(val);
+                if (numId !== null) out.byNumId.set(numId, val);
+                for (let ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki] && !out.dict.has(keys[ki])) out.dict.set(keys[ki], val);
+                }
+            } else {
+                out.arr.push('');
+            }
+        }
+        return out;
+    }
+
+    function lookupEnrichment(layer, { lexAttr, idAttr, numId, greekWord, lemma, seqIdx }) {
+        if (!layer) return '';
+        if (lexAttr) {
+            const hit = layer.dict.get(lexAttr) || layer.dict.get(lexAttr.toUpperCase());
+            if (hit) return hit;
+        }
+        if (idAttr) {
+            const hit = layer.dict.get(idAttr) || layer.dict.get(idAttr.toLowerCase());
+            if (hit) return hit;
+        }
+        if (numId !== null && numId !== undefined && layer.byNumId.has(numId)) return layer.byNumId.get(numId);
+        if (lemma && layer.dict.has(lemma)) return layer.dict.get(lemma);
+        if (greekWord && layer.dict.has(greekWord)) return layer.dict.get(greekWord);
+        if (numId !== null && numId !== undefined && layer.arr.length > 100000 && layer.arr[numId - 1]) return layer.arr[numId - 1];
+        if (seqIdx !== null && seqIdx !== undefined && layer.arr.length > 100000 && layer.arr[seqIdx]) return layer.arr[seqIdx];
+        return '';
+    }
+
+    // --- 4. CATSS / RAHLFS GREEK MORPHOLOGY DECODER ---
+    function decodeMorphology(rawCode) {
+        const code = String(rawCode || '').trim();
+        if (!code) return '';
+        if (morphDescMap[code]) return morphDescMap[code];
+        const compact = code.replace(/\s+/g, '');
+        if (morphDescMap[compact]) return morphDescMap[compact];
+
+        const norm = code.toUpperCase().replace(/[^A-Z0-9-]/g, ' ').replace(/\s+/g, ' ').trim();
+        const parts = norm.split(/[\s-]+/).filter(Boolean);
+        const rawPos = parts[0] || '';
+        const basePos = rawPos.replace(/\d+$/, '');
+        const tail = parts.slice(1).join('');
+
+        const CASES = { N: 'Nominative', G: 'Genitive', D: 'Dative', A: 'Accusative', V: 'Vocative' };
+        const NUMS = { S: 'Singular', P: 'Plural', D: 'Dual' };
+        const GENS = { M: 'Masculine', F: 'Feminine', N: 'Neuter' };
+        const TENSES = { P: 'Present', I: 'Imperfect', F: 'Future', A: 'Aorist', X: 'Perfect', Y: 'Pluperfect' };
+        const VOICES = { A: 'Active', M: 'Middle', P: 'Passive', D: 'Middle/Passive', E: 'Middle/Passive', O: 'Passive Deponent' };
+        const MOODS = { I: 'Indicative', S: 'Subjunctive', O: 'Optative', D: 'Imperative', M: 'Imperative', N: 'Infinitive', P: 'Participle' };
+
+        function decodeCNG(str) {
+            const out = [];
+            if (!str) return out;
+            let s = str;
+            if (/^[123]/.test(s)) {
+                out.push(`${s[0] === '1' ? '1st' : s[0] === '2' ? '2nd' : '3rd'} Person`);
+                s = s.slice(1);
+            }
+            if (CASES[s[0]]) out.push(CASES[s[0]]);
+            if (NUMS[s[1]]) out.push(NUMS[s[1]]);
+            if (GENS[s[2]]) out.push(GENS[s[2]]);
+            return out;
+        }
+
+        if (basePos === 'V' || rawPos.startsWith('V')) {
+            const out = ['Verb'];
+            let vStr = tail || rawPos.replace(/^V\d*/, '');
+            let secondPrefix = '';
+            if (vStr.startsWith('2')) { secondPrefix = '2nd '; vStr = vStr.slice(1); }
+            let idx = 0;
+            if (TENSES[vStr[idx]]) { out.push(`${secondPrefix}${TENSES[vStr[idx]]}`); idx++; }
+            if (VOICES[vStr[idx]]) { out.push(VOICES[vStr[idx]]); idx++; }
+            if (MOODS[vStr[idx]]) {
+                const mood = MOODS[vStr[idx]];
+                out.push(mood);
+                idx++;
+                const rest = vStr.slice(idx);
+                if (mood === 'Participle') out.push(...decodeCNG(rest));
+                else if (/^[123][SPD]/.test(rest)) {
+                    out.push(`${rest[0] === '1' ? '1st' : rest[0] === '2' ? '2nd' : '3rd'} Person`);
+                    if (NUMS[rest[1]]) out.push(NUMS[rest[1]]);
+                }
+            }
+            return out.length > 1 ? out.join(' · ') : `Verb (${code})`;
+        }
+
+        const POS_LABELS = {
+            N: 'Noun', A: 'Adjective', RA: 'Definite Article', RP: 'Personal Pronoun',
+            RD: 'Demonstrative Pronoun', RR: 'Relative Pronoun', RI: 'Interrogative Pronoun',
+            RX: 'Indefinite Pronoun', RC: 'Reciprocal Pronoun', RF: 'Reflexive Pronoun',
+            P: 'Preposition', C: 'Conjunction', D: 'Adverb', X: 'Particle',
+            I: 'Interjection', M: 'Number', T: 'Definite Article'
+        };
+
+        const posLabel = POS_LABELS[basePos] || POS_LABELS[basePos.slice(0, 2)] || POS_LABELS[basePos[0]];
+        if (posLabel) {
+            const out = [posLabel];
+            const cng = decodeCNG(tail);
+            if (cng.length) out.push(...cng);
+            else if (tail.length >= 3) out.push(...decodeCNG(tail.slice(-3)));
+            return out.join(' · ');
+        }
+        return code;
+    }
+
+    // --- 5. BIDIRECTIONAL ENGLISH (BSB/MT) <-> LXX PSALM VERSIFICATION ---
+    function mapEnglishRefToLxx(bookNum, chap, verse) {
+        const b = parseInt(bookNum, 10), c = parseInt(chap, 10), v = parseInt(verse, 10);
+        if (b !== 19) return { b, c, v, note: '' };
+        if (c <= 8 || c >= 148) return { b, c, v, note: '' };
+        if (c === 9) return { b, c: 9, v, note: 'LXX Ps 9' };
+        if (c === 10) return { b, c: 9, v: v + 21, note: `LXX Ps 9:${v + 21}` };
+        if (c >= 11 && c <= 113) return { b, c: c - 1, v, note: `LXX Ps ${c - 1} (Eng Ps ${c})` };
+        if (c === 114) return { b, c: 113, v, note: 'LXX Ps 113 (Eng Ps 114)' };
+        if (c === 115) return { b, c: 113, v: v + 8, note: `LXX Ps 113:${v + 8} (Eng Ps 115)` };
+        if (c === 116) {
+            return v <= 9
+                ? { b, c: 114, v, note: `LXX Ps 114:${v} (Eng Ps 116)` }
+                : { b, c: 115, v: v - 9, note: `LXX Ps 115:${v - 9} (Eng Ps 116)` };
+        }
+        if (c >= 117 && c <= 146) return { b, c: c - 1, v, note: `LXX Ps ${c - 1} (Eng Ps ${c})` };
+        if (c === 147) {
+            return v <= 11
+                ? { b, c: 146, v, note: `LXX Ps 146:${v} (Eng Ps 147)` }
+                : { b, c: 147, v: v - 11, note: `LXX Ps 147:${v - 11} (Eng Ps 147)` };
+        }
+        return { b, c, v, note: '' };
+    }
+
+    function mapLxxRefToEnglish(bookNum, chap, verse) {
+        const b = parseInt(bookNum, 10), c = parseInt(chap, 10), v = parseInt(verse, 10);
+        if (b !== 19) return { b, c, v };
+        if (c <= 8 || c >= 148) return { b, c, v };
+        if (c === 9) return v <= 21 ? { b: 19, c: 9, v } : { b: 19, c: 10, v: v - 21 };
+        if (c >= 10 && c <= 112) return { b: 19, c: c + 1, v };
+        if (c === 113) return v <= 8 ? { b: 19, c: 114, v } : { b: 19, c: 115, v: v - 8 };
+        if (c === 114) return { b: 19, c: 116, v };
+        if (c === 115) return { b: 19, c: 116, v: v + 9 };
+        if (c >= 116 && c <= 145) return { b: 19, c: c + 1, v };
+        if (c === 146) return { b: 19, c: 147, v };
+        if (c === 147) return { b: 19, c: 147, v: v + 11 };
+        return { b, c, v };
+    }
+
+    // --- 6. GITHUB REPO DISCOVERY & ASSEMBLER ---
+    async function discoverRepoFiles() {
+        const found = {
+            versification: '12-Marvel.Bible/00-versification_original.csv',
+            fallbackVersification: [],
+            text: '12-Marvel.Bible/01-text_accented.csv.zip',
+            lexemes: '12-Marvel.Bible/09-lexemes.csv',
+            gloss: '12-Marvel.Bible/06-gloss.csv',
+            morph: null, morphDesc: null, strongs: null, translit: null
+        };
+        try {
+            const res = await fetch(TREE_API_URL);
+            if (!res.ok) return found;
+            const json = await res.json();
+            const paths = (json.tree || [])
+                .filter((item) => item.type === 'blob')
+                .map((item) => item.path)
+                .filter((p) => /\.(csv|tsv|txt|zip)$/i.test(p) && !/readme|backup|license|declaration|\.py$/i.test(p));
+            const inDir = (prefix) => paths.filter((p) => p.startsWith(prefix));
+            const pickBest = (prefix, preferRe) => {
+                const list = inDir(prefix);
+                if (!list.length) return null;
+                if (preferRe) { const hit = list.find((p) => preferRe.test(p)); if (hit) return hit; }
+                return list.find((p) => /\.(csv|tsv|zip)$/i.test(p)) || list[0];
+            };
+            found.fallbackVersification = inDir('08_versification/');
+            found.morph = pickBest('03a_morphology_with_JTauber_patches/', /morph|patch|csv|zip/i);
+            found.morphDesc = pickBest('03b_descriptions_on_morphology_codes/', /desc|morph|csv|txt/i);
+            found.strongs = pickBest('07_StrongNumber/', /strong|csv|txt|zip/i);
+            found.translit = pickBest('04_SBL_transliteration/', /translit|sbl|csv|txt|zip/i);
+        } catch (e) {}
+        return found;
+    }
+
+    function assembleBooksMap(textRaw, versRaw, layers) {
+        const { lexLayer, glossLayer, morphLayer, strongsLayer, translitLayer } = layers;
+        const textLines = textRaw.replace(/^\uFEFF/, '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const textDelim = detectDelimiter(textLines.slice(0, 15));
+        const textStart = looksLikeHeader(parseDelimitedRow(textLines[0] || '', textDelim)) ? 1 : 0;
+
+        const booksMap = {};
+        let totalWords = 0;
+
+        const addTuple = (b, c, v, tuple) => {
+            if (!booksMap[b]) booksMap[b] = {};
+            if (!booksMap[b][c]) booksMap[b][c] = {};
+            if (!booksMap[b][c][v]) booksMap[b][c][v] = [];
+            booksMap[b][c][v].push(tuple);
+            totalWords++;
+        };
+
+        const emitPayloadToVerse = (b, c, v, rawPayload, fallbackSeqIdx, fallbackNumId) => {
+            const grkTokens = extractGrkTokensFromString(rawPayload);
+            if (grkTokens) {
+                grkTokens.forEach((gt) => {
+                    const ctx = {
+                        lexAttr: gt.lexAttr, idAttr: gt.idAttr,
+                        numId: gt.numId !== null ? gt.numId : fallbackNumId,
+                        greekWord: gt.word, lemma: '', seqIdx: fallbackSeqIdx
+                    };
+                    const lemma = lookupEnrichment(lexLayer, ctx);
+                    ctx.lemma = lemma;
+                    const morph = gt.morphAttr || lookupEnrichment(morphLayer, ctx);
+                    const gloss =
+                        gt.glossAttr ||
+                        lookupEnrichment(glossLayer, ctx) ||
+                        (gt.lexAttr && lexLayer && lexLayer.extraGloss.get(gt.lexAttr)) ||
+                        '';
+                    const strongs =
+                        gt.strongAttr ||
+                        lookupEnrichment(strongsLayer, ctx) ||
+                        (gt.lexAttr && lexLayer && lexLayer.extraStrongs.get(gt.lexAttr)) ||
+                        '';
+                    const translit = lookupEnrichment(translitLayer, ctx);
+                    addTuple(b, c, v, [gt.word, lemma, morph, gloss, strongs, translit]);
+                });
+                return;
+            }
+            const cleaned = stripHtmlTags(rawPayload);
+            if (!cleaned) return;
+            const words = cleaned.split(/\s+/).filter(Boolean);
+            words.forEach((w) => {
+                const seq = words.length === 1 ? fallbackSeqIdx : null;
+                const nid = words.length === 1 ? fallbackNumId : null;
+                const ctx = { lexAttr: '', idAttr: '', numId: nid, greekWord: w, lemma: '', seqIdx: seq };
+                const lemma = lookupEnrichment(lexLayer, ctx);
+                ctx.lemma = lemma;
+                addTuple(b, c, v, [
+                    w, lemma, lookupEnrichment(morphLayer, ctx),
+                    lookupEnrichment(glossLayer, ctx), lookupEnrichment(strongsLayer, ctx),
+                    lookupEnrichment(translitLayer, ctx)
+                ]);
+            });
+        };
+
+        let inlineRefHits = 0;
+        const probeLimit = Math.min(textLines.length, textStart + 40);
+        for (let i = textStart; i < probeLimit; i++) {
+            if (parseRefFromRow(parseDelimitedRow(textLines[i], textDelim))) inlineRefHits++;
+        }
+
+        if (inlineRefHits >= 5) {
+            let lastRef = null;
+            for (let i = textStart; i < textLines.length; i++) {
+                const cols = parseDelimitedRow(textLines[i], textDelim);
+                const ref = parseRefFromRow(cols) || lastRef;
+                if (ref) lastRef = ref;
+                if (!ref) continue;
+                const { wid, val } = extractPayloadColumn(cols, true);
+                if (val) emitPayloadToVerse(ref.b, ref.c, ref.v, val, i - textStart, wid);
+            }
+            if (Object.keys(booksMap).length > 0) return { booksMap, tokenCount: totalWords };
+        }
+
+        const rowPayloads = [];
+        const rowIdToIdx = new Map();
+        for (let i = textStart; i < textLines.length; i++) {
+            const cols = parseDelimitedRow(textLines[i], textDelim);
+            if (!cols.length) continue;
+            const { wid, val } = extractPayloadColumn(cols, true);
+            if (!val) continue;
+            const idx = rowPayloads.length;
+            rowPayloads.push({ id: wid !== null ? wid : idx + 1, val });
+            if (wid !== null) rowIdToIdx.set(wid, idx);
+        }
+
+        const versLines = versRaw.replace(/^\uFEFF/, '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const versDelim = detectDelimiter(versLines.slice(0, 15));
+        const versStart = looksLikeHeader(parseDelimitedRow(versLines[0] || '', versDelim)) ? 1 : 0;
+        const versRowCount = versLines.length - versStart;
+        const isRowAligned = Math.abs(versRowCount - rowPayloads.length) <= Math.max(8000, rowPayloads.length * 0.35);
+
+        if (isRowAligned) {
+            let lastRef = null;
+            for (let i = versStart; i < versLines.length; i++) {
+                const cols = parseDelimitedRow(versLines[i], versDelim);
+                const parsed = parseRefFromRow(cols);
+                const ref = parsed || lastRef;
+                if (parsed) lastRef = parsed;
+                if (!ref) continue;
+                const wid = parsed && parsed.wid !== null ? parsed.wid : (/^\d+$/.test(stripWrap(cols[0])) ? parseInt(stripWrap(cols[0]), 10) : null);
+                const rIdx = wid !== null && rowIdToIdx.has(wid) ? rowIdToIdx.get(wid) : i - versStart;
+                const item = rowPayloads[rIdx];
+                if (item) emitPayloadToVerse(ref.b, ref.c, ref.v, item.val, rIdx, item.id);
+            }
+        } else {
+            const parsedRefs = [];
+            for (let i = versStart; i < versLines.length; i++) {
+                const cols = parseDelimitedRow(versLines[i], versDelim);
+                const ref = parseRefFromRow(cols);
+                if (!ref) continue;
+                const afterNums = [];
+                for (let k = ref.refColEnd + 1; k < cols.length; k++) {
+                    if (/^\d+$/.test(stripWrap(cols[k]))) afterNums.push(parseInt(stripWrap(cols[k]), 10));
+                }
+                parsedRefs.push({ ref, afterNums });
+            }
+            for (let i = 0; i < parsedRefs.length; i++) {
+                const cur = parsedRefs[i], next = parsedRefs[i + 1];
+                const sId = cur.ref.wid !== null ? cur.ref.wid : (cur.afterNums[0] !== undefined ? cur.afterNums[0] : null);
+                let eId = cur.afterNums.length >= 2 && cur.afterNums[1] >= sId ? cur.afterNums[1] : null;
+                if (eId === null && next) {
+                    const nextStart = next.ref.wid !== null ? next.ref.wid : (next.afterNums[0] !== undefined ? next.afterNums[0] : null);
+                    if (nextStart !== null) eId = nextStart - 1;
+                }
+                if (sId === null) continue;
+                const startIdx = rowIdToIdx.has(sId) ? rowIdToIdx.get(sId) : sId - 1;
+                const endIdx = eId !== null ? (rowIdToIdx.has(eId) ? rowIdToIdx.get(eId) : eId - 1) : startIdx;
+                for (let tIdx = Math.max(0, startIdx); tIdx <= Math.min(rowPayloads.length - 1, endIdx); tIdx++) {
+                    const item = rowPayloads[tIdx];
+                    if (item) emitPayloadToVerse(cur.ref.b, cur.ref.c, cur.ref.v, item.val, tIdx, item.id);
+                }
+            }
+        }
+        return { booksMap, tokenCount: totalWords };
+    }
+
+    async function syncLxxFromGitHub(onProgress) {
+        if (activeSyncPromise) return activeSyncPromise;
+        const report = (pct, msg) => { if (typeof onProgress === 'function') onProgress(pct, msg); };
+
+        activeSyncPromise = (async () => {
+            try {
+                lastSyncDiagnostic = '';
+                report(6, 'Scanning eliranwong/LXX-Rahlfs-1935 on GitHub...');
+                const files = await discoverRepoFiles();
+
+                report(16, 'Downloading accented Greek text & versification...');
+                const [versRaw, textRaw] = await Promise.all([
+                    fetchRepoTextFile(files.versification),
+                    fetchRepoTextFile(files.text)
+                ]);
+
+                report(38, 'Downloading lexemes & English glosses...');
+                const [lexRaw, glossRaw] = await Promise.all([
+                    fetchRepoTextFile(files.lexemes).catch(() => ''),
+                    fetchRepoTextFile(files.gloss).catch(() => '')
+                ]);
+
+                report(56, 'Downloading morphology descriptions, Strong’s & transliteration...');
+                const [morphRaw, morphDescRaw, strongsRaw, translitRaw] = await Promise.all([
+                    files.morph ? fetchRepoTextFile(files.morph).catch(() => '') : Promise.resolve(''),
+                    files.morphDesc ? fetchRepoTextFile(files.morphDesc).catch(() => '') : Promise.resolve(''),
+                    files.strongs ? fetchRepoTextFile(files.strongs).catch(() => '') : Promise.resolve(''),
+                    files.translit ? fetchRepoTextFile(files.translit).catch(() => '') : Promise.resolve('')
+                ]);
+
+                report(70, 'Extracting clean Greek text, lemmas, morphology & glosses...');
+                const loadedMorphDesc = {};
+                if (morphDescRaw) {
+                    const mdLines = morphDescRaw.replace(/^\uFEFF/, '').split(/\r?\n/);
+                    const mdDelim = detectDelimiter(mdLines.slice(0, 10));
+                    mdLines.forEach((ln) => {
+                        const cols = parseDelimitedRow(ln.trim(), mdDelim);
+                        if (cols.length >= 2 && cols[0] && cols[1] && !looksLikeHeader(cols)) {
+                            loadedMorphDesc[cols[0].trim()] = cols.slice(1).join(' · ').trim();
+                        }
+                    });
+                }
+                morphDescMap = loadedMorphDesc;
+
+                const layers = {
+                    lexLayer: parseEnrichmentLayer(lexRaw, 'lex'),
+                    glossLayer: parseEnrichmentLayer(glossRaw, 'gloss'),
+                    morphLayer: parseEnrichmentLayer(morphRaw, 'morph'),
+                    strongsLayer: parseEnrichmentLayer(strongsRaw, 'strongs'),
+                    translitLayer: parseEnrichmentLayer(translitRaw, 'translit')
+                };
+
+                let result = assembleBooksMap(textRaw, versRaw, layers);
+                let bookNums = Object.keys(result.booksMap).map((k) => parseInt(k, 10)).filter((n) => n >= 1 && n <= 39);
+
+                if (bookNums.length === 0 && files.fallbackVersification.length > 0) {
+                    for (let i = 0; i < files.fallbackVersification.length; i++) {
+                        try {
+                            const fbVersRaw = await fetchRepoTextFile(files.fallbackVersification[i]);
+                            result = assembleBooksMap(textRaw, fbVersRaw, layers);
+                            bookNums = Object.keys(result.booksMap).map((k) => parseInt(k, 10)).filter((n) => n >= 1 && n <= 39);
+                            if (bookNums.length > 0) break;
+                        } catch (e) {}
+                    }
+                }
+
+                if (bookNums.length === 0) throw new Error('Could not recognize CSV columns in repository');
+
+                report(86, `Saving ${bookNums.length} Septuagint books to offline cache...`);
+                for (let i = 0; i < bookNums.length; i++) {
+                    const bNum = bookNums[i];
+                    await idbPut(IDB_STORE, bNum, result.booksMap[bNum]);
+                    bookMemCache.set(bNum, result.booksMap[bNum]);
+                }
+
+                const meta = { ready: true, bookCount: bookNums.length, tokenCount: result.tokenCount, syncedAt: Date.now() };
+                await idbPut(IDB_META_STORE, 'morphDesc', loadedMorphDesc);
+                await idbPut(IDB_META_STORE, 'status', meta);
+
+                lxxReady = true;
+                report(100, `Cached ${bookNums.length} LXX books (${result.tokenCount.toLocaleString()} Greek words) offline!`);
+                return meta;
+            } finally {
+                activeSyncPromise = null;
+            }
+        })();
+
+        return activeSyncPromise;
+    }
+
+    // --- 7. NON-DESTRUCTIVE BIDIRECTIONAL CROSS-HIGHLIGHTING ENGINE ---
+    const supportsCssHighlights = typeof CSS !== 'undefined' && Boolean(CSS.highlights) && typeof Highlight !== 'undefined';
+
+    function getCandidateTermsForGreekWord(tuple) {
+        const [word, lemma, morph, gloss] = tuple;
+        const terms = new Set();
+        const addPhrase = (phrase) => {
+            String(phrase || '')
+                .replace(/\([^)]*\)/g, ' ')
+                .split(/[,;/|]+/)
+                .forEach((part) => {
+                    const clean = part.trim().toLowerCase().replace(/^to\s+/, '');
+                    if (!clean) return;
+                    clean.split(/\s+/).forEach((tok) => {
+                        const w = tok.replace(/[^a-z']/g, '');
+                        if (!w) return;
+                        terms.add(w);
+                        const st = stemEnglish(w);
+                        if (st) terms.add(st);
+                    });
+                });
+        };
+
+        if (gloss) addPhrase(gloss);
+
+        const normLemma = normalizeGreek(lemma);
+        const normWord = normalizeGreek(word);
+        if (normLemma && GREEK_SYNONYM_MAP[normLemma]) {
+            GREEK_SYNONYM_MAP[normLemma].forEach((t) => { terms.add(t); terms.add(stemEnglish(t)); });
+        }
+        if (normWord && GREEK_SYNONYM_MAP[normWord]) {
+            GREEK_SYNONYM_MAP[normWord].forEach((t) => { terms.add(t); terms.add(stemEnglish(t)); });
+        }
+
+        // Definite article morphological cue
+        const upperM = String(morph || '').toUpperCase();
+        if (/^RA\b|^T\b/.test(upperM)) {
+            terms.add('the');
+        }
+        return terms;
+    }
+
+    function getEffectiveGloss(tuple) {
+        const [word, lemma, morph, gloss] = tuple;
+        if (gloss) return gloss;
+        const normL = normalizeGreek(lemma);
+        const normW = normalizeGreek(word);
+        if (normL && GREEK_SYNONYM_MAP[normL]) return GREEK_SYNONYM_MAP[normL][0];
+        if (normW && GREEK_SYNONYM_MAP[normW]) return GREEK_SYNONYM_MAP[normW][0];
+        if (/^RA\b|^T\b/i.test(morph || '')) return 'the';
+        return '';
+    }
+
+    function getEnglishTokensForVerse(engBook, engChap, engVerse) {
+        const ed = getEditor();
+        if (!ed) return [];
+        const blocks = ed.querySelectorAll(
+            `div[data-book-num="${engBook}"][data-chapter-num="${engChap}"][data-verse-num="${engVerse}"]:not(.lex-chapter-banner):not(.lex-thought-spacer)`
+        );
+        if (!blocks.length) return [];
+
+        const tokens = [];
+        blocks.forEach((blk) => {
+            const tw = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = tw.nextNode())) {
+                if (node.parentElement && node.parentElement.closest('.ot-in-nt-inline-badge, sup, .verse-num')) continue;
+                const val = node.nodeValue || '';
+                const re = /[A-Za-z][A-Za-z'’-]*/g;
+                let m;
+                while ((m = re.exec(val)) !== null) {
+                    const raw = m[0];
+                    const lower = raw.toLowerCase().replace(/’/g, "'");
+                    tokens.push({
+                        raw,
+                        lower,
+                        stem: stemEnglish(lower),
+                        node,
+                        start: m.index,
+                        end: m.index + raw.length,
+                        idx: tokens.length
+                    });
+                }
+            }
+        });
+        return tokens;
+    }
+
+    function scoreGreekToEnglishMatch(grkTuple, grkIdx, grkTotal, enTok, enTotal) {
+        const terms = getCandidateTermsForGreekWord(grkTuple);
+        if (!terms.size) return 0;
+
+        let baseScore = 0;
+        if (terms.has(enTok.lower)) {
+            baseScore = EN_STOPWORDS.has(enTok.lower) ? 1.6 : 4.2;
+        } else if (enTok.stem && terms.has(enTok.stem)) {
+            baseScore = EN_STOPWORDS.has(enTok.lower) ? 1.3 : 3.5;
+        } else if (enTok.stem.length >= 4) {
+            for (const t of terms) {
+                if (t.length >= 4 && (enTok.stem.startsWith(t) || t.startsWith(enTok.stem))) {
+                    baseScore = 2.4;
+                    break;
+                }
+            }
+        }
+        if (baseScore === 0) return 0;
+
+        // Position-proximity tie-breaker so duplicate words (like two "the" or "and") pick the right occurrence
+        const grkPos = grkTotal > 1 ? grkIdx / (grkTotal - 1) : 0.5;
+        const enPos = enTotal > 1 ? enTok.idx / (enTotal - 1) : 0.5;
+        const proximityBonus = Math.max(0, 1.15 - Math.abs(grkPos - enPos) * 1.4);
+        return baseScore + proximityBonus;
+    }
+
+    function findMatchingEnglishTokens(lxxBook, lxxChap, lxxVerse, grkTuples, grkIdx) {
+        const mapped = mapLxxRefToEnglish(lxxBook, lxxChap, lxxVerse);
+        const enTokens = getEnglishTokensForVerse(mapped.b, mapped.c, mapped.v);
+        if (!enTokens.length || !grkTuples || !grkTuples[grkIdx]) return [];
+
+        const tuple = grkTuples[grkIdx];
+        const isArticle = /^RA\b|^T\b/i.test(tuple[2] || '') || normalizeGreek(tuple[1]) === 'ο';
+
+        // Smart article alignment: anchor Greek "the" directly before its governed noun's English match
+        if (isArticle && grkIdx + 1 < grkTuples.length) {
+            const nextMatches = findMatchingEnglishTokens(lxxBook, lxxChap, lxxVerse, grkTuples, grkIdx + 1);
+            if (nextMatches.length > 0) {
+                const headIdx = nextMatches[0].idx;
+                if (headIdx > 0 && enTokens[headIdx - 1].lower === 'the') {
+                    return [enTokens[headIdx - 1]];
+                }
+                if (headIdx > 1 && enTokens[headIdx - 2].lower === 'the') {
+                    return [enTokens[headIdx - 2]];
+                }
+                // Greek often uses articles where English omits "the" (e.g., "ὁ θεὸς" -> "God")
+                return [];
+            }
+        }
+
+        const scored = [];
+        for (let i = 0; i < enTokens.length; i++) {
+            const s = scoreGreekToEnglishMatch(tuple, grkIdx, grkTuples.length, enTokens[i], enTokens.length);
+            if (s > 0) scored.push({ tok: enTokens[i], score: s });
+        }
+        if (!scored.length) return [];
+
+        scored.sort((a, b) => b.score - a.score);
+        const best = scored[0];
+        // Return the single best match (plus a tied adjacent word for 2-word idioms if very close)
+        const picks = [best.tok];
+        if (!EN_STOPWORDS.has(best.tok.lower) && scored.length > 1) {
+            const second = scored[1];
+            if (second.score >= best.score - 0.15 && Math.abs(second.tok.idx - best.tok.idx) <= 2) {
+                picks.push(second.tok);
+            }
+        }
+        return picks;
+    }
+
+    function setEditorRangesHighlight(kind, ranges) {
+        const hlName = kind === 'pin' ? 'lf-lxx-en-pin' : 'lf-lxx-en-hover';
+        if (supportsCssHighlights) {
+            if (!ranges || !ranges.length) {
+                CSS.highlights.delete(hlName);
+            } else {
+                try {
+                    CSS.highlights.set(hlName, new Highlight(...ranges));
+                } catch (e) {}
+            }
+            return;
+        }
+        // Fallback non-DOM overlay boxes if browser lacks CSS.highlights
+        const layerId = kind === 'pin' ? 'lfLxxFallbackPinLayer' : 'lfLxxFallbackHoverLayer';
+        let layer = document.getElementById(layerId);
+        if (!ranges || !ranges.length) {
+            if (layer) layer.innerHTML = '';
+            return;
+        }
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.id = layerId;
+            layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99900;';
+            document.body.appendChild(layer);
+        }
+        layer.innerHTML = '';
+        const bg = kind === 'pin' ? 'rgba(20,184,166,0.28)' : 'rgba(251,191,36,0.38)';
+        ranges.forEach((r) => {
+            Array.from(r.getClientRects()).forEach((rect) => {
+                const box = document.createElement('div');
+                box.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background:${bg};border-radius:3px;`;
+                layer.appendChild(box);
+            });
+        });
+    }
+
+    function tokensToRanges(enTokens) {
+        const ranges = [];
+        enTokens.forEach((tok) => {
+            if (!tok || !tok.node || !tok.node.isConnected) return;
+            try {
+                const r = document.createRange();
+                r.setStart(tok.node, tok.start);
+                r.setEnd(tok.node, tok.end);
+                ranges.push(r);
+            } catch (e) {}
+        });
+        return ranges;
+    }
+
+    function clearDrawerXrefClasses(cls) {
+        const body = document.getElementById('lfLxxDrawerBody');
+        if (!body) return;
+        body.querySelectorAll(`.${cls}`).forEach((el) => el.classList.remove(cls));
+    }
+
+    function clearAllCrossHighlights() {
+        setEditorRangesHighlight('hover', []);
+        setEditorRangesHighlight('pin', []);
+        clearDrawerXrefClasses('xref-hover');
+        clearDrawerXrefClasses('selected');
+        clearDrawerXrefClasses('lemma-match');
+    }
+
+    function applyGreekWordCrossHighlight({ lxxBook, lxxChap, lxxVerse, grkTuples, grkIdx, wordEl, mode }) {
+        if (!drawerState.crossHighlight) {
+            if (mode === 'hover') setEditorRangesHighlight('hover', []);
+            return [];
+        }
+        const matchedEn = findMatchingEnglishTokens(lxxBook, lxxChap, lxxVerse, grkTuples, grkIdx);
+        setEditorRangesHighlight(mode, tokensToRanges(matchedEn));
+
+        // Highlight repeated occurrences of the same Greek lemma within the same verse
+        if (wordEl && wordEl.parentElement) {
+            const cls = mode === 'pin' ? 'lemma-match' : 'xref-hover';
+            if (mode === 'pin') clearDrawerXrefClasses('lemma-match');
+            else clearDrawerXrefClasses('xref-hover');
+
+            const normL = normalizeGreek(grkTuples[grkIdx][1] || grkTuples[grkIdx][0]);
+            if (normL.length >= 2) {
+                wordEl.parentElement.querySelectorAll('.lf-lxx-word').forEach((sib) => {
+                    if (sib === wordEl) return;
+                    if (sib.dataset.normLemma === normL) sib.classList.add(cls);
+                });
+            }
+            if (mode === 'hover') wordEl.classList.add('xref-hover');
+        }
+        return matchedEn;
+    }
+
+    // Reverse direction: Hovering English word in #editor highlights Greek word(s) in LXX drawer
+    let editorHoverRaf = 0;
+    let lastHoverSig = '';
+
+    function handleEditorEnglishHover(clientX, clientY, isPinClick) {
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open') || !drawerState.crossHighlight || !lxxReady) return;
+
+        const ed = getEditor();
+        if (!ed) return;
+
+        let caretRange = null;
+        if (document.caretRangeFromPoint) {
+            caretRange = document.caretRangeFromPoint(clientX, clientY);
+        } else if (document.caretPositionFromPoint) {
+            const pos = document.caretPositionFromPoint(clientX, clientY);
+            if (pos && pos.offsetNode) {
+                caretRange = document.createRange();
+                caretRange.setStart(pos.offsetNode, pos.offset);
+            }
+        }
+        if (!caretRange || !caretRange.startContainer || caretRange.startContainer.nodeType !== 3) {
+            if (!isPinClick && lastHoverSig) {
+                lastHoverSig = '';
+                setEditorRangesHighlight('hover', []);
+                clearDrawerXrefClasses('xref-hover');
+            }
+            return;
+        }
+
+        const textNode = caretRange.startContainer;
+        if (!ed.contains(textNode) || (textNode.parentElement && textNode.parentElement.closest('.ot-in-nt-inline-badge'))) return;
+
+        let blk = textNode.parentElement;
+        while (blk && blk.parentElement !== ed) blk = blk.parentElement;
+        if (!blk || !blk.dataset.bookNum || !blk.dataset.chapterNum || !blk.dataset.verseNum) return;
+
+        const engB = parseInt(blk.dataset.bookNum, 10);
+        const engC = parseInt(blk.dataset.chapterNum, 10);
+        const engV = parseInt(blk.dataset.verseNum, 10);
+        const mapped = mapEnglishRefToLxx(engB, engC, engV);
+
+        // Only cross-highlight when the drawer is showing the matching OT book & chapter
+        if (mapped.b !== drawerState.bookNum || mapped.c !== drawerState.chapter) return;
+
+        const str = textNode.nodeValue || '';
+        const off = caretRange.startOffset;
+        let s = off, e = off;
+        while (s > 0 && /[A-Za-z'’-]/.test(str[s - 1])) s--;
+        while (e < str.length && /[A-Za-z'’-]/.test(str[e])) e++;
+        const rawWord = str.slice(s, e);
+        if (!rawWord || !/[A-Za-z]/.test(rawWord)) {
+            if (!isPinClick && lastHoverSig) {
+                lastHoverSig = '';
+                setEditorRangesHighlight('hover', []);
+                clearDrawerXrefClasses('xref-hover');
+            }
+            return;
+        }
+
+        const sig = `${engB}_${engC}_${engV}_${s}_${rawWord}`;
+        if (!isPinClick && sig === lastHoverSig) return;
+        lastHoverSig = sig;
+
+        const enTokens = getEnglishTokensForVerse(engB, engC, engV);
+        const hoveredTok = enTokens.find((t) => t.node === textNode && t.start === s);
+        if (!hoveredTok) return;
+
+        const bookData = bookMemCache.get(drawerState.bookNum);
+        const chapData = bookData && bookData[drawerState.chapter];
+        const grkTuples = chapData && chapData[mapped.v];
+        if (!grkTuples || !grkTuples.length) return;
+
+        // Score every Greek word in that verse against this English word
+        let matchedGrkIndices = [];
+        if (hoveredTok.lower === 'the' && hoveredTok.idx + 1 < enTokens.length) {
+            // Find the Greek noun matching the next English word, then highlight its preceding Greek article
+            const nextEn = enTokens[hoveredTok.idx + 1];
+            let bestNounIdx = -1, bestNounScore = 0;
+            grkTuples.forEach((gt, gi) => {
+                const sc = scoreGreekToEnglishMatch(gt, gi, grkTuples.length, nextEn, enTokens.length);
+                if (sc > bestNounScore) { bestNounScore = sc; bestNounIdx = gi; }
+            });
+            if (bestNounIdx > 0 && /^RA\b|^T\b/i.test(grkTuples[bestNounIdx - 1][2] || '')) {
+                matchedGrkIndices.push(bestNounIdx - 1);
+            }
+        }
+
+        if (!matchedGrkIndices.length) {
+            const scored = [];
+            grkTuples.forEach((gt, gi) => {
+                const sc = scoreGreekToEnglishMatch(gt, gi, grkTuples.length, hoveredTok, enTokens.length);
+                if (sc > 0) scored.push({ gi, sc });
+            });
+            scored.sort((a, b) => b.sc - a.sc);
+            if (scored.length) {
+                matchedGrkIndices.push(scored[0].gi);
+                if (scored.length > 1 && scored[1].sc >= scored[0].sc - 0.25 && !EN_STOPWORDS.has(hoveredTok.lower)) {
+                    matchedGrkIndices.push(scored[1].gi);
+                }
+            }
+        }
+
+        const mode = isPinClick ? 'pin' : 'hover';
+        setEditorRangesHighlight(mode, tokensToRanges([hoveredTok]));
+
+        const body = document.getElementById('lfLxxDrawerBody');
+        if (!body) return;
+        const cls = isPinClick ? 'selected' : 'xref-hover';
+        clearDrawerXrefClasses(cls);
+
+        const verseRow = body.querySelector(`.lf-lxx-verse-row[data-lxx-verse="${mapped.v}"]`);
+        if (!verseRow) return;
+
+        const wordEls = verseRow.querySelectorAll('.lf-lxx-word');
+        let firstMatchedEl = null;
+        matchedGrkIndices.forEach((gi) => {
+            if (wordEls[gi]) {
+                wordEls[gi].classList.add(cls);
+                if (!firstMatchedEl) firstMatchedEl = wordEls[gi];
+            }
+        });
+
+        if (isPinClick && firstMatchedEl && matchedGrkIndices.length) {
+            const inspector = document.getElementById('lfLxxInspector');
+            showWordTooltip(grkTuples[matchedGrkIndices[0]], firstMatchedEl, inspector, [hoveredTok]);
+            // Gently scroll LXX drawer (never #editor) if the matched verse is out of drawer view
+            const dr = body.getBoundingClientRect();
+            const vr = verseRow.getBoundingClientRect();
+            if (vr.top < dr.top || vr.bottom > dr.bottom) {
+                verseRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }
+
+    function bindEditorCrossHighlightListeners() {
+        if (window.__lfLxxEditorCrossHlBound) return;
+        window.__lfLxxEditorCrossHlBound = true;
+
+        document.addEventListener('mousemove', (e) => {
+            const drawer = document.getElementById('lfLxxDrawer');
+            if (!drawer || !drawer.classList.contains('open') || !drawerState.crossHighlight) return;
+            const ed = getEditor();
+            if (!ed || !ed.contains(e.target)) {
+                if (lastHoverSig && !e.target.closest('#lfLxxDrawer')) {
+                    lastHoverSig = '';
+                    setEditorRangesHighlight('hover', []);
+                    clearDrawerXrefClasses('xref-hover');
+                }
+                return;
+            }
+            const x = e.clientX, y = e.clientY;
+            if (editorHoverRaf) return;
+            editorHoverRaf = requestAnimationFrame(() => {
+                editorHoverRaf = 0;
+                handleEditorEnglishHover(x, y, false);
+            });
+        }, { passive: true });
+
+        document.addEventListener('click', (e) => {
+            const drawer = document.getElementById('lfLxxDrawer');
+            if (!drawer || !drawer.classList.contains('open') || !drawerState.crossHighlight) return;
+            const ed = getEditor();
+            if (ed && ed.contains(e.target)) {
+                handleEditorEnglishHover(e.clientX, e.clientY, true);
+            }
+        }, true);
+    }
+
+    // --- 8. STYLES, RESIZE HANDLE & SPLIT-SCREEN LAYOUT ---
+    function getSavedDrawerWidth() {
+        try {
+            const w = parseInt(localStorage.getItem(WIDTH_STORE_KEY), 10);
+            if (w && w >= 340 && w <= window.innerWidth * 0.78) return w;
+        } catch (e) {}
+        return Math.min(480, Math.round(window.innerWidth * 0.42));
+    }
+
+    function applyDrawerWidth(widthPx, persist) {
+        const minW = 340;
+        const maxW = Math.max(480, Math.round(window.innerWidth * 0.72));
+        const clamped = Math.max(minW, Math.min(maxW, Math.round(widthPx)));
+        document.documentElement.style.setProperty('--lf-lxx-drawer-w', `${clamped}px`);
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (drawer) drawer.style.width = `${clamped}px`;
+        const snapBtn = document.getElementById('lfLxxHalfSnapBtn');
+        if (snapBtn) {
+            const isHalf = Math.abs(clamped - window.innerWidth * 0.5) < 40;
+            snapBtn.classList.toggle('active', isHalf);
+            snapBtn.textContent = isHalf ? '◧ Compact' : '◧ 50%';
+        }
+        if (persist) {
+            try { localStorage.setItem(WIDTH_STORE_KEY, String(clamped)); } catch (e) {}
+        }
+    }
+
+    function setSplitLayoutActive(isOpen) {
+        document.body.classList.toggle('lf-lxx-split-open', Boolean(isOpen));
+        setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 60);
+    }
+
+    function ensureLxxStyles() {
+        if (document.getElementById('lfLxxStudioStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfLxxStudioStyles';
+        st.textContent = `
+            ::highlight(lf-lxx-en-hover) {
+                background-color: rgba(251, 191, 36, 0.45);
+                color: inherit;
+            }
+            ::highlight(lf-lxx-en-pin) {
+                background-color: rgba(20, 184, 166, 0.34);
+                color: inherit;
+            }
+            @media (min-width: 860px) {
+                body.lf-lxx-split-open main {
+                    width: calc(100% - var(--lf-lxx-drawer-w, 460px) - 18px) !important;
+                    max-width: calc(100vw - var(--lf-lxx-drawer-w, 460px) - 18px) !important;
+                    box-sizing: border-box !important;
+                    transition: width 0.12s ease, max-width 0.12s ease;
+                }
+                body.lf-lxx-resizing main,
+                body.lf-lxx-resizing #lfLxxDrawer {
+                    transition: none !important;
+                    user-select: none !important;
+                }
+            }
+            #lfLxxOpenBtn {
+                display: inline-flex; align-items: center; gap: 5px;
+                padding: 4px 10px; border-radius: 9999px;
+                font-size: 11.5px; font-weight: 700; color: #0f766e;
+                background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+                border: 1px solid #99f6e4; cursor: pointer;
+                transition: all 0.15s ease; white-space: nowrap;
+                box-shadow: 0 1px 2px rgba(15,118,110,0.08);
+            }
+            #lfLxxOpenBtn:hover {
+                background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+                transform: translateY(-0.5px);
+                box-shadow: 0 2px 6px rgba(15,118,110,0.16);
+            }
+            #lfLxxDrawer {
+                position: fixed; top: 66px; right: 10px; bottom: 10px;
+                width: var(--lf-lxx-drawer-w, 460px); max-width: 94vw; z-index: 99920;
+                background: #ffffff; border: 1.5px solid #99f6e4; border-radius: 16px;
+                box-shadow: 0 20px 56px rgba(15, 23, 42, 0.22);
+                display: none; flex-direction: column; overflow: hidden;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfLxxDrawer.open { display: flex; }
+            .lf-lxx-resize-handle {
+                position: absolute; top: 0; bottom: 0; left: 0; width: 11px;
+                cursor: ew-resize; z-index: 40;
+                display: flex; align-items: center; justify-content: center;
+                background: transparent; transition: background 0.14s ease;
+            }
+            .lf-lxx-resize-handle:hover,
+            body.lf-lxx-resizing .lf-lxx-resize-handle {
+                background: rgba(20, 184, 166, 0.14);
+            }
+            .lf-lxx-resize-grip {
+                width: 4px; height: 46px; border-radius: 999px;
+                background: #99f6e4; transition: background 0.14s ease, height 0.14s ease;
+            }
+            .lf-lxx-resize-handle:hover .lf-lxx-resize-grip,
+            body.lf-lxx-resizing .lf-lxx-resize-grip {
+                background: #0d9488; height: 64px;
+            }
+            .lf-lxx-head {
+                display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                padding: 11px 14px 11px 18px; background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-lxx-controls {
+                display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+                padding: 8px 14px 8px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-lxx-select {
+                border: 1px solid #cbd5e1; border-radius: 7px; padding: 4px 8px;
+                font-size: 12px; font-weight: 600; color: #0f172a; background: #ffffff;
+            }
+            .lf-lxx-btn {
+                border: 1px solid #cbd5e1; background: #ffffff; color: #334155;
+                font-size: 11.5px; font-weight: 600; border-radius: 7px; padding: 4px 9px; cursor: pointer;
+                transition: all 0.12s ease;
+            }
+            .lf-lxx-btn:hover { background: #f1f5f9; }
+            .lf-lxx-btn.teal { background: #0f766e; color: #ffffff; border-color: #0f766e; }
+            .lf-lxx-btn.teal:hover { background: #115e59; }
+            .lf-lxx-btn.active { background: #ccfbf1; color: #0f766e; border-color: #5eead4; }
+            .lf-lxx-body { flex: 1; overflow-y: auto; padding: 14px 16px 24px 20px; }
+            .lf-lxx-verse-row { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; line-height: 1.9; }
+            .lf-lxx-vnum {
+                display: inline-block; min-width: 24px; font-size: 10.5px; font-weight: 800;
+                color: #0f766e; background: #f0fdfa; border: 1px solid #99f6e4;
+                border-radius: 5px; text-align: center; padding: 0 4px;
+                margin-right: 7px; vertical-align: middle; line-height: 1.6;
+            }
+            .lf-lxx-word {
+                display: inline-flex; flex-direction: column; align-items: center;
+                padding: 2px 5px; margin: 2px 2px; border-radius: 6px; cursor: pointer;
+                vertical-align: top; transition: background 0.1s ease, box-shadow 0.1s ease;
+            }
+            .lf-lxx-word:hover { background: #fef3c7; }
+            .lf-lxx-word.xref-hover {
+                background: #fef3c7 !important;
+                box-shadow: 0 0 0 1.5px #f59e0b;
+            }
+            .lf-lxx-word.xref-hover .lf-lxx-gloss-inline { color: #92400e; font-weight: 700; }
+            .lf-lxx-word.selected {
+                background: #ccfbf1 !important;
+                box-shadow: 0 0 0 1.5px #0d9488;
+            }
+            .lf-lxx-word.selected .lf-lxx-gloss-inline { color: #115e59; font-weight: 700; }
+            .lf-lxx-word.lemma-match {
+                background: #e0f2fe;
+                box-shadow: 0 0 0 1px #7dd3fc;
+            }
+            .lf-lxx-grk { font-family: "SBL Greek", "Gentium Plus", "Times New Roman", Georgia, serif; font-size: 17.5px; color: #0f172a; line-height: 1.35; }
+            .lf-lxx-gloss-inline { font-size: 10.5px; color: #475569; line-height: 1.25; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .lf-lxx-morph-inline { font-size: 9px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #0f766e; line-height: 1.15; }
+            .lf-lxx-inspector { border-top: 1.5px solid #99f6e4; background: #f0fdfa; padding: 11px 16px 11px 20px; font-size: 12.5px; color: #0f172a; display: none; }
+            .lf-lxx-inspector.open { display: block; }
+            .lf-lxx-credit-bar {
+                padding: 7px 14px 7px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+                font-size: 10.5px; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            }
+            .lf-lxx-credit-bar a { color: #0f766e; font-weight: 600; text-decoration: none; }
+            .lf-lxx-credit-bar a:hover { text-decoration: underline; }
+            .lf-lxx-inline-box { margin-top: 10px; padding: 10px 12px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 9px; }
+            .lf-lxx-inline-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+            .lf-lxx-progress-track { width: 100%; height: 7px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin: 8px 0 4px; }
+            .lf-lxx-progress-fill { height: 100%; background: linear-gradient(90deg, #0d9488, #4f46e5); width: 0%; transition: width 0.2s ease; }
+            #lfLxxFloatTip {
+                position: fixed; z-index: 100020; max-width: 320px;
+                background: #0f172a; color: #f8fafc; border-radius: 10px; padding: 10px 13px;
+                box-shadow: 0 12px 32px rgba(15,23,42,0.35); font-size: 12px; line-height: 1.45;
+                display: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfLxxFloatTip.open { display: block; }
+            #lfLxxKudosCard {
+                margin-top: 12px; padding: 13px 15px; border-radius: 12px;
+                border: 1.5px solid rgba(15, 118, 110, 0.32);
+                background: linear-gradient(135deg, rgba(240, 253, 250, 0.92) 0%, rgba(238, 242, 255, 0.85) 100%);
+                color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: left;
+            }
+            #lfLxxKudosCard a { color: #0f766e; font-weight: 600; text-decoration: underline; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function showWordTooltip(wordTuple, anchorEl, targetInspectorEl, matchedEnTokens) {
+        const [w, l, m, g, s, t] = wordTuple;
+        const parsedMorph = decodeMorphology(m);
+        const effGloss = g || getEffectiveGloss(wordTuple);
+        const matchedText = matchedEnTokens && matchedEnTokens.length
+            ? matchedEnTokens.map((x) => `“${x.raw}”`).join(', ')
+            : '';
+
+        const html = `
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span style="font-family:'SBL Greek','Gentium Plus',Georgia,serif;font-size:19px;font-weight:700;">${escapeHtml(w)}</span>
+                    ${matchedText ? `<span style="font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;">BSB: ${escapeHtml(matchedText)}</span>` : ''}
+                </div>
+                ${s ? `<span style="font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(20,184,166,0.2);color:#5eead4;">Strong’s ${escapeHtml(s)}</span>` : ''}
+            </div>
+            ${l ? `<div><strong>Lemma:</strong> <span style="font-family:'SBL Greek',Georgia,serif;font-size:14.5px;">${escapeHtml(l)}</span>${t ? ` <span style="opacity:0.75;">(${escapeHtml(t)})</span>` : ''}</div>` : ''}
+            ${effGloss ? `<div><strong>Gloss:</strong> ${escapeHtml(effGloss)}</div>` : ''}
+            ${m ? `<div><strong>Morphology:</strong> <code style="font-size:11px;opacity:0.9;">${escapeHtml(m)}</code>${parsedMorph && parsedMorph !== m ? ` — ${escapeHtml(parsedMorph)}` : ''}</div>` : ''}
+        `;
+
+        if (targetInspectorEl) {
+            targetInspectorEl.innerHTML = html.replace(/color:#5eead4/g, 'color:#0f766e');
+            targetInspectorEl.classList.add('open');
+            return;
+        }
+
+        let tip = document.getElementById('lfLxxFloatTip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'lfLxxFloatTip';
+            document.body.appendChild(tip);
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#lfLxxFloatTip, .lf-lxx-word')) tip.classList.remove('open');
+            });
+        }
+        tip.innerHTML = html;
+        tip.classList.add('open');
+        const r = anchorEl.getBoundingClientRect();
+        tip.style.top = `${Math.max(12, Math.min(window.innerHeight - tip.offsetHeight - 12, r.bottom + 8))}px`;
+        tip.style.left = `${Math.max(12, Math.min(window.innerWidth - tip.offsetWidth - 12, r.left))}px`;
+    }
+
+    function renderTaggedWordsInto(container, wordTuples, { interlinear = false, inspectorEl = null, lxxBook = null, lxxChap = null, lxxVerse = null } = {}) {
+        container.innerHTML = '';
+        wordTuples.forEach((rawTuple, idx) => {
+            let tuple = rawTuple;
+            if (tuple[0] && tuple[0].includes('<grk')) {
+                const parsed = extractGrkTokensFromString(tuple[0]);
+                if (parsed && parsed[0]) {
+                    tuple = [parsed[0].word, tuple[1], parsed[0].morphAttr || tuple[2], tuple[3], tuple[4], tuple[5]];
+                }
+            }
+            const [w, l, m, g] = tuple;
+            const effGloss = g || getEffectiveGloss(tuple);
+            const span = document.createElement('span');
+            span.className = 'lf-lxx-word';
+            span.dataset.normLemma = normalizeGreek(l || w);
+            span.title = [l, effGloss, m].filter(Boolean).join(' · ') || 'Click for parsing';
+            span.innerHTML = `
+                <span class="lf-lxx-grk">${escapeHtml(w)}</span>
+                ${interlinear && effGloss ? `<span class="lf-lxx-gloss-inline">${escapeHtml(effGloss)}</span>` : ''}
+                ${interlinear && m ? `<span class="lf-lxx-morph-inline">${escapeHtml(m)}</span>` : ''}
+            `;
+
+            if (lxxBook && lxxChap && lxxVerse) {
+                span.onmouseenter = () => {
+                    applyGreekWordCrossHighlight({
+                        lxxBook, lxxChap, lxxVerse,
+                        grkTuples: wordTuples, grkIdx: idx,
+                        wordEl: span, mode: 'hover'
+                    });
+                };
+                span.onmouseleave = () => {
+                    setEditorRangesHighlight('hover', []);
+                    clearDrawerXrefClasses('xref-hover');
+                };
+            }
+
+            span.onclick = (e) => {
+                e.stopPropagation();
+                const root = document.getElementById('lfLxxDrawerBody') || container;
+                root.querySelectorAll('.lf-lxx-word.selected').forEach((el) => el.classList.remove('selected'));
+                span.classList.add('selected');
+                let matchedEn = [];
+                if (lxxBook && lxxChap && lxxVerse) {
+                    matchedEn = applyGreekWordCrossHighlight({
+                        lxxBook, lxxChap, lxxVerse,
+                        grkTuples: wordTuples, grkIdx: idx,
+                        wordEl: span, mode: 'pin'
+                    });
+                }
+                showWordTooltip(tuple, span, inspectorEl, matchedEn);
+            };
+            container.appendChild(span);
+        });
+    }
+
+    // --- 9. SIDE-BY-SIDE RESIZABLE TAGGED LXX DRAWER ---
+    let drawerState = { bookNum: 1, chapter: 1, interlinear: true, crossHighlight: true };
+
+    function detectEditorOtChapter() {
+        const ed = getEditor();
+        if (!ed) return null;
+        const mainEl = document.querySelector('main');
+        const topY = mainEl ? mainEl.getBoundingClientRect().top + 110 : 140;
+        const children = ed.children;
+        let lo = 0, hi = children.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (children[mid].getBoundingClientRect().bottom <= topY) lo = mid + 1;
+            else hi = mid;
+        }
+        for (let i = lo; i < Math.min(children.length, lo + 10); i++) {
+            const ch = children[i];
+            const b = parseInt(ch.dataset && ch.dataset.bookNum, 10);
+            const c = parseInt(ch.dataset && ch.dataset.chapterNum, 10);
+            if (b >= 1 && b <= 39 && c > 0) return { bookNum: b, chapter: c };
+        }
+        return null;
+    }
+
+    async function renderLxxDrawerBody() {
+        const body = document.getElementById('lfLxxDrawerBody');
+        const chapSel = document.getElementById('lfLxxChapSel');
+        const bookSel = document.getElementById('lfLxxBookSel');
+        const inspector = document.getElementById('lfLxxInspector');
+        const statusBadge = document.getElementById('lfLxxStatusBadge');
+        if (!body) return;
+
+        clearAllCrossHighlights();
+        if (!lxxReady) await checkIfCached();
+
+        if (statusBadge) {
+            statusBadge.textContent = lxxReady ? 'Offline Ready' : 'Not Synced';
+            statusBadge.style.color = lxxReady ? '#047857' : '#b45309';
+        }
+
+        if (!lxxReady) {
+            body.innerHTML = `
+                <div style="text-align:center;padding:24px 12px;">
+                    <div style="font-size:28px;margin-bottom:8px;">αΩ</div>
+                    <strong style="font-size:15px;color:#0f172a;">Rahlfs 1935 Tagged Septuagint (LXX)</strong>
+                    <p style="font-size:12.5px;color:#475569;margin:8px 0 16px;line-height:1.5;">
+                        Connect directly to <code>eliranwong/LXX-Rahlfs-1935</code> on GitHub to download clean accented Greek text, lexemes, morphology parsing, and English glosses.<br/><br/>
+                        Downloads once and caches permanently in Chrome for instant offline study.
+                    </p>
+                    <button type="button" class="lf-lxx-btn teal" id="lfLxxStartSyncBtn" style="padding:8px 16px;font-size:13px;">⬇ Download &amp; Cache Tagged LXX</button>
+                    <div id="lfLxxSyncBox" style="margin-top:14px;display:none;">
+                        <div class="lf-lxx-progress-track"><div class="lf-lxx-progress-fill" id="lfLxxProgFill"></div></div>
+                        <div id="lfLxxProgMsg" style="font-size:11.5px;color:#475569;"></div>
+                    </div>
+                </div>
+            `;
+            const startBtn = body.querySelector('#lfLxxStartSyncBtn');
+            startBtn.onclick = async () => {
+                startBtn.disabled = true;
+                const box = body.querySelector('#lfLxxSyncBox');
+                const fill = body.querySelector('#lfLxxProgFill');
+                const msg = body.querySelector('#lfLxxProgMsg');
+                box.style.display = 'block';
+                msg.style.color = '#475569';
+                try {
+                    await syncLxxFromGitHub((pct, text) => { fill.style.width = `${pct}%`; msg.textContent = text; });
+                    renderLxxDrawerBody();
+                } catch (err) {
+                    startBtn.disabled = false;
+                    msg.style.color = '#be123c';
+                    msg.textContent = `Sync error: ${err.message}.`;
+                }
+            };
+            return;
+        }
+
+        if (bookSel) bookSel.value = String(drawerState.bookNum);
+        const bookData = await getCachedBook(drawerState.bookNum);
+        if (!bookData) {
+            body.innerHTML = `<div style="padding:24px;color:#64748b;text-align:center;">No cached data for ${escapeHtml(BOOK_NAME_BY_NUM[drawerState.bookNum] || 'Book')}.</div>`;
+            return;
+        }
+
+        const chapters = Object.keys(bookData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
+        if (!chapters.includes(drawerState.chapter)) drawerState.chapter = chapters[0] || 1;
+
+        if (chapSel) {
+            chapSel.innerHTML = chapters.map((c) => `<option value="${c}"${c === drawerState.chapter ? ' selected' : ''}>Ch. ${c}</option>`).join('');
+        }
+
+        const chapData = bookData[drawerState.chapter] || {};
+        const verses = Object.keys(chapData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
+
+        body.innerHTML = '';
+        if (inspector) inspector.classList.remove('open');
+
+        verses.forEach((vNum) => {
+            const row = document.createElement('div');
+            row.className = 'lf-lxx-verse-row';
+            row.dataset.lxxVerse = String(vNum);
+            const badge = document.createElement('span');
+            badge.className = 'lf-lxx-vnum';
+            badge.textContent = vNum;
+            const wordsWrap = document.createElement('span');
+            renderTaggedWordsInto(wordsWrap, chapData[vNum] || [], {
+                interlinear: drawerState.interlinear,
+                inspectorEl: inspector,
+                lxxBook: drawerState.bookNum,
+                lxxChap: drawerState.chapter,
+                lxxVerse: vNum
+            });
+            row.appendChild(badge);
+            row.appendChild(wordsWrap);
+            body.appendChild(row);
+        });
+    }
+
+    function ensureDrawerDOM() {
+        if (document.getElementById('lfLxxDrawer')) return;
+        ensureLxxStyles();
+        bindEditorCrossHighlightListeners();
+
+        const drawer = document.createElement('div');
+        drawer.id = 'lfLxxDrawer';
+        drawer.className = 'modal';
+        drawer.innerHTML = `
+            <div class="lf-lxx-resize-handle" id="lfLxxResizeHandle" title="Drag left or right to resize pane">
+                <div class="lf-lxx-resize-grip"></div>
+            </div>
+            <div class="lf-lxx-head">
+                <div>
+                    <strong style="font-size:14.5px;color:#0f766e;">αΩ Tagged Septuagint (LXX)</strong>
+                    <span id="lfLxxStatusBadge" style="margin-left:6px;font-size:10.5px;font-weight:700;"></span>
+                    <div style="font-size:11px;color:#64748b;">Drag left edge to resize · Hover or click words to cross-highlight</div>
+                </div>
+                <div style="display:flex;gap:5px;align-items:center;">
+                    <button type="button" class="lf-lxx-btn" id="lfLxxHalfSnapBtn" title="Toggle half-screen split view">◧ 50%</button>
+                    <button type="button" class="lf-lxx-btn" id="lfLxxClearCacheBtn" title="Clear cached LXX and re-sync">↻</button>
+                    <button type="button" class="lf-lxx-btn" id="lfLxxCloseDrawerBtn">✕</button>
+                </div>
+            </div>
+            <div class="lf-lxx-controls">
+                <select id="lfLxxBookSel" class="lf-lxx-select">
+                    ${OT_BOOK_LIST.map(([num, name]) => `<option value="${num}">${escapeHtml(name)}</option>`).join('')}
+                </select>
+                <select id="lfLxxChapSel" class="lf-lxx-select"></select>
+                <button type="button" class="lf-lxx-btn active" id="lfLxxInterlinearBtn">Glosses: On</button>
+<button type="button" class="lf-lxx-btn active" id="lfLxxCrossHlBtn" title="Sync-highlight Greek words and matching English BSB words">Sync-HL: On</button>
+                <button type="button" class="lf-lxx-btn" id="lfLxxSyncEditorBtn" title="Match OT chapter currently visible in LexFlow">Sync</button>
+            </div>
+            <div class="lf-lxx-body" id="lfLxxDrawerBody"></div>
+            <div class="lf-lxx-inspector" id="lfLxxInspector"></div>
+            <div class="lf-lxx-credit-bar">
+                <span>Data: <a href="${REPO_URL}" target="_blank" rel="noopener">Eliran Wong (LXX-Rahlfs-1935)</a> · <a href="https://marvel.bible/" target="_blank" rel="noopener">Marvel.Bible</a></span>
+                <span>CATSS / J. Tauber</span>
+            </div>
+        `;
+        document.body.appendChild(drawer);
+        applyDrawerWidth(getSavedDrawerWidth(), false);
+
+        // Smooth drag-to-resize on the left edge handle
+        const handle = drawer.querySelector('#lfLxxResizeHandle');
+        let resizeRaf = 0;
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.body.classList.add('lf-lxx-resizing');
+
+            const onMove = (ev) => {
+                const desiredW = window.innerWidth - ev.clientX - 10;
+                if (resizeRaf) cancelAnimationFrame(resizeRaf);
+                resizeRaf = requestAnimationFrame(() => {
+                    resizeRaf = 0;
+                    applyDrawerWidth(desiredW, false);
+                });
+            };
+            const onUp = (ev) => {
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onUp);
+                document.body.classList.remove('lf-lxx-resizing');
+                applyDrawerWidth(window.innerWidth - ev.clientX - 10, true);
+                window.dispatchEvent(new Event('resize'));
+            };
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+        });
+
+        // One-click 50% half-screen toggle
+        drawer.querySelector('#lfLxxHalfSnapBtn').onclick = () => {
+            const curW = drawer.getBoundingClientRect().width;
+            const halfW = Math.round(window.innerWidth * 0.5);
+            const targetW = Math.abs(curW - halfW) < 40 ? 440 : halfW;
+            applyDrawerWidth(targetW, true);
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 140);
+        };
+
+        const closeDrawer = () => {
+            drawer.classList.remove('open');
+            clearAllCrossHighlights();
+            setSplitLayoutActive(false);
+        };
+        drawer.querySelector('#lfLxxCloseDrawerBtn').onclick = closeDrawer;
+
+        drawer.querySelector('#lfLxxBookSel').onchange = (e) => {
+            drawerState.bookNum = parseInt(e.target.value, 10);
+            drawerState.chapter = 1;
+            renderLxxDrawerBody();
+        };
+        drawer.querySelector('#lfLxxChapSel').onchange = (e) => {
+            drawerState.chapter = parseInt(e.target.value, 10);
+            renderLxxDrawerBody();
+        };
+        const interBtn = drawer.querySelector('#lfLxxInterlinearBtn');
+        interBtn.onclick = () => {
+            drawerState.interlinear = !drawerState.interlinear;
+            interBtn.textContent = drawerState.interlinear ? 'Glosses: On' : 'Glosses: Off';
+            interBtn.classList.toggle('active', drawerState.interlinear);
+            renderLxxDrawerBody();
+        };
+        const crossBtn = drawer.querySelector('#lfLxxCrossHlBtn');
+        crossBtn.onclick = () => {
+            drawerState.crossHighlight = !drawerState.crossHighlight;
+            crossBtn.textContent = drawerState.crossHighlight ? 'Sync-HL: On' : 'Sync-HL: Off';
+            crossBtn.classList.toggle('active', drawerState.crossHighlight);
+            if (!drawerState.crossHighlight) clearAllCrossHighlights();
+        };
+        drawer.querySelector('#lfLxxSyncEditorBtn').onclick = () => {
+            const ot = detectEditorOtChapter();
+            if (ot) {
+                const mapped = mapEnglishRefToLxx(ot.bookNum, ot.chapter, 1);
+                drawerState.bookNum = mapped.b;
+                drawerState.chapter = mapped.c;
+                renderLxxDrawerBody();
+            }
+        };
+        drawer.querySelector('#lfLxxClearCacheBtn').onclick = async () => {
+            if (!confirm('Clear the locally cached LXX database and re-download from GitHub?')) return;
+            await idbClearAll();
+            renderLxxDrawerBody();
+        };
+    }
+
+    function toggleLxxDrawer() {
+        ensureDrawerDOM();
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            clearAllCrossHighlights();
+            setSplitLayoutActive(false);
+            return;
+        }
+        const ot = detectEditorOtChapter();
+        if (ot) {
+            const mapped = mapEnglishRefToLxx(ot.bookNum, ot.chapter, 1);
+            drawerState.bookNum = mapped.b;
+            drawerState.chapter = mapped.c;
+        }
+        drawer.classList.add('open');
+        setSplitLayoutActive(true);
+        renderLxxDrawerBody();
+    }
+
+    // --- 10. AUTO-INJECT TAGGED LXX INTO THE OT-IN-NT COMPARISON MODAL ---
+    function parseOtRefString(refStr) {
+        const m = String(refStr || '').trim().match(/^([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,2})\s+(\d+):(\d+)(?:[–-](\d+))?/);
+        if (!m) return null;
+        const b = resolveBookNum(m[1]);
+        if (!b) return null;
+        const c = parseInt(m[2], 10);
+        const sv = parseInt(m[3], 10);
+        const ev = m[4] ? parseInt(m[4], 10) : sv;
+        return { b, c, sv, ev };
+    }
+
+    async function populateLxxInModalBox(boxEl, b, c, sv, ev, shift) {
+        const mappedStart = mapEnglishRefToLxx(b, c, sv);
+        const lxxBook = mappedStart.b;
+        const lxxChap = mappedStart.c;
+        const lxxSv = Math.max(1, mappedStart.v + shift);
+        const lxxEv = Math.max(lxxSv, mappedStart.v + (ev - sv) + shift);
+
+        const bookData = await getCachedBook(lxxBook);
+        const chapData = bookData && bookData[lxxChap];
+        const allTuples = [];
+        if (chapData) {
+            for (let v = lxxSv; v <= lxxEv; v++) {
+                if (chapData[v]) allTuples.push(...chapData[v]);
+            }
+        }
+
+        const refTag = lxxEv > lxxSv ? `${BOOK_NAME_BY_NUM[lxxBook]} ${lxxChap}:${lxxSv}–${lxxEv}` : `${BOOK_NAME_BY_NUM[lxxBook]} ${lxxChap}:${lxxSv}`;
+        const lxxNote = mappedStart.note || shift !== 0 ? ` (${refTag} in LXX)` : '';
+
+        boxEl.innerHTML = `
+            <div class="lf-lxx-inline-head">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:#0f766e;">
+                    αΩ Tagged LXX (Rahlfs 1935)${escapeHtml(lxxNote)}
+                </span>
+                <div style="display:flex;gap:4px;">
+                    <button type="button" class="lf-lxx-btn" data-lxx-nudge="-1" title="Shift verse -1">−1v</button>
+                    <button type="button" class="lf-lxx-btn" data-lxx-nudge="1" title="Shift verse +1">+1v</button>
+                    <button type="button" class="lf-lxx-btn" data-lxx-inter="1">Glosses</button>
+                </div>
+            </div>
+            <div class="lf-lxx-inline-words"></div>
+            <div style="margin-top:6px;font-size:10px;color:#64748b;">
+                Source: <a href="${REPO_URL}" target="_blank" rel="noopener" style="color:#0f766e;font-weight:600;text-decoration:none;">Eliran Wong · LXX-Rahlfs-1935 / Marvel.Bible</a>
+            </div>
+        `;
+
+        const wordsEl = boxEl.querySelector('.lf-lxx-inline-words');
+        let showGloss = false;
+        const drawWords = () => {
+            if (!allTuples.length) {
+                wordsEl.innerHTML = `<span style="font-size:12px;color:#64748b;">Verse ${escapeHtml(refTag)} not found in LXX numbering — try −1v or +1v above.</span>`;
+            } else {
+                renderTaggedWordsInto(wordsEl, allTuples, { interlinear: showGloss });
+            }
+        };
+        drawWords();
+
+        boxEl.querySelectorAll('[data-lxx-nudge]').forEach((btn) => {
+            btn.onclick = () => populateLxxInModalBox(boxEl, b, c, sv, ev, shift + parseInt(btn.getAttribute('data-lxx-nudge'), 10));
+        });
+        const gBtn = boxEl.querySelector('[data-lxx-inter]');
+        gBtn.onclick = () => {
+            showGloss = !showGloss;
+            gBtn.classList.toggle('active', showGloss);
+            drawWords();
+        };
+    }
+
+    async function hydrateOtComparisonModal() {
+        const overlay = document.getElementById('lfOtExpOverlay');
+        if (!overlay || !overlay.classList.contains('open')) return;
+        ensureLxxStyles();
+
+        const items = overlay.querySelectorAll('.lf-ot-item');
+        if (!items.length) return;
+        if (!lxxReady) await checkIfCached();
+
+        items.forEach((item) => {
+            if (item.querySelector('.lf-lxx-inline-box')) return;
+            const strongRef = item.querySelector('strong');
+            const parsed = strongRef ? parseOtRefString(strongRef.textContent) : null;
+            if (!parsed) return;
+
+            const box = document.createElement('div');
+            box.className = 'lf-lxx-inline-box';
+            item.appendChild(box);
+
+            if (lxxReady) {
+                populateLxxInModalBox(box, parsed.b, parsed.c, parsed.sv, parsed.ev, 0);
+            } else {
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:11.5px;color:#0f766e;font-weight:600;">αΩ View Rahlfs 1935 Tagged Greek LXX for ${escapeHtml(strongRef.textContent)}</span>
+                        <button type="button" class="lf-lxx-btn teal" data-lxx-load-now="1">Load Tagged LXX (Caches Offline)</button>
+                    </div>
+                    <div data-lxx-inline-prog="1" style="display:none;margin-top:6px;">
+                        <div class="lf-lxx-progress-track"><div class="lf-lxx-progress-fill"></div></div>
+                        <div style="font-size:11px;color:#475569;"></div>
+                    </div>
+                `;
+                const loadBtn = box.querySelector('[data-lxx-load-now]');
+                loadBtn.onclick = async () => {
+                    loadBtn.disabled = true;
+                    const prog = box.querySelector('[data-lxx-inline-prog]');
+                    const fill = prog.querySelector('.lf-lxx-progress-fill');
+                    const msg = prog.lastElementChild;
+                    prog.style.display = 'block';
+                    try {
+                        await syncLxxFromGitHub((pct, txt) => { fill.style.width = `${pct}%`; msg.textContent = txt; });
+                        overlay.querySelectorAll('.lf-lxx-inline-box').forEach((bEl) => bEl.remove());
+                        hydrateOtComparisonModal();
+                    } catch (err) {
+                        loadBtn.disabled = false;
+                        msg.style.color = '#be123c';
+                        msg.textContent = `Could not load LXX: ${err.message}`;
+                    }
+                };
+            }
+        });
+    }
+
+    // --- 11. FULL ATTRIBUTION INSIDE "KUDOS & RESOURCE CREDITS" ---
+    function buildLxxKudosCard() {
+        const card = document.createElement('div');
+        card.id = 'lfLxxKudosCard';
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:14px;color:#0f766e;">αΩ Tagged Septuagint (LXX — Rahlfs 1935)</strong>
+                <span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#ccfbf1;color:#0f766e;border:1px solid #99f6e4;">Open-Source Greek OT</span>
+            </div>
+            <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#334155;">
+                Accented Greek Septuagint text, lexemes, English glosses, Strong’s mappings, and SBL transliteration powered by
+                <strong>Eliran Wong</strong>’s open-source
+                <a href="${REPO_URL}" target="_blank" rel="noopener">LXX-Rahlfs-1935</a> project and
+                <a href="https://marvel.bible/" target="_blank" rel="noopener">Marvel.Bible / UniqueBible.app</a>.
+            </p>
+            <p style="margin:0;font-size:11.5px;line-height:1.45;color:#475569;">
+                Built upon the <strong>Rahlfs 1935 Septuaginta</strong> critical text, <strong>CATSS / CCAT</strong> (University of Pennsylvania) morphological tagging, and <strong>James Tauber</strong>’s morphology patches.
+            </p>
+        `;
+        return card;
+    }
+
+    function injectLxxKudosCredit() {
+        ensureLxxStyles();
+        if (document.getElementById('lfLxxKudosCard')) return;
+
+        const headings = document.querySelectorAll('h1, h2, h3, h4, strong, div');
+        let kudosContainer = null;
+
+        for (let i = 0; i < headings.length; i++) {
+            const el = headings[i];
+            if (el.closest('#lfLxxDrawer, #lfFlowModalOverlay, #lfOtExpOverlay')) continue;
+            if (el.tagName === 'DIV' && el.children.length > 2) continue;
+            const txt = (el.textContent || '').trim();
+            if (txt.length < 5 || txt.length > 80) continue;
+            if (!/(?:kudos|resource\s*credits|acknowledg|credits\s*&|attributions)/i.test(txt)) continue;
+            if (el.closest('button')) continue;
+
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) continue;
+
+            let cur = el.parentElement;
+            let best = null;
+            while (cur && cur !== document.body) {
+                const cr = cur.getBoundingClientRect();
+                const cs = window.getComputedStyle(cur);
+                if (cr.width >= 300 && cr.height >= 160 && cr.width < window.innerWidth * 0.96) {
+                    best = cur;
+                    if (cur.getAttribute('role') === 'dialog' || cur.classList.contains('modal') || parseFloat(cs.borderRadius) >= 10) {
+                        if (cur.textContent && !/Personal Workspace Settings & Themes/i.test(cur.textContent.slice(0, 140))) break;
+                    }
+                }
+                cur = cur.parentElement;
+            }
+            if (best && !/Personal Workspace Settings & Themes/i.test((best.textContent || '').slice(0, 140))) {
+                kudosContainer = best;
+                break;
+            }
+        }
+        if (!kudosContainer) return;
+
+        const scrollables = Array.from(kudosContainer.querySelectorAll('div, section, ul')).filter((d) => {
+            const cs = window.getComputedStyle(d);
+            return /(auto|scroll)/.test(cs.overflowY || '') && d.getBoundingClientRect().height >= 120;
+        });
+
+        const targetParent = scrollables[0] || kudosContainer;
+        const card = buildLxxKudosCard();
+        const lastChild = targetParent.lastElementChild;
+        if (
+            targetParent === kudosContainer &&
+            lastChild && lastChild.querySelector && lastChild.querySelector('button') &&
+            lastChild.getBoundingClientRect().height < 72
+        ) {
+            targetParent.insertBefore(card, lastChild);
+        } else {
+            targetParent.appendChild(card);
+        }
+    }
+
+    // --- 12. TOOLBAR BUTTON & OBSERVERS ---
+    function injectLxxButton() {
+        ensureLxxStyles();
+        let btn = document.getElementById('lfLxxOpenBtn');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'lfLxxOpenBtn';
+            btn.type = 'button';
+            btn.innerHTML = '<span>αΩ</span><span>Tagged LXX</span>';
+            btn.title = 'Open Rahlfs 1935 Tagged Septuagint (Resizable Split + Cross-Highlighting)';
+            btn.addEventListener('mousedown', (e) => e.stopPropagation());
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleLxxDrawer();
+            });
+        }
+
+        btn.classList.remove('tf-collapsible-body');
+        btn.style.setProperty('display', 'inline-flex', 'important');
+
+        const flowBtn = document.getElementById('lfFlowOpenBtn');
+        const toolbarCard = (flowBtn && flowBtn.parentElement && flowBtn.parentElement !== document.body)
+            ? flowBtn.parentElement
+            : (document.querySelector('.tf-header-row') && document.querySelector('.tf-header-row').parentElement);
+
+        if (toolbarCard && toolbarCard.isConnected && toolbarCard.getBoundingClientRect().width > 120) {
+            if (window.getComputedStyle(toolbarCard).position === 'static') toolbarCard.style.position = 'relative';
+            const flowW = flowBtn ? Math.max(150, Math.ceil(flowBtn.getBoundingClientRect().width)) : 162;
+            btn.style.position = 'absolute';
+            btn.style.top = '7px';
+            btn.style.right = `${flowW + 20}px`;
+            btn.style.bottom = '';
+            btn.style.zIndex = '35';
+            if (btn.parentElement !== toolbarCard) toolbarCard.appendChild(btn);
+            return;
+        }
+
+        btn.style.position = 'fixed';
+        btn.style.top = '';
+        btn.style.bottom = '18px';
+        btn.style.right = '195px';
+        btn.style.zIndex = '9990';
+        if (btn.parentElement !== document.body) document.body.appendChild(btn);
+    }
+
+    function initLxxConnector() {
+        checkIfCached();
+        injectLxxButton();
+        injectLxxKudosCredit();
+        setTimeout(injectLxxButton, 300);
+        setTimeout(injectLxxButton, 1000);
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('button, a, [role="button"]');
+            if (btn && /kudos|credit/i.test(btn.textContent || '')) {
+                setTimeout(injectLxxKudosCredit, 30);
+                setTimeout(injectLxxKudosCredit, 180);
+                setTimeout(injectLxxKudosCredit, 450);
+            }
+        }, true);
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => {
+                const ov = document.getElementById('lfOtExpOverlay');
+                if (ov && ov.classList.contains('open')) hydrateOtComparisonModal();
+                injectLxxKudosCredit();
+            });
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLxxConnector);
+    } else {
+        initLxxConnector();
+    }
+})();
+
     </script>
 </body>
 </html>
