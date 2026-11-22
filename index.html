@@ -28183,6 +28183,289 @@ function showContextMenu(x, y) {
     }
 })();
 
+	/* === LEXFLOW FIX: 60FPS SMOOTH BORDER COLOR PICKER (DEFERRED TRIPLE-STORAGE COMMIT) === */
+(function () {
+    const PREVIEW_STYLE_ID = 'lfSmoothBorderColorPreviewStyle';
+    const IDLE_COMMIT_MS = 380;
+
+    let isCommitting = false;
+    let activeInput = null;
+    let pendingHex = null;
+    let lastCommittedHex = null;
+    let previewRaf = 0;
+    let idleTimer = 0;
+    let cachedTargets = null;
+
+    function hexToRgb(hex) {
+        const clean = String(hex || '').replace('#', '').trim();
+        if (!/^[0-9a-f]{6}$/i.test(clean)) return null;
+        return {
+            r: parseInt(clean.slice(0, 2), 16),
+            g: parseInt(clean.slice(2, 4), 16),
+            b: parseInt(clean.slice(4, 6), 16)
+        };
+    }
+
+    function ensurePreviewStyleEl() {
+        let st = document.getElementById(PREVIEW_STYLE_ID);
+        if (!st) {
+            st = document.createElement('style');
+            st.id = PREVIEW_STYLE_ID;
+            document.head.appendChild(st);
+        }
+        return st;
+    }
+
+    function findModalContainer(el) {
+        let cur = el;
+        let dialogCandidate = null;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+            const cs = window.getComputedStyle(cur);
+            if (cur.getAttribute('role') === 'dialog' || cur.classList.contains('modal')) {
+                dialogCandidate = cur;
+            }
+            if (cs.position === 'fixed') {
+                // If this fixed node is a full-screen backdrop, prefer the centered dialog card inside it
+                const r = cur.getBoundingClientRect();
+                if (r.width >= window.innerWidth * 0.9 && r.height >= window.innerHeight * 0.9) {
+                    let child = el;
+                    while (child && child.parentElement !== cur) child = child.parentElement;
+                    return child || dialogCandidate || cur;
+                }
+                return cur;
+            }
+            cur = cur.parentElement;
+        }
+        return dialogCandidate;
+    }
+
+    function isBorderColorPicker(inputEl) {
+        if (!inputEl || inputEl.tagName !== 'INPUT' || inputEl.type !== 'color') return false;
+        const modal = findModalContainer(inputEl);
+        const contextText = [
+            inputEl.id || '',
+            inputEl.name || '',
+            inputEl.getAttribute('aria-label') || '',
+            inputEl.title || '',
+            inputEl.parentElement ? inputEl.parentElement.textContent || '' : '',
+            modal ? (modal.textContent || '').slice(0, 600) : ''
+        ].join(' ');
+        return /border\s*color|workspace\s*settings|custom\s*border/i.test(contextText);
+    }
+
+    function collectPreviewTargets(inputEl) {
+        const modal = findModalContainer(inputEl);
+        const targets = {
+            modal,
+            cards: [],
+            hexEl: null,
+            hexTextNode: null,
+            swatchEl: null,
+            triggerEl: null
+        };
+        if (!modal) return targets;
+
+        modal.setAttribute('data-lf-color-modal', '1');
+
+        // 1. Find the trigger button/label wrapping or adjacent to the color input
+        const trigger = inputEl.closest('label, button') || inputEl.parentElement;
+        if (trigger && trigger !== modal) {
+            targets.triggerEl = trigger;
+            trigger.setAttribute('data-lf-color-trigger', '1');
+
+            // Look for a separate custom swatch square inside the trigger
+            const subEls = trigger.querySelectorAll('span, div');
+            for (let i = 0; i < subEls.length; i++) {
+                const s = subEls[i];
+                if (s === inputEl || s.contains(inputEl)) continue;
+                const r = s.getBoundingClientRect();
+                const cs = window.getComputedStyle(s);
+                const hasBg = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
+                if (hasBg && r.width >= 10 && r.width <= 38 && r.height >= 10 && r.height <= 38) {
+                    targets.swatchEl = s;
+                    s.setAttribute('data-lf-color-swatch', '1');
+                    break;
+                }
+            }
+        }
+
+        // 2. Find the #xxxxxx hex badge & bordered section cards inside the settings modal
+        const allEls = modal.querySelectorAll('div, section, span, code, button');
+        for (let i = 0; i < allEls.length; i++) {
+            const el = allEls[i];
+            if (el === inputEl || el === targets.triggerEl || el === targets.swatchEl) continue;
+
+            // Leaf hex readout pill (e.g., #4381e5)
+            if (!targets.hexEl && el.children.length === 0) {
+                const txt = (el.textContent || '').trim();
+                if (/^#[0-9a-f]{6}$/i.test(txt)) {
+                    const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+                    let tn;
+                    while ((tn = tw.nextNode())) {
+                        if (/#[0-9a-f]{6}/i.test(tn.nodeValue || '')) {
+                            targets.hexEl = el;
+                            targets.hexTextNode = tn;
+                            el.setAttribute('data-lf-color-hex', '1');
+                            break;
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            // Inner rounded section cards with a visible border
+            if (el.tagName === 'DIV' || el.tagName === 'SECTION') {
+                const cs = window.getComputedStyle(el);
+                const bw = parseFloat(cs.borderTopWidth) || 0;
+                const r = el.getBoundingClientRect();
+                if (bw >= 1 && r.width >= 240 && r.height >= 55 && cs.borderTopStyle !== 'none') {
+                    el.setAttribute('data-lf-color-card', '1');
+                    targets.cards.push(el);
+                }
+            }
+        }
+
+        return targets;
+    }
+
+    function clearPreviewStyles() {
+        const st = document.getElementById(PREVIEW_STYLE_ID);
+        if (st) st.textContent = '';
+
+        if (cachedTargets) {
+            if (cachedTargets.modal) cachedTargets.modal.removeAttribute('data-lf-color-modal');
+            if (cachedTargets.hexEl) cachedTargets.hexEl.removeAttribute('data-lf-color-hex');
+            if (cachedTargets.swatchEl) cachedTargets.swatchEl.removeAttribute('data-lf-color-swatch');
+            if (cachedTargets.triggerEl) cachedTargets.triggerEl.removeAttribute('data-lf-color-trigger');
+            cachedTargets.cards.forEach((c) => c.removeAttribute('data-lf-color-card'));
+            cachedTargets = null;
+        }
+    }
+
+    function paintSmoothPreview(hex) {
+        const rgb = hexToRgb(hex);
+        if (!rgb || !activeInput) return;
+
+        if (!cachedTargets || !cachedTargets.modal || !cachedTargets.modal.isConnected) {
+            cachedTargets = collectPreviewTargets(activeInput);
+        }
+
+        // Update #hex readout text node IN PLACE (zero childList MutationObserver triggers)
+        if (cachedTargets.hexTextNode && cachedTargets.hexTextNode.isConnected) {
+            cachedTargets.hexTextNode.nodeValue = cachedTargets.hexTextNode.nodeValue.replace(
+                /#[0-9a-f]{6}/i,
+                hex.toLowerCase()
+            );
+        }
+
+        // Lightweight <style> in <head> paints modal, cards, swatch, and header borders in <0.5ms
+        const { r, g, b } = rgb;
+        const st = ensurePreviewStyleEl();
+        st.textContent = `
+            [data-lf-color-modal="1"] {
+                border-color: rgba(${r}, ${g}, ${b}, 0.72) !important;
+                box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28), 0 0 0 1.5px rgba(${r}, ${g}, ${b}, 0.32) !important;
+            }
+            [data-lf-color-card="1"] {
+                border-color: rgba(${r}, ${g}, ${b}, 0.48) !important;
+            }
+            [data-lf-color-hex="1"] {
+                color: ${hex} !important;
+                border-color: rgba(${r}, ${g}, ${b}, 0.35) !important;
+                background-color: rgba(${r}, ${g}, ${b}, 0.11) !important;
+            }
+            [data-lf-color-swatch="1"] {
+                background-color: ${hex} !important;
+            }
+            [data-lf-color-trigger="1"] {
+                color: ${hex} !important;
+                border-color: rgba(${r}, ${g}, ${b}, 0.45) !important;
+            }
+            header, .tf-header-row {
+                border-color: rgba(${r}, ${g}, ${b}, 0.55) !important;
+            }
+        `;
+    }
+
+    function commitColorToNative(inputEl) {
+        clearTimeout(idleTimer);
+        idleTimer = 0;
+        if (previewRaf) {
+            cancelAnimationFrame(previewRaf);
+            previewRaf = 0;
+        }
+
+        clearPreviewStyles();
+
+        if (!inputEl || !inputEl.isConnected) return;
+        const finalHex = inputEl.value;
+        if (!finalHex || finalHex === lastCommittedHex) return;
+
+        lastCommittedHex = finalHex;
+        isCommitting = true;
+        try {
+            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        } finally {
+            isCommitting = false;
+        }
+    }
+
+    // Intercept rapid color-picker drag events before LexFlow's triple-storage save fires
+    window.addEventListener(
+        'input',
+        (e) => {
+            if (isCommitting) return;
+            const target = e.target;
+            if (!isBorderColorPicker(target)) return;
+
+            e.stopImmediatePropagation();
+
+            activeInput = target;
+            pendingHex = target.value;
+
+            if (!previewRaf) {
+                previewRaf = requestAnimationFrame(() => {
+                    previewRaf = 0;
+                    if (pendingHex) paintSmoothPreview(pendingHex);
+                });
+            }
+
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                commitColorToNative(target);
+            }, IDLE_COMMIT_MS);
+        },
+        true
+    );
+
+    // Commit immediately when user finishes picking (Done / release)
+    window.addEventListener(
+        'change',
+        (e) => {
+            if (isCommitting) return;
+            const target = e.target;
+            if (!isBorderColorPicker(target)) return;
+            commitColorToNative(target);
+        },
+        true
+    );
+
+    // Clear preview cleanly if user clicks a preset swatch (Blue, Red, Classic Glass, etc.) or closes modal
+    document.addEventListener(
+        'click',
+        (e) => {
+            if (!cachedTargets || !cachedTargets.modal) return;
+            const btn = e.target && e.target.closest && e.target.closest('button');
+            if (btn && btn !== cachedTargets.triggerEl && cachedTargets.modal.contains(btn)) {
+                clearTimeout(idleTimer);
+                clearPreviewStyles();
+                lastCommittedHex = null;
+            }
+        },
+        true
+    );
+})();
+
     </script>
 </body>
 </html>
