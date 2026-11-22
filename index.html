@@ -34654,6 +34654,621 @@ function showContextMenu(x, y) {
     else initLsj();
 })();
 
+	/* === LEXFLOW ADD-ON (FIXED): TAGGED LXX (RAHLFS 1935) + CATSS + LSJ INSIDE OT-IN-NT MODAL === */
+(function () {
+    const LXX_IDB_NAME = 'LexFlow_LXX_Rahlfs1935_v3';
+    const CATSS_IDB_NAME = 'LexFlow_CATSS_Parallel_v1';
+    const CARD_ID = 'lfOtNtLxxCardV2';
+
+    const OT_REF_PATTERNS = [
+        [22, 'Song\\s+of\\s+(?:Solomon|Songs)|Canticles|Song|Cant|SoS'],
+        [13, '1\\s*Chronicles|1\\s*Chron|1\\s*Chr|1\\s*Ch'],
+        [14, '2\\s*Chronicles|2\\s*Chron|2\\s*Chr|2\\s*Ch'],
+        [9, '1\\s*Samuel|1\\s*Sam|1\\s*Sa'],
+        [10, '2\\s*Samuel|2\\s*Sam|2\\s*Sa'],
+        [11, '1\\s*Kings|1\\s*Kgs|1\\s*Ki'],
+        [12, '2\\s*Kings|2\\s*Kgs|2\\s*Ki'],
+        [5, 'Deuteronomy|Deut|Dt'],
+        [21, 'Ecclesiastes|Eccl|Ecc|Qoheleth|Qoh'],
+        [25, 'Lamentations|Lam'],
+        [3, 'Leviticus|Lev'],
+        [16, 'Nehemiah|Neh'],
+        [1, 'Genesis|Gen'],
+        [2, 'Exodus|Exod|Ex'],
+        [4, 'Numbers|Num'],
+        [6, 'Joshua|Josh'],
+        [7, 'Judges|Judg|Jdg'],
+        [8, 'Ruth'],
+        [15, 'Ezra|Ezr'],
+        [17, 'Esther|Esth|Est'],
+        [18, 'Job'],
+        [19, 'Psalms|Psalm|Pss|Psa|Ps'],
+        [20, 'Proverbs|Prov|Pr'],
+        [23, 'Isaiah|Isa'],
+        [24, 'Jeremiah|Jer'],
+        [26, 'Ezekiel|Ezek|Eze|Ezk'],
+        [27, 'Daniel|Dan'],
+        [28, 'Hosea|Hos'],
+        [29, 'Joel'],
+        [30, 'Amos'],
+        [31, 'Obadiah|Obad'],
+        [32, 'Jonah|Jon'],
+        [33, 'Micah|Mic'],
+        [34, 'Nahum|Nah'],
+        [35, 'Habakkuk|Hab'],
+        [36, 'Zephaniah|Zeph|Zep'],
+        [37, 'Haggai|Hag'],
+        [38, 'Zechariah|Zech|Zec'],
+        [39, 'Malachi|Mal']
+    ];
+
+    const BOOK_NAMES = {
+        1: 'Genesis', 2: 'Exodus', 3: 'Leviticus', 4: 'Numbers', 5: 'Deuteronomy',
+        6: 'Joshua', 7: 'Judges', 8: 'Ruth', 9: '1 Samuel', 10: '2 Samuel',
+        11: '1 Kings', 12: '2 Kings', 13: '1 Chronicles', 14: '2 Chronicles', 15: 'Ezra',
+        16: 'Nehemiah', 17: 'Esther', 18: 'Job', 19: 'Psalm', 20: 'Proverbs',
+        21: 'Ecclesiastes', 22: 'Song of Solomon', 23: 'Isaiah', 24: 'Jeremiah', 25: 'Lamentations',
+        26: 'Ezekiel', 27: 'Daniel', 28: 'Hosea', 29: 'Joel', 30: 'Amos',
+        31: 'Obadiah', 32: 'Jonah', 33: 'Micah', 34: 'Nahum', 35: 'Habakkuk',
+        36: 'Zephaniah', 37: 'Haggai', 38: 'Zechariah', 39: 'Malachi'
+    };
+
+    const GRK_STOP = new Set([
+        'και', 'ο', 'η', 'το', 'του', 'τησ', 'τον', 'την', 'των', 'τοις', 'ταις', 'τους', 'τας',
+        'τω', 'τη', 'οι', 'αι', 'τα', 'εν', 'εις', 'εκ', 'εξ', 'δε', 'γαρ', 'οτι', 'μη', 'ου',
+        'ουκ', 'ουχ', 'ως', 'αυτου', 'αυτης', 'αυτων', 'αυτω', 'αυτον', 'αυτην', 'σου', 'μου',
+        'σοι', 'μοι', 'σε', 'με', 'εμου', 'ημων', 'ημιν', 'ημας', 'υμων', 'υμιν', 'υμας',
+        'δια', 'δι', 'επι', 'επ', 'εφ', 'απο', 'απ', 'αφ', 'προς', 'υπο', 'κατα', 'μετα',
+        'παρα', 'παρ', 'περι', 'ος', 'ον', 'ην', 'ου', 'ω', 'ων', 'οις', 'ους', 'ας', 'αλλα', 'αλλ'
+    ]);
+
+    const memLxx = new Map();
+    let psalmVerseShift = 0;
+    let lastRenderedSig = '';
+    let renderRunId = 0;
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function normGreek(s) {
+        return String(s || '')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/ς/g, 'σ').replace(/[^α-ω]/g, '');
+    }
+
+    function mapEngToLxx(b, c, v) {
+        if (b !== 19) return { b, c, v };
+        if (c <= 8 || c >= 148) return { b, c, v };
+        if (c === 9) return { b: 19, c: 9, v };
+        if (c === 10) return { b: 19, c: 9, v: v + 21 };
+        if (c >= 11 && c <= 113) return { b: 19, c: c - 1, v };
+        if (c === 114) return { b: 19, c: 113, v };
+        if (c === 115) return { b: 19, c: 113, v: v + 8 };
+        if (c === 116) return v <= 9 ? { b: 19, c: 114, v } : { b: 19, c: 115, v: v - 9 };
+        if (c >= 117 && c <= 146) return { b: 19, c: c - 1, v };
+        if (c === 147) return v <= 11 ? { b: 19, c: 146, v } : { b: 19, c: 147, v: v - 11 };
+        return { b, c, v };
+    }
+
+    async function readIdbBook(dbName, bookNum) {
+        try {
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open(dbName, 1);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('books')) d.createObjectStore('books');
+                    if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            const fetchKey = (k) => new Promise((resolve, reject) => {
+                const tx = db.transaction('books', 'readonly');
+                const req = tx.objectStore('books').get(k);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+            let data = await fetchKey(bookNum);
+            if (!data) data = await fetchKey(String(bookNum));
+            db.close();
+            return data;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function getLxxBook(bookNum) {
+        if (memLxx.has(bookNum)) return memLxx.get(bookNum);
+        const data = await readIdbBook(LXX_IDB_NAME, bookNum);
+        if (data) memLxx.set(bookNum, data);
+        return data;
+    }
+
+    async function getCatssBook(bookNum) {
+        return readIdbBook(CATSS_IDB_NAME, bookNum);
+    }
+
+    function parseOtRef(rawText) {
+        const cleaned = String(rawText || '').replace(/\s+/g, ' ').trim();
+        if (!cleaned) return null;
+        for (let i = 0; i < OT_REF_PATTERNS.length; i++) {
+            const [bookNum, pat] = OT_REF_PATTERNS[i];
+            const re = new RegExp(`\\b(?:${pat})\\.?\\s+(\\d+):(\\d+)(?:\\s*[-–—]\\s*(\\d+))?`, 'i');
+            const m = cleaned.match(re);
+            if (m) {
+                const chap = parseInt(m[1], 10);
+                const vStart = parseInt(m[2], 10);
+                const vEnd = m[3] ? Math.max(vStart, parseInt(m[3], 10)) : vStart;
+                return { bookNum, chap, vStart, vEnd };
+            }
+        }
+        return null;
+    }
+
+    function decodeGreekMorph(rawCode) {
+        const code = String(rawCode || '').trim();
+        if (!code) return '';
+        const parts = code.toUpperCase().replace(/[^A-Z0-9-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
+        const basePos = (parts[0] || '').replace(/\d+$/, '');
+        const tail = parts.slice(1).join('');
+        const CASES = { N: 'Nominative', G: 'Genitive', D: 'Dative', A: 'Accusative', V: 'Vocative' };
+        const NUMS = { S: 'Singular', P: 'Plural', D: 'Dual' };
+        const GENS = { M: 'Masculine', F: 'Feminine', N: 'Neuter' };
+        const TENSES = { P: 'Present', I: 'Imperfect', F: 'Future', A: 'Aorist', X: 'Perfect', Y: 'Pluperfect' };
+        const VOICES = { A: 'Active', M: 'Middle', P: 'Passive', D: 'Mid/Pass', E: 'Mid/Pass' };
+        const MOODS = { I: 'Indicative', S: 'Subjunctive', O: 'Optative', D: 'Imperative', M: 'Imperative', N: 'Infinitive', P: 'Participle' };
+        const POS = { N: 'Noun', A: 'Adjective', RA: 'Article', RP: 'Pronoun', RD: 'Demonstrative', RR: 'Relative', P: 'Preposition', C: 'Conjunction', D: 'Adverb', X: 'Particle', T: 'Article' };
+        const cng = (str) => [CASES[str[0]], NUMS[str[1]], GENS[str[2]]].filter(Boolean);
+        if (basePos === 'V') {
+            const out = ['Verb'];
+            let v = tail.startsWith('2') ? tail.slice(1) : tail;
+            let idx = 0;
+            if (TENSES[v[idx]]) { out.push(TENSES[v[idx]]); idx++; }
+            if (VOICES[v[idx]]) { out.push(VOICES[v[idx]]); idx++; }
+            if (MOODS[v[idx]]) {
+                const mood = MOODS[v[idx]]; out.push(mood); idx++;
+                const rest = v.slice(idx);
+                if (mood === 'Participle') out.push(...cng(rest));
+                else if (/^[123][SPD]/.test(rest)) {
+                    out.push(`${rest[0] === '1' ? '1st' : rest[0] === '2' ? '2nd' : '3rd'} Person`);
+                    if (NUMS[rest[1]]) out.push(NUMS[rest[1]]);
+                }
+            }
+            return out.join(' · ');
+        }
+        const pLabel = POS[basePos] || POS[basePos[0]];
+        return pLabel ? [pLabel, ...cng(tail)].join(' · ') : code;
+    }
+
+    function alignCatssToVerse(catssRows, grkTuples) {
+        if (!catssRows || !catssRows.length) return new Map();
+        const domKeys = grkTuples.map((t) => normGreek(t[0]));
+        const idxToRow = new Map();
+        let cur = 0;
+        for (let r = 0; r < catssRows.length; r++) {
+            const gks = catssRows[r].gk || [];
+            for (let k = 0; k < gks.length; k++) {
+                const tgt = gks[k];
+                if (!tgt) continue;
+                let hit = -1;
+                for (let d = cur; d <= Math.min(domKeys.length - 1, cur + 5); d++) {
+                    if (domKeys[d] === tgt) { hit = d; break; }
+                }
+                if (hit === -1) {
+                    const p = tgt.slice(0, Math.min(3, tgt.length));
+                    for (let d = cur; d <= Math.min(domKeys.length - 1, cur + 3); d++) {
+                        const c = domKeys[d];
+                        if (c && ((tgt.length >= 3 && c.startsWith(p)) || (c.length >= 3 && tgt.startsWith(c.slice(0, 3))))) {
+                            hit = d; break;
+                        }
+                    }
+                }
+                if (hit !== -1) {
+                    idxToRow.set(hit, catssRows[r]);
+                    cur = hit + 1;
+                }
+            }
+        }
+        return idxToRow;
+    }
+
+    function openLsjFromOtNt(lemma) {
+        const clean = String(lemma || '').trim();
+        if (!clean) return;
+        const lsjBtn = document.getElementById('lfLsjToolbarBtn');
+        if (lsjBtn) {
+            lsjBtn.click();
+            setTimeout(() => {
+                const inp = document.getElementById('lfLsjSearchInput');
+                const go = document.getElementById('lfLsjSearchGoBtn');
+                if (inp && go) {
+                    inp.value = clean;
+                    go.click();
+                }
+            }, 70);
+        } else {
+            window.open(`https://logeion.uchicago.edu/${encodeURIComponent(clean)}`, '_blank', 'noopener,noreferrer');
+        }
+    }
+
+    function ensureStyles() {
+        if (document.getElementById('lfOtNtLxxStylesV2')) return;
+        const st = document.createElement('style');
+        st.id = 'lfOtNtLxxStylesV2';
+        st.textContent = `
+            #${CARD_ID} {
+                margin-top: 12px;
+                padding: 13px 16px;
+                background: #ffffff;
+                border: 1px solid #99f6e4;
+                border-radius: 12px;
+                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+                text-align: left;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            .lf-otnt-lxx-head {
+                display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+                margin-bottom: 8px;
+            }
+            .lf-otnt-lxx-label {
+                font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+                text-transform: uppercase; color: #0f766e;
+            }
+            .lf-otnt-lxx-meta {
+                display: inline-flex; align-items: center; gap: 5px;
+                font-size: 10.5px; color: #475569; font-weight: 600;
+            }
+            .lf-otnt-nudge-btn {
+                border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
+                font-size: 10px; font-weight: 700; border-radius: 5px;
+                padding: 1px 5px; cursor: pointer;
+            }
+            .lf-otnt-nudge-btn:hover { background: #f0fdfa; border-color: #14b8a6; color: #0f766e; }
+            .lf-otnt-lxx-text {
+                font-family: "SBL Greek", "Gentium Plus", Georgia, serif;
+                font-size: 18px; line-height: 1.75; color: #0f172a;
+            }
+            .lf-otnt-lxx-vnum {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-size: 10.5px; font-weight: 800; color: #0f766e;
+                vertical-align: super; margin-right: 3px;
+            }
+            .lf-otnt-lxx-w {
+                display: inline-block; padding: 0 3px; margin: 1px 1px; border-radius: 5px;
+                cursor: pointer; transition: background 0.1s ease, box-shadow 0.1s ease;
+            }
+            .lf-otnt-lxx-w:hover { background: #f0fdfa; box-shadow: 0 0 0 1px #5eead4; }
+            .lf-otnt-lxx-w.nt-match {
+                background: #fef3c7; border: 1px solid #f59e0b; padding: 0 4px;
+            }
+            .lf-otnt-lxx-w.active {
+                background: #ccfbf1 !important; box-shadow: 0 0 0 1.5px #0d9488;
+            }
+            .lf-otnt-lxx-insp {
+                display: none; margin-top: 10px; padding: 8px 11px; border-radius: 9px;
+                background: #f0fdfa; border: 1px solid #99f6e4;
+                font-size: 12px; color: #1e293b; line-height: 1.5;
+            }
+            .lf-otnt-lxx-insp.open { display: block; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function findVisibleOtNtModalParts() {
+        const nodes = document.querySelectorAll('div, span, p, h1, h2, h3, h4, h5, label, strong');
+        let wlcLabel = null;
+        for (let i = 0; i < nodes.length; i++) {
+            const el = nodes[i];
+            if (el.closest(`#${CARD_ID}, #lfOtNtLxxCard, #lfLxxDrawer, #lfTriStudioOverlay, #lfLsjModalOverlay, script, style`)) continue;
+            const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (/^WLC\s+HEBREW\s+OLD\s+TESTAMENT:?$/i.test(txt)) {
+                const r = el.getBoundingClientRect();
+                if (r.width > 40 && r.height > 6) {
+                    if (!wlcLabel || wlcLabel.contains(el)) wlcLabel = el;
+                }
+            }
+        }
+        if (!wlcLabel) return null;
+
+        // 1. Find the WLC card (smallest ancestor holding Hebrew text but NOT the pane header)
+        let wlcCard = wlcLabel.parentElement;
+        while (wlcCard && wlcCard !== document.body) {
+            const txt = wlcCard.textContent || '';
+            if (/[\u05D0-\u05EA]/.test(txt) && !/OLD TESTAMENT SOURCE|SRGNT/i.test(txt)) break;
+            if (/OLD TESTAMENT SOURCE|SRGNT/i.test(txt)) { wlcCard = wlcLabel.parentElement; break; }
+            wlcCard = wlcCard.parentElement;
+        }
+        if (!wlcCard || wlcCard === document.body) return null;
+
+        // 2. Find the OT column (holds "OLD TESTAMENT SOURCE (PSALMS 2:8)")
+        let otCol = wlcCard.parentElement;
+        while (otCol && otCol !== document.body) {
+            const txt = otCol.textContent || '';
+            if (/OLD TESTAMENT SOURCE/i.test(txt) && !/SRGNT/i.test(txt)) break;
+            if (/SRGNT/i.test(txt)) { otCol = null; break; }
+            otCol = otCol.parentElement;
+        }
+
+        // 3. Walk all the way up to the FULL modal container (includes top header + <select> + both columns)
+        let modalRoot = (otCol || wlcCard).parentElement;
+        let fallbackRoot = modalRoot;
+        while (modalRoot && modalRoot !== document.body) {
+            const txt = modalRoot.textContent || '';
+            if (/SRGNT/i.test(txt)) fallbackRoot = modalRoot;
+            if (/SRGNT/i.test(txt) && (/Scan OT Roots/i.test(txt) || modalRoot.querySelector('select'))) {
+                break;
+            }
+            modalRoot = modalRoot.parentElement;
+        }
+        if (!modalRoot || modalRoot === document.body) modalRoot = fallbackRoot || document.body;
+
+        // 4. Extract OT reference — check OT column header first ("OLD TESTAMENT SOURCE (PSALMS 2:8)"), then <select>, then modal header
+        let refObj = null;
+        if (otCol) {
+            const hdrCandidates = otCol.querySelectorAll('div, span, h1, h2, h3, h4, strong, p');
+            for (let i = 0; i < hdrCandidates.length; i++) {
+                const t = (hdrCandidates[i].textContent || '').replace(/\s+/g, ' ').trim();
+                if (/OLD TESTAMENT SOURCE/i.test(t) && t.length < 120) {
+                    refObj = parseOtRef(t);
+                    if (refObj) break;
+                }
+            }
+        }
+        if (!refObj) {
+            const selects = modalRoot.querySelectorAll('select');
+            for (let i = 0; i < selects.length; i++) {
+                const sel = selects[i];
+                const optText = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : sel.value;
+                refObj = parseOtRef(optText);
+                if (refObj) break;
+            }
+        }
+        if (!refObj) {
+            const hdrs = modalRoot.querySelectorAll('h1, h2, h3, h4, strong, div, span');
+            for (let i = 0; i < hdrs.length; i++) {
+                const t = (hdrs[i].textContent || '').replace(/\s+/g, ' ').trim();
+                if (t.length >= 6 && t.length < 95 && /\d+:\d+/.test(t)) {
+                    refObj = parseOtRef(t);
+                    if (refObj) break;
+                }
+            }
+        }
+
+        // 5. Collect Greek tokens from the SRGNT box for automatic shared-root highlighting
+        const ntTokens = [];
+        const boxes = modalRoot.querySelectorAll('div, section, p');
+        for (let i = 0; i < boxes.length; i++) {
+            const el = boxes[i];
+            if (el.closest(`#${CARD_ID}`)) continue;
+            const txt = el.textContent || '';
+            if (/SRGNT\s+GREEK\s+NEW\s+TESTAMENT/i.test(txt) && !/WLC\s+HEBREW/i.test(txt) && /[\u0370-\u03FF\u1F00-\u1FFF]/.test(txt) && txt.length < 2200) {
+                const grkWords = txt.match(/[\u0370-\u03FF\u1F00-\u1FFF]+/g) || [];
+                grkWords.forEach((w) => {
+                    const nw = normGreek(w);
+                    if (nw && nw.length >= 3 && !GRK_STOP.has(nw) && !ntTokens.includes(nw)) ntTokens.push(nw);
+                });
+                break;
+            }
+        }
+
+        return { wlcCard, refObj, ntTokens };
+    }
+
+    function matchesNtGreek(tuple, ntTokens) {
+        if (!ntTokens || !ntTokens.length) return false;
+        const w = normGreek(tuple[0]);
+        const lem = normGreek(tuple[1]);
+        const candidates = [w, lem].filter((x) => x && x.length >= 3 && !GRK_STOP.has(x));
+        for (let i = 0; i < candidates.length; i++) {
+            const c = candidates[i];
+            for (let j = 0; j < ntTokens.length; j++) {
+                const nt = ntTokens[j];
+                if (c === nt) return true;
+                const minLen = Math.min(c.length, nt.length);
+                if (minLen >= 5 && c.slice(0, 5) === nt.slice(0, 5)) return true;
+                if (minLen >= 4 && minLen <= 6 && c.slice(0, 4) === nt.slice(0, 4)) return true;
+            }
+        }
+        return false;
+    }
+
+    async function renderLxxCardInOtNt(force) {
+        const parts = findVisibleOtNtModalParts();
+        if (!parts || !parts.refObj) return;
+
+        // Clean up any older V1 card if present
+        const oldCard = document.getElementById('lfOtNtLxxCard');
+        if (oldCard) oldCard.remove();
+
+        const { wlcCard, refObj, ntTokens } = parts;
+        const baseKey = `${refObj.bookNum}_${refObj.chap}_${refObj.vStart}_${refObj.vEnd}`;
+        if (lastRenderedSig && !lastRenderedSig.startsWith(baseKey + '|')) {
+            psalmVerseShift = 0;
+        }
+
+        const sig = `${baseKey}|${psalmVerseShift}|${ntTokens.slice(0, 8).join(',')}`;
+        const existing = document.getElementById(CARD_ID);
+        if (!force && existing && existing.isConnected && existing.dataset.sig === sig) return;
+
+        ensureStyles();
+        const runId = ++renderRunId;
+        lastRenderedSig = sig;
+
+        let card = existing;
+        if (!card || !card.isConnected) {
+            card = document.createElement('div');
+            card.id = CARD_ID;
+            wlcCard.insertAdjacentElement('afterend', card);
+        }
+        card.dataset.sig = sig;
+
+        const [lxxBook, catssBook] = await Promise.all([
+            getLxxBook(refObj.bookNum),
+            getCatssBook(refObj.bookNum)
+        ]);
+        if (runId !== renderRunId) return;
+
+        if (!lxxBook) {
+            card.innerHTML = `
+                <div class="lf-otnt-lxx-head">
+                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
+                </div>
+                <div style="font-size:12.5px;color:#475569;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                    <span>Tagged LXX is not cached in this browser yet.</span>
+                    <button type="button" id="lfOtNtOpenSyncBtn" style="border:1px solid #0d9488;background:#0f766e;color:#ffffff;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:7px;cursor:pointer;">Open αΩ Tagged LXX to Sync</button>
+                </div>
+            `;
+            const syncBtn = card.querySelector('#lfOtNtOpenSyncBtn');
+            if (syncBtn) {
+                syncBtn.onclick = () => {
+                    const toggle = Array.from(document.querySelectorAll('button')).find((b) => /Tagged LXX/i.test(b.textContent || ''));
+                    if (toggle) toggle.click();
+                };
+            }
+            return;
+        }
+
+        const verseBlocks = [];
+        let displayLxxRef = '';
+        for (let v = refObj.vStart; v <= Math.min(refObj.vEnd, refObj.vStart + 8); v++) {
+            const mapped = mapEngToLxx(refObj.bookNum, refObj.chap, Math.max(1, v + (refObj.bookNum === 19 ? psalmVerseShift : 0)));
+            const tuples = (lxxBook[mapped.c] && lxxBook[mapped.c][mapped.v]) || [];
+            if (tuples.length) {
+                const catssRows = catssBook
+                    ? ((catssBook[refObj.chap] && catssBook[refObj.chap][v]) || (catssBook[mapped.c] && catssBook[mapped.c][mapped.v]) || null)
+                    : null;
+                verseBlocks.push({ lxxChap: mapped.c, lxxVerse: mapped.v, tuples, catssMap: alignCatssToVerse(catssRows, tuples), catssRows });
+                if (!displayLxxRef) displayLxxRef = `${BOOK_NAMES[refObj.bookNum]} ${mapped.c}:${mapped.v}`;
+            }
+        }
+        if (verseBlocks.length > 1) {
+            displayLxxRef += `–${verseBlocks[verseBlocks.length - 1].lxxVerse}`;
+        }
+
+        const isPsalm = refObj.bookNum === 19;
+        const nudgeHtml = isPsalm
+            ? `<button type="button" class="lf-otnt-nudge-btn" id="lfOtNtPrevV" title="Shift LXX Psalm verse -1 (superscription offset)">−1v</button><button type="button" class="lf-otnt-nudge-btn" id="lfOtNtNextV" title="Shift LXX Psalm verse +1 (superscription offset)">+1v</button>`
+            : '';
+
+        if (!verseBlocks.length) {
+            card.innerHTML = `
+                <div class="lf-otnt-lxx-head">
+                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
+                    <span class="lf-otnt-lxx-meta">${nudgeHtml}</span>
+                </div>
+                <div style="font-size:12.5px;color:#64748b;">Verse not found at ${escapeHtml(BOOK_NAMES[refObj.bookNum] || '')} ${refObj.chap}:${refObj.vStart} in LXX versification.${isPsalm ? ' Try −1v or +1v above.' : ''}</div>
+            `;
+        } else {
+            const bodyHtml = verseBlocks.map((vb, bi) => {
+                const vPrefix = verseBlocks.length > 1 ? `<span class="lf-otnt-lxx-vnum">${vb.lxxVerse}</span>` : '';
+                const wordsHtml = vb.tuples.map((t, wi) => {
+                    const isMatch = matchesNtGreek(t, ntTokens);
+                    return `<span class="lf-otnt-lxx-w${isMatch ? ' nt-match' : ''}" data-bi="${bi}" data-wi="${wi}">${escapeHtml(t[0])}</span>`;
+                }).join(' ');
+                return `${vPrefix}${wordsHtml}`;
+            }).join(' ');
+
+            card.innerHTML = `
+                <div class="lf-otnt-lxx-head">
+                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
+                    <span class="lf-otnt-lxx-meta">
+                        <span>${escapeHtml(displayLxxRef)}</span>
+                        ${nudgeHtml}
+                    </span>
+                </div>
+                <div class="lf-otnt-lxx-text">${bodyHtml}</div>
+                <div class="lf-otnt-lxx-insp" id="lfOtNtLxxInsp"></div>
+            `;
+
+            const inspEl = card.querySelector('#lfOtNtLxxInsp');
+            card.querySelectorAll('.lf-otnt-lxx-w').forEach((wEl) => {
+                wEl.onclick = (e) => {
+                    e.stopPropagation();
+                    const wasActive = wEl.classList.contains('active');
+                    card.querySelectorAll('.lf-otnt-lxx-w.active').forEach((n) => n.classList.remove('active'));
+                    if (wasActive) {
+                        inspEl.classList.remove('open');
+                        return;
+                    }
+                    wEl.classList.add('active');
+                    const bi = parseInt(wEl.dataset.bi, 10);
+                    const wi = parseInt(wEl.dataset.wi, 10);
+                    const vb = verseBlocks[bi];
+                    const t = vb.tuples[wi];
+                    const catssRow = vb.catssMap.get(wi);
+
+                    let hebBadge = '';
+                    if (catssRow) {
+                        if (catssRow.f === 'plus') {
+                            hebBadge = `<span style="margin-left:6px;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;background:#ccfbf1;color:#0f766e;">+ LXX Plus</span>`;
+                        } else if (catssRow.h) {
+                            const fullHeb = catssRow.hg >= 0 && vb.catssRows
+                                ? vb.catssRows.filter((r) => r.hg === catssRow.hg).map((r) => r.h).join('').replace(/־(?=[^\s])/g, '')
+                                : catssRow.h;
+                            hebBadge = `<span style="margin-left:8px;padding:1px 7px;border-radius:6px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-weight:700;">MT: <span dir="rtl" style="font-family:'SBL Hebrew','Ezra SIL',serif;font-size:16px;">${escapeHtml(fullHeb)}</span></span>`;
+                        }
+                    }
+
+                    inspEl.innerHTML = `
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div>
+                                <span style="font-family:'SBL Greek',Georgia,serif;font-size:17px;font-weight:700;color:#0f172a;">${escapeHtml(t[0])}</span>
+                                ${t[1] ? ` <span style="color:#475569;">(${escapeHtml(t[1])})</span>` : ''}
+                                ${t[4] ? `<span style="margin-left:5px;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:#ccfbf1;color:#0f766e;">${escapeHtml(t[4])}</span>` : ''}
+                                ${hebBadge}
+                            </div>
+                            <button type="button" id="lfOtNtLsjBtn" style="border:1px solid #818cf8;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;cursor:pointer;">📖 LSJ</button>
+                        </div>
+                        ${t[3] ? `<div style="margin-top:3px;"><strong>Gloss:</strong> ${escapeHtml(t[3])}</div>` : ''}
+                        ${t[2] ? `<div style="font-size:11px;color:#0f766e;"><code>${escapeHtml(t[2])}</code> — ${escapeHtml(decodeGreekMorph(t[2]))}</div>` : ''}
+                    `;
+                    inspEl.querySelector('#lfOtNtLsjBtn').onclick = (ev) => {
+                        ev.stopPropagation();
+                        openLsjFromOtNt(t[1] || t[0]);
+                    };
+                    inspEl.classList.add('open');
+                };
+            });
+        }
+
+        const prevBtn = card.querySelector('#lfOtNtPrevV');
+        const nextBtn = card.querySelector('#lfOtNtNextV');
+        if (prevBtn) prevBtn.onclick = (e) => { e.stopPropagation(); psalmVerseShift--; renderLxxCardInOtNt(true); };
+        if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); psalmVerseShift++; renderLxxCardInOtNt(true); };
+    }
+
+    let checkTimer = 0;
+    function scheduleCheck() {
+        if (checkTimer) return;
+        checkTimer = setTimeout(() => {
+            checkTimer = 0;
+            renderLxxCardInOtNt(false);
+        }, 50);
+    }
+
+    function init() {
+        scheduleCheck();
+        document.addEventListener('change', scheduleCheck, true);
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.closest && e.target.closest(`#${CARD_ID}`)) return;
+            setTimeout(scheduleCheck, 80);
+        }, true);
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver((muts) => {
+                if (muts.every((m) => m.target && m.target.closest && m.target.closest(`#${CARD_ID}`))) return;
+                scheduleCheck();
+            });
+            obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+        }
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+
     </script>
 </body>
 </html>
