@@ -33786,6 +33786,874 @@ function showContextMenu(x, y) {
 })();
 
 
+	/* === LEXFLOW ADD-ON: PUBLIC-DOMAIN LSJ GREEK-ENGLISH LEXICON (PERSEUS / CELANO UNICODE + OFFLINE IDB) === */
+(function () {
+    const CELANO_RAW = 'https://raw.githubusercontent.com/gcelano/LSJ_GreekUnicode/master/';
+    const CELANO_CDN = 'https://cdn.jsdelivr.net/gh/gcelano/LSJ_GreekUnicode@master/';
+    const PERSEUS_RAW = 'https://raw.githubusercontent.com/PerseusDL/lexica/master/CTS_XML_TEI/perseus/pdllex/grc/lsj/';
+    const PERSEUS_CDN = 'https://cdn.jsdelivr.net/gh/PerseusDL/lexica@master/CTS_XML_TEI/perseus/pdllex/grc/lsj/';
+
+    const IDB_NAME = 'LexFlow_LSJ_Lexicon_v1';
+    const IDB_VOLS = 'volumes';
+    const IDB_META = 'meta';
+    const TOTAL_VOLS = 27;
+
+    const GREEK_ALPHA = 'αβγδεζηθικλμνξοπρστυφχψω';
+    const ALPHA_RANK = {};
+    for (let i = 0; i < GREEK_ALPHA.length; i++) ALPHA_RANK[GREEK_ALPHA[i]] = i;
+
+    // Initial volume estimate across Perseus/Celano grc.lsj.perseus-eng1..27.xml (auto-corrects via binary search)
+    const INITIAL_VOL_GUESS = {
+        α: 1, β: 2, γ: 3, δ: 4, ε: 5, ζ: 7, η: 8, θ: 9, ι: 10, κ: 11, λ: 12,
+        μ: 13, ν: 14, ξ: 15, ο: 16, π: 17, ρ: 18, σ: 19, τ: 20, υ: 21, φ: 22, χ: 23, ψ: 24, ω: 25
+    };
+
+    const BETA_TO_GRK = {
+        A: 'α', B: 'β', G: 'γ', D: 'δ', E: 'ε', Z: 'ζ', H: 'η', Q: 'θ',
+        I: 'ι', K: 'κ', L: 'λ', M: 'μ', N: 'ν', C: 'ξ', O: 'ο', P: 'π',
+        R: 'ρ', S: 'σ', T: 'τ', U: 'υ', F: 'φ', X: 'χ', Y: 'ψ', W: 'ω'
+    };
+
+    const KOINE_TO_ATTIC_REWRITES = [
+        [/^γινομ/, 'γιγνομ'],
+        [/^γινωσκ/, 'γιγνωσκ'],
+        [/^ουθει/, 'ουδει'],
+        [/^μηθει/, 'μηδει'],
+        [/^ειπον$/, 'λεγω'],
+        [/^ειδον$/, 'οραω'],
+        [/σσω$/, 'ττω'],
+        [/σσα$/, 'ττα'],
+        [/σσομ/, 'ττομ']
+    ];
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function normGreek(s) {
+        return String(s || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/ς/g, 'σ')
+            .replace(/[^α-ω]/g, '');
+    }
+
+    function compareGreek(a, b) {
+        const len = Math.min(a.length, b.length);
+        for (let i = 0; i < len; i++) {
+            const ra = ALPHA_RANK[a[i]];
+            const rb = ALPHA_RANK[b[i]];
+            if (ra !== rb) return (ra ?? 99) - (rb ?? 99);
+        }
+        return a.length - b.length;
+    }
+
+    function betacodeToGreekSimple(str) {
+        const up = String(str || '').toUpperCase();
+        let out = '';
+        for (let i = 0; i < up.length; i++) {
+            if (BETA_TO_GRK[up[i]]) out += BETA_TO_GRK[up[i]];
+        }
+        return out.endsWith('σ') ? out.slice(0, -1) + 'ς' : out;
+    }
+
+    // Allows searching LSJ using either Greek script OR simple Latin transliteration (e.g. "poieo", "arche", "theos")
+    function latinToGreekQuery(raw) {
+        const s = String(raw || '').trim();
+        if (/[\u0370-\u03FF\u1F00-\u1FFF]/.test(s)) return normGreek(s);
+        let low = s.toLowerCase().replace(/[^a-z]/g, '');
+        if (!low) return '';
+        low = low
+            .replace(/th/g, 'θ')
+            .replace(/ph/g, 'φ')
+            .replace(/ch/g, 'χ')
+            .replace(/ps/g, 'ψ')
+            .replace(/rh/g, 'ρ')
+            .replace(/^h(?=[aeiouy])/, '');
+        const map = {
+            a: 'α', b: 'β', g: 'γ', d: 'δ', e: 'ε', z: 'ζ', i: 'ι', k: 'κ',
+            l: 'λ', m: 'μ', n: 'ν', x: 'ξ', o: 'ο', p: 'π', r: 'ρ', s: 'σ',
+            t: 'τ', u: 'υ', y: 'υ', f: 'φ', c: 'κ', w: 'ω', q: 'θ', h: 'η'
+        };
+        let out = '';
+        for (let i = 0; i < low.length; i++) {
+            out += map[low[i]] || low[i];
+        }
+        return normGreek(out);
+    }
+
+    function getCandidateKeys(lemma, surfaceWord) {
+        const list = [];
+        const add = (k) => { if (k && !list.includes(k)) list.push(k); };
+        const nLem = normGreek(lemma);
+        const nSurf = normGreek(surfaceWord);
+        add(nLem);
+        if (nLem) {
+            KOINE_TO_ATTIC_REWRITES.forEach(([re, rep]) => {
+                if (re.test(nLem)) add(nLem.replace(re, rep));
+            });
+            // Handle long/short vowel transliteration variations (e/η, o/ω) for Latin queries
+            if (nLem.endsWith('ο')) add(nLem.slice(0, -1) + 'ω');
+            if (nLem.endsWith('ε')) add(nLem.slice(0, -1) + 'η');
+        }
+        add(nSurf);
+        if (nSurf && nSurf.endsWith('ν') && nSurf.length > 3) add(nSurf.slice(0, -1));
+        return list;
+    }
+
+    // --- 1. INDEXEDDB CACHE FOR LSJ VOLUMES ---
+    let idbPromise = null;
+    const volMemCache = new Map();
+    let volIndexMeta = {}; // { [volNum]: { firstKey, lastKey, count, sparse } }
+    const inflightVols = new Map();
+
+    function openIdb() {
+        if (idbPromise) return idbPromise;
+        idbPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open(IDB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(IDB_VOLS)) db.createObjectStore(IDB_VOLS);
+                if (!db.objectStoreNames.contains(IDB_META)) db.createObjectStore(IDB_META);
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return idbPromise;
+    }
+
+    async function idbGet(store, key) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).get(key);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbPut(store, key, val) {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            const req = tx.objectStore(store).put(val, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function idbClearAll() {
+        const db = await openIdb();
+        volMemCache.clear();
+        volIndexMeta = {};
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([IDB_VOLS, IDB_META], 'readwrite');
+            tx.objectStore(IDB_VOLS).clear();
+            tx.objectStore(IDB_META).clear();
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async function loadMetaIndex() {
+        if (Object.keys(volIndexMeta).length) return volIndexMeta;
+        try {
+            const saved = await idbGet(IDB_META, 'volIndex');
+            if (saved) volIndexMeta = saved;
+        } catch (e) {}
+        return volIndexMeta;
+    }
+
+    async function saveMetaIndex() {
+        try { await idbPut(IDB_META, 'volIndex', volIndexMeta); } catch (e) {}
+    }
+
+    async function getCachedVolume(volNum) {
+        if (volMemCache.has(volNum)) return volMemCache.get(volNum);
+        const vol = await idbGet(IDB_VOLS, volNum);
+        if (vol) volMemCache.set(volNum, vol);
+        return vol;
+    }
+
+    // --- 2. PERSEUS / CELANO TEI-XML PARSER & CLEAN HTML FORMATTER ---
+    function formatTeiEntryToHtml(rawInnerXml) {
+        // Rename TEI tags that collide with HTML5 table/head tags (especially <tr> = translation!)
+        let safe = String(rawInnerXml || '')
+            .replace(/<\?[\s\S]*?\?>/g, '')
+            .replace(/<pb\b[^>]*\/?>/gi, '')
+            .replace(/<milestone\b[^>]*\/?>/gi, '')
+            .replace(/<([a-zA-Z0-9_-]+)\b([^>]*)\/>/g, '<$1$2></$1>')
+            .replace(/<tr(?=[\s>])/gi, '<lsj-tr')
+            .replace(/<\/tr>/gi, '</lsj-tr>')
+            .replace(/<title(?=[\s>])/gi, '<lsj-title')
+            .replace(/<\/title>/gi, '</lsj-title>')
+            .replace(/<meta(?=[\s>])/gi, '<lsj-meta')
+            .replace(/<link(?=[\s>])/gi, '<lsj-link')
+            .replace(/<head(?=[\s>])/gi, '<lsj-head')
+            .replace(/<\/head>/gi, '</lsj-head>');
+
+        const tpl = document.createElement('template');
+        tpl.innerHTML = safe;
+
+        // Convert any Betacode <foreign lang="greek"> if Perseus fallback was used
+        tpl.content.querySelectorAll('foreign, orth, quote').forEach((el) => {
+            const lang = (el.getAttribute('lang') || el.getAttribute('xml:lang') || '').toLowerCase();
+            const txt = (el.textContent || '').trim();
+            if ((lang === 'greek' || lang === 'grc') && txt && !/[\u0370-\u03FF\u1F00-\u1FFF]/.test(txt) && /[a-zA-Z]/.test(txt)) {
+                const conv = betacodeToGreekSimple(txt);
+                if (conv) el.textContent = conv;
+            }
+        });
+
+        // Add clean visual markers on <sense n="...">
+        tpl.content.querySelectorAll('sense').forEach((sEl) => {
+            const n = (sEl.getAttribute('n') || '').trim();
+            const lvl = parseInt(sEl.getAttribute('level') || '2', 10);
+            sEl.setAttribute('data-lvl', String(isNaN(lvl) ? 2 : lvl));
+            if (n && n !== '0') {
+                const badge = document.createElement('span');
+                badge.className = lvl <= 1 ? 'lf-lsj-snum major' : 'lf-lsj-snum';
+                badge.textContent = `${n}. `;
+                sEl.insertBefore(badge, sEl.firstChild);
+            }
+        });
+
+        // Wrap in a container to serialize and highlight LXX references cleanly
+        const holder = document.createElement('div');
+        holder.appendChild(tpl.content.cloneNode(true));
+        let html = holder.innerHTML;
+        // Highlight explicit Septuagint citations inside LSJ text!
+        html = html.replace(/\bLXX\b/g, '<span class="lf-lsj-lxx-pill">LXX</span>');
+        return html;
+    }
+
+    function parseLsjXmlVolume(xmlText, volNum) {
+        const entriesByKey = {};
+        let firstKey = '';
+        let lastKey = '';
+        let count = 0;
+
+        const entryRe = /<entryFree\b([^>]*)>([\s\S]*?)<\/entryFree>/gi;
+        let m;
+        while ((m = entryRe.exec(xmlText)) !== null) {
+            const attrs = m[1] || '';
+            const inner = m[2] || '';
+            const idAttr = (attrs.match(/\bid\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+            const keyAttr = (attrs.match(/\bkey\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+
+            // Extract display headword from first <orth> tag
+            const orthMatch = inner.match(/<orth\b[^>]*>([\s\S]*?)<\/orth>/i);
+            let orth = orthMatch ? orthMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+            if (!orth || (!/[\u0370-\u03FF\u1F00-\u1FFF]/.test(orth) && keyAttr)) {
+                orth = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(keyAttr) ? keyAttr : betacodeToGreekSimple(keyAttr);
+            }
+            const cleanOrth = orth.replace(/^\*+/, '').trim();
+            const normKey = normGreek(cleanOrth.replace(/[-–—]/g, ''));
+            if (!normKey) continue;
+
+            // Extract first 2 English translations (<tr>) for quick preview
+            const trs = [];
+            const trRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+            let tm;
+            while ((tm = trRe.exec(inner)) !== null && trs.length < 3) {
+                const t = tm[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+                if (t && !trs.includes(t)) trs.push(t);
+            }
+
+            if (!entriesByKey[normKey]) entriesByKey[normKey] = [];
+            entriesByKey[normKey].push({
+                id: idAttr,
+                orth: cleanOrth,
+                preview: trs.join('; '),
+                rawXml: inner
+            });
+
+            if (!firstKey || compareGreek(normKey, firstKey) < 0) firstKey = normKey;
+            if (!lastKey || compareGreek(normKey, lastKey) > 0) lastKey = normKey;
+            count++;
+        }
+
+        return { volNum, firstKey, lastKey, count, sparse: count < 15, entriesByKey };
+    }
+
+    async function fetchAndCacheVolume(volNum, onStatus) {
+        const existing = await getCachedVolume(volNum);
+        if (existing) return existing;
+        if (inflightVols.has(volNum)) return inflightVols.get(volNum);
+
+        const p = (async () => {
+            const fname = `grc.lsj.perseus-eng${volNum}.xml`;
+            const urls = [
+                CELANO_RAW + fname,
+                CELANO_CDN + fname,
+                PERSEUS_RAW + fname,
+                PERSEUS_CDN + fname
+            ];
+            let xmlText = '';
+            let lastErr = null;
+            for (let i = 0; i < urls.length; i++) {
+                try {
+                    if (onStatus) onStatus(`Downloading LSJ volume ${volNum}/27...`);
+                    const res = await fetch(urls[i]);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    xmlText = await res.text();
+                    if (xmlText && xmlText.includes('<entryFree')) break;
+                } catch (err) {
+                    lastErr = err;
+                }
+            }
+            if (!xmlText || !xmlText.includes('<entryFree')) {
+                throw lastErr || new Error(`Could not fetch LSJ volume ${volNum}`);
+            }
+
+            if (onStatus) onStatus(`Indexing LSJ volume ${volNum}/27...`);
+            const volObj = parseLsjXmlVolume(xmlText, volNum);
+            volMemCache.set(volNum, volObj);
+            await idbPut(IDB_VOLS, volNum, volObj);
+            await loadMetaIndex();
+            volIndexMeta[volNum] = {
+                firstKey: volObj.firstKey,
+                lastKey: volObj.lastKey,
+                count: volObj.count,
+                sparse: volObj.sparse
+            };
+            await saveMetaIndex();
+            return volObj;
+        })();
+
+        inflightVols.set(volNum, p);
+        try {
+            return await p;
+        } finally {
+            inflightVols.delete(volNum);
+        }
+    }
+
+    // Smart adaptive locator: checks cached volumes first, then converges on the exact 1..27 volume in 1-2 fetches
+    async function lookupInLsj(lemma, surfaceWord, onStatus) {
+        await loadMetaIndex();
+        const candidates = getCandidateKeys(lemma, surfaceWord);
+        if (!candidates.length) return { query: lemma || surfaceWord || '', hits: [], suggestions: [] };
+
+        const searchInVol = (vol, candList) => {
+            if (!vol || !vol.entriesByKey) return [];
+            for (let i = 0; i < candList.length; i++) {
+                const list = vol.entriesByKey[candList[i]];
+                if (list && list.length) return list.map((item) => ({ ...item, matchedKey: candList[i] }));
+            }
+            return [];
+        };
+
+        const findSuggestionsInVol = (vol, primaryKey) => {
+            if (!vol || !vol.entriesByKey || !primaryKey) return [];
+            const keys = Object.keys(vol.entriesByKey);
+            const prefix = primaryKey.slice(0, Math.min(4, primaryKey.length));
+            const out = [];
+            for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                if (k.startsWith(prefix) || (primaryKey.length >= 4 && primaryKey.startsWith(k) && k.length >= 3)) {
+                    const first = vol.entriesByKey[k][0];
+                    if (first) out.push({ key: k, orth: first.orth, preview: first.preview });
+                }
+                if (out.length >= 16) break;
+            }
+            return out;
+        };
+
+        const primaryKey = candidates[0];
+
+        // 1. Check already-cached volumes whose alphabetical range covers primaryKey
+        const cachedNums = Object.keys(volIndexMeta).map((n) => parseInt(n, 10));
+        for (let i = 0; i < cachedNums.length; i++) {
+            const vn = cachedNums[i];
+            const m = volIndexMeta[vn];
+            if (!m || m.sparse) continue;
+            for (let c = 0; c < candidates.length; c++) {
+                const ck = candidates[c];
+                if (compareGreek(ck, m.firstKey) >= 0 && compareGreek(ck, m.lastKey) <= 0) {
+                    const vol = await getCachedVolume(vn);
+                    const hits = searchInVol(vol, candidates);
+                    if (hits.length) return { query: lemma || surfaceWord, hits, suggestions: [], volNum: vn };
+                }
+            }
+        }
+
+        // 2. Adaptive bounded binary search across volumes 1..27
+        let lo = 1;
+        let hi = TOTAL_VOLS;
+        const visited = new Set();
+        let guess = INITIAL_VOL_GUESS[primaryKey[0]] || 1;
+        let lastRelevantVol = null;
+
+        for (let step = 0; step < 7 && lo <= hi; step++) {
+            let vIdx = step === 0 ? Math.max(lo, Math.min(hi, guess)) : Math.floor((lo + hi) / 2);
+            while (visited.has(vIdx) && vIdx < hi) vIdx++;
+            while (visited.has(vIdx) && vIdx > lo) vIdx--;
+            if (visited.has(vIdx)) break;
+            visited.add(vIdx);
+
+            const vol = await fetchAndCacheVolume(vIdx, onStatus);
+            const hits = searchInVol(vol, candidates);
+            if (hits.length) {
+                return { query: lemma || surfaceWord, hits, suggestions: [], volNum: vIdx };
+            }
+
+            if (vol.sparse || !vol.firstKey) {
+                // Digamma/koppa/empty volume: nudge past it
+                if (vIdx <= guess) lo = vIdx + 1;
+                else hi = vIdx - 1;
+                continue;
+            }
+
+            if (compareGreek(primaryKey, vol.firstKey) < 0) {
+                hi = vIdx - 1;
+            } else if (compareGreek(primaryKey, vol.lastKey) > 0) {
+                lo = vIdx + 1;
+            } else {
+                // Primary key falls inside this volume's range, just not exact headword match
+                lastRelevantVol = vol;
+                break;
+            }
+            if (vol.firstKey[0] === primaryKey[0] || vol.lastKey[0] === primaryKey[0]) {
+                lastRelevantVol = vol;
+            }
+        }
+
+        // Also check alternate Attic candidate if it starts with a different letter (e.g. εἶπον -> λέγω)
+        for (let c = 1; c < candidates.length; c++) {
+            const alt = candidates[c];
+            if (alt[0] === primaryKey[0]) continue;
+            const altGuess = INITIAL_VOL_GUESS[alt[0]];
+            if (altGuess) {
+                const vol = await fetchAndCacheVolume(altGuess, onStatus);
+                const hits = searchInVol(vol, [alt]);
+                if (hits.length) return { query: lemma || surfaceWord, hits, suggestions: [], volNum: altGuess };
+            }
+        }
+
+        const suggestions = lastRelevantVol ? findSuggestionsInVol(lastRelevantVol, primaryKey) : [];
+        return { query: lemma || surfaceWord, hits: [], suggestions };
+    }
+
+    // --- 3. STYLES & SEARCHABLE LSJ LEXICON MODAL ---
+    function ensureLsjStyles() {
+        if (document.getElementById('lfLsjStyles')) return;
+        const st = document.createElement('style');
+        st.id = 'lfLsjStyles';
+        st.textContent = `
+            .lf-lsj-trigger-btn {
+                display: inline-flex; align-items: center; gap: 4px;
+                border: 1px solid #818cf8; background: #eef2ff; color: #3730a3;
+                font-size: 11px; font-weight: 700; border-radius: 999px;
+                padding: 2px 9px; cursor: pointer; vertical-align: middle;
+                transition: all 0.12s ease; white-space: nowrap;
+            }
+            .lf-lsj-trigger-btn:hover { background: #e0e7ff; border-color: #4f46e5; }
+            #lfLsjModalOverlay {
+                position: fixed; inset: 0; z-index: 100080;
+                background: rgba(15, 23, 42, 0.56); backdrop-filter: blur(5px);
+                display: none; align-items: center; justify-content: center; padding: 16px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            #lfLsjModalOverlay.open { display: flex; }
+            .lf-lsj-card {
+                width: min(760px, 95vw); max-height: 88vh; background: #ffffff;
+                border-radius: 18px; border: 1.5px solid #a5b4fc;
+                box-shadow: 0 28px 72px rgba(15, 23, 42, 0.36);
+                display: flex; flex-direction: column; overflow: hidden;
+            }
+            .lf-lsj-head {
+                display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+                padding: 13px 18px;
+                background: linear-gradient(135deg, #eef2ff 0%, #f0fdfa 100%);
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-lsj-searchbar {
+                display: flex; gap: 8px; padding: 10px 18px;
+                background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+            }
+            .lf-lsj-input {
+                flex: 1; border: 1.5px solid #cbd5e1; border-radius: 9px;
+                padding: 7px 12px; font-size: 14px; color: #0f172a; background: #ffffff;
+                outline: none;
+            }
+            .lf-lsj-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+            .lf-lsj-body {
+                flex: 1; overflow-y: auto; padding: 16px 20px 24px;
+                color: #1e293b; font-size: 14px; line-height: 1.68;
+            }
+            .lf-lsj-entry {
+                padding: 14px 16px; margin-bottom: 14px;
+                border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;
+                box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+            }
+            .lf-lsj-entry-head {
+                display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+                padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9;
+            }
+            .lf-lsj-headword {
+                font-family: "SBL Greek", "Gentium Plus", Georgia, serif;
+                font-size: 24px; font-weight: 700; color: #312e81;
+            }
+            .lf-lsj-entry orth, .lf-lsj-entry foreign, .lf-lsj-entry quote {
+                font-family: "SBL Greek", "Gentium Plus", Georgia, serif;
+                font-size: 1.06em; color: #0f172a;
+            }
+            .lf-lsj-entry orth { font-weight: 700; color: #312e81; }
+            .lf-lsj-entry lsj-tr {
+                font-weight: 700; color: #0f766e;
+                background: rgba(204, 251, 241, 0.45);
+                padding: 0 3px; border-radius: 3px;
+            }
+            .lf-lsj-entry sense {
+                display: block; margin-top: 6px; padding-left: 12px;
+                border-left: 2px solid #e2e8f0;
+            }
+            .lf-lsj-entry sense[data-lvl="1"] {
+                margin-top: 10px; border-left: 2.5px solid #818cf8; padding-left: 12px;
+            }
+            .lf-lsj-snum { font-weight: 800; color: #4338ca; }
+            .lf-lsj-snum.major { color: #312e81; font-size: 1.05em; }
+            .lf-lsj-entry bibl, .lf-lsj-entry author, .lf-lsj-entry lsj-title {
+                font-size: 0.88em; color: #64748b; font-style: italic;
+            }
+            .lf-lsj-entry gramgrp, .lf-lsj-entry gen, .lf-lsj-entry pos, .lf-lsj-entry itype {
+                font-size: 0.92em; color: #475569;
+            }
+            .lf-lsj-lxx-pill {
+                display: inline-block; font-size: 10px; font-weight: 800; font-style: normal;
+                padding: 0 5px; border-radius: 4px; background: #ccfbf1; color: #0f766e;
+                border: 1px solid #5eead4; vertical-align: middle; letter-spacing: 0.03em;
+            }
+            .lf-lsj-sugg-chip {
+                display: inline-flex; align-items: center; gap: 6px;
+                padding: 5px 11px; margin: 4px; border-radius: 8px;
+                border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer;
+                font-size: 13px; color: #0f172a;
+            }
+            .lf-lsj-sugg-chip:hover { background: #eef2ff; border-color: #818cf8; }
+            .lf-lsj-foot {
+                padding: 9px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+                display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+                font-size: 11px; color: #64748b;
+            }
+            .lf-lsj-foot a { color: #4338ca; font-weight: 600; text-decoration: none; }
+            .lf-lsj-foot a:hover { text-decoration: underline; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    let isCachingAll = false;
+
+    async function ensureLsjModalDOM() {
+        ensureLsjStyles();
+        await loadMetaIndex();
+        let ov = document.getElementById('lfLsjModalOverlay');
+        if (ov) return ov;
+
+        ov = document.createElement('div');
+        ov.id = 'lfLsjModalOverlay';
+        ov.className = 'modal';
+        ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('open'); });
+        ov.innerHTML = `
+            <div class="lf-lsj-card">
+                <div class="lf-lsj-head">
+                    <div>
+                        <strong style="font-size:15.5px;color:#312e81;">📖 LSJ Greek–English Lexicon (1940)</strong>
+                        <div style="font-size:11.5px;color:#475569;">Liddell–Scott–Jones · Perseus Digital Library / Celano Unicode · Offline IndexedDB</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <button type="button" class="lf-lxx-btn" id="lfLsjCacheAllBtn" title="Download all 27 alphabetical volumes for 100% offline use"></button>
+                        <button type="button" class="lf-lxx-btn" id="lfLsjCloseBtn">✕</button>
+                    </div>
+                </div>
+                <div class="lf-lsj-searchbar">
+                    <input type="text" id="lfLsjSearchInput" class="lf-lsj-input" placeholder="Search Greek lemma or transliteration (e.g. ποιέω, ἀρχή, poieo, logos)..." />
+                    <button type="button" class="lf-lxx-btn teal" id="lfLsjSearchGoBtn" style="padding:0 16px;">Search</button>
+                </div>
+                <div class="lf-lsj-body" id="lfLsjBody"></div>
+                <div class="lf-lsj-foot">
+                    <span>Text: <strong>Liddell, Scott &amp; Jones (1940, Public Domain)</strong> · Digital: <a href="https://github.com/PerseusDL/lexica" target="_blank" rel="noopener">PerseusDL</a> &amp; <a href="https://github.com/gcelano/LSJ_GreekUnicode" target="_blank" rel="noopener">G. Celano</a></span>
+                    <span id="lfLsjCacheStat"></span>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(ov);
+
+        ov.querySelector('#lfLsjCloseBtn').onclick = () => ov.classList.remove('open');
+        const input = ov.querySelector('#lfLsjSearchInput');
+        const runSearch = () => {
+            const raw = input.value.trim();
+            if (!raw) return;
+            const grk = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(raw) ? raw : latinToGreekQuery(raw);
+            openLsjForWord(grk, raw);
+        };
+        ov.querySelector('#lfLsjSearchGoBtn').onclick = runSearch;
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') runSearch(); });
+
+        ov.querySelector('#lfLsjCacheAllBtn').onclick = async () => {
+            if (isCachingAll) return;
+            await loadMetaIndex();
+            const cachedCount = Object.keys(volIndexMeta).length;
+            if (cachedCount >= TOTAL_VOLS) {
+                if (!confirm('All 27 LSJ volumes are cached offline. Clear LSJ cache?')) return;
+                await idbClearAll();
+                refreshLsjCacheFooter();
+                return;
+            }
+            if (!confirm('Download all 27 alphabetical LSJ volumes (~45 MB total) into Chrome IndexedDB for 100% offline use? (You can also just look up words one-by-one to cache letters automatically.)')) return;
+            isCachingAll = true;
+            const btn = ov.querySelector('#lfLsjCacheAllBtn');
+            const stat = ov.querySelector('#lfLsjCacheStat');
+            try {
+                for (let v = 1; v <= TOTAL_VOLS; v++) {
+                    if (volIndexMeta[v]) continue;
+                    btn.textContent = `Caching ${v}/${TOTAL_VOLS}...`;
+                    if (stat) stat.textContent = `Downloading volume ${v} of ${TOTAL_VOLS}...`;
+                    await fetchAndCacheVolume(v);
+                }
+            } catch (err) {
+                if (stat) stat.textContent = `Stopped: ${err.message}`;
+            } finally {
+                isCachingAll = false;
+                refreshLsjCacheFooter();
+            }
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && ov.classList.contains('open')) ov.classList.remove('open');
+        });
+
+        refreshLsjCacheFooter();
+        return ov;
+    }
+
+    async function refreshLsjCacheFooter() {
+        await loadMetaIndex();
+        const count = Object.keys(volIndexMeta).length;
+        const btn = document.getElementById('lfLsjCacheAllBtn');
+        const stat = document.getElementById('lfLsjCacheStat');
+        if (btn && !isCachingAll) {
+            btn.textContent = count >= TOTAL_VOLS ? '✓ All 27 Offline' : `⬇ Cache All (${count}/27)`;
+            btn.classList.toggle('active', count >= TOTAL_VOLS);
+        }
+        if (stat && !isCachingAll) {
+            stat.textContent = `${count} / ${TOTAL_VOLS} letter volumes cached offline`;
+        }
+    }
+
+    async function openLsjForWord(lemma, surfaceWord) {
+        const ov = await ensureLsjModalDOM();
+        const body = ov.querySelector('#lfLsjBody');
+        const input = ov.querySelector('#lfLsjSearchInput');
+        ov.classList.add('open');
+
+        const displayQuery = (lemma || surfaceWord || '').trim();
+        if (input && displayQuery) input.value = displayQuery;
+
+        if (!displayQuery) {
+            body.innerHTML = `
+                <div style="text-align:center;padding:30px 14px;color:#475569;">
+                    <div style="font-size:28px;margin-bottom:6px;">📖</div>
+                    <strong style="color:#0f172a;font-size:15px;">Liddell–Scott–Jones Greek–English Lexicon</strong>
+                    <p style="font-size:13px;max-width:460px;margin:8px auto 0;line-height:1.55;">
+                        Type any Greek lemma above (or English letters like <code>poieo</code> or <code>logos</code>), or click <strong>📖 LSJ</strong> on any Greek word in the Tagged LXX drawer or 3-Way Parallel Studio. Each Greek letter caches offline automatically on first lookup.
+                    </p>
+                </div>
+            `;
+            refreshLsjCacheFooter();
+            return;
+        }
+
+        body.innerHTML = `<div style="padding:30px;text-align:center;color:#4338ca;font-size:13.5px;">Looking up <strong>${escapeHtml(displayQuery)}</strong> in LSJ...</div>`;
+
+        try {
+            const res = await lookupInLsj(lemma, surfaceWord, (msg) => {
+                body.innerHTML = `<div style="padding:30px;text-align:center;color:#4338ca;font-size:13.5px;">${escapeHtml(msg)}<div style="font-size:11.5px;color:#64748b;margin-top:6px;">Caches permanently offline after first download</div></div>`;
+            });
+            refreshLsjCacheFooter();
+
+            if (res.hits.length) {
+                body.innerHTML = res.hits.map((entry) => {
+                    const formatted = formatTeiEntryToHtml(entry.rawXml);
+                    const logeionLink = `https://logeion.uchicago.edu/${encodeURIComponent(entry.orth.replace(/[-–—]/g, ''))}`;
+                    return `
+                        <div class="lf-lsj-entry">
+                            <div class="lf-lsj-entry-head">
+                                <span class="lf-lsj-headword">${escapeHtml(entry.orth)}</span>
+                                <a href="${logeionLink}" target="_blank" rel="noopener noreferrer" style="font-size:11px;font-weight:700;color:#4338ca;text-decoration:none;">Logeion ↗</a>
+                            </div>
+                            <div class="lf-lsj-entry-content">${formatted}</div>
+                        </div>
+                    `;
+                }).join('');
+                return;
+            }
+
+            // No exact hit — render clickable close headword suggestions + Logeion fallback
+            const suggHtml = res.suggestions.length
+                ? `<div style="margin-top:14px;"><strong style="font-size:12.5px;color:#334155;">Nearby LSJ Headwords:</strong><div style="margin-top:6px;">${res.suggestions.map((s) =>
+                    `<button type="button" class="lf-lsj-sugg-chip" data-lsj-pick="${escapeHtml(s.orth)}"><span style="font-family:'SBL Greek',Georgia,serif;font-size:16px;font-weight:700;color:#312e81;">${escapeHtml(s.orth)}</span>${s.preview ? `<span style="font-size:11.5px;color:#64748b;">${escapeHtml(s.preview.slice(0, 42))}</span>` : ''}</button>`
+                ).join('')}</div></div>`
+                : '';
+
+            body.innerHTML = `
+                <div style="padding:22px 10px;text-align:center;">
+                    <strong style="color:#0f172a;font-size:15px;">No exact LSJ headword for “${escapeHtml(displayQuery)}”</strong>
+                    <p style="font-size:12.5px;color:#64748b;margin:6px 0 10px;">Try searching the dictionary root form (lemma) or open directly on <a href="https://logeion.uchicago.edu/${encodeURIComponent(displayQuery)}" target="_blank" rel="noopener noreferrer" style="color:#4338ca;font-weight:700;">Logeion ↗</a>.</p>
+                    ${suggHtml}
+                </div>
+            `;
+            body.querySelectorAll('[data-lsj-pick]').forEach((btn) => {
+                btn.onclick = () => openLsjForWord(btn.getAttribute('data-lsj-pick'), '');
+            });
+        } catch (err) {
+            body.innerHTML = `<div style="padding:24px;text-align:center;color:#be123c;">LSJ lookup error: ${escapeHtml(err.message)}. Check your internet connection for the first download of this letter volume.</div>`;
+        }
+    }
+
+    // --- 4. AUTO-INJECT "📖 LSJ" BUTTONS INTO DRAWER, 3-WAY STUDIO, OT-IN-NT TOOLTIP & KUDOS ---
+    function extractLemmaAndWordFromStandardCard(container) {
+        let lemma = '';
+        let word = '';
+        const firstGreek = container.querySelector('span[style*="SBL Greek"]');
+        if (firstGreek) word = (firstGreek.textContent || '').trim();
+        const divs = container.querySelectorAll('div');
+        for (let i = 0; i < divs.length; i++) {
+            const txt = divs[i].textContent || '';
+            if (/^\s*Lemma:/i.test(txt)) {
+                const sp = divs[i].querySelector('span');
+                if (sp) lemma = (sp.textContent || '').trim();
+                break;
+            }
+        }
+        return { lemma: lemma || word, word };
+    }
+
+    function decorateStandardGreekCard(cardEl) {
+        if (!cardEl || !cardEl.classList.contains('open')) return;
+        if (cardEl.querySelector('.lf-lsj-trigger-btn')) return;
+        const { lemma, word } = extractLemmaAndWordFromStandardCard(cardEl);
+        if (!lemma && !word) return;
+
+        ensureLsjStyles();
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lf-lsj-trigger-btn';
+        btn.innerHTML = `📖 LSJ`;
+        btn.title = `Open full LSJ Greek–English Lexicon entry for ${lemma || word}`;
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            openLsjForWord(lemma, word);
+        };
+
+        const topRow = cardEl.firstElementChild;
+        if (topRow && topRow.tagName === 'DIV') {
+            btn.style.marginLeft = '6px';
+            topRow.appendChild(btn);
+        } else {
+            cardEl.appendChild(btn);
+        }
+    }
+
+    function decorateTriStudioGreekBox() {
+        const triInsp = document.getElementById('lfTriInspector');
+        if (!triInsp || !triInsp.classList.contains('open')) return;
+        const boxes = triInsp.querySelectorAll('.lf-tri-insp-box');
+        const grkBox = boxes[2];
+        if (!grkBox || grkBox.querySelector('.lf-lsj-trigger-btn')) return;
+
+        ensureLsjStyles();
+        const rows = grkBox.querySelectorAll(':scope > div');
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const spans = row.querySelectorAll('span');
+            if (!spans.length) continue;
+            const surface = (spans[0].textContent || '').trim();
+            if (!/[\u0370-\u03FF\u1F00-\u1FFF]/.test(surface)) continue;
+            let lemma = surface;
+            if (spans[1]) {
+                const m = (spans[1].textContent || '').match(/\(([^)]+)\)/);
+                if (m && /[\u0370-\u03FF\u1F00-\u1FFF]/.test(m[1])) lemma = m[1].trim();
+            }
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'lf-lsj-trigger-btn';
+            btn.style.marginLeft = '6px';
+            btn.textContent = '📖 LSJ';
+            btn.title = `Look up ${lemma} in LSJ Greek–English Lexicon`;
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                openLsjForWord(lemma, surface);
+            };
+            const targetAnchor = spans[1] || spans[0];
+            targetAnchor.insertAdjacentElement('afterend', btn);
+        }
+    }
+
+    function injectLsjToolbarButton() {
+        const controls = document.querySelector('#lfLxxDrawer .lf-lxx-controls');
+        if (!controls || document.getElementById('lfLsjToolbarBtn')) return;
+        ensureLsjStyles();
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'lfLsjToolbarBtn';
+        btn.className = 'lf-lxx-btn';
+        btn.textContent = '📖 LSJ';
+        btn.title = 'Open LSJ Greek–English Lexicon (1940 Public Domain · Perseus/Celano)';
+        btn.onclick = () => openLsjForWord('', '');
+        controls.appendChild(btn);
+    }
+
+    function injectLsjKudosCard() {
+        const catssCard = document.getElementById('lfKudosCatssCardNative');
+        if (!catssCard || document.getElementById('lfKudosLsjCardNative')) return;
+
+        const card = document.createElement('div');
+        card.id = 'lfKudosLsjCardNative';
+        card.style.cssText = catssCard.style.cssText;
+        card.innerHTML = `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px;">
+                <strong style="font-size:15px;color:#0f172a;line-height:1.3;">Liddell–Scott–Jones (LSJ) Greek–English Lexicon</strong>
+                <a href="https://github.com/PerseusDL/lexica" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#e0e7ff;color:#3730a3;text-decoration:none;white-space:nowrap;">PerseusDL ↗</a>
+            </div>
+            <div style="font-size:12.5px;font-weight:600;color:#4338ca;margin-bottom:8px;">
+                H. G. Liddell, R. Scott &amp; H. S. Jones (1940) • Perseus Digital Library (Tufts) &amp; <a href="https://github.com/gcelano/LSJ_GreekUnicode" target="_blank" rel="noopener noreferrer" style="color:#4338ca;text-decoration:underline;">G. Celano</a>
+            </div>
+            <p style="margin:0;font-size:13px;line-height:1.55;color:#334155;">
+                Provides full classical and Hellenistic Greek lexical entries (public-domain 1940 9th edition text). Digitized by the Perseus Digital Library (CC BY-SA 4.0) with Unicode TEI-XML conversion by Giuseppe G. A. Celano (CC BY-NC-SA), cached locally in IndexedDB for free non-commercial study.
+            </p>
+        `;
+        catssCard.insertAdjacentElement('afterend', card);
+    }
+
+    function runDecorators() {
+        injectLsjToolbarButton();
+        decorateStandardGreekCard(document.getElementById('lfLxxInspector'));
+        decorateStandardGreekCard(document.getElementById('lfLxxFloatTip'));
+        decorateTriStudioGreekBox();
+        injectLsjKudosCard();
+    }
+
+    function initLsj() {
+        ensureLsjStyles();
+        loadMetaIndex();
+        runDecorators();
+        setTimeout(runDecorators, 300);
+
+        if (document.body && typeof MutationObserver !== 'undefined') {
+            const obs = new MutationObserver(() => runDecorators());
+            obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        }
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLsj);
+    else initLsj();
+})();
+
     </script>
 </body>
 </html>
