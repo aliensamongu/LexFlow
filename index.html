@@ -35269,6 +35269,441 @@ function showContextMenu(x, y) {
     else init();
 })();
 
+	/* === LEXFLOW FIX v3: ZERO-LAG TAB + CMD/CTRL+ENTER LINE BREAKS + MODIFIER-CLICK CARET === */
+(function () {
+    const isMac = /Mac|iPhone|iPad|iPod/i.test(
+        (navigator.userAgentData && navigator.userAgentData.platform) ||
+        navigator.platform ||
+        navigator.userAgent ||
+        ''
+    );
+
+	function isBreakMod(e) {
+    return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
+}
+
+    function getThoughtEditor() {
+        return (typeof editor !== 'undefined' && editor) ||
+            document.getElementById('editor') ||
+            document.querySelector('[contenteditable="true"]');
+    }
+
+    // -------------------------------------------------------------------------
+    // 1. ZERO-LAG MUTATION OBSERVER SHIELD (KEEPS TAB INDENTING SNAPPY)
+    // -------------------------------------------------------------------------
+    const OrigMO = window.MutationObserver;
+    if (OrigMO && !OrigMO.__lfFastShieldV3) {
+        function FastMutationObserver(callback) {
+            let isBodyObs = false;
+            let timer = 0;
+            let queued = [];
+
+            const wrappedCb = (records, obs) => {
+                if (!isBodyObs) {
+                    callback(records, obs);
+                    return;
+                }
+                const ed = getThoughtEditor();
+                const relevant = ed
+                    ? records.filter((r) => r.target !== ed && !ed.contains(r.target))
+                    : records;
+                if (!relevant.length) return;
+
+                queued.push(...relevant);
+                if (!timer) {
+                    timer = setTimeout(() => {
+                        const batch = queued;
+                        queued = [];
+                        timer = 0;
+                        callback(batch, obs);
+                    }, 80);
+                }
+            };
+
+            const realObs = new OrigMO(wrappedCb);
+            return {
+                observe(target, options) {
+                    if (target === document.body || target === document.documentElement) {
+                        isBodyObs = true;
+                    }
+                    return realObs.observe(target, options);
+                },
+                disconnect() {
+                    if (timer) { clearTimeout(timer); timer = 0; }
+                    queued = [];
+                    return realObs.disconnect();
+                },
+                takeRecords() {
+                    return realObs.takeRecords();
+                }
+            };
+        }
+        FastMutationObserver.__lfFastShieldV3 = true;
+        window.MutationObserver = FastMutationObserver;
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. CARET BOOKMARK + CLICK / MODIFIER-RELEASE GUARDIAN
+    // -------------------------------------------------------------------------
+    let lastCaret = null;
+    let editorIntent = false;
+    let pendingClick = null;
+    let guardTimers = [];
+    let debouncedInputTimer = 0;
+
+    function cancelGuardTimers() {
+        while (guardTimers.length) clearTimeout(guardTimers.pop());
+    }
+
+    function findBlockContainer(node, ed) {
+        let cur = node && node.nodeType === 3 ? node.parentNode : node;
+        while (cur && cur !== ed && cur !== document.body) {
+            if (/^(DIV|P|LI|BLOCKQUOTE|H[1-6]|SECTION|ARTICLE)$/i.test(cur.tagName)) return cur;
+            cur = cur.parentNode;
+        }
+        return ed;
+    }
+
+    function findNonEditableAncestor(node, ed) {
+        let cur = node && node.nodeType === 3 ? node.parentNode : node;
+        while (cur && cur !== ed && cur !== document.body) {
+            if (
+                (cur.getAttribute && cur.getAttribute('contenteditable') === 'false') ||
+                (cur.classList && (cur.classList.contains('ot-in-nt-inline-badge') || cur.classList.contains('verse-num'))) ||
+                cur.tagName === 'SUP'
+            ) {
+                return cur;
+            }
+            cur = cur.parentNode;
+        }
+        return null;
+    }
+
+    function getCharOffsetInBlock(block, targetNode, targetOffset) {
+        try {
+            const r = document.createRange();
+            r.selectNodeContents(block);
+            r.setEnd(targetNode, targetOffset);
+            return r.toString().length;
+        } catch (e) {
+            return -1;
+        }
+    }
+
+    function captureCurrentCaret() {
+        const ed = getThoughtEditor();
+        if (!ed) return;
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount || !sel.isCollapsed) return;
+        const r = sel.getRangeAt(0);
+        if (!ed.contains(r.startContainer)) return;
+        const block = findBlockContainer(r.startContainer, ed);
+        lastCaret = {
+            node: r.startContainer,
+            offset: r.startOffset,
+            block,
+            charOffset: getCharOffsetInBlock(block, r.startContainer, r.startOffset)
+        };
+    }
+
+    function hasLiveCaretInEditor(ed) {
+        if (!ed || document.activeElement !== ed) return false;
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return false;
+        return ed.contains(sel.anchorNode);
+    }
+
+    function restoreBookmark(bm) {
+        const ed = getThoughtEditor();
+        if (!ed || !bm) return false;
+        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
+
+        const sel = window.getSelection();
+        if (!sel) return false;
+
+        try {
+            if (bm.node && bm.node.isConnected && ed.contains(bm.node)) {
+                const maxOff = bm.node.nodeType === 3 ? bm.node.nodeValue.length : bm.node.childNodes.length;
+                const r = document.createRange();
+                r.setStart(bm.node, Math.max(0, Math.min(bm.offset, maxOff)));
+                r.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(r);
+                return true;
+            }
+            if (bm.block && bm.block.isConnected && ed.contains(bm.block) && bm.charOffset >= 0) {
+                const tw = document.createTreeWalker(bm.block, NodeFilter.SHOW_TEXT);
+                let rem = bm.charOffset;
+                let n;
+                let lastTxt = null;
+                while ((n = tw.nextNode())) {
+                    lastTxt = n;
+                    if (rem <= n.nodeValue.length) {
+                        const r = document.createRange();
+                        r.setStart(n, rem);
+                        r.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(r);
+                        return true;
+                    }
+                    rem -= n.nodeValue.length;
+                }
+                if (lastTxt) {
+                    const r = document.createRange();
+                    r.setStart(lastTxt, lastTxt.nodeValue.length);
+                    r.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(r);
+                    return true;
+                }
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    function placeCaretAtPoint(clientX, clientY, ed) {
+        let range = null;
+        if (document.caretRangeFromPoint) {
+            range = document.caretRangeFromPoint(clientX, clientY);
+        } else if (document.caretPositionFromPoint) {
+            const pos = document.caretPositionFromPoint(clientX, clientY);
+            if (pos && pos.offsetNode) {
+                range = document.createRange();
+                range.setStart(pos.offsetNode, pos.offset);
+                range.collapse(true);
+            }
+        }
+        if (!range || !ed.contains(range.startContainer)) return false;
+
+        const locked = findNonEditableAncestor(range.startContainer, ed);
+        if (locked) {
+            range.setStartAfter(locked);
+            range.collapse(true);
+        }
+
+        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
+        const sel = window.getSelection();
+        if (!sel) return false;
+        sel.removeAllRanges();
+        sel.addRange(range);
+        captureCurrentCaret();
+        return true;
+    }
+
+    function scheduleCaretGuard(bm) {
+        cancelGuardTimers();
+        const check = () => {
+            if (!editorIntent) return;
+            const ed = getThoughtEditor();
+            if (!ed) return;
+            if (!hasLiveCaretInEditor(ed)) {
+                restoreBookmark(bm || lastCaret);
+            }
+        };
+        Promise.resolve().then(check);
+        requestAnimationFrame(check);
+        guardTimers.push(setTimeout(check, 40));
+        guardTimers.push(setTimeout(check, 140));
+    }
+
+    document.addEventListener('selectionchange', () => {
+        const ed = getThoughtEditor();
+        if (ed && document.activeElement === ed) captureCurrentCaret();
+    });
+
+    document.addEventListener('focusout', (e) => {
+        const ed = getThoughtEditor();
+        if (!ed || e.target !== ed) return;
+        if (!editorIntent || e.relatedTarget) return;
+        if (lastCaret) scheduleCaretGuard(lastCaret);
+    }, true);
+
+    window.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        const ed = getThoughtEditor();
+        if (!ed) return;
+        const insideEd = ed.contains(e.target);
+        const onWidget = e.target && e.target.closest && e.target.closest('button, a, input, select, .ot-in-nt-inline-badge');
+
+        if (insideEd && !onWidget) {
+            editorIntent = true;
+            cancelGuardTimers();
+
+            // Allow rapid phrasing: holding Cmd (Mac) or Ctrl (PC) while clicking places a clean caret
+            if (isBreakMod(e)) {
+                e.preventDefault();
+                if (placeCaretAtPoint(e.clientX, e.clientY, ed)) {
+                    scheduleCaretGuard(lastCaret);
+                }
+                pendingClick = null;
+                return;
+            }
+
+            pendingClick = { x: e.clientX, y: e.clientY, detail: e.detail };
+        } else {
+            editorIntent = false;
+            pendingClick = null;
+            cancelGuardTimers();
+        }
+    }, true);
+
+    // Verify single clicks after all click listeners finish so nothing drops the caret
+    window.addEventListener('click', (e) => {
+        if (!pendingClick) return;
+        const clickInfo = pendingClick;
+        pendingClick = null;
+
+        if (clickInfo.detail > 1 || Math.hypot(e.clientX - clickInfo.x, e.clientY - clickInfo.y) >= 6) return;
+
+        const ed = getThoughtEditor();
+        if (!ed || !ed.contains(e.target)) return;
+
+        const verifyClickCaret = () => {
+            if (!editorIntent) return;
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount && !sel.isCollapsed && ed.contains(sel.anchorNode)) return;
+            if (!hasLiveCaretInEditor(ed)) {
+                placeCaretAtPoint(clickInfo.x, clickInfo.y, ed);
+            } else {
+                captureCurrentCaret();
+            }
+        };
+
+        requestAnimationFrame(verifyClickCaret);
+        guardTimers.push(setTimeout(verifyClickCaret, 60));
+    }, false);
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key !== 'Meta' && e.key !== 'Control' && e.key !== 'Enter' && e.key !== 'Tab') return;
+        if (!editorIntent || !lastCaret) return;
+        const active = document.activeElement;
+        if (active && /^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName)) return;
+        if (active && active.closest && active.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')) return;
+
+        scheduleCaretGuard(lastCaret);
+    }, true);
+
+    // -------------------------------------------------------------------------
+    // 3. CMD + ENTER (MAC) / CTRL + ENTER (PC) LINE BREAKS
+    // -------------------------------------------------------------------------
+    function needsTrailingSentinel(br, block) {
+        let cur = br;
+        while (cur && cur !== block) {
+            let sib = cur.nextSibling;
+            while (sib) {
+                if (sib.nodeType === 1) {
+                    if (sib.tagName === 'BR') return false;
+                    const txt = (sib.textContent || '').replace(/[\u200B\r\n]/g, '').trim();
+                    if (txt.length > 0 || sib.querySelector('br, img')) return false;
+                } else if (sib.nodeType === 3) {
+                    const txt = (sib.nodeValue || '').replace(/[\u200B\r\n]/g, '').trim();
+                    if (txt.length > 0) return false;
+                }
+                sib = sib.nextSibling;
+            }
+            cur = cur.parentNode;
+        }
+        return true;
+    }
+
+    function placeCaretAfterBr(br) {
+        if (!br || !br.isConnected) return null;
+        const sel = window.getSelection();
+        if (!sel) return null;
+        const r = document.createRange();
+        const next = br.nextSibling;
+        if (next && next.nodeType === 3 && next.nodeValue.length > 0) {
+            r.setStart(next, 0);
+        } else {
+            r.setStartAfter(br);
+        }
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+        captureCurrentCaret();
+        return lastCaret;
+    }
+
+    window.addEventListener('keydown', (e) => {
+        const active = document.activeElement;
+        if (active && /^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName)) return;
+        if (active && active.closest && active.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')) return;
+
+        const ed = getThoughtEditor();
+        if (!ed) return;
+
+        if (ed === active || (active && ed.contains(active))) {
+            editorIntent = true;
+            if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Tab') captureCurrentCaret();
+        }
+	
+	// Block plain Enter and Shift+Enter inside #editor so ONLY Cmd+Enter (Mac) / Ctrl+Enter (PC) breaks lines
+        if (e.key === 'Enter' && !isBreakMod(e)) {
+            const s = window.getSelection();
+            if (s && s.rangeCount && ed.contains(s.getRangeAt(0).startContainer)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+            return;
+        }
+
+        if (e.key !== 'Enter') return;
+
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+
+        const range = sel.getRangeAt(0);
+        if (!ed.contains(range.startContainer) || !ed.contains(range.endContainer)) return;
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        editorIntent = true;
+
+        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
+
+        const workRange = range.cloneRange();
+        if (!workRange.collapsed) workRange.deleteContents();
+
+        const lockedEl = findNonEditableAncestor(workRange.startContainer, ed);
+        if (lockedEl) {
+            workRange.setStartAfter(lockedEl);
+            workRange.collapse(true);
+        }
+
+        const block = findBlockContainer(workRange.startContainer, ed);
+        const br = document.createElement('br');
+        workRange.insertNode(br);
+
+        while (br.nextSibling && br.nextSibling.nodeType === 3 && br.nextSibling.nodeValue === '') {
+            br.nextSibling.remove();
+        }
+        if (br.nextSibling && br.nextSibling.nodeType === 3 && /^ [^\s]/.test(br.nextSibling.nodeValue)) {
+            br.nextSibling.nodeValue = br.nextSibling.nodeValue.slice(1);
+        }
+
+        if (needsTrailingSentinel(br, block)) {
+            const sentinel = document.createElement('br');
+            sentinel.dataset.lfBreakSentinel = '1';
+            br.parentNode.insertBefore(sentinel, br.nextSibling);
+        }
+
+        const bm = placeCaretAfterBr(br);
+        scheduleCaretGuard(bm);
+
+        clearTimeout(debouncedInputTimer);
+        debouncedInputTimer = setTimeout(() => {
+            try {
+                ed.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertLineBreak' }));
+            } catch (err) {
+                ed.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (editorIntent && !hasLiveCaretInEditor(ed)) {
+                restoreBookmark(lastCaret);
+            }
+        }, 250);
+    }, true);
+})();
+
     </script>
 </body>
 </html>
