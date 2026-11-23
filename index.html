@@ -35704,6 +35704,662 @@ function showContextMenu(x, y) {
     }, true);
 })();
 
+
+	/* === LEXFLOW FEATURE v3: AUTO-HIGHLIGHT ACTIVE VERSE IN LSJ & THAYER'S === */
+(function () {
+    const BOOKS = [
+        { num: 1, name: 'Genesis', lsj: ['Genesis', 'Gen.', 'Ge.', 'Gn.'], thayer: ['Genesis', 'Gen.', 'Gen', 'Ge.', 'Gn.'] },
+        { num: 2, name: 'Exodus', lsj: ['Exodus', 'Exod.', 'Ex.'], thayer: ['Exodus', 'Exod.', 'Exod', 'Ex.'] },
+        { num: 3, name: 'Leviticus', lsj: ['Leviticus', 'Lev.', 'Le.', 'Lv.'], thayer: ['Leviticus', 'Lev.', 'Lev', 'Le.', 'Lv.'] },
+        { num: 4, name: 'Numbers', lsj: ['Numbers', 'Num.', 'Nu.', 'Nm.'], thayer: ['Numbers', 'Num.', 'Num', 'Nu.', 'Nm.'] },
+        { num: 5, name: 'Deuteronomy', lsj: ['Deuteronomy', 'Deut.', 'De.', 'Dt.'], thayer: ['Deuteronomy', 'Deut.', 'Deut', 'De.', 'Dt.'] },
+        { num: 6, name: 'Joshua', lsj: ['Joshua', 'Josh.', 'Jos.'], thayer: ['Joshua', 'Josh.', 'Josh', 'Jos.'] },
+        { num: 7, name: 'Judges', lsj: ['Judges', 'Judg.', 'Jdg.', 'Ju.'], thayer: ['Judges', 'Judg.', 'Judg', 'Jdg.'] },
+        { num: 8, name: 'Ruth', lsj: ['Ruth', 'Ru.'], thayer: ['Ruth', 'Ru.'] },
+        { num: 9, name: '1 Samuel', lsj: ['1 Samuel', '1 Sam.', '1 Sa.', '1 Reg.', '1 Ki.', '1 Kings'], thayer: ['1 Samuel', '1 Sam.', '1 Sam', '1 Sa.', '1 Kings'] },
+        { num: 10, name: '2 Samuel', lsj: ['2 Samuel', '2 Sam.', '2 Sa.', '2 Reg.', '2 Ki.', '2 Kings'], thayer: ['2 Samuel', '2 Sam.', '2 Sam', '2 Sa.', '2 Kings'] },
+        { num: 11, name: '1 Kings', lsj: ['1 Kings', '1 Ki.', '1 Reg.', '3 Reg.', '3 Ki.'], thayer: ['1 Kings', '1 Ki.', '1 Kgs.', '1 Kgs'] },
+        { num: 12, name: '2 Kings', lsj: ['2 Kings', '2 Ki.', '2 Reg.', '4 Reg.', '4 Ki.'], thayer: ['2 Kings', '2 Ki.', '2 Kgs.', '2 Kgs'] },
+        { num: 13, name: '1 Chronicles', lsj: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Par.'], thayer: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Chr'] },
+        { num: 14, name: '2 Chronicles', lsj: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Par.'], thayer: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Chr'] },
+        { num: 15, name: 'Ezra', lsj: ['Ezra', 'Ezr.', '1 Esd.'], thayer: ['Ezra', 'Ezr.'] },
+        { num: 16, name: 'Nehemiah', lsj: ['Nehemiah', 'Neh.', 'Ne.', '2 Esd.'], thayer: ['Nehemiah', 'Neh.', 'Neh', 'Ne.'] },
+        { num: 17, name: 'Esther', lsj: ['Esther', 'Esth.', 'Est.'], thayer: ['Esther', 'Esth.', 'Est.'] },
+        { num: 18, name: 'Job', lsj: ['Job'], thayer: ['Job'] },
+        { num: 19, name: 'Psalms', lsj: ['Psalms', 'Psalm', 'Ps.', 'Pss.'], thayer: ['Psalms', 'Psalm', 'Ps.', 'Ps', 'Pss.'] },
+        { num: 20, name: 'Proverbs', lsj: ['Proverbs', 'Prov.', 'Pr.'], thayer: ['Proverbs', 'Prov.', 'Prov', 'Pr.'] },
+        { num: 21, name: 'Ecclesiastes', lsj: ['Ecclesiastes', 'Eccles.', 'Eccl.', 'Ec.'], thayer: ['Ecclesiastes', 'Eccles.', 'Eccl.', 'Eccl', 'Ec.'] },
+        { num: 22, name: 'Song of Solomon', lsj: ['Song of Solomon', 'Cant.', 'Ca.', 'Song'], thayer: ['Song of Solomon', 'Cant.', 'Song', 'So.'] },
+        { num: 23, name: 'Isaiah', lsj: ['Isaiah', 'Isa.', 'Is.'], thayer: ['Isaiah', 'Isa.', 'Isa', 'Is.'] },
+        { num: 24, name: 'Jeremiah', lsj: ['Jeremiah', 'Jer.', 'Je.'], thayer: ['Jeremiah', 'Jer.', 'Jer', 'Je.'] },
+        { num: 25, name: 'Lamentations', lsj: ['Lamentations', 'Lam.', 'La.'], thayer: ['Lamentations', 'Lam.', 'Lam', 'La.'] },
+        { num: 26, name: 'Ezekiel', lsj: ['Ezekiel', 'Ezek.', 'Ez.'], thayer: ['Ezekiel', 'Ezek.', 'Ezek', 'Ez.'] },
+        { num: 27, name: 'Daniel', lsj: ['Daniel', 'Dan.', 'Da.'], thayer: ['Daniel', 'Dan.', 'Dan', 'Da.'] },
+        { num: 28, name: 'Hosea', lsj: ['Hosea', 'Hos.', 'Ho.'], thayer: ['Hosea', 'Hos.', 'Hos', 'Ho.'] },
+        { num: 29, name: 'Joel', lsj: ['Joel', 'Jl.'], thayer: ['Joel', 'Jl.'] },
+        { num: 30, name: 'Amos', lsj: ['Amos', 'Am.'], thayer: ['Amos', 'Am.'] },
+        { num: 31, name: 'Obadiah', lsj: ['Obadiah', 'Obad.', 'Ob.'], thayer: ['Obadiah', 'Obad.', 'Ob.'] },
+        { num: 32, name: 'Jonah', lsj: ['Jonah', 'Jon.'], thayer: ['Jonah', 'Jon.'] },
+        { num: 33, name: 'Micah', lsj: ['Micah', 'Mic.', 'Mi.'], thayer: ['Micah', 'Mic.', 'Mic', 'Mi.'] },
+        { num: 34, name: 'Nahum', lsj: ['Nahum', 'Nah.', 'Na.'], thayer: ['Nahum', 'Nah.', 'Na.'] },
+        { num: 35, name: 'Habakkuk', lsj: ['Habakkuk', 'Hab.', 'Hb.'], thayer: ['Habakkuk', 'Hab.', 'Hab', 'Hb.'] },
+        { num: 36, name: 'Zephaniah', lsj: ['Zephaniah', 'Zeph.', 'Zp.'], thayer: ['Zephaniah', 'Zeph.', 'Zeph', 'Zp.'] },
+        { num: 37, name: 'Haggai', lsj: ['Haggai', 'Hag.', 'Hg.'], thayer: ['Haggai', 'Hag.', 'Hg.'] },
+        { num: 38, name: 'Zechariah', lsj: ['Zechariah', 'Zech.', 'Zc.'], thayer: ['Zechariah', 'Zech.', 'Zech', 'Zc.'] },
+        { num: 39, name: 'Malachi', lsj: ['Malachi', 'Mal.', 'Ml.'], thayer: ['Malachi', 'Mal.', 'Mal', 'Ml.'] },
+        { num: 40, name: 'Matthew', lsj: ['Ev. Matt.', 'Ev. Mat.', 'Matthew', 'Matt.', 'Mat.', 'Mt.'], thayer: ['Matthew', 'Matt.', 'Matt', 'Mat.', 'Mt.'] },
+        { num: 41, name: 'Mark', lsj: ['Ev. Marc.', 'Ev. Mar.', 'Mark', 'Marc.', 'Mk.', 'Mr.'], thayer: ['Mark', 'Mk.', 'Mk', 'Mr.', 'Marc.'] },
+        { num: 42, name: 'Luke', lsj: ['Ev. Luc.', 'Luke', 'Lk.'], thayer: ['Luke', 'Luk.', 'Lk.', 'Lk', 'Luc.'] },
+        { num: 43, name: 'John', lsj: ['Ev. Jo.', 'Ev. Joh.', 'John', 'Joh.', 'Jn.'], thayer: ['John', 'Joh.', 'Jn.', 'Jn', 'Jo.'] },
+        { num: 44, name: 'Acts', lsj: ['Act. Ap.', 'Acts', 'Act.'], thayer: ['Acts', 'Act.', 'Act', 'Ac.'] },
+        { num: 45, name: 'Romans', lsj: ['Ep. Rom.', 'Romans', 'Rom.', 'Ro.'], thayer: ['Romans', 'Rom.', 'Rom', 'Ro.'] },
+        { num: 46, name: '1 Corinthians', lsj: ['1 Ep. Cor.', '1 Corinthians', '1 Cor.', '1 Co.'], thayer: ['1 Corinthians', '1 Cor.', '1 Cor', '1 Co.'] },
+        { num: 47, name: '2 Corinthians', lsj: ['2 Ep. Cor.', '2 Corinthians', '2 Cor.', '2 Co.'], thayer: ['2 Corinthians', '2 Cor.', '2 Cor', '2 Co.'] },
+        { num: 48, name: 'Galatians', lsj: ['Ep. Gal.', 'Galatians', 'Gal.', 'Ga.'], thayer: ['Galatians', 'Gal.', 'Gal', 'Ga.'] },
+        { num: 49, name: 'Ephesians', lsj: ['Ep. Eph.', 'Ephesians', 'Eph.'], thayer: ['Ephesians', 'Eph.', 'Eph'] },
+        { num: 50, name: 'Philippians', lsj: ['Ep. Phil.', 'Philippians', 'Phil.', 'Php.'], thayer: ['Philippians', 'Phil.', 'Phil', 'Php.'] },
+        { num: 51, name: 'Colossians', lsj: ['Ep. Col.', 'Colossians', 'Col.'], thayer: ['Colossians', 'Col.', 'Col'] },
+        { num: 52, name: '1 Thessalonians', lsj: ['1 Ep. Thess.', '1 Thessalonians', '1 Thess.', '1 Thes.', '1 Th.'], thayer: ['1 Thessalonians', '1 Thess.', '1 Thess', '1 Thes.', '1 Th.'] },
+        { num: 53, name: '2 Thessalonians', lsj: ['2 Ep. Thess.', '2 Thessalonians', '2 Thess.', '2 Thes.', '2 Th.'], thayer: ['2 Thessalonians', '2 Thess.', '2 Thess', '2 Thes.', '2 Th.'] },
+        { num: 54, name: '1 Timothy', lsj: ['1 Ep. Tim.', '1 Timothy', '1 Tim.', '1 Ti.'], thayer: ['1 Timothy', '1 Tim.', '1 Tim', '1 Ti.'] },
+        { num: 55, name: '2 Timothy', lsj: ['2 Ep. Tim.', '2 Timothy', '2 Tim.', '2 Ti.'], thayer: ['2 Timothy', '2 Tim.', '2 Tim', '2 Ti.'] },
+        { num: 56, name: 'Titus', lsj: ['Ep. Tit.', 'Titus', 'Tit.'], thayer: ['Titus', 'Tit.', 'Tit'] },
+        { num: 57, name: 'Philemon', lsj: ['Ep. Philem.', 'Philemon', 'Philem.', 'Phm.'], thayer: ['Philemon', 'Philem.', 'Phm.'] },
+        { num: 58, name: 'Hebrews', lsj: ['Ep. Hebr.', 'Hebrews', 'Hebr.', 'Heb.'], thayer: ['Hebrews', 'Heb.', 'Heb', 'Hebr.'] },
+        { num: 59, name: 'James', lsj: ['Ep. Jac.', 'James', 'Jac.', 'Jas.'], thayer: ['James', 'Jas.', 'Jas', 'Jac.'] },
+        { num: 60, name: '1 Peter', lsj: ['1 Ep. Pet.', '1 Peter', '1 Pet.', '1 Pe.'], thayer: ['1 Peter', '1 Pet.', '1 Pet', '1 Pe.'] },
+        { num: 61, name: '2 Peter', lsj: ['2 Ep. Pet.', '2 Peter', '2 Pet.', '2 Pe.'], thayer: ['2 Peter', '2 Pet.', '2 Pet', '2 Pe.'] },
+        { num: 62, name: '1 John', lsj: ['1 Ep. Jo.', '1 Ep. Joh.', '1 John', '1 Joh.', '1 Jn.'], thayer: ['1 John', '1 Jn.', '1 Jn', '1 Jo.'] },
+        { num: 63, name: '2 John', lsj: ['2 Ep. Jo.', '2 Ep. Joh.', '2 John', '2 Joh.', '2 Jn.'], thayer: ['2 John', '2 Jn.', '2 Jn', '2 Jo.'] },
+        { num: 64, name: '3 John', lsj: ['3 Ep. Jo.', '3 Ep. Joh.', '3 John', '3 Joh.', '3 Jn.'], thayer: ['3 John', '3 Jn.', '3 Jn', '3 Jo.'] },
+        { num: 65, name: 'Jude', lsj: ['Ep. Jud.', 'Jude', 'Jud.'], thayer: ['Jude', 'Jud.'] },
+        { num: 66, name: 'Revelation', lsj: ['Apoc.', 'Revelation', 'Rev.'], thayer: ['Revelation', 'Rev.', 'Rev', 'Apoc.'] }
+    ];
+
+    const NAME_TO_BOOK = new Map();
+    BOOKS.forEach((b) => {
+        NAME_TO_BOOK.set(b.name.toLowerCase(), b);
+        [...b.lsj, ...b.thayer].forEach((al) => {
+            NAME_TO_BOOK.set(al.toLowerCase().replace(/\.+$/, ''), b);
+        });
+    });
+
+    function getThoughtEditor() {
+        return (typeof editor !== 'undefined' && editor) ||
+            document.getElementById('editor') ||
+            document.querySelector('[contenteditable="true"]');
+    }
+
+    function buildMatcher(mode) {
+        const pairs = [];
+        BOOKS.forEach((b) => {
+            (b[mode] || []).forEach((alias) => pairs.push({ alias, bookNum: b.num }));
+        });
+        pairs.sort((a, b) => b.alias.length - a.alias.length);
+        const aliasMap = new Map();
+        const escaped = pairs.map(({ alias, bookNum }) => {
+            aliasMap.set(alias.toLowerCase().replace(/\s+/g, ' '), bookNum);
+            return alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+        });
+        const pattern =
+            `(?:\\b(${escaped.join('|')})(?=\\s|\\d|\\(|$)|([;,]))\\s*` +
+            `(?:(\\d{1,3})(?:\\s*\\(\\d{1,3}\\))?\\s*[:.]\\s*)?` +
+            `(\\d{1,3})(?:\\s*[–—-]\\s*(\\d{1,3}))?`;
+        return { regex: new RegExp(pattern, 'gi'), aliasMap };
+    }
+
+    const MATCHERS = {
+        lsj: buildMatcher('lsj'),
+        thayer: buildMatcher('thayer')
+    };
+
+    const oldStyle = document.getElementById('lfVerseMatchStyles');
+    if (oldStyle) oldStyle.remove();
+    const style = document.createElement('style');
+    style.id = 'lfVerseMatchStyles';
+    style.textContent = `
+        mark.lf-verse-match-pill {
+            background: #fef08a !important;
+            color: #713f12 !important;
+            font-weight: 700 !important;
+            padding: 1px 5px !important;
+            border-radius: 4px !important;
+            border-bottom: 2px solid #eab308 !important;
+            box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.45) !important;
+        }
+        #lfLsjActiveVersePill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        #lfLsjActiveVersePill:hover {
+            background: #fef08a;
+        }
+    `;
+    document.head.appendChild(style);
+
+    let activeRef = window.__lfActiveVerse || null;
+
+    function setActiveRef(bookNum, chapter, verse) {
+        bookNum = parseInt(bookNum, 10);
+        chapter = parseInt(chapter, 10);
+        verse = parseInt(verse, 10);
+        if (!bookNum || !chapter || !verse) return false;
+        const book = BOOKS.find((b) => b.num === bookNum);
+        if (!book) return false;
+        if (activeRef && activeRef.bookNum === bookNum && activeRef.chapter === chapter && activeRef.verse === verse) {
+            return true;
+        }
+        activeRef = {
+            bookNum,
+            bookName: book.name,
+            chapter,
+            verse,
+            label: `${book.name} ${chapter}:${verse}`
+        };
+        window.__lfActiveVerse = activeRef;
+        refreshAllLexiconHighlights(false);
+        return true;
+    }
+
+    function parseRefFromText(txt) {
+        if (!txt) return null;
+        const clean = txt.replace(/\s+/g, ' ').trim();
+        const m = clean.match(/\b([1-3]?\s*[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\.?\s+(\d{1,3})(?:[:.](\d{1,3}))?\b/);
+        if (!m) return null;
+        const b = NAME_TO_BOOK.get(m[1].toLowerCase().replace(/\.+$/, '').trim());
+        if (!b) return null;
+        return {
+            bookNum: b.num,
+            chapter: parseInt(m[2], 10),
+            verse: m[3] ? parseInt(m[3], 10) : 0
+        };
+    }
+
+    function getToolbarBookAndChapter() {
+        const selects = Array.from(document.querySelectorAll('select')).filter(
+            (s) => !s.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')
+        );
+        for (let i = 0; i < selects.length; i++) {
+            const sel = selects[i];
+            const opt = sel.options && sel.options[sel.selectedIndex];
+            const label = ((opt && opt.textContent) || sel.value || '').trim();
+            const b = NAME_TO_BOOK.get(label.toLowerCase().replace(/\.+$/, ''));
+            if (b) {
+                const nextSel = selects[i + 1];
+                if (nextSel) {
+                    const cOpt = nextSel.options && nextSel.options[nextSel.selectedIndex];
+                    const cTxt = ((cOpt && cOpt.textContent) || nextSel.value || '').trim();
+                    const cm = cTxt.match(/(\d{1,3})/);
+                    if (cm) return { bookNum: b.num, chapter: parseInt(cm[1], 10), verse: 0 };
+                }
+            }
+        }
+        const inputs = Array.from(document.querySelectorAll('input[type="text"], input:not([type])')).filter(
+            (inp) => !inp.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')
+        );
+        for (const inp of inputs) {
+            const parsed = parseRefFromText(inp.value);
+            if (parsed) return parsed;
+        }
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // 1. DETECT ACTIVE VERSE FROM EDITOR, LAST ACTIVE BLOCK, OR LXX DRAWER
+    // -------------------------------------------------------------------------
+    function detectFromEditorRange(range) {
+        const ed = getThoughtEditor();
+        if (!ed || !range || !ed.contains(range.startContainer)) return false;
+
+        let cur = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
+        let verseBlock = null;
+        while (cur && cur !== ed) {
+            if (cur.parentElement === ed && /^(DIV|P|SECTION|ARTICLE)$/i.test(cur.tagName)) {
+                verseBlock = cur;
+                break;
+            }
+            cur = cur.parentElement;
+        }
+        if (!verseBlock) verseBlock = window.__lexflowLastActiveBlock || ed;
+
+        let bookNum = parseInt((verseBlock.dataset && verseBlock.dataset.bookNum) || '0', 10);
+        let chapter = parseInt((verseBlock.dataset && verseBlock.dataset.chapterNum) || '0', 10);
+        let chapterBannerEl = null;
+
+        let prev = verseBlock === ed ? null : verseBlock.previousElementSibling;
+        while (prev) {
+            if (!bookNum || !chapter) {
+                if (prev.dataset && prev.dataset.bookNum && prev.dataset.chapterNum) {
+                    bookNum = parseInt(prev.dataset.bookNum, 10);
+                    chapter = parseInt(prev.dataset.chapterNum, 10);
+                } else {
+                    const parsed = parseRefFromText(prev.textContent);
+                    if (parsed) {
+                        bookNum = parsed.bookNum;
+                        chapter = parsed.chapter;
+                        chapterBannerEl = prev;
+                        break;
+                    }
+                }
+            }
+            if (prev.classList && prev.classList.contains('lex-chapter-banner')) {
+                chapterBannerEl = prev;
+                break;
+            }
+            prev = prev.previousElementSibling;
+        }
+
+        if (!bookNum || !chapter) {
+            const tb = getToolbarBookAndChapter();
+            if (tb) {
+                bookNum = tb.bookNum;
+                chapter = tb.chapter;
+            }
+        }
+        if (!bookNum || !chapter) return false;
+
+        let verse = parseInt((verseBlock.dataset && (verseBlock.dataset.verseNum || verseBlock.dataset.verse)) || '0', 10);
+        if (!verse) {
+            const scanStartEl = chapterBannerEl ? chapterBannerEl.nextElementSibling || verseBlock : ed;
+            let lastSeenVerse = 0;
+            const tw = document.createTreeWalker(ed, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+            let n;
+            let pastStart = (scanStartEl === ed);
+
+            while ((n = tw.nextNode())) {
+                if (!pastStart) {
+                    if (n === scanStartEl || (n.nodeType === 1 && n.contains(scanStartEl))) {
+                        pastStart = true;
+                    } else {
+                        continue;
+                    }
+                }
+
+                const cmp = document.createRange();
+                try {
+                    if (n.nodeType === 3) cmp.setStart(n, 0);
+                    else cmp.setStartBefore(n);
+                    cmp.collapse(true);
+                    if (cmp.compareBoundaryPoints(Range.START_TO_START, range) > 0) break;
+                } catch (e) {}
+
+                if (n.nodeType === 1) {
+                    if (n.dataset && (n.dataset.verse || n.dataset.verseNum)) {
+                        const v = parseInt(n.dataset.verse || n.dataset.verseNum, 10);
+                        if (v >= 1 && v <= 176) lastSeenVerse = v;
+                    } else if (
+                        (n.classList && (n.classList.contains('verse-num') || n.classList.contains('vnum'))) ||
+                        n.tagName === 'SUP' ||
+                        n.tagName === 'B' ||
+                        n.tagName === 'STRONG'
+                    ) {
+                        const raw = (n.textContent || '').trim();
+                        const vm = raw.match(/^\[?(\d{1,3})\]?$/);
+                        if (vm) {
+                            const v = parseInt(vm[1], 10);
+                            if (v >= 1 && v <= 176) lastSeenVerse = v;
+                        }
+                    }
+                } else if (n.nodeType === 3) {
+                    const p = n.parentElement;
+                    if (p && (p.tagName === 'SUP' || (p.classList && p.classList.contains('verse-num')))) continue;
+                    const prevSib = n.previousSibling;
+                    const atLineStart = !prevSib || prevSib.tagName === 'BR' || (p && p.firstChild === n && /^(DIV|P|SPAN)$/i.test(p.tagName));
+                    if (atLineStart) {
+                        const vm = n.nodeValue.match(/^\s*\[?(\d{1,3})\]?(?:\s+|(?=[A-Za-z“"‘'(\[]))/);
+                        if (vm) {
+                            const v = parseInt(vm[1], 10);
+                            if (v >= 1 && v <= 176) lastSeenVerse = v;
+                        }
+                    }
+                }
+            }
+            verse = lastSeenVerse || 1;
+        }
+
+        return setActiveRef(bookNum, chapter, verse);
+    }
+
+    function detectFromLxxDrawerNode(node) {
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !node || !drawer.contains(node)) return false;
+
+        let cur = node.nodeType === 3 ? node.parentElement : node;
+        let verseRow = null;
+        while (cur && cur !== drawer) {
+            if (cur.dataset && (cur.dataset.verse || cur.dataset.verseNum || cur.dataset.ref)) {
+                verseRow = cur;
+                break;
+            }
+            if (!verseRow && /^(DIV|LI|P|TR)$/i.test(cur.tagName) && /^\s*\d{1,3}\b/.test(cur.textContent || '')) {
+                verseRow = cur;
+            }
+            cur = cur.parentElement;
+        }
+
+        let bookNum = 0;
+        let chapter = 0;
+        let verse = 0;
+
+        if (verseRow && verseRow.dataset) {
+            bookNum = parseInt(verseRow.dataset.bookNum || verseRow.dataset.book || '0', 10);
+            chapter = parseInt(verseRow.dataset.chapterNum || verseRow.dataset.chapter || '0', 10);
+            verse = parseInt(verseRow.dataset.verseNum || verseRow.dataset.verse || '0', 10);
+            if ((!bookNum || !chapter || !verse) && verseRow.dataset.ref) {
+                const parsed = parseRefFromText(verseRow.dataset.ref);
+                if (parsed) {
+                    bookNum = parsed.bookNum;
+                    chapter = parsed.chapter;
+                    verse = parsed.verse;
+                }
+            }
+        }
+
+        if (!bookNum || !chapter) {
+            const selects = drawer.querySelectorAll('select');
+            selects.forEach((sel) => {
+                const opt = sel.options && sel.options[sel.selectedIndex];
+                const txt = ((opt && opt.textContent) || sel.value || '').trim();
+                const b = NAME_TO_BOOK.get(txt.toLowerCase().replace(/\.+$/, ''));
+                if (b) bookNum = b.num;
+                else if (/^\d{1,3}$/.test(txt)) chapter = parseInt(txt, 10);
+            });
+            if (!bookNum || !chapter) {
+                const hdr = drawer.querySelector('h2, h3, .lxx-header, .lxx-passage-title');
+                const parsed = parseRefFromText(hdr && hdr.textContent);
+                if (parsed) {
+                    bookNum = parsed.bookNum;
+                    chapter = parsed.chapter;
+                }
+            }
+        }
+
+        if (!verse && verseRow) {
+            const vm = (verseRow.textContent || '').trim().match(/^(\d{1,3})\b/);
+            if (vm) verse = parseInt(vm[1], 10);
+        }
+
+        return setActiveRef(bookNum, chapter, verse);
+    }
+
+    function syncFromCurrentSelection() {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+            if (detectFromEditorRange(sel.getRangeAt(0))) return;
+        }
+        if (!activeRef) {
+            const tb = getToolbarBookAndChapter();
+            if (tb && tb.bookNum && tb.chapter && tb.verse) {
+                setActiveRef(tb.bookNum, tb.chapter, tb.verse);
+            }
+        }
+    }
+
+    document.addEventListener('selectionchange', syncFromCurrentSelection);
+    document.addEventListener('keyup', syncFromCurrentSelection, true);
+    document.addEventListener('mouseup', (e) => {
+        syncFromCurrentSelection();
+        detectFromLxxDrawerNode(e.target);
+    }, true);
+    document.addEventListener('click', (e) => {
+        syncFromCurrentSelection();
+        detectFromLxxDrawerNode(e.target);
+        setTimeout(() => refreshAllLexiconHighlights(true), 60);
+        setTimeout(() => refreshAllLexiconHighlights(false), 320);
+    }, true);
+
+    // -------------------------------------------------------------------------
+    // 2. HIGHLIGHT MATCHING CITATIONS ACROSS TEXT NODES (LSJ & THAYER'S)
+    // -------------------------------------------------------------------------
+    function findLsjContainer() {
+        const byId = document.getElementById('lfLsjModalOverlay');
+        if (byId && byId.offsetParent !== null) return byId;
+        const heading = Array.from(document.querySelectorAll('h1, h2, h3, div, span')).find((el) =>
+            /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) && el.children.length <= 2
+        );
+        if (!heading) return null;
+        let box = heading.parentElement;
+        while (box && box !== document.body) {
+            if (box.textContent.length > 150 && (box.id || box.className)) return box;
+            box = box.parentElement;
+        }
+        return heading.parentElement;
+    }
+
+    function unwrapOldMarks(container) {
+        if (!container) return;
+        const marks = container.querySelectorAll('mark.lf-verse-match-pill');
+        if (!marks.length) return;
+        marks.forEach((m) => {
+            const parent = m.parentNode;
+            if (!parent) return;
+            while (m.firstChild) parent.insertBefore(m.firstChild, m);
+            m.remove();
+            parent.normalize();
+        });
+    }
+
+    function highlightElementCitations(el, mode) {
+        if (!el || !activeRef) return 0;
+        const { regex, aliasMap } = MATCHERS[mode];
+
+        const textNodes = [];
+        const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+            acceptNode(n) {
+                if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_ACCEPT;
+                const p = n.parentElement;
+                if (!p || /^(SCRIPT|STYLE|INPUT|TEXTAREA|BUTTON|MARK)$/i.test(p.tagName)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+
+        let cur;
+        let fullText = '';
+        while ((cur = tw.nextNode())) {
+            const start = fullText.length;
+            fullText += cur.nodeValue;
+            textNodes.push({ node: cur, start, end: fullText.length });
+        }
+        if (!textNodes.length) return 0;
+
+        regex.lastIndex = 0;
+        let currentBookNum = 0;
+        let currentChapter = 0;
+        let lastMatchEnd = -1;
+        const hitSpans = [];
+        let m;
+
+        while ((m = regex.exec(fullText)) !== null) {
+            const bookStr = m[1];
+            const sep = m[2];
+            const chStr = m[3];
+            const vsStart = parseInt(m[4], 10);
+            const vsEnd = m[5] ? parseInt(m[5], 10) : vsStart;
+
+            if (bookStr) {
+                const key = bookStr.toLowerCase().replace(/\s+/g, ' ');
+                currentBookNum = aliasMap.get(key) || 0;
+                currentChapter = 0;
+            } else if (sep) {
+                const between = fullText.slice(Math.max(0, lastMatchEnd), m.index);
+                if (lastMatchEnd < 0 || /[A-Za-z]{3,}/.test(between)) {
+                    currentBookNum = 0;
+                    currentChapter = 0;
+                }
+            }
+
+            if (chStr) {
+                currentChapter = parseInt(chStr, 10);
+            }
+            lastMatchEnd = m.index + m[0].length;
+
+            if (
+                currentBookNum === activeRef.bookNum &&
+                currentChapter === activeRef.chapter &&
+                activeRef.verse >= vsStart &&
+                activeRef.verse <= vsEnd
+            ) {
+                const leadTrim = m[0].match(/^[\s;,]+/);
+                const startIdx = m.index + (leadTrim ? leadTrim[0].length : 0);
+                const endIdx = m.index + m[0].length;
+                if (endIdx > startIdx) {
+                    hitSpans.push({ start: startIdx, end: endIdx });
+                }
+            }
+        }
+
+        if (!hitSpans.length) return 0;
+
+        for (let i = hitSpans.length - 1; i >= 0; i--) {
+            const { start, end } = hitSpans[i];
+            for (let j = textNodes.length - 1; j >= 0; j--) {
+                const tn = textNodes[j];
+                if (tn.end <= start || tn.start >= end) continue;
+                const localStart = Math.max(0, start - tn.start);
+                const localEnd = Math.min(tn.node.nodeValue.length, end - tn.start);
+                if (localEnd <= localStart) continue;
+
+                let targetNode = tn.node;
+                if (localEnd < targetNode.nodeValue.length) {
+                    targetNode.splitText(localEnd);
+                }
+                if (localStart > 0) {
+                    targetNode = targetNode.splitText(localStart);
+                }
+                const mark = document.createElement('mark');
+                mark.className = 'lf-verse-match-pill';
+                mark.title = `Active study verse: ${activeRef.label}`;
+                targetNode.parentNode.insertBefore(mark, targetNode);
+                mark.appendChild(targetNode);
+            }
+        }
+
+        return hitSpans.length;
+    }
+
+    function updateLsjHeaderPill(modal, matchCount) {
+        if (!modal) return;
+        let pill = document.getElementById('lfLsjActiveVersePill');
+        if (!pill) {
+            const titleEl = Array.from(modal.querySelectorAll('h1, h2, h3, div, span')).find((el) =>
+                /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) && el.children.length <= 2
+            );
+            if (titleEl) {
+                pill = document.createElement('span');
+                pill.id = 'lfLsjActiveVersePill';
+                pill.title = 'Click to jump to highlighted verse (or set verse)';
+                pill.addEventListener('click', () => {
+                    const first = modal.querySelector('mark.lf-verse-match-pill');
+                    if (first) {
+                        first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        const manual = prompt('Enter active verse (e.g., Genesis 1:2):', activeRef ? activeRef.label : 'Genesis 1:2');
+                        const parsed = parseRefFromText(manual);
+                        if (parsed && parsed.verse) {
+                            setActiveRef(parsed.bookNum, parsed.chapter, parsed.verse);
+                            refreshAllLexiconHighlights(true);
+                        }
+                    }
+                });
+                titleEl.appendChild(pill);
+            }
+        }
+        if (pill) {
+            if (!activeRef) {
+                pill.textContent = 'Click verse in editor';
+            } else {
+                pill.textContent = matchCount > 0
+                    ? `${activeRef.label} (${matchCount} match${matchCount === 1 ? '' : 'es'})`
+                    : `Verse: ${activeRef.label}`;
+            }
+        }
+    }
+
+    let isHighlighting = false;
+
+    function refreshAllLexiconHighlights(shouldScroll) {
+        if (isHighlighting) return;
+        isHighlighting = true;
+        try {
+            const ed = getThoughtEditor();
+
+            // 1. LSJ Modal
+            const lsjModal = findLsjContainer();
+            if (lsjModal) {
+                unwrapOldMarks(lsjModal);
+                let lsjHits = 0;
+                if (activeRef) {
+                    const bodyContainer =
+                        lsjModal.querySelector('#lfLsjResults, #lfLsjBody, .lf-lsj-results, .lf-lsj-entry') ||
+                        lsjModal;
+                    lsjHits = highlightElementCitations(bodyContainer, 'lsj');
+                }
+                updateLsjHeaderPill(lsjModal, lsjHits);
+                if (shouldScroll && lsjHits > 0) {
+                    const first = lsjModal.querySelector('mark.lf-verse-match-pill');
+                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            // 2. Thayer's Greek Lexicon cards / popovers / drawers (outside editor)
+            if (activeRef) {
+                const thayerCandidates = Array.from(document.querySelectorAll(
+                    '.thayer, [class*="thayer" i], [id*="thayer" i], [class*="lexicon" i], [id*="lexicon" i], [class*="popover" i], [class*="definition" i], #lfLxxDrawer'
+                )).filter((el) => (!ed || !ed.contains(el)) && (!lsjModal || !lsjModal.contains(el)));
+
+                thayerCandidates.forEach((box) => {
+                    if (box.id === 'lfLxxDrawer') {
+                        const subCards = box.querySelectorAll('[class*="lexicon" i], [class*="thayer" i], [class*="card" i], [class*="detail" i], [class*="def" i]');
+                        subCards.forEach((card) => {
+                            if (/Thayer|Strong|Lexicon|Definition/i.test(card.textContent || '')) {
+                                unwrapOldMarks(card);
+                                const hits = highlightElementCitations(card, 'thayer');
+                                if (shouldScroll && hits > 0) {
+                                    const first = card.querySelector('mark.lf-verse-match-pill');
+                                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }
+                        });
+                        return;
+                    }
+
+                    if (/Thayer|Strong|G\d{1,4}/i.test(box.textContent || '')) {
+                        unwrapOldMarks(box);
+                        const hits = highlightElementCitations(box, 'thayer');
+                        if (shouldScroll && hits > 0) {
+                            const first = box.querySelector('mark.lf-verse-match-pill');
+                            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                });
+            }
+        } finally {
+            isHighlighting = false;
+        }
+    }
+
+    // Re-check whenever LSJ is open so async IndexedDB results highlight immediately
+    setInterval(() => {
+        const lsjModal = findLsjContainer();
+        if (lsjModal && !lsjModal.querySelector('mark.lf-verse-match-pill')) {
+            refreshAllLexiconHighlights(false);
+        }
+    }, 450);
+})();
+
     </script>
 </body>
 </html>
