@@ -35705,7 +35705,7 @@ function showContextMenu(x, y) {
 })();
 
 
-	/* === LEXFLOW FEATURE v3: AUTO-HIGHLIGHT ACTIVE VERSE IN LSJ & THAYER'S === */
+	/* === LEXFLOW FEATURE v4: AUTO-HIGHLIGHT ACTIVE VERSE IN LSJ & THAYER'S === */
 (function () {
     const BOOKS = [
         { num: 1, name: 'Genesis', lsj: ['Genesis', 'Gen.', 'Ge.', 'Gn.'], thayer: ['Genesis', 'Gen.', 'Gen', 'Ge.', 'Gn.'] },
@@ -35716,12 +35716,12 @@ function showContextMenu(x, y) {
         { num: 6, name: 'Joshua', lsj: ['Joshua', 'Josh.', 'Jos.'], thayer: ['Joshua', 'Josh.', 'Josh', 'Jos.'] },
         { num: 7, name: 'Judges', lsj: ['Judges', 'Judg.', 'Jdg.', 'Ju.'], thayer: ['Judges', 'Judg.', 'Judg', 'Jdg.'] },
         { num: 8, name: 'Ruth', lsj: ['Ruth', 'Ru.'], thayer: ['Ruth', 'Ru.'] },
-        { num: 9, name: '1 Samuel', lsj: ['1 Samuel', '1 Sam.', '1 Sa.', '1 Reg.', '1 Ki.', '1 Kings'], thayer: ['1 Samuel', '1 Sam.', '1 Sam', '1 Sa.', '1 Kings'] },
-        { num: 10, name: '2 Samuel', lsj: ['2 Samuel', '2 Sam.', '2 Sa.', '2 Reg.', '2 Ki.', '2 Kings'], thayer: ['2 Samuel', '2 Sam.', '2 Sam', '2 Sa.', '2 Kings'] },
-        { num: 11, name: '1 Kings', lsj: ['1 Kings', '1 Ki.', '1 Reg.', '3 Reg.', '3 Ki.'], thayer: ['1 Kings', '1 Ki.', '1 Kgs.', '1 Kgs'] },
-        { num: 12, name: '2 Kings', lsj: ['2 Kings', '2 Ki.', '2 Reg.', '4 Reg.', '4 Ki.'], thayer: ['2 Kings', '2 Ki.', '2 Kgs.', '2 Kgs'] },
-        { num: 13, name: '1 Chronicles', lsj: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Par.'], thayer: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Chr'] },
-        { num: 14, name: '2 Chronicles', lsj: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Par.'], thayer: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Chr'] },
+        { num: 9, name: '1 Samuel', lsj: ['1 Samuel', '1 Sam.', '1 Sa.', '1 Reg.', '1 Ki.', '1 Kings'], thayer: ['1 Samuel', '1 Sam.', '1 Sam', 'I Sam.', 'I Sam', '1 Sa.', '1 Kings', 'I Kings'] },
+        { num: 10, name: '2 Samuel', lsj: ['2 Samuel', '2 Sam.', '2 Sa.', '2 Reg.', '2 Ki.', '2 Kings'], thayer: ['2 Samuel', '2 Sam.', '2 Sam', 'II Sam.', 'II Sam', '2 Sa.', '2 Kings', 'II Kings'] },
+        { num: 11, name: '1 Kings', lsj: ['1 Kings', '1 Ki.', '1 Reg.', '3 Reg.', '3 Ki.'], thayer: ['1 Kings', '1 Ki.', '1 Kgs.', '1 Kgs', 'I Kings', 'I Kgs.', 'I Kgs'] },
+        { num: 12, name: '2 Kings', lsj: ['2 Kings', '2 Ki.', '2 Reg.', '4 Reg.', '4 Ki.'], thayer: ['2 Kings', '2 Ki.', '2 Kgs.', '2 Kgs', 'II Kings', 'II Kgs.', 'II Kgs'] },
+        { num: 13, name: '1 Chronicles', lsj: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Par.'], thayer: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Chr', 'I Chron.', 'I Chr.', 'I Chr'] },
+        { num: 14, name: '2 Chronicles', lsj: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Par.'], thayer: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Chr', 'II Chron.', 'II Chr.', 'II Chr'] },
         { num: 15, name: 'Ezra', lsj: ['Ezra', 'Ezr.', '1 Esd.'], thayer: ['Ezra', 'Ezr.'] },
         { num: 16, name: 'Nehemiah', lsj: ['Nehemiah', 'Neh.', 'Ne.', '2 Esd.'], thayer: ['Nehemiah', 'Neh.', 'Neh', 'Ne.'] },
         { num: 17, name: 'Esther', lsj: ['Esther', 'Esth.', 'Est.'], thayer: ['Esther', 'Esth.', 'Est.'] },
@@ -35753,25 +35753,25 @@ function showContextMenu(x, y) {
         { num: 43, name: 'John', lsj: ['Ev. Jo.', 'Ev. Joh.', 'John', 'Joh.', 'Jn.'], thayer: ['John', 'Joh.', 'Jn.', 'Jn', 'Jo.'] },
         { num: 44, name: 'Acts', lsj: ['Act. Ap.', 'Acts', 'Act.'], thayer: ['Acts', 'Act.', 'Act', 'Ac.'] },
         { num: 45, name: 'Romans', lsj: ['Ep. Rom.', 'Romans', 'Rom.', 'Ro.'], thayer: ['Romans', 'Rom.', 'Rom', 'Ro.'] },
-        { num: 46, name: '1 Corinthians', lsj: ['1 Ep. Cor.', '1 Corinthians', '1 Cor.', '1 Co.'], thayer: ['1 Corinthians', '1 Cor.', '1 Cor', '1 Co.'] },
-        { num: 47, name: '2 Corinthians', lsj: ['2 Ep. Cor.', '2 Corinthians', '2 Cor.', '2 Co.'], thayer: ['2 Corinthians', '2 Cor.', '2 Cor', '2 Co.'] },
+        { num: 46, name: '1 Corinthians', lsj: ['1 Ep. Cor.', '1 Corinthians', '1 Cor.', '1 Co.'], thayer: ['1 Corinthians', '1 Cor.', '1 Cor', 'I Cor.', 'I Cor', '1 Co.'] },
+        { num: 47, name: '2 Corinthians', lsj: ['2 Ep. Cor.', '2 Corinthians', '2 Cor.', '2 Co.'], thayer: ['2 Corinthians', '2 Cor.', '2 Cor', 'II Cor.', 'II Cor', '2 Co.'] },
         { num: 48, name: 'Galatians', lsj: ['Ep. Gal.', 'Galatians', 'Gal.', 'Ga.'], thayer: ['Galatians', 'Gal.', 'Gal', 'Ga.'] },
         { num: 49, name: 'Ephesians', lsj: ['Ep. Eph.', 'Ephesians', 'Eph.'], thayer: ['Ephesians', 'Eph.', 'Eph'] },
         { num: 50, name: 'Philippians', lsj: ['Ep. Phil.', 'Philippians', 'Phil.', 'Php.'], thayer: ['Philippians', 'Phil.', 'Phil', 'Php.'] },
         { num: 51, name: 'Colossians', lsj: ['Ep. Col.', 'Colossians', 'Col.'], thayer: ['Colossians', 'Col.', 'Col'] },
-        { num: 52, name: '1 Thessalonians', lsj: ['1 Ep. Thess.', '1 Thessalonians', '1 Thess.', '1 Thes.', '1 Th.'], thayer: ['1 Thessalonians', '1 Thess.', '1 Thess', '1 Thes.', '1 Th.'] },
-        { num: 53, name: '2 Thessalonians', lsj: ['2 Ep. Thess.', '2 Thessalonians', '2 Thess.', '2 Thes.', '2 Th.'], thayer: ['2 Thessalonians', '2 Thess.', '2 Thess', '2 Thes.', '2 Th.'] },
-        { num: 54, name: '1 Timothy', lsj: ['1 Ep. Tim.', '1 Timothy', '1 Tim.', '1 Ti.'], thayer: ['1 Timothy', '1 Tim.', '1 Tim', '1 Ti.'] },
-        { num: 55, name: '2 Timothy', lsj: ['2 Ep. Tim.', '2 Timothy', '2 Tim.', '2 Ti.'], thayer: ['2 Timothy', '2 Tim.', '2 Tim', '2 Ti.'] },
+        { num: 52, name: '1 Thessalonians', lsj: ['1 Ep. Thess.', '1 Thessalonians', '1 Thess.', '1 Thes.', '1 Th.'], thayer: ['1 Thessalonians', '1 Thess.', '1 Thess', 'I Thess.', 'I Thess', '1 Thes.', '1 Th.'] },
+        { num: 53, name: '2 Thessalonians', lsj: ['2 Ep. Thess.', '2 Thessalonians', '2 Thess.', '2 Thes.', '2 Th.'], thayer: ['2 Thessalonians', '2 Thess.', '2 Thess', 'II Thess.', 'II Thess', '2 Thes.', '2 Th.'] },
+        { num: 54, name: '1 Timothy', lsj: ['1 Ep. Tim.', '1 Timothy', '1 Tim.', '1 Ti.'], thayer: ['1 Timothy', '1 Tim.', '1 Tim', 'I Tim.', 'I Tim', '1 Ti.'] },
+        { num: 55, name: '2 Timothy', lsj: ['2 Ep. Tim.', '2 Timothy', '2 Tim.', '2 Ti.'], thayer: ['2 Timothy', '2 Tim.', '2 Tim', 'II Tim.', 'II Tim', '2 Ti.'] },
         { num: 56, name: 'Titus', lsj: ['Ep. Tit.', 'Titus', 'Tit.'], thayer: ['Titus', 'Tit.', 'Tit'] },
         { num: 57, name: 'Philemon', lsj: ['Ep. Philem.', 'Philemon', 'Philem.', 'Phm.'], thayer: ['Philemon', 'Philem.', 'Phm.'] },
         { num: 58, name: 'Hebrews', lsj: ['Ep. Hebr.', 'Hebrews', 'Hebr.', 'Heb.'], thayer: ['Hebrews', 'Heb.', 'Heb', 'Hebr.'] },
         { num: 59, name: 'James', lsj: ['Ep. Jac.', 'James', 'Jac.', 'Jas.'], thayer: ['James', 'Jas.', 'Jas', 'Jac.'] },
-        { num: 60, name: '1 Peter', lsj: ['1 Ep. Pet.', '1 Peter', '1 Pet.', '1 Pe.'], thayer: ['1 Peter', '1 Pet.', '1 Pet', '1 Pe.'] },
-        { num: 61, name: '2 Peter', lsj: ['2 Ep. Pet.', '2 Peter', '2 Pet.', '2 Pe.'], thayer: ['2 Peter', '2 Pet.', '2 Pet', '2 Pe.'] },
-        { num: 62, name: '1 John', lsj: ['1 Ep. Jo.', '1 Ep. Joh.', '1 John', '1 Joh.', '1 Jn.'], thayer: ['1 John', '1 Jn.', '1 Jn', '1 Jo.'] },
-        { num: 63, name: '2 John', lsj: ['2 Ep. Jo.', '2 Ep. Joh.', '2 John', '2 Joh.', '2 Jn.'], thayer: ['2 John', '2 Jn.', '2 Jn', '2 Jo.'] },
-        { num: 64, name: '3 John', lsj: ['3 Ep. Jo.', '3 Ep. Joh.', '3 John', '3 Joh.', '3 Jn.'], thayer: ['3 John', '3 Jn.', '3 Jn', '3 Jo.'] },
+        { num: 60, name: '1 Peter', lsj: ['1 Ep. Pet.', '1 Peter', '1 Pet.', '1 Pe.'], thayer: ['1 Peter', '1 Pet.', '1 Pet', 'I Pet.', 'I Pet', '1 Pe.'] },
+        { num: 61, name: '2 Peter', lsj: ['2 Ep. Pet.', '2 Peter', '2 Pet.', '2 Pe.'], thayer: ['2 Peter', '2 Pet.', '2 Pet', 'II Pet.', 'II Pet', '2 Pe.'] },
+        { num: 62, name: '1 John', lsj: ['1 Ep. Jo.', '1 Ep. Joh.', '1 John', '1 Joh.', '1 Jn.'], thayer: ['1 John', '1 Jn.', '1 Jn', 'I John', 'I Jn.', 'I Jn', '1 Jo.'] },
+        { num: 63, name: '2 John', lsj: ['2 Ep. Jo.', '2 Ep. Joh.', '2 John', '2 Joh.', '2 Jn.'], thayer: ['2 John', '2 Jn.', '2 Jn', 'II John', 'II Jn.', 'II Jn', '2 Jo.'] },
+        { num: 64, name: '3 John', lsj: ['3 Ep. Jo.', '3 Ep. Joh.', '3 John', '3 Joh.', '3 Jn.'], thayer: ['3 John', '3 Jn.', '3 Jn', 'III John', 'III Jn.', 'III Jn', '3 Jo.'] },
         { num: 65, name: 'Jude', lsj: ['Ep. Jud.', 'Jude', 'Jud.'], thayer: ['Jude', 'Jud.'] },
         { num: 66, name: 'Revelation', lsj: ['Apoc.', 'Revelation', 'Rev.'], thayer: ['Revelation', 'Rev.', 'Rev', 'Apoc.'] }
     ];
@@ -35783,6 +35783,12 @@ function showContextMenu(x, y) {
             NAME_TO_BOOK.set(al.toLowerCase().replace(/\.+$/, ''), b);
         });
     });
+
+    function isElementVisible(el) {
+        if (!el || !el.isConnected) return false;
+        const cs = window.getComputedStyle(el);
+        return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+    }
 
     function getThoughtEditor() {
         return (typeof editor !== 'undefined' && editor) ||
@@ -35875,7 +35881,7 @@ function showContextMenu(x, y) {
     function parseRefFromText(txt) {
         if (!txt) return null;
         const clean = txt.replace(/\s+/g, ' ').trim();
-        const m = clean.match(/\b([1-3]?\s*[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\.?\s+(\d{1,3})(?:[:.](\d{1,3}))?\b/);
+        const m = clean.match(/\b([1-3I]{1,3}\s*[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\.?\s+(\d{1,3})(?:[:.](\d{1,3}))?\b/);
         if (!m) return null;
         const b = NAME_TO_BOOK.get(m[1].toLowerCase().replace(/\.+$/, '').trim());
         if (!b) return null;
@@ -35999,13 +36005,13 @@ function showContextMenu(x, y) {
                         const v = parseInt(n.dataset.verse || n.dataset.verseNum, 10);
                         if (v >= 1 && v <= 176) lastSeenVerse = v;
                     } else if (
-                        (n.classList && (n.classList.contains('verse-num') || n.classList.contains('vnum'))) ||
+                        (n.classList && /verse|vnum/i.test(n.className)) ||
                         n.tagName === 'SUP' ||
                         n.tagName === 'B' ||
                         n.tagName === 'STRONG'
                     ) {
                         const raw = (n.textContent || '').trim();
-                        const vm = raw.match(/^\[?(\d{1,3})\]?$/);
+                        const vm = raw.match(/^(?:\d{1,3}\s*[:.])?\s*\[?(\d{1,3})\]?\.?$/);
                         if (vm) {
                             const v = parseInt(vm[1], 10);
                             if (v >= 1 && v <= 176) lastSeenVerse = v;
@@ -36013,11 +36019,11 @@ function showContextMenu(x, y) {
                     }
                 } else if (n.nodeType === 3) {
                     const p = n.parentElement;
-                    if (p && (p.tagName === 'SUP' || (p.classList && p.classList.contains('verse-num')))) continue;
+                    if (p && (p.tagName === 'SUP' || (p.classList && /verse|vnum/i.test(p.className)))) continue;
                     const prevSib = n.previousSibling;
                     const atLineStart = !prevSib || prevSib.tagName === 'BR' || (p && p.firstChild === n && /^(DIV|P|SPAN)$/i.test(p.tagName));
                     if (atLineStart) {
-                        const vm = n.nodeValue.match(/^\s*\[?(\d{1,3})\]?(?:\s+|(?=[A-Za-z“"‘'(\[]))/);
+                        const vm = n.nodeValue.match(/^\s*(?:\d{1,3}\s*[:.])?\s*\[?(\d{1,3})\]?(?:\s+|(?=[A-Za-z“"‘'(\[]))/);
                         if (vm) {
                             const v = parseInt(vm[1], 10);
                             if (v >= 1 && v <= 176) lastSeenVerse = v;
@@ -36095,13 +36101,13 @@ function showContextMenu(x, y) {
 
     function syncFromCurrentSelection() {
         const sel = window.getSelection();
-        if (sel && sel.rangeCount) {
-            if (detectFromEditorRange(sel.getRangeAt(0))) return;
+        if (sel && sel.rangeCount && detectFromEditorRange(sel.getRangeAt(0))) {
+            return;
         }
-        if (!activeRef) {
-            const tb = getToolbarBookAndChapter();
-            if (tb && tb.bookNum && tb.chapter && tb.verse) {
-                setActiveRef(tb.bookNum, tb.chapter, tb.verse);
+        if (!activeRef && window.__lexflowLastActiveBlock) {
+            const blk = window.__lexflowLastActiveBlock;
+            if (blk.dataset && blk.dataset.bookNum && blk.dataset.chapterNum) {
+                setActiveRef(blk.dataset.bookNum, blk.dataset.chapterNum, blk.dataset.verseNum || blk.dataset.verse || 1);
             }
         }
     }
@@ -36124,14 +36130,16 @@ function showContextMenu(x, y) {
     // -------------------------------------------------------------------------
     function findLsjContainer() {
         const byId = document.getElementById('lfLsjModalOverlay');
-        if (byId && byId.offsetParent !== null) return byId;
+        if (byId && isElementVisible(byId)) return byId;
         const heading = Array.from(document.querySelectorAll('h1, h2, h3, div, span')).find((el) =>
-            /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) && el.children.length <= 2
+            isElementVisible(el) &&
+            /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) &&
+            el.children.length <= 2
         );
         if (!heading) return null;
         let box = heading.parentElement;
         while (box && box !== document.body) {
-            if (box.textContent.length > 150 && (box.id || box.className)) return box;
+            if (box.querySelector('input') && box.textContent.length > 120) return box;
             box = box.parentElement;
         }
         return heading.parentElement;
@@ -36318,7 +36326,7 @@ function showContextMenu(x, y) {
             if (activeRef) {
                 const thayerCandidates = Array.from(document.querySelectorAll(
                     '.thayer, [class*="thayer" i], [id*="thayer" i], [class*="lexicon" i], [id*="lexicon" i], [class*="popover" i], [class*="definition" i], #lfLxxDrawer'
-                )).filter((el) => (!ed || !ed.contains(el)) && (!lsjModal || !lsjModal.contains(el)));
+                )).filter((el) => isElementVisible(el) && (!ed || !ed.contains(el)) && (!lsjModal || !lsjModal.contains(el)));
 
                 thayerCandidates.forEach((box) => {
                     if (box.id === 'lfLxxDrawer') {
@@ -36354,7 +36362,7 @@ function showContextMenu(x, y) {
     // Re-check whenever LSJ is open so async IndexedDB results highlight immediately
     setInterval(() => {
         const lsjModal = findLsjContainer();
-        if (lsjModal && !lsjModal.querySelector('mark.lf-verse-match-pill')) {
+        if (lsjModal && (!lsjModal.querySelector('mark.lf-verse-match-pill') || !document.getElementById('lfLsjActiveVersePill'))) {
             refreshAllLexiconHighlights(false);
         }
     }, 450);
