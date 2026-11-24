@@ -34654,1718 +34654,1232 @@ function showContextMenu(x, y) {
     else initLsj();
 })();
 
-	/* === LEXFLOW ADD-ON (FIXED): TAGGED LXX (RAHLFS 1935) + CATSS + LSJ INSIDE OT-IN-NT MODAL === */
-(function () {
-    const LXX_IDB_NAME = 'LexFlow_LXX_Rahlfs1935_v3';
-    const CATSS_IDB_NAME = 'LexFlow_CATSS_Parallel_v1';
-    const CARD_ID = 'lfOtNtLxxCardV2';
 
-    const OT_REF_PATTERNS = [
-        [22, 'Song\\s+of\\s+(?:Solomon|Songs)|Canticles|Song|Cant|SoS'],
-        [13, '1\\s*Chronicles|1\\s*Chron|1\\s*Chr|1\\s*Ch'],
-        [14, '2\\s*Chronicles|2\\s*Chron|2\\s*Chr|2\\s*Ch'],
-        [9, '1\\s*Samuel|1\\s*Sam|1\\s*Sa'],
-        [10, '2\\s*Samuel|2\\s*Sam|2\\s*Sa'],
-        [11, '1\\s*Kings|1\\s*Kgs|1\\s*Ki'],
-        [12, '2\\s*Kings|2\\s*Kgs|2\\s*Ki'],
-        [5, 'Deuteronomy|Deut|Dt'],
-        [21, 'Ecclesiastes|Eccl|Ecc|Qoheleth|Qoh'],
-        [25, 'Lamentations|Lam'],
-        [3, 'Leviticus|Lev'],
-        [16, 'Nehemiah|Neh'],
-        [1, 'Genesis|Gen'],
-        [2, 'Exodus|Exod|Ex'],
-        [4, 'Numbers|Num'],
-        [6, 'Joshua|Josh'],
-        [7, 'Judges|Judg|Jdg'],
-        [8, 'Ruth'],
-        [15, 'Ezra|Ezr'],
-        [17, 'Esther|Esth|Est'],
-        [18, 'Job'],
-        [19, 'Psalms|Psalm|Pss|Psa|Ps'],
-        [20, 'Proverbs|Prov|Pr'],
-        [23, 'Isaiah|Isa'],
-        [24, 'Jeremiah|Jer'],
-        [26, 'Ezekiel|Ezek|Eze|Ezk'],
-        [27, 'Daniel|Dan'],
-        [28, 'Hosea|Hos'],
-        [29, 'Joel'],
-        [30, 'Amos'],
-        [31, 'Obadiah|Obad'],
-        [32, 'Jonah|Jon'],
-        [33, 'Micah|Mic'],
-        [34, 'Nahum|Nah'],
-        [35, 'Habakkuk|Hab'],
-        [36, 'Zephaniah|Zeph|Zep'],
-        [37, 'Haggai|Hag'],
-        [38, 'Zechariah|Zech|Zec'],
-        [39, 'Malachi|Mal']
-    ];
-
-    const BOOK_NAMES = {
-        1: 'Genesis', 2: 'Exodus', 3: 'Leviticus', 4: 'Numbers', 5: 'Deuteronomy',
-        6: 'Joshua', 7: 'Judges', 8: 'Ruth', 9: '1 Samuel', 10: '2 Samuel',
-        11: '1 Kings', 12: '2 Kings', 13: '1 Chronicles', 14: '2 Chronicles', 15: 'Ezra',
-        16: 'Nehemiah', 17: 'Esther', 18: 'Job', 19: 'Psalm', 20: 'Proverbs',
-        21: 'Ecclesiastes', 22: 'Song of Solomon', 23: 'Isaiah', 24: 'Jeremiah', 25: 'Lamentations',
-        26: 'Ezekiel', 27: 'Daniel', 28: 'Hosea', 29: 'Joel', 30: 'Amos',
-        31: 'Obadiah', 32: 'Jonah', 33: 'Micah', 34: 'Nahum', 35: 'Habakkuk',
-        36: 'Zephaniah', 37: 'Haggai', 38: 'Zechariah', 39: 'Malachi'
-    };
-
-    const GRK_STOP = new Set([
-        'και', 'ο', 'η', 'το', 'του', 'τησ', 'τον', 'την', 'των', 'τοις', 'ταις', 'τους', 'τας',
-        'τω', 'τη', 'οι', 'αι', 'τα', 'εν', 'εις', 'εκ', 'εξ', 'δε', 'γαρ', 'οτι', 'μη', 'ου',
-        'ουκ', 'ουχ', 'ως', 'αυτου', 'αυτης', 'αυτων', 'αυτω', 'αυτον', 'αυτην', 'σου', 'μου',
-        'σοι', 'μοι', 'σε', 'με', 'εμου', 'ημων', 'ημιν', 'ημας', 'υμων', 'υμιν', 'υμας',
-        'δια', 'δι', 'επι', 'επ', 'εφ', 'απο', 'απ', 'αφ', 'προς', 'υπο', 'κατα', 'μετα',
-        'παρα', 'παρ', 'περι', 'ος', 'ον', 'ην', 'ου', 'ω', 'ων', 'οις', 'ους', 'ας', 'αλλα', 'αλλ'
-    ]);
-
-    const memLxx = new Map();
-    let psalmVerseShift = 0;
-    let lastRenderedSig = '';
-    let renderRunId = 0;
-
-    function escapeHtml(s) {
-        return String(s || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    function normGreek(s) {
-        return String(s || '')
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase().replace(/ς/g, 'σ').replace(/[^α-ω]/g, '');
-    }
-
-    function mapEngToLxx(b, c, v) {
-        if (b !== 19) return { b, c, v };
-        if (c <= 8 || c >= 148) return { b, c, v };
-        if (c === 9) return { b: 19, c: 9, v };
-        if (c === 10) return { b: 19, c: 9, v: v + 21 };
-        if (c >= 11 && c <= 113) return { b: 19, c: c - 1, v };
-        if (c === 114) return { b: 19, c: 113, v };
-        if (c === 115) return { b: 19, c: 113, v: v + 8 };
-        if (c === 116) return v <= 9 ? { b: 19, c: 114, v } : { b: 19, c: 115, v: v - 9 };
-        if (c >= 117 && c <= 146) return { b: 19, c: c - 1, v };
-        if (c === 147) return v <= 11 ? { b: 19, c: 146, v } : { b: 19, c: 147, v: v - 11 };
-        return { b, c, v };
-    }
-
-    async function readIdbBook(dbName, bookNum) {
-        try {
-            const db = await new Promise((resolve, reject) => {
-                const req = indexedDB.open(dbName, 1);
-                req.onupgradeneeded = (e) => {
-                    const d = e.target.result;
-                    if (!d.objectStoreNames.contains('books')) d.createObjectStore('books');
-                    if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
-                };
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-            const fetchKey = (k) => new Promise((resolve, reject) => {
-                const tx = db.transaction('books', 'readonly');
-                const req = tx.objectStore('books').get(k);
-                req.onsuccess = () => resolve(req.result || null);
-                req.onerror = () => reject(req.error);
-            });
-            let data = await fetchKey(bookNum);
-            if (!data) data = await fetchKey(String(bookNum));
-            db.close();
-            return data;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    async function getLxxBook(bookNum) {
-        if (memLxx.has(bookNum)) return memLxx.get(bookNum);
-        const data = await readIdbBook(LXX_IDB_NAME, bookNum);
-        if (data) memLxx.set(bookNum, data);
-        return data;
-    }
-
-    async function getCatssBook(bookNum) {
-        return readIdbBook(CATSS_IDB_NAME, bookNum);
-    }
-
-    function parseOtRef(rawText) {
-        const cleaned = String(rawText || '').replace(/\s+/g, ' ').trim();
-        if (!cleaned) return null;
-        for (let i = 0; i < OT_REF_PATTERNS.length; i++) {
-            const [bookNum, pat] = OT_REF_PATTERNS[i];
-            const re = new RegExp(`\\b(?:${pat})\\.?\\s+(\\d+):(\\d+)(?:\\s*[-–—]\\s*(\\d+))?`, 'i');
-            const m = cleaned.match(re);
-            if (m) {
-                const chap = parseInt(m[1], 10);
-                const vStart = parseInt(m[2], 10);
-                const vEnd = m[3] ? Math.max(vStart, parseInt(m[3], 10)) : vStart;
-                return { bookNum, chap, vStart, vEnd };
-            }
-        }
-        return null;
-    }
-
-    function decodeGreekMorph(rawCode) {
-        const code = String(rawCode || '').trim();
-        if (!code) return '';
-        const parts = code.toUpperCase().replace(/[^A-Z0-9-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
-        const basePos = (parts[0] || '').replace(/\d+$/, '');
-        const tail = parts.slice(1).join('');
-        const CASES = { N: 'Nominative', G: 'Genitive', D: 'Dative', A: 'Accusative', V: 'Vocative' };
-        const NUMS = { S: 'Singular', P: 'Plural', D: 'Dual' };
-        const GENS = { M: 'Masculine', F: 'Feminine', N: 'Neuter' };
-        const TENSES = { P: 'Present', I: 'Imperfect', F: 'Future', A: 'Aorist', X: 'Perfect', Y: 'Pluperfect' };
-        const VOICES = { A: 'Active', M: 'Middle', P: 'Passive', D: 'Mid/Pass', E: 'Mid/Pass' };
-        const MOODS = { I: 'Indicative', S: 'Subjunctive', O: 'Optative', D: 'Imperative', M: 'Imperative', N: 'Infinitive', P: 'Participle' };
-        const POS = { N: 'Noun', A: 'Adjective', RA: 'Article', RP: 'Pronoun', RD: 'Demonstrative', RR: 'Relative', P: 'Preposition', C: 'Conjunction', D: 'Adverb', X: 'Particle', T: 'Article' };
-        const cng = (str) => [CASES[str[0]], NUMS[str[1]], GENS[str[2]]].filter(Boolean);
-        if (basePos === 'V') {
-            const out = ['Verb'];
-            let v = tail.startsWith('2') ? tail.slice(1) : tail;
-            let idx = 0;
-            if (TENSES[v[idx]]) { out.push(TENSES[v[idx]]); idx++; }
-            if (VOICES[v[idx]]) { out.push(VOICES[v[idx]]); idx++; }
-            if (MOODS[v[idx]]) {
-                const mood = MOODS[v[idx]]; out.push(mood); idx++;
-                const rest = v.slice(idx);
-                if (mood === 'Participle') out.push(...cng(rest));
-                else if (/^[123][SPD]/.test(rest)) {
-                    out.push(`${rest[0] === '1' ? '1st' : rest[0] === '2' ? '2nd' : '3rd'} Person`);
-                    if (NUMS[rest[1]]) out.push(NUMS[rest[1]]);
-                }
-            }
-            return out.join(' · ');
-        }
-        const pLabel = POS[basePos] || POS[basePos[0]];
-        return pLabel ? [pLabel, ...cng(tail)].join(' · ') : code;
-    }
-
-    function alignCatssToVerse(catssRows, grkTuples) {
-        if (!catssRows || !catssRows.length) return new Map();
-        const domKeys = grkTuples.map((t) => normGreek(t[0]));
-        const idxToRow = new Map();
-        let cur = 0;
-        for (let r = 0; r < catssRows.length; r++) {
-            const gks = catssRows[r].gk || [];
-            for (let k = 0; k < gks.length; k++) {
-                const tgt = gks[k];
-                if (!tgt) continue;
-                let hit = -1;
-                for (let d = cur; d <= Math.min(domKeys.length - 1, cur + 5); d++) {
-                    if (domKeys[d] === tgt) { hit = d; break; }
-                }
-                if (hit === -1) {
-                    const p = tgt.slice(0, Math.min(3, tgt.length));
-                    for (let d = cur; d <= Math.min(domKeys.length - 1, cur + 3); d++) {
-                        const c = domKeys[d];
-                        if (c && ((tgt.length >= 3 && c.startsWith(p)) || (c.length >= 3 && tgt.startsWith(c.slice(0, 3))))) {
-                            hit = d; break;
-                        }
-                    }
-                }
-                if (hit !== -1) {
-                    idxToRow.set(hit, catssRows[r]);
-                    cur = hit + 1;
-                }
-            }
-        }
-        return idxToRow;
-    }
-
-    function openLsjFromOtNt(lemma) {
-        const clean = String(lemma || '').trim();
-        if (!clean) return;
-        const lsjBtn = document.getElementById('lfLsjToolbarBtn');
-        if (lsjBtn) {
-            lsjBtn.click();
-            setTimeout(() => {
-                const inp = document.getElementById('lfLsjSearchInput');
-                const go = document.getElementById('lfLsjSearchGoBtn');
-                if (inp && go) {
-                    inp.value = clean;
-                    go.click();
-                }
-            }, 70);
-        } else {
-            window.open(`https://logeion.uchicago.edu/${encodeURIComponent(clean)}`, '_blank', 'noopener,noreferrer');
-        }
-    }
-
-    function ensureStyles() {
-        if (document.getElementById('lfOtNtLxxStylesV2')) return;
-        const st = document.createElement('style');
-        st.id = 'lfOtNtLxxStylesV2';
-        st.textContent = `
-            #${CARD_ID} {
-                margin-top: 12px;
-                padding: 13px 16px;
-                background: #ffffff;
-                border: 1px solid #99f6e4;
-                border-radius: 12px;
-                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
-                text-align: left;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            }
-            .lf-otnt-lxx-head {
-                display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-                margin-bottom: 8px;
-            }
-            .lf-otnt-lxx-label {
-                font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
-                text-transform: uppercase; color: #0f766e;
-            }
-            .lf-otnt-lxx-meta {
-                display: inline-flex; align-items: center; gap: 5px;
-                font-size: 10.5px; color: #475569; font-weight: 600;
-            }
-            .lf-otnt-nudge-btn {
-                border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
-                font-size: 10px; font-weight: 700; border-radius: 5px;
-                padding: 1px 5px; cursor: pointer;
-            }
-            .lf-otnt-nudge-btn:hover { background: #f0fdfa; border-color: #14b8a6; color: #0f766e; }
-            .lf-otnt-lxx-text {
-                font-family: "SBL Greek", "Gentium Plus", Georgia, serif;
-                font-size: 18px; line-height: 1.75; color: #0f172a;
-            }
-            .lf-otnt-lxx-vnum {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                font-size: 10.5px; font-weight: 800; color: #0f766e;
-                vertical-align: super; margin-right: 3px;
-            }
-            .lf-otnt-lxx-w {
-                display: inline-block; padding: 0 3px; margin: 1px 1px; border-radius: 5px;
-                cursor: pointer; transition: background 0.1s ease, box-shadow 0.1s ease;
-            }
-            .lf-otnt-lxx-w:hover { background: #f0fdfa; box-shadow: 0 0 0 1px #5eead4; }
-            .lf-otnt-lxx-w.nt-match {
-                background: #fef3c7; border: 1px solid #f59e0b; padding: 0 4px;
-            }
-            .lf-otnt-lxx-w.active {
-                background: #ccfbf1 !important; box-shadow: 0 0 0 1.5px #0d9488;
-            }
-            .lf-otnt-lxx-insp {
-                display: none; margin-top: 10px; padding: 8px 11px; border-radius: 9px;
-                background: #f0fdfa; border: 1px solid #99f6e4;
-                font-size: 12px; color: #1e293b; line-height: 1.5;
-            }
-            .lf-otnt-lxx-insp.open { display: block; }
-        `;
-        document.head.appendChild(st);
-    }
-
-    function findVisibleOtNtModalParts() {
-        const nodes = document.querySelectorAll('div, span, p, h1, h2, h3, h4, h5, label, strong');
-        let wlcLabel = null;
-        for (let i = 0; i < nodes.length; i++) {
-            const el = nodes[i];
-            if (el.closest(`#${CARD_ID}, #lfOtNtLxxCard, #lfLxxDrawer, #lfTriStudioOverlay, #lfLsjModalOverlay, script, style`)) continue;
-            const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
-            if (/^WLC\s+HEBREW\s+OLD\s+TESTAMENT:?$/i.test(txt)) {
-                const r = el.getBoundingClientRect();
-                if (r.width > 40 && r.height > 6) {
-                    if (!wlcLabel || wlcLabel.contains(el)) wlcLabel = el;
-                }
-            }
-        }
-        if (!wlcLabel) return null;
-
-        // 1. Find the WLC card (smallest ancestor holding Hebrew text but NOT the pane header)
-        let wlcCard = wlcLabel.parentElement;
-        while (wlcCard && wlcCard !== document.body) {
-            const txt = wlcCard.textContent || '';
-            if (/[\u05D0-\u05EA]/.test(txt) && !/OLD TESTAMENT SOURCE|SRGNT/i.test(txt)) break;
-            if (/OLD TESTAMENT SOURCE|SRGNT/i.test(txt)) { wlcCard = wlcLabel.parentElement; break; }
-            wlcCard = wlcCard.parentElement;
-        }
-        if (!wlcCard || wlcCard === document.body) return null;
-
-        // 2. Find the OT column (holds "OLD TESTAMENT SOURCE (PSALMS 2:8)")
-        let otCol = wlcCard.parentElement;
-        while (otCol && otCol !== document.body) {
-            const txt = otCol.textContent || '';
-            if (/OLD TESTAMENT SOURCE/i.test(txt) && !/SRGNT/i.test(txt)) break;
-            if (/SRGNT/i.test(txt)) { otCol = null; break; }
-            otCol = otCol.parentElement;
-        }
-
-        // 3. Walk all the way up to the FULL modal container (includes top header + <select> + both columns)
-        let modalRoot = (otCol || wlcCard).parentElement;
-        let fallbackRoot = modalRoot;
-        while (modalRoot && modalRoot !== document.body) {
-            const txt = modalRoot.textContent || '';
-            if (/SRGNT/i.test(txt)) fallbackRoot = modalRoot;
-            if (/SRGNT/i.test(txt) && (/Scan OT Roots/i.test(txt) || modalRoot.querySelector('select'))) {
-                break;
-            }
-            modalRoot = modalRoot.parentElement;
-        }
-        if (!modalRoot || modalRoot === document.body) modalRoot = fallbackRoot || document.body;
-
-        // 4. Extract OT reference — check OT column header first ("OLD TESTAMENT SOURCE (PSALMS 2:8)"), then <select>, then modal header
-        let refObj = null;
-        if (otCol) {
-            const hdrCandidates = otCol.querySelectorAll('div, span, h1, h2, h3, h4, strong, p');
-            for (let i = 0; i < hdrCandidates.length; i++) {
-                const t = (hdrCandidates[i].textContent || '').replace(/\s+/g, ' ').trim();
-                if (/OLD TESTAMENT SOURCE/i.test(t) && t.length < 120) {
-                    refObj = parseOtRef(t);
-                    if (refObj) break;
-                }
-            }
-        }
-        if (!refObj) {
-            const selects = modalRoot.querySelectorAll('select');
-            for (let i = 0; i < selects.length; i++) {
-                const sel = selects[i];
-                const optText = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : sel.value;
-                refObj = parseOtRef(optText);
-                if (refObj) break;
-            }
-        }
-        if (!refObj) {
-            const hdrs = modalRoot.querySelectorAll('h1, h2, h3, h4, strong, div, span');
-            for (let i = 0; i < hdrs.length; i++) {
-                const t = (hdrs[i].textContent || '').replace(/\s+/g, ' ').trim();
-                if (t.length >= 6 && t.length < 95 && /\d+:\d+/.test(t)) {
-                    refObj = parseOtRef(t);
-                    if (refObj) break;
-                }
-            }
-        }
-
-        // 5. Collect Greek tokens from the SRGNT box for automatic shared-root highlighting
-        const ntTokens = [];
-        const boxes = modalRoot.querySelectorAll('div, section, p');
-        for (let i = 0; i < boxes.length; i++) {
-            const el = boxes[i];
-            if (el.closest(`#${CARD_ID}`)) continue;
-            const txt = el.textContent || '';
-            if (/SRGNT\s+GREEK\s+NEW\s+TESTAMENT/i.test(txt) && !/WLC\s+HEBREW/i.test(txt) && /[\u0370-\u03FF\u1F00-\u1FFF]/.test(txt) && txt.length < 2200) {
-                const grkWords = txt.match(/[\u0370-\u03FF\u1F00-\u1FFF]+/g) || [];
-                grkWords.forEach((w) => {
-                    const nw = normGreek(w);
-                    if (nw && nw.length >= 3 && !GRK_STOP.has(nw) && !ntTokens.includes(nw)) ntTokens.push(nw);
-                });
-                break;
-            }
-        }
-
-        return { wlcCard, refObj, ntTokens };
-    }
-
-    function matchesNtGreek(tuple, ntTokens) {
-        if (!ntTokens || !ntTokens.length) return false;
-        const w = normGreek(tuple[0]);
-        const lem = normGreek(tuple[1]);
-        const candidates = [w, lem].filter((x) => x && x.length >= 3 && !GRK_STOP.has(x));
-        for (let i = 0; i < candidates.length; i++) {
-            const c = candidates[i];
-            for (let j = 0; j < ntTokens.length; j++) {
-                const nt = ntTokens[j];
-                if (c === nt) return true;
-                const minLen = Math.min(c.length, nt.length);
-                if (minLen >= 5 && c.slice(0, 5) === nt.slice(0, 5)) return true;
-                if (minLen >= 4 && minLen <= 6 && c.slice(0, 4) === nt.slice(0, 4)) return true;
-            }
-        }
-        return false;
-    }
-
-    async function renderLxxCardInOtNt(force) {
-        const parts = findVisibleOtNtModalParts();
-        if (!parts || !parts.refObj) return;
-
-        // Clean up any older V1 card if present
-        const oldCard = document.getElementById('lfOtNtLxxCard');
-        if (oldCard) oldCard.remove();
-
-        const { wlcCard, refObj, ntTokens } = parts;
-        const baseKey = `${refObj.bookNum}_${refObj.chap}_${refObj.vStart}_${refObj.vEnd}`;
-        if (lastRenderedSig && !lastRenderedSig.startsWith(baseKey + '|')) {
-            psalmVerseShift = 0;
-        }
-
-        const sig = `${baseKey}|${psalmVerseShift}|${ntTokens.slice(0, 8).join(',')}`;
-        const existing = document.getElementById(CARD_ID);
-        if (!force && existing && existing.isConnected && existing.dataset.sig === sig) return;
-
-        ensureStyles();
-        const runId = ++renderRunId;
-        lastRenderedSig = sig;
-
-        let card = existing;
-        if (!card || !card.isConnected) {
-            card = document.createElement('div');
-            card.id = CARD_ID;
-            wlcCard.insertAdjacentElement('afterend', card);
-        }
-        card.dataset.sig = sig;
-
-        const [lxxBook, catssBook] = await Promise.all([
-            getLxxBook(refObj.bookNum),
-            getCatssBook(refObj.bookNum)
-        ]);
-        if (runId !== renderRunId) return;
-
-        if (!lxxBook) {
-            card.innerHTML = `
-                <div class="lf-otnt-lxx-head">
-                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
-                </div>
-                <div style="font-size:12.5px;color:#475569;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-                    <span>Tagged LXX is not cached in this browser yet.</span>
-                    <button type="button" id="lfOtNtOpenSyncBtn" style="border:1px solid #0d9488;background:#0f766e;color:#ffffff;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:7px;cursor:pointer;">Open αΩ Tagged LXX to Sync</button>
-                </div>
-            `;
-            const syncBtn = card.querySelector('#lfOtNtOpenSyncBtn');
-            if (syncBtn) {
-                syncBtn.onclick = () => {
-                    const toggle = Array.from(document.querySelectorAll('button')).find((b) => /Tagged LXX/i.test(b.textContent || ''));
-                    if (toggle) toggle.click();
-                };
-            }
-            return;
-        }
-
-        const verseBlocks = [];
-        let displayLxxRef = '';
-        for (let v = refObj.vStart; v <= Math.min(refObj.vEnd, refObj.vStart + 8); v++) {
-            const mapped = mapEngToLxx(refObj.bookNum, refObj.chap, Math.max(1, v + (refObj.bookNum === 19 ? psalmVerseShift : 0)));
-            const tuples = (lxxBook[mapped.c] && lxxBook[mapped.c][mapped.v]) || [];
-            if (tuples.length) {
-                const catssRows = catssBook
-                    ? ((catssBook[refObj.chap] && catssBook[refObj.chap][v]) || (catssBook[mapped.c] && catssBook[mapped.c][mapped.v]) || null)
-                    : null;
-                verseBlocks.push({ lxxChap: mapped.c, lxxVerse: mapped.v, tuples, catssMap: alignCatssToVerse(catssRows, tuples), catssRows });
-                if (!displayLxxRef) displayLxxRef = `${BOOK_NAMES[refObj.bookNum]} ${mapped.c}:${mapped.v}`;
-            }
-        }
-        if (verseBlocks.length > 1) {
-            displayLxxRef += `–${verseBlocks[verseBlocks.length - 1].lxxVerse}`;
-        }
-
-        const isPsalm = refObj.bookNum === 19;
-        const nudgeHtml = isPsalm
-            ? `<button type="button" class="lf-otnt-nudge-btn" id="lfOtNtPrevV" title="Shift LXX Psalm verse -1 (superscription offset)">−1v</button><button type="button" class="lf-otnt-nudge-btn" id="lfOtNtNextV" title="Shift LXX Psalm verse +1 (superscription offset)">+1v</button>`
-            : '';
-
-        if (!verseBlocks.length) {
-            card.innerHTML = `
-                <div class="lf-otnt-lxx-head">
-                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
-                    <span class="lf-otnt-lxx-meta">${nudgeHtml}</span>
-                </div>
-                <div style="font-size:12.5px;color:#64748b;">Verse not found at ${escapeHtml(BOOK_NAMES[refObj.bookNum] || '')} ${refObj.chap}:${refObj.vStart} in LXX versification.${isPsalm ? ' Try −1v or +1v above.' : ''}</div>
-            `;
-        } else {
-            const bodyHtml = verseBlocks.map((vb, bi) => {
-                const vPrefix = verseBlocks.length > 1 ? `<span class="lf-otnt-lxx-vnum">${vb.lxxVerse}</span>` : '';
-                const wordsHtml = vb.tuples.map((t, wi) => {
-                    const isMatch = matchesNtGreek(t, ntTokens);
-                    return `<span class="lf-otnt-lxx-w${isMatch ? ' nt-match' : ''}" data-bi="${bi}" data-wi="${wi}">${escapeHtml(t[0])}</span>`;
-                }).join(' ');
-                return `${vPrefix}${wordsHtml}`;
-            }).join(' ');
-
-            card.innerHTML = `
-                <div class="lf-otnt-lxx-head">
-                    <span class="lf-otnt-lxx-label">LXX GREEK SEPTUAGINT (RAHLFS 1935):</span>
-                    <span class="lf-otnt-lxx-meta">
-                        <span>${escapeHtml(displayLxxRef)}</span>
-                        ${nudgeHtml}
-                    </span>
-                </div>
-                <div class="lf-otnt-lxx-text">${bodyHtml}</div>
-                <div class="lf-otnt-lxx-insp" id="lfOtNtLxxInsp"></div>
-            `;
-
-            const inspEl = card.querySelector('#lfOtNtLxxInsp');
-            card.querySelectorAll('.lf-otnt-lxx-w').forEach((wEl) => {
-                wEl.onclick = (e) => {
-                    e.stopPropagation();
-                    const wasActive = wEl.classList.contains('active');
-                    card.querySelectorAll('.lf-otnt-lxx-w.active').forEach((n) => n.classList.remove('active'));
-                    if (wasActive) {
-                        inspEl.classList.remove('open');
-                        return;
-                    }
-                    wEl.classList.add('active');
-                    const bi = parseInt(wEl.dataset.bi, 10);
-                    const wi = parseInt(wEl.dataset.wi, 10);
-                    const vb = verseBlocks[bi];
-                    const t = vb.tuples[wi];
-                    const catssRow = vb.catssMap.get(wi);
-
-                    let hebBadge = '';
-                    if (catssRow) {
-                        if (catssRow.f === 'plus') {
-                            hebBadge = `<span style="margin-left:6px;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;background:#ccfbf1;color:#0f766e;">+ LXX Plus</span>`;
-                        } else if (catssRow.h) {
-                            const fullHeb = catssRow.hg >= 0 && vb.catssRows
-                                ? vb.catssRows.filter((r) => r.hg === catssRow.hg).map((r) => r.h).join('').replace(/־(?=[^\s])/g, '')
-                                : catssRow.h;
-                            hebBadge = `<span style="margin-left:8px;padding:1px 7px;border-radius:6px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-weight:700;">MT: <span dir="rtl" style="font-family:'SBL Hebrew','Ezra SIL',serif;font-size:16px;">${escapeHtml(fullHeb)}</span></span>`;
-                        }
-                    }
-
-                    inspEl.innerHTML = `
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-                            <div>
-                                <span style="font-family:'SBL Greek',Georgia,serif;font-size:17px;font-weight:700;color:#0f172a;">${escapeHtml(t[0])}</span>
-                                ${t[1] ? ` <span style="color:#475569;">(${escapeHtml(t[1])})</span>` : ''}
-                                ${t[4] ? `<span style="margin-left:5px;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:#ccfbf1;color:#0f766e;">${escapeHtml(t[4])}</span>` : ''}
-                                ${hebBadge}
-                            </div>
-                            <button type="button" id="lfOtNtLsjBtn" style="border:1px solid #818cf8;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;cursor:pointer;">📖 LSJ</button>
-                        </div>
-                        ${t[3] ? `<div style="margin-top:3px;"><strong>Gloss:</strong> ${escapeHtml(t[3])}</div>` : ''}
-                        ${t[2] ? `<div style="font-size:11px;color:#0f766e;"><code>${escapeHtml(t[2])}</code> — ${escapeHtml(decodeGreekMorph(t[2]))}</div>` : ''}
-                    `;
-                    inspEl.querySelector('#lfOtNtLsjBtn').onclick = (ev) => {
-                        ev.stopPropagation();
-                        openLsjFromOtNt(t[1] || t[0]);
-                    };
-                    inspEl.classList.add('open');
-                };
-            });
-        }
-
-        const prevBtn = card.querySelector('#lfOtNtPrevV');
-        const nextBtn = card.querySelector('#lfOtNtNextV');
-        if (prevBtn) prevBtn.onclick = (e) => { e.stopPropagation(); psalmVerseShift--; renderLxxCardInOtNt(true); };
-        if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); psalmVerseShift++; renderLxxCardInOtNt(true); };
-    }
-
-    let checkTimer = 0;
-    function scheduleCheck() {
-        if (checkTimer) return;
-        checkTimer = setTimeout(() => {
-            checkTimer = 0;
-            renderLxxCardInOtNt(false);
-        }, 50);
-    }
-
-    function init() {
-        scheduleCheck();
-        document.addEventListener('change', scheduleCheck, true);
-        document.addEventListener('click', (e) => {
-            if (e.target && e.target.closest && e.target.closest(`#${CARD_ID}`)) return;
-            setTimeout(scheduleCheck, 80);
-        }, true);
-        if (document.body && typeof MutationObserver !== 'undefined') {
-            const obs = new MutationObserver((muts) => {
-                if (muts.every((m) => m.target && m.target.closest && m.target.closest(`#${CARD_ID}`))) return;
-                scheduleCheck();
-            });
-            obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-        }
-    }
-
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
-})();
-
-	/* === LEXFLOW FIX v3: ZERO-LAG TAB + CMD/CTRL+ENTER LINE BREAKS + MODIFIER-CLICK CARET === */
-(function () {
-    const isMac = /Mac|iPhone|iPad|iPod/i.test(
-        (navigator.userAgentData && navigator.userAgentData.platform) ||
-        navigator.platform ||
-        navigator.userAgent ||
-        ''
-    );
-
-	function isBreakMod(e) {
-    return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
-}
-
-    function getThoughtEditor() {
-        return (typeof editor !== 'undefined' && editor) ||
-            document.getElementById('editor') ||
-            document.querySelector('[contenteditable="true"]');
-    }
-
-    // -------------------------------------------------------------------------
-    // 1. ZERO-LAG MUTATION OBSERVER SHIELD (KEEPS TAB INDENTING SNAPPY)
-    // -------------------------------------------------------------------------
-    const OrigMO = window.MutationObserver;
-    if (OrigMO && !OrigMO.__lfFastShieldV3) {
-        function FastMutationObserver(callback) {
-            let isBodyObs = false;
-            let timer = 0;
-            let queued = [];
-
-            const wrappedCb = (records, obs) => {
-                if (!isBodyObs) {
-                    callback(records, obs);
-                    return;
-                }
-                const ed = getThoughtEditor();
-                const relevant = ed
-                    ? records.filter((r) => r.target !== ed && !ed.contains(r.target))
-                    : records;
-                if (!relevant.length) return;
-
-                queued.push(...relevant);
-                if (!timer) {
-                    timer = setTimeout(() => {
-                        const batch = queued;
-                        queued = [];
-                        timer = 0;
-                        callback(batch, obs);
-                    }, 80);
-                }
-            };
-
-            const realObs = new OrigMO(wrappedCb);
-            return {
-                observe(target, options) {
-                    if (target === document.body || target === document.documentElement) {
-                        isBodyObs = true;
-                    }
-                    return realObs.observe(target, options);
-                },
-                disconnect() {
-                    if (timer) { clearTimeout(timer); timer = 0; }
-                    queued = [];
-                    return realObs.disconnect();
-                },
-                takeRecords() {
-                    return realObs.takeRecords();
-                }
-            };
-        }
-        FastMutationObserver.__lfFastShieldV3 = true;
-        window.MutationObserver = FastMutationObserver;
-    }
-
-    // -------------------------------------------------------------------------
-    // 2. CARET BOOKMARK + CLICK / MODIFIER-RELEASE GUARDIAN
-    // -------------------------------------------------------------------------
-    let lastCaret = null;
-    let editorIntent = false;
-    let pendingClick = null;
-    let guardTimers = [];
-    let debouncedInputTimer = 0;
-
-    function cancelGuardTimers() {
-        while (guardTimers.length) clearTimeout(guardTimers.pop());
-    }
-
-    function findBlockContainer(node, ed) {
-        let cur = node && node.nodeType === 3 ? node.parentNode : node;
-        while (cur && cur !== ed && cur !== document.body) {
-            if (/^(DIV|P|LI|BLOCKQUOTE|H[1-6]|SECTION|ARTICLE)$/i.test(cur.tagName)) return cur;
-            cur = cur.parentNode;
-        }
-        return ed;
-    }
-
-    function findNonEditableAncestor(node, ed) {
-        let cur = node && node.nodeType === 3 ? node.parentNode : node;
-        while (cur && cur !== ed && cur !== document.body) {
-            if (
-                (cur.getAttribute && cur.getAttribute('contenteditable') === 'false') ||
-                (cur.classList && (cur.classList.contains('ot-in-nt-inline-badge') || cur.classList.contains('verse-num'))) ||
-                cur.tagName === 'SUP'
-            ) {
-                return cur;
-            }
-            cur = cur.parentNode;
-        }
-        return null;
-    }
-
-    function getCharOffsetInBlock(block, targetNode, targetOffset) {
-        try {
-            const r = document.createRange();
-            r.selectNodeContents(block);
-            r.setEnd(targetNode, targetOffset);
-            return r.toString().length;
-        } catch (e) {
-            return -1;
-        }
-    }
-
-    function captureCurrentCaret() {
-        const ed = getThoughtEditor();
-        if (!ed) return;
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount || !sel.isCollapsed) return;
-        const r = sel.getRangeAt(0);
-        if (!ed.contains(r.startContainer)) return;
-        const block = findBlockContainer(r.startContainer, ed);
-        lastCaret = {
-            node: r.startContainer,
-            offset: r.startOffset,
-            block,
-            charOffset: getCharOffsetInBlock(block, r.startContainer, r.startOffset)
-        };
-    }
-
-    function hasLiveCaretInEditor(ed) {
-        if (!ed || document.activeElement !== ed) return false;
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount) return false;
-        return ed.contains(sel.anchorNode);
-    }
-
-    function restoreBookmark(bm) {
-        const ed = getThoughtEditor();
-        if (!ed || !bm) return false;
-        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
-
-        const sel = window.getSelection();
-        if (!sel) return false;
-
-        try {
-            if (bm.node && bm.node.isConnected && ed.contains(bm.node)) {
-                const maxOff = bm.node.nodeType === 3 ? bm.node.nodeValue.length : bm.node.childNodes.length;
-                const r = document.createRange();
-                r.setStart(bm.node, Math.max(0, Math.min(bm.offset, maxOff)));
-                r.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(r);
-                return true;
-            }
-            if (bm.block && bm.block.isConnected && ed.contains(bm.block) && bm.charOffset >= 0) {
-                const tw = document.createTreeWalker(bm.block, NodeFilter.SHOW_TEXT);
-                let rem = bm.charOffset;
-                let n;
-                let lastTxt = null;
-                while ((n = tw.nextNode())) {
-                    lastTxt = n;
-                    if (rem <= n.nodeValue.length) {
-                        const r = document.createRange();
-                        r.setStart(n, rem);
-                        r.collapse(true);
-                        sel.removeAllRanges();
-                        sel.addRange(r);
-                        return true;
-                    }
-                    rem -= n.nodeValue.length;
-                }
-                if (lastTxt) {
-                    const r = document.createRange();
-                    r.setStart(lastTxt, lastTxt.nodeValue.length);
-                    r.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(r);
-                    return true;
-                }
-            }
-        } catch (e) {}
-        return false;
-    }
-
-    function placeCaretAtPoint(clientX, clientY, ed) {
-        let range = null;
-        if (document.caretRangeFromPoint) {
-            range = document.caretRangeFromPoint(clientX, clientY);
-        } else if (document.caretPositionFromPoint) {
-            const pos = document.caretPositionFromPoint(clientX, clientY);
-            if (pos && pos.offsetNode) {
-                range = document.createRange();
-                range.setStart(pos.offsetNode, pos.offset);
-                range.collapse(true);
-            }
-        }
-        if (!range || !ed.contains(range.startContainer)) return false;
-
-        const locked = findNonEditableAncestor(range.startContainer, ed);
-        if (locked) {
-            range.setStartAfter(locked);
-            range.collapse(true);
-        }
-
-        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
-        const sel = window.getSelection();
-        if (!sel) return false;
-        sel.removeAllRanges();
-        sel.addRange(range);
-        captureCurrentCaret();
-        return true;
-    }
-
-    function scheduleCaretGuard(bm) {
-        cancelGuardTimers();
-        const check = () => {
-            if (!editorIntent) return;
-            const ed = getThoughtEditor();
-            if (!ed) return;
-            if (!hasLiveCaretInEditor(ed)) {
-                restoreBookmark(bm || lastCaret);
-            }
-        };
-        Promise.resolve().then(check);
-        requestAnimationFrame(check);
-        guardTimers.push(setTimeout(check, 40));
-        guardTimers.push(setTimeout(check, 140));
-    }
-
-    document.addEventListener('selectionchange', () => {
-        const ed = getThoughtEditor();
-        if (ed && document.activeElement === ed) captureCurrentCaret();
-    });
-
-    document.addEventListener('focusout', (e) => {
-        const ed = getThoughtEditor();
-        if (!ed || e.target !== ed) return;
-        if (!editorIntent || e.relatedTarget) return;
-        if (lastCaret) scheduleCaretGuard(lastCaret);
-    }, true);
-
-    window.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        const ed = getThoughtEditor();
-        if (!ed) return;
-        const insideEd = ed.contains(e.target);
-        const onWidget = e.target && e.target.closest && e.target.closest('button, a, input, select, .ot-in-nt-inline-badge');
-
-        if (insideEd && !onWidget) {
-            editorIntent = true;
-            cancelGuardTimers();
-
-            // Allow rapid phrasing: holding Cmd (Mac) or Ctrl (PC) while clicking places a clean caret
-            if (isBreakMod(e)) {
-                e.preventDefault();
-                if (placeCaretAtPoint(e.clientX, e.clientY, ed)) {
-                    scheduleCaretGuard(lastCaret);
-                }
-                pendingClick = null;
-                return;
-            }
-
-            pendingClick = { x: e.clientX, y: e.clientY, detail: e.detail };
-        } else {
-            editorIntent = false;
-            pendingClick = null;
-            cancelGuardTimers();
-        }
-    }, true);
-
-    // Verify single clicks after all click listeners finish so nothing drops the caret
-    window.addEventListener('click', (e) => {
-        if (!pendingClick) return;
-        const clickInfo = pendingClick;
-        pendingClick = null;
-
-        if (clickInfo.detail > 1 || Math.hypot(e.clientX - clickInfo.x, e.clientY - clickInfo.y) >= 6) return;
-
-        const ed = getThoughtEditor();
-        if (!ed || !ed.contains(e.target)) return;
-
-        const verifyClickCaret = () => {
-            if (!editorIntent) return;
-            const sel = window.getSelection();
-            if (sel && sel.rangeCount && !sel.isCollapsed && ed.contains(sel.anchorNode)) return;
-            if (!hasLiveCaretInEditor(ed)) {
-                placeCaretAtPoint(clickInfo.x, clickInfo.y, ed);
-            } else {
-                captureCurrentCaret();
-            }
-        };
-
-        requestAnimationFrame(verifyClickCaret);
-        guardTimers.push(setTimeout(verifyClickCaret, 60));
-    }, false);
-
-    window.addEventListener('keyup', (e) => {
-        if (e.key !== 'Meta' && e.key !== 'Control' && e.key !== 'Enter' && e.key !== 'Tab') return;
-        if (!editorIntent || !lastCaret) return;
-        const active = document.activeElement;
-        if (active && /^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName)) return;
-        if (active && active.closest && active.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')) return;
-
-        scheduleCaretGuard(lastCaret);
-    }, true);
-
-    // -------------------------------------------------------------------------
-    // 3. CMD + ENTER (MAC) / CTRL + ENTER (PC) LINE BREAKS
-    // -------------------------------------------------------------------------
-    function needsTrailingSentinel(br, block) {
-        let cur = br;
-        while (cur && cur !== block) {
-            let sib = cur.nextSibling;
-            while (sib) {
-                if (sib.nodeType === 1) {
-                    if (sib.tagName === 'BR') return false;
-                    const txt = (sib.textContent || '').replace(/[\u200B\r\n]/g, '').trim();
-                    if (txt.length > 0 || sib.querySelector('br, img')) return false;
-                } else if (sib.nodeType === 3) {
-                    const txt = (sib.nodeValue || '').replace(/[\u200B\r\n]/g, '').trim();
-                    if (txt.length > 0) return false;
-                }
-                sib = sib.nextSibling;
-            }
-            cur = cur.parentNode;
-        }
-        return true;
-    }
-
-    function placeCaretAfterBr(br) {
-        if (!br || !br.isConnected) return null;
-        const sel = window.getSelection();
-        if (!sel) return null;
-        const r = document.createRange();
-        const next = br.nextSibling;
-        if (next && next.nodeType === 3 && next.nodeValue.length > 0) {
-            r.setStart(next, 0);
-        } else {
-            r.setStartAfter(br);
-        }
-        r.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(r);
-        captureCurrentCaret();
-        return lastCaret;
-    }
-
-    window.addEventListener('keydown', (e) => {
-        const active = document.activeElement;
-        if (active && /^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName)) return;
-        if (active && active.closest && active.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')) return;
-
-        const ed = getThoughtEditor();
-        if (!ed) return;
-
-        if (ed === active || (active && ed.contains(active))) {
-            editorIntent = true;
-            if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Tab') captureCurrentCaret();
-        }
-	
-	// Block plain Enter and Shift+Enter inside #editor so ONLY Cmd+Enter (Mac) / Ctrl+Enter (PC) breaks lines
-        if (e.key === 'Enter' && !isBreakMod(e)) {
-            const s = window.getSelection();
-            if (s && s.rangeCount && ed.contains(s.getRangeAt(0).startContainer)) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-            }
-            return;
-        }
-
-        if (e.key !== 'Enter') return;
-
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount) return;
-
-        const range = sel.getRangeAt(0);
-        if (!ed.contains(range.startContainer) || !ed.contains(range.endContainer)) return;
-
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        editorIntent = true;
-
-        if (document.activeElement !== ed) ed.focus({ preventScroll: true });
-
-        const workRange = range.cloneRange();
-        if (!workRange.collapsed) workRange.deleteContents();
-
-        const lockedEl = findNonEditableAncestor(workRange.startContainer, ed);
-        if (lockedEl) {
-            workRange.setStartAfter(lockedEl);
-            workRange.collapse(true);
-        }
-
-        const block = findBlockContainer(workRange.startContainer, ed);
-        const br = document.createElement('br');
-        workRange.insertNode(br);
-
-        while (br.nextSibling && br.nextSibling.nodeType === 3 && br.nextSibling.nodeValue === '') {
-            br.nextSibling.remove();
-        }
-        if (br.nextSibling && br.nextSibling.nodeType === 3 && /^ [^\s]/.test(br.nextSibling.nodeValue)) {
-            br.nextSibling.nodeValue = br.nextSibling.nodeValue.slice(1);
-        }
-
-        if (needsTrailingSentinel(br, block)) {
-            const sentinel = document.createElement('br');
-            sentinel.dataset.lfBreakSentinel = '1';
-            br.parentNode.insertBefore(sentinel, br.nextSibling);
-        }
-
-        const bm = placeCaretAfterBr(br);
-        scheduleCaretGuard(bm);
-
-        clearTimeout(debouncedInputTimer);
-        debouncedInputTimer = setTimeout(() => {
-            try {
-                ed.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertLineBreak' }));
-            } catch (err) {
-                ed.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-            if (editorIntent && !hasLiveCaretInEditor(ed)) {
-                restoreBookmark(lastCaret);
-            }
-        }, 250);
-    }, true);
-})();
-
-
-	/* === LEXFLOW FEATURE v4: AUTO-HIGHLIGHT ACTIVE VERSE IN LSJ & THAYER'S === */
+	/* === LEXFLOW FEATURE v3: ALL-LEXICON SCRIPTURE SEARCH + VERSE-WORDS FALLBACK === */
 (function () {
     const BOOKS = [
-        { num: 1, name: 'Genesis', lsj: ['Genesis', 'Gen.', 'Ge.', 'Gn.'], thayer: ['Genesis', 'Gen.', 'Gen', 'Ge.', 'Gn.'] },
-        { num: 2, name: 'Exodus', lsj: ['Exodus', 'Exod.', 'Ex.'], thayer: ['Exodus', 'Exod.', 'Exod', 'Ex.'] },
-        { num: 3, name: 'Leviticus', lsj: ['Leviticus', 'Lev.', 'Le.', 'Lv.'], thayer: ['Leviticus', 'Lev.', 'Lev', 'Le.', 'Lv.'] },
-        { num: 4, name: 'Numbers', lsj: ['Numbers', 'Num.', 'Nu.', 'Nm.'], thayer: ['Numbers', 'Num.', 'Num', 'Nu.', 'Nm.'] },
-        { num: 5, name: 'Deuteronomy', lsj: ['Deuteronomy', 'Deut.', 'De.', 'Dt.'], thayer: ['Deuteronomy', 'Deut.', 'Deut', 'De.', 'Dt.'] },
-        { num: 6, name: 'Joshua', lsj: ['Joshua', 'Josh.', 'Jos.'], thayer: ['Joshua', 'Josh.', 'Josh', 'Jos.'] },
-        { num: 7, name: 'Judges', lsj: ['Judges', 'Judg.', 'Jdg.', 'Ju.'], thayer: ['Judges', 'Judg.', 'Judg', 'Jdg.'] },
-        { num: 8, name: 'Ruth', lsj: ['Ruth', 'Ru.'], thayer: ['Ruth', 'Ru.'] },
-        { num: 9, name: '1 Samuel', lsj: ['1 Samuel', '1 Sam.', '1 Sa.', '1 Reg.', '1 Ki.', '1 Kings'], thayer: ['1 Samuel', '1 Sam.', '1 Sam', 'I Sam.', 'I Sam', '1 Sa.', '1 Kings', 'I Kings'] },
-        { num: 10, name: '2 Samuel', lsj: ['2 Samuel', '2 Sam.', '2 Sa.', '2 Reg.', '2 Ki.', '2 Kings'], thayer: ['2 Samuel', '2 Sam.', '2 Sam', 'II Sam.', 'II Sam', '2 Sa.', '2 Kings', 'II Kings'] },
-        { num: 11, name: '1 Kings', lsj: ['1 Kings', '1 Ki.', '1 Reg.', '3 Reg.', '3 Ki.'], thayer: ['1 Kings', '1 Ki.', '1 Kgs.', '1 Kgs', 'I Kings', 'I Kgs.', 'I Kgs'] },
-        { num: 12, name: '2 Kings', lsj: ['2 Kings', '2 Ki.', '2 Reg.', '4 Reg.', '4 Ki.'], thayer: ['2 Kings', '2 Ki.', '2 Kgs.', '2 Kgs', 'II Kings', 'II Kgs.', 'II Kgs'] },
-        { num: 13, name: '1 Chronicles', lsj: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Par.'], thayer: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Chr', 'I Chron.', 'I Chr.', 'I Chr'] },
-        { num: 14, name: '2 Chronicles', lsj: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Par.'], thayer: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Chr', 'II Chron.', 'II Chr.', 'II Chr'] },
-        { num: 15, name: 'Ezra', lsj: ['Ezra', 'Ezr.', '1 Esd.'], thayer: ['Ezra', 'Ezr.'] },
-        { num: 16, name: 'Nehemiah', lsj: ['Nehemiah', 'Neh.', 'Ne.', '2 Esd.'], thayer: ['Nehemiah', 'Neh.', 'Neh', 'Ne.'] },
-        { num: 17, name: 'Esther', lsj: ['Esther', 'Esth.', 'Est.'], thayer: ['Esther', 'Esth.', 'Est.'] },
-        { num: 18, name: 'Job', lsj: ['Job'], thayer: ['Job'] },
-        { num: 19, name: 'Psalms', lsj: ['Psalms', 'Psalm', 'Ps.', 'Pss.'], thayer: ['Psalms', 'Psalm', 'Ps.', 'Ps', 'Pss.'] },
-        { num: 20, name: 'Proverbs', lsj: ['Proverbs', 'Prov.', 'Pr.'], thayer: ['Proverbs', 'Prov.', 'Prov', 'Pr.'] },
-        { num: 21, name: 'Ecclesiastes', lsj: ['Ecclesiastes', 'Eccles.', 'Eccl.', 'Ec.'], thayer: ['Ecclesiastes', 'Eccles.', 'Eccl.', 'Eccl', 'Ec.'] },
-        { num: 22, name: 'Song of Solomon', lsj: ['Song of Solomon', 'Cant.', 'Ca.', 'Song'], thayer: ['Song of Solomon', 'Cant.', 'Song', 'So.'] },
-        { num: 23, name: 'Isaiah', lsj: ['Isaiah', 'Isa.', 'Is.'], thayer: ['Isaiah', 'Isa.', 'Isa', 'Is.'] },
-        { num: 24, name: 'Jeremiah', lsj: ['Jeremiah', 'Jer.', 'Je.'], thayer: ['Jeremiah', 'Jer.', 'Jer', 'Je.'] },
-        { num: 25, name: 'Lamentations', lsj: ['Lamentations', 'Lam.', 'La.'], thayer: ['Lamentations', 'Lam.', 'Lam', 'La.'] },
-        { num: 26, name: 'Ezekiel', lsj: ['Ezekiel', 'Ezek.', 'Ez.'], thayer: ['Ezekiel', 'Ezek.', 'Ezek', 'Ez.'] },
-        { num: 27, name: 'Daniel', lsj: ['Daniel', 'Dan.', 'Da.'], thayer: ['Daniel', 'Dan.', 'Dan', 'Da.'] },
-        { num: 28, name: 'Hosea', lsj: ['Hosea', 'Hos.', 'Ho.'], thayer: ['Hosea', 'Hos.', 'Hos', 'Ho.'] },
-        { num: 29, name: 'Joel', lsj: ['Joel', 'Jl.'], thayer: ['Joel', 'Jl.'] },
-        { num: 30, name: 'Amos', lsj: ['Amos', 'Am.'], thayer: ['Amos', 'Am.'] },
-        { num: 31, name: 'Obadiah', lsj: ['Obadiah', 'Obad.', 'Ob.'], thayer: ['Obadiah', 'Obad.', 'Ob.'] },
-        { num: 32, name: 'Jonah', lsj: ['Jonah', 'Jon.'], thayer: ['Jonah', 'Jon.'] },
-        { num: 33, name: 'Micah', lsj: ['Micah', 'Mic.', 'Mi.'], thayer: ['Micah', 'Mic.', 'Mic', 'Mi.'] },
-        { num: 34, name: 'Nahum', lsj: ['Nahum', 'Nah.', 'Na.'], thayer: ['Nahum', 'Nah.', 'Na.'] },
-        { num: 35, name: 'Habakkuk', lsj: ['Habakkuk', 'Hab.', 'Hb.'], thayer: ['Habakkuk', 'Hab.', 'Hab', 'Hb.'] },
-        { num: 36, name: 'Zephaniah', lsj: ['Zephaniah', 'Zeph.', 'Zp.'], thayer: ['Zephaniah', 'Zeph.', 'Zeph', 'Zp.'] },
-        { num: 37, name: 'Haggai', lsj: ['Haggai', 'Hag.', 'Hg.'], thayer: ['Haggai', 'Hag.', 'Hg.'] },
-        { num: 38, name: 'Zechariah', lsj: ['Zechariah', 'Zech.', 'Zc.'], thayer: ['Zechariah', 'Zech.', 'Zech', 'Zc.'] },
-        { num: 39, name: 'Malachi', lsj: ['Malachi', 'Mal.', 'Ml.'], thayer: ['Malachi', 'Mal.', 'Mal', 'Ml.'] },
-        { num: 40, name: 'Matthew', lsj: ['Ev. Matt.', 'Ev. Mat.', 'Matthew', 'Matt.', 'Mat.', 'Mt.'], thayer: ['Matthew', 'Matt.', 'Matt', 'Mat.', 'Mt.'] },
-        { num: 41, name: 'Mark', lsj: ['Ev. Marc.', 'Ev. Mar.', 'Mark', 'Marc.', 'Mk.', 'Mr.'], thayer: ['Mark', 'Mk.', 'Mk', 'Mr.', 'Marc.'] },
-        { num: 42, name: 'Luke', lsj: ['Ev. Luc.', 'Luke', 'Lk.'], thayer: ['Luke', 'Luk.', 'Lk.', 'Lk', 'Luc.'] },
-        { num: 43, name: 'John', lsj: ['Ev. Jo.', 'Ev. Joh.', 'John', 'Joh.', 'Jn.'], thayer: ['John', 'Joh.', 'Jn.', 'Jn', 'Jo.'] },
-        { num: 44, name: 'Acts', lsj: ['Act. Ap.', 'Acts', 'Act.'], thayer: ['Acts', 'Act.', 'Act', 'Ac.'] },
-        { num: 45, name: 'Romans', lsj: ['Ep. Rom.', 'Romans', 'Rom.', 'Ro.'], thayer: ['Romans', 'Rom.', 'Rom', 'Ro.'] },
-        { num: 46, name: '1 Corinthians', lsj: ['1 Ep. Cor.', '1 Corinthians', '1 Cor.', '1 Co.'], thayer: ['1 Corinthians', '1 Cor.', '1 Cor', 'I Cor.', 'I Cor', '1 Co.'] },
-        { num: 47, name: '2 Corinthians', lsj: ['2 Ep. Cor.', '2 Corinthians', '2 Cor.', '2 Co.'], thayer: ['2 Corinthians', '2 Cor.', '2 Cor', 'II Cor.', 'II Cor', '2 Co.'] },
-        { num: 48, name: 'Galatians', lsj: ['Ep. Gal.', 'Galatians', 'Gal.', 'Ga.'], thayer: ['Galatians', 'Gal.', 'Gal', 'Ga.'] },
-        { num: 49, name: 'Ephesians', lsj: ['Ep. Eph.', 'Ephesians', 'Eph.'], thayer: ['Ephesians', 'Eph.', 'Eph'] },
-        { num: 50, name: 'Philippians', lsj: ['Ep. Phil.', 'Philippians', 'Phil.', 'Php.'], thayer: ['Philippians', 'Phil.', 'Phil', 'Php.'] },
-        { num: 51, name: 'Colossians', lsj: ['Ep. Col.', 'Colossians', 'Col.'], thayer: ['Colossians', 'Col.', 'Col'] },
-        { num: 52, name: '1 Thessalonians', lsj: ['1 Ep. Thess.', '1 Thessalonians', '1 Thess.', '1 Thes.', '1 Th.'], thayer: ['1 Thessalonians', '1 Thess.', '1 Thess', 'I Thess.', 'I Thess', '1 Thes.', '1 Th.'] },
-        { num: 53, name: '2 Thessalonians', lsj: ['2 Ep. Thess.', '2 Thessalonians', '2 Thess.', '2 Thes.', '2 Th.'], thayer: ['2 Thessalonians', '2 Thess.', '2 Thess', 'II Thess.', 'II Thess', '2 Thes.', '2 Th.'] },
-        { num: 54, name: '1 Timothy', lsj: ['1 Ep. Tim.', '1 Timothy', '1 Tim.', '1 Ti.'], thayer: ['1 Timothy', '1 Tim.', '1 Tim', 'I Tim.', 'I Tim', '1 Ti.'] },
-        { num: 55, name: '2 Timothy', lsj: ['2 Ep. Tim.', '2 Timothy', '2 Tim.', '2 Ti.'], thayer: ['2 Timothy', '2 Tim.', '2 Tim', 'II Tim.', 'II Tim', '2 Ti.'] },
-        { num: 56, name: 'Titus', lsj: ['Ep. Tit.', 'Titus', 'Tit.'], thayer: ['Titus', 'Tit.', 'Tit'] },
-        { num: 57, name: 'Philemon', lsj: ['Ep. Philem.', 'Philemon', 'Philem.', 'Phm.'], thayer: ['Philemon', 'Philem.', 'Phm.'] },
-        { num: 58, name: 'Hebrews', lsj: ['Ep. Hebr.', 'Hebrews', 'Hebr.', 'Heb.'], thayer: ['Hebrews', 'Heb.', 'Heb', 'Hebr.'] },
-        { num: 59, name: 'James', lsj: ['Ep. Jac.', 'James', 'Jac.', 'Jas.'], thayer: ['James', 'Jas.', 'Jas', 'Jac.'] },
-        { num: 60, name: '1 Peter', lsj: ['1 Ep. Pet.', '1 Peter', '1 Pet.', '1 Pe.'], thayer: ['1 Peter', '1 Pet.', '1 Pet', 'I Pet.', 'I Pet', '1 Pe.'] },
-        { num: 61, name: '2 Peter', lsj: ['2 Ep. Pet.', '2 Peter', '2 Pet.', '2 Pe.'], thayer: ['2 Peter', '2 Pet.', '2 Pet', 'II Pet.', 'II Pet', '2 Pe.'] },
-        { num: 62, name: '1 John', lsj: ['1 Ep. Jo.', '1 Ep. Joh.', '1 John', '1 Joh.', '1 Jn.'], thayer: ['1 John', '1 Jn.', '1 Jn', 'I John', 'I Jn.', 'I Jn', '1 Jo.'] },
-        { num: 63, name: '2 John', lsj: ['2 Ep. Jo.', '2 Ep. Joh.', '2 John', '2 Joh.', '2 Jn.'], thayer: ['2 John', '2 Jn.', '2 Jn', 'II John', 'II Jn.', 'II Jn', '2 Jo.'] },
-        { num: 64, name: '3 John', lsj: ['3 Ep. Jo.', '3 Ep. Joh.', '3 John', '3 Joh.', '3 Jn.'], thayer: ['3 John', '3 Jn.', '3 Jn', 'III John', 'III Jn.', 'III Jn', '3 Jo.'] },
-        { num: 65, name: 'Jude', lsj: ['Ep. Jud.', 'Jude', 'Jud.'], thayer: ['Jude', 'Jud.'] },
-        { num: 66, name: 'Revelation', lsj: ['Apoc.', 'Revelation', 'Rev.'], thayer: ['Revelation', 'Rev.', 'Rev', 'Apoc.'] }
+        { num: 1, name: 'Genesis', ot: ['Genesis', 'Gen', 'Gn', 'Ge'], gnt: ['Genesis', 'Gen', 'Ge', 'Gn'], lsj: ['Genesis', 'Gen.', 'Ge.', 'Gn.'] },
+        { num: 2, name: 'Exodus', ot: ['Exodus', 'Exod', 'Ex'], gnt: ['Exodus', 'Exod', 'Ex'], lsj: ['Exodus', 'Exod.', 'Ex.'] },
+        { num: 3, name: 'Leviticus', ot: ['Leviticus', 'Lev', 'Lv', 'Le'], gnt: ['Leviticus', 'Lev', 'Le', 'Lv'], lsj: ['Leviticus', 'Lev.', 'Le.', 'Lv.'] },
+        { num: 4, name: 'Numbers', ot: ['Numbers', 'Num', 'Nu', 'Nm', 'Nb'], gnt: ['Numbers', 'Num', 'Nu', 'Nm'], lsj: ['Numbers', 'Num.', 'Nu.', 'Nm.'] },
+        { num: 5, name: 'Deuteronomy', ot: ['Deuteronomy', 'Deut', 'Dt', 'De'], gnt: ['Deuteronomy', 'Deut', 'De', 'Dt'], lsj: ['Deuteronomy', 'Deut.', 'De.', 'Dt.'] },
+        { num: 6, name: 'Joshua', ot: ['Joshua', 'Josh', 'Jos'], gnt: ['Joshua', 'Josh', 'Jos'], lsj: ['Joshua', 'Josh.', 'Jos.'] },
+        { num: 7, name: 'Judges', ot: ['Judges', 'Judg', 'Jdg', 'Jg', 'Ju'], gnt: ['Judges', 'Judg', 'Jdg', 'Jg', 'Ju'], lsj: ['Judges', 'Judg.', 'Jdg.', 'Ju.'] },
+        { num: 8, name: 'Ruth', ot: ['Ruth', 'Ru', 'Rth'], gnt: ['Ruth', 'Ru'], lsj: ['Ruth', 'Ru.'] },
+        { num: 9, name: '1 Samuel', ot: ['1 Samuel', '1 Sam', '1 Sa', '1 S', '1Sm', '1S', 'I Sam', 'I Sa', 'I S', '1 Kings', 'I Kings'], gnt: ['1 Samuel', '1 Sam', 'I Sam', '1 Sa', 'I Sa', '1 S', 'I S', '1 Kings', 'I Kings'], lsj: ['1 Samuel', '1 Sam.', '1 Sa.', '1 Reg.', '1 Ki.', '1 Kings'] },
+        { num: 10, name: '2 Samuel', ot: ['2 Samuel', '2 Sam', '2 Sa', '2 S', '2Sm', '2S', 'II Sam', 'II Sa', 'II S', '2 Kings', 'II Kings'], gnt: ['2 Samuel', '2 Sam', 'II Sam', '2 Sa', 'II Sa', '2 S', 'II S', '2 Kings', 'II Kings'], lsj: ['2 Samuel', '2 Sam.', '2 Sa.', '2 Reg.', '2 Ki.', '2 Kings'] },
+        { num: 11, name: '1 Kings', ot: ['1 Kings', '1 Kgs', '1 Ki', '1 K', '1Ki', '1K', 'I Kings', 'I Kgs', 'I Ki', 'I K'], gnt: ['1 Kings', '1 Kgs', '1 Ki', '1 K', 'I Kings', 'I Kgs', 'I Ki', 'I K'], lsj: ['1 Kings', '1 Ki.', '1 Reg.', '3 Reg.', '3 Ki.'] },
+        { num: 12, name: '2 Kings', ot: ['2 Kings', '2 Kgs', '2 Ki', '2 K', '2Ki', '2K', 'II Kings', 'II Kgs', 'II Ki', 'II K'], gnt: ['2 Kings', '2 Kgs', '2 Ki', '2 K', 'II Kings', 'II Kgs', 'II Ki', 'II K'], lsj: ['2 Kings', '2 Ki.', '2 Reg.', '4 Reg.', '4 Ki.'] },
+        { num: 13, name: '1 Chronicles', ot: ['1 Chronicles', '1 Chron', '1 Chr', '1 Ch', '1Ch', 'I Chron', 'I Chr', 'I Ch'], gnt: ['1 Chronicles', '1 Chron', '1 Chr', '1 Ch', 'I Chron', 'I Chr', 'I Ch'], lsj: ['1 Chronicles', '1 Chron.', '1 Chr.', '1 Par.'] },
+        { num: 14, name: '2 Chronicles', ot: ['2 Chronicles', '2 Chron', '2 Chr', '2 Ch', '2Ch', 'II Chron', 'II Chr', 'II Ch'], gnt: ['2 Chronicles', '2 Chron', '2 Chr', '2 Ch', 'II Chron', 'II Chr', 'II Ch'], lsj: ['2 Chronicles', '2 Chron.', '2 Chr.', '2 Par.'] },
+        { num: 15, name: 'Ezra', ot: ['Ezra', 'Ezr'], gnt: ['Ezra', 'Ezr'], lsj: ['Ezra', 'Ezr.', '1 Esd.'] },
+        { num: 16, name: 'Nehemiah', ot: ['Nehemiah', 'Neh', 'Ne'], gnt: ['Nehemiah', 'Neh', 'Ne'], lsj: ['Nehemiah', 'Neh.', 'Ne.', '2 Esd.'] },
+        { num: 17, name: 'Esther', ot: ['Esther', 'Esth', 'Est', 'Es'], gnt: ['Esther', 'Esth', 'Est'], lsj: ['Esther', 'Esth.', 'Est.'] },
+        { num: 18, name: 'Job', ot: ['Job', 'Jb'], gnt: ['Job', 'Jb'], lsj: ['Job'] },
+        { num: 19, name: 'Psalms', ot: ['Psalms', 'Psalm', 'Pss', 'Psa', 'Ps'], gnt: ['Psalms', 'Psalm', 'Pss', 'Psa', 'Ps'], lsj: ['Psalms', 'Psalm', 'Ps.', 'Pss.'] },
+        { num: 20, name: 'Proverbs', ot: ['Proverbs', 'Prov', 'Prv', 'Pr'], gnt: ['Proverbs', 'Prov', 'Pr'], lsj: ['Proverbs', 'Prov.', 'Pr.'] },
+        { num: 21, name: 'Ecclesiastes', ot: ['Ecclesiastes', 'Eccles', 'Eccl', 'Ecc', 'Ec', 'Qoh'], gnt: ['Ecclesiastes', 'Eccles', 'Eccl', 'Ec'], lsj: ['Ecclesiastes', 'Eccles.', 'Eccl.', 'Ec.'] },
+        { num: 22, name: 'Song of Solomon', ot: ['Song of Solomon', 'Songs', 'Song', 'Cant', 'Ct', 'Ca', 'So', 'SS'], gnt: ['Song of Solomon', 'Cant', 'Song', 'Ca', 'So'], lsj: ['Song of Solomon', 'Cant.', 'Ca.', 'Song'] },
+        { num: 23, name: 'Isaiah', ot: ['Isaiah', 'Isa', 'Is'], gnt: ['Isaiah', 'Isa', 'Is'], lsj: ['Isaiah', 'Isa.', 'Is.'] },
+        { num: 24, name: 'Jeremiah', ot: ['Jeremiah', 'Jer', 'Je', 'Jr'], gnt: ['Jeremiah', 'Jer', 'Je'], lsj: ['Jeremiah', 'Jer.', 'Je.'] },
+        { num: 25, name: 'Lamentations', ot: ['Lamentations', 'Lam', 'La'], gnt: ['Lamentations', 'Lam', 'La'], lsj: ['Lamentations', 'Lam.', 'La.'] },
+        { num: 26, name: 'Ezekiel', ot: ['Ezekiel', 'Ezek', 'Eze', 'Ez'], gnt: ['Ezekiel', 'Ezek', 'Ez'], lsj: ['Ezekiel', 'Ezek.', 'Ez.'] },
+        { num: 27, name: 'Daniel', ot: ['Daniel', 'Dan', 'Dn', 'Da'], gnt: ['Daniel', 'Dan', 'Dn', 'Da'], lsj: ['Daniel', 'Dan.', 'Da.'] },
+        { num: 28, name: 'Hosea', ot: ['Hosea', 'Hos', 'Ho'], gnt: ['Hosea', 'Hos', 'Ho'], lsj: ['Hosea', 'Hos.', 'Ho.'] },
+        { num: 29, name: 'Joel', ot: ['Joel', 'Joe', 'Jl', 'Jo'], gnt: ['Joel', 'Jl'], lsj: ['Joel', 'Jl.'] },
+        { num: 30, name: 'Amos', ot: ['Amos', 'Am'], gnt: ['Amos', 'Am'], lsj: ['Amos', 'Am.'] },
+        { num: 31, name: 'Obadiah', ot: ['Obadiah', 'Obad', 'Ob'], gnt: ['Obadiah', 'Obad', 'Ob'], lsj: ['Obadiah', 'Obad.', 'Ob.'] },
+        { num: 32, name: 'Jonah', ot: ['Jonah', 'Jon', 'Jnh'], gnt: ['Jonah', 'Jon'], lsj: ['Jonah', 'Jon.'] },
+        { num: 33, name: 'Micah', ot: ['Micah', 'Mic', 'Mi'], gnt: ['Micah', 'Mic', 'Mi'], lsj: ['Micah', 'Mic.', 'Mi.'] },
+        { num: 34, name: 'Nahum', ot: ['Nahum', 'Nah', 'Na'], gnt: ['Nahum', 'Nah', 'Na'], lsj: ['Nahum', 'Nah.', 'Na.'] },
+        { num: 35, name: 'Habakkuk', ot: ['Habakkuk', 'Hab', 'Hb'], gnt: ['Habakkuk', 'Hab', 'Hb'], lsj: ['Habakkuk', 'Hab.', 'Hb.'] },
+        { num: 36, name: 'Zephaniah', ot: ['Zephaniah', 'Zeph', 'Zep', 'Zp'], gnt: ['Zephaniah', 'Zeph', 'Zp'], lsj: ['Zephaniah', 'Zeph.', 'Zp.'] },
+        { num: 37, name: 'Haggai', ot: ['Haggai', 'Hag', 'Hg'], gnt: ['Haggai', 'Hag', 'Hg'], lsj: ['Haggai', 'Hag.', 'Hg.'] },
+        { num: 38, name: 'Zechariah', ot: ['Zechariah', 'Zech', 'Zec', 'Zc'], gnt: ['Zechariah', 'Zech', 'Zc'], lsj: ['Zechariah', 'Zech.', 'Zc.'] },
+        { num: 39, name: 'Malachi', ot: ['Malachi', 'Mal', 'Ml'], gnt: ['Malachi', 'Mal', 'Ml'], lsj: ['Malachi', 'Mal.', 'Ml.'] },
+        { num: 40, name: 'Matthew', ot: ['Matthew', 'Matt', 'Mt'], gnt: ['Matthew', 'Matt', 'Mat', 'Mt'], lsj: ['Ev. Matt.', 'Ev. Mat.', 'Matthew', 'Matt.', 'Mat.', 'Mt.'] },
+        { num: 41, name: 'Mark', ot: ['Mark', 'Mk'], gnt: ['Mark', 'Marc', 'Mk', 'Mr'], lsj: ['Ev. Marc.', 'Ev. Mar.', 'Mark', 'Marc.', 'Mk.', 'Mr.'] },
+        { num: 42, name: 'Luke', ot: ['Luke', 'Lk'], gnt: ['Luke', 'Luk', 'Luc', 'Lk'], lsj: ['Ev. Luc.', 'Luke', 'Lk.'] },
+        { num: 43, name: 'John', ot: ['John', 'Jn'], gnt: ['John', 'Joh', 'Jn', 'Jo'], lsj: ['Ev. Jo.', 'Ev. Joh.', 'John', 'Joh.', 'Jn.'] },
+        { num: 44, name: 'Acts', ot: ['Acts', 'Ac'], gnt: ['Acts', 'Act', 'Ac'], lsj: ['Act. Ap.', 'Acts', 'Act.'] },
+        { num: 45, name: 'Romans', ot: ['Romans', 'Rom', 'Ro'], gnt: ['Romans', 'Rom', 'Ro', 'Rm'], lsj: ['Ep. Rom.', 'Romans', 'Rom.', 'Ro.'] },
+        { num: 46, name: '1 Corinthians', ot: ['1 Corinthians', '1 Cor', '1 Co'], gnt: ['1 Corinthians', '1 Cor', 'I Cor', '1 Co', 'I Co'], lsj: ['1 Ep. Cor.', '1 Corinthians', '1 Cor.', '1 Co.'] },
+        { num: 47, name: '2 Corinthians', ot: ['2 Corinthians', '2 Cor', '2 Co'], gnt: ['2 Corinthians', '2 Cor', 'II Cor', '2 Co', 'II Co'], lsj: ['2 Ep. Cor.', '2 Corinthians', '2 Cor.', '2 Co.'] },
+        { num: 48, name: 'Galatians', ot: ['Galatians', 'Gal', 'Ga'], gnt: ['Galatians', 'Gal', 'Ga'], lsj: ['Ep. Gal.', 'Galatians', 'Gal.', 'Ga.'] },
+        { num: 49, name: 'Ephesians', ot: ['Ephesians', 'Eph'], gnt: ['Ephesians', 'Eph', 'Ep'], lsj: ['Ep. Eph.', 'Ephesians', 'Eph.'] },
+        { num: 50, name: 'Philippians', ot: ['Philippians', 'Phil', 'Php'], gnt: ['Philippians', 'Phil', 'Php', 'Ph'], lsj: ['Ep. Phil.', 'Philippians', 'Phil.', 'Php.'] },
+        { num: 51, name: 'Colossians', ot: ['Colossians', 'Col'], gnt: ['Colossians', 'Col'], lsj: ['Ep. Col.', 'Colossians', 'Col.'] },
+        { num: 52, name: '1 Thessalonians', ot: ['1 Thessalonians', '1 Thess', '1 Th'], gnt: ['1 Thessalonians', '1 Thess', 'I Thess', '1 Thes', 'I Thes', '1 Th', 'I Th'], lsj: ['1 Ep. Thess.', '1 Thessalonians', '1 Thess.', '1 Thes.', '1 Th.'] },
+        { num: 53, name: '2 Thessalonians', ot: ['2 Thessalonians', '2 Thess', '2 Th'], gnt: ['2 Thessalonians', '2 Thess', 'II Thess', '2 Thes', 'II Thes', '2 Th', 'II Th'], lsj: ['2 Ep. Thess.', '2 Thessalonians', '2 Thess.', '2 Thes.', '2 Th.'] },
+        { num: 54, name: '1 Timothy', ot: ['1 Timothy', '1 Tim', '1 Ti'], gnt: ['1 Timothy', '1 Tim', 'I Tim', '1 Ti', 'I Ti'], lsj: ['1 Ep. Tim.', '1 Timothy', '1 Tim.', '1 Ti.'] },
+        { num: 55, name: '2 Timothy', ot: ['2 Timothy', '2 Tim', '2 Ti'], gnt: ['2 Timothy', '2 Tim', 'II Tim', '2 Ti', 'II Ti'], lsj: ['2 Ep. Tim.', '2 Timothy', '2 Tim.', '2 Ti.'] },
+        { num: 56, name: 'Titus', ot: ['Titus', 'Tit'], gnt: ['Titus', 'Tit', 'Ti'], lsj: ['Ep. Tit.', 'Titus', 'Tit.'] },
+        { num: 57, name: 'Philemon', ot: ['Philemon', 'Philem', 'Phm'], gnt: ['Philemon', 'Philem', 'Phlm', 'Phm'], lsj: ['Ep. Philem.', 'Philemon', 'Philem.', 'Phm.'] },
+        { num: 58, name: 'Hebrews', ot: ['Hebrews', 'Heb', 'He'], gnt: ['Hebrews', 'Hebr', 'Heb', 'He'], lsj: ['Ep. Hebr.', 'Hebrews', 'Hebr.', 'Heb.'] },
+        { num: 59, name: 'James', ot: ['James', 'Jas', 'Ja'], gnt: ['James', 'Jas', 'Jac', 'Ja'], lsj: ['Ep. Jac.', 'James', 'Jac.', 'Jas.'] },
+        { num: 60, name: '1 Peter', ot: ['1 Peter', '1 Pet', '1 Pe'], gnt: ['1 Peter', '1 Pet', 'I Pet', '1 Pe', 'I Pe', '1 P', 'I P'], lsj: ['1 Ep. Pet.', '1 Peter', '1 Pet.', '1 Pe.'] },
+        { num: 61, name: '2 Peter', ot: ['2 Peter', '2 Pet', '2 Pe'], gnt: ['2 Peter', '2 Pet', 'II Pet', '2 Pe', 'II Pe', '2 P', 'II P'], lsj: ['2 Ep. Pet.', '2 Peter', '2 Pet.', '2 Pe.'] },
+        { num: 62, name: '1 John', ot: ['1 John', '1 Jn'], gnt: ['1 John', '1 Joh', 'I Joh', '1 Jn', 'I Jn', '1 Jo', 'I Jo', 'I John'], lsj: ['1 Ep. Jo.', '1 Ep. Joh.', '1 John', '1 Joh.', '1 Jn.'] },
+        { num: 63, name: '2 John', ot: ['2 John', '2 Jn'], gnt: ['2 John', '2 Joh', 'II Joh', '2 Jn', 'II Jn', '2 Jo', 'II Jo', 'II John'], lsj: ['2 Ep. Jo.', '2 Ep. Joh.', '2 John', '2 Joh.', '2 Jn.'] },
+        { num: 64, name: '3 John', ot: ['3 John', '3 Jn'], gnt: ['3 John', '3 Joh', 'III Joh', '3 Jn', 'III Jn', '3 Jo', 'III Jo', 'III John'], lsj: ['3 Ep. Jo.', '3 Ep. Joh.', '3 John', '3 Joh.', '3 Jn.'] },
+        { num: 65, name: 'Jude', ot: ['Jude', 'Jud'], gnt: ['Jude', 'Jud'], lsj: ['Ep. Jud.', 'Jude', 'Jud.'] },
+        { num: 66, name: 'Revelation', ot: ['Revelation', 'Rev', 'Re'], gnt: ['Revelation', 'Apoc', 'Rev', 'Re'], lsj: ['Apoc.', 'Revelation', 'Rev.'] }
     ];
 
-    const NAME_TO_BOOK = new Map();
-    BOOKS.forEach((b) => {
-        NAME_TO_BOOK.set(b.name.toLowerCase(), b);
-        [...b.lsj, ...b.thayer].forEach((al) => {
-            NAME_TO_BOOK.set(al.toLowerCase().replace(/\.+$/, ''), b);
-        });
-    });
-
-    function isElementVisible(el) {
-        if (!el || !el.isConnected) return false;
-        const cs = window.getComputedStyle(el);
-        return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
-    }
-
-    function getThoughtEditor() {
-        return (typeof editor !== 'undefined' && editor) ||
-            document.getElementById('editor') ||
-            document.querySelector('[contenteditable="true"]');
-    }
-
-    function buildMatcher(mode) {
-        const pairs = [];
-        BOOKS.forEach((b) => {
-            (b[mode] || []).forEach((alias) => pairs.push({ alias, bookNum: b.num }));
-        });
-        pairs.sort((a, b) => b.alias.length - a.alias.length);
-        const aliasMap = new Map();
-        const escaped = pairs.map(({ alias, bookNum }) => {
-            aliasMap.set(alias.toLowerCase().replace(/\s+/g, ' '), bookNum);
-            return alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
-        });
-        const pattern =
-            `(?:\\b(${escaped.join('|')})(?=\\s|\\d|\\(|$)|([;,]))\\s*` +
-            `(?:(\\d{1,3})(?:\\s*\\(\\d{1,3}\\))?\\s*[:.]\\s*)?` +
-            `(\\d{1,3})(?:\\s*[–—-]\\s*(\\d{1,3}))?`;
-        return { regex: new RegExp(pattern, 'gi'), aliasMap };
-    }
-
-    const MATCHERS = {
-        lsj: buildMatcher('lsj'),
-        thayer: buildMatcher('thayer')
+    const LEXICON_META = {
+        abbott: { label: 'Abbott-Smith', full: 'Abbott-Smith (1922)', mode: 'gnt', modal: 'gnt', chipBg: '#ede9fe', chipText: '#6d28d9', chipBorder: '#c4b5fd' },
+        bdb: { label: 'BDB', full: 'BDB Hebrew Lexicon', mode: 'ot', modal: 'hebrew', chipBg: '#ccfbf1', chipText: '#0f766e', chipBorder: '#5eead4' },
+        gesenius: { label: 'Gesenius', full: 'Gesenius Hebrew-Chaldee', mode: 'ot', modal: 'hebrew', chipBg: '#d1fae5', chipText: '#047857', chipBorder: '#6ee7b7' },
+        lsj: { label: 'LSJ (1940)', full: 'LSJ Greek-English (1940)', mode: 'lsj', modal: 'lsj', chipBg: '#e0e7ff', chipText: '#3730a3', chipBorder: '#a5b4fc' }
     };
 
-    const oldStyle = document.getElementById('lfVerseMatchStyles');
-    if (oldStyle) oldStyle.remove();
-    const style = document.createElement('style');
-    style.id = 'lfVerseMatchStyles';
-    style.textContent = `
-        mark.lf-verse-match-pill {
-            background: #fef08a !important;
-            color: #713f12 !important;
-            font-weight: 700 !important;
-            padding: 1px 5px !important;
-            border-radius: 4px !important;
-            border-bottom: 2px solid #eab308 !important;
-            box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.45) !important;
-        }
-        #lfLsjActiveVersePill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-left: 10px;
-            padding: 3px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            background: #fef9c3;
-            color: #854d0e;
-            border: 1px solid #fde047;
-            cursor: pointer;
-            vertical-align: middle;
-        }
-        #lfLsjActiveVersePill:hover {
-            background: #fef08a;
-        }
-    `;
-    document.head.appendChild(style);
-
-    let activeRef = window.__lfActiveVerse || null;
-
-    function setActiveRef(bookNum, chapter, verse) {
-        bookNum = parseInt(bookNum, 10);
-        chapter = parseInt(chapter, 10);
-        verse = parseInt(verse, 10);
-        if (!bookNum || !chapter || !verse) return false;
-        const book = BOOKS.find((b) => b.num === bookNum);
-        if (!book) return false;
-        if (activeRef && activeRef.bookNum === bookNum && activeRef.chapter === chapter && activeRef.verse === verse) {
-            return true;
-        }
-        activeRef = {
-            bookNum,
-            bookName: book.name,
-            chapter,
-            verse,
-            label: `${book.name} ${chapter}:${verse}`
+    const BOOK_LOOKUP = new Map();
+    BOOKS.forEach((b) => {
+        const reg = (k) => {
+            const clean = k.toLowerCase().replace(/\.+$/, '').replace(/\s+/g, ' ').trim();
+            if (clean && !BOOK_LOOKUP.has(clean)) BOOK_LOOKUP.set(clean, b);
+            const compact = clean.replace(/\s+/g, '');
+            if (compact && !BOOK_LOOKUP.has(compact)) BOOK_LOOKUP.set(compact, b);
         };
-        window.__lfActiveVerse = activeRef;
-        refreshAllLexiconHighlights(false);
-        return true;
+        reg(b.name);
+        [...b.gnt, ...b.ot, ...b.lsj].forEach(reg);
+    });
+
+    function romanToInt(str) {
+        if (!str) return 0;
+        const map = { i: 1, v: 5, x: 10, l: 50, c: 100 };
+        const s = str.toLowerCase();
+        let total = 0;
+        for (let i = 0; i < s.length; i++) {
+            const cur = map[s[i]] || 0;
+            const next = map[s[i + 1]] || 0;
+            if (!cur) return 0;
+            total += cur < next ? -cur : cur;
+        }
+        return total;
     }
 
-    function parseRefFromText(txt) {
-        if (!txt) return null;
-        const clean = txt.replace(/\s+/g, ' ').trim();
-        const m = clean.match(/\b([1-3I]{1,3}\s*[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\.?\s+(\d{1,3})(?:[:.](\d{1,3}))?\b/);
+    function parseVerseQuery(raw) {
+        if (!raw) return null;
+        const clean = raw.trim().replace(/^<\s*/, '').replace(/\s*>$/, '').trim();
+        const m = clean.match(/^((?:[1-3]\s*|I{1,3}\s+)?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\.?\s+(\d{1,3})\s*[:.]\s*(\d{1,3})\s*$/i);
         if (!m) return null;
-        const b = NAME_TO_BOOK.get(m[1].toLowerCase().replace(/\.+$/, '').trim());
-        if (!b) return null;
-        return {
-            bookNum: b.num,
-            chapter: parseInt(m[2], 10),
-            verse: m[3] ? parseInt(m[3], 10) : 0
-        };
+        const bookKey = m[1].toLowerCase().replace(/\.+$/, '').replace(/\s+/g, ' ').trim();
+        const book = BOOK_LOOKUP.get(bookKey) || BOOK_LOOKUP.get(bookKey.replace(/\s+/g, ''));
+        if (!book) return null;
+        const chapter = parseInt(m[2], 10);
+        const verse = parseInt(m[3], 10);
+        if (!chapter || !verse) return null;
+        return { book, chapter, verse, label: `${book.name} ${chapter}:${verse}` };
     }
 
-    function getToolbarBookAndChapter() {
-        const selects = Array.from(document.querySelectorAll('select')).filter(
-            (s) => !s.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')
-        );
-        for (let i = 0; i < selects.length; i++) {
-            const sel = selects[i];
-            const opt = sel.options && sel.options[sel.selectedIndex];
-            const label = ((opt && opt.textContent) || sel.value || '').trim();
-            const b = NAME_TO_BOOK.get(label.toLowerCase().replace(/\.+$/, ''));
-            if (b) {
-                const nextSel = selects[i + 1];
-                if (nextSel) {
-                    const cOpt = nextSel.options && nextSel.options[nextSel.selectedIndex];
-                    const cTxt = ((cOpt && cOpt.textContent) || nextSel.value || '').trim();
-                    const cm = cTxt.match(/(\d{1,3})/);
-                    if (cm) return { bookNum: b.num, chapter: parseInt(cm[1], 10), verse: 0 };
-                }
-            }
-        }
-        const inputs = Array.from(document.querySelectorAll('input[type="text"], input:not([type])')).filter(
-            (inp) => !inp.closest('#lfLsjModalOverlay, #lfTriStudioOverlay, #lfCatssModalOverlay, #lfLxxDrawer')
-        );
-        for (const inp of inputs) {
-            const parsed = parseRefFromText(inp.value);
-            if (parsed) return parsed;
-        }
-        return null;
-    }
-
-    // -------------------------------------------------------------------------
-    // 1. DETECT ACTIVE VERSE FROM EDITOR, LAST ACTIVE BLOCK, OR LXX DRAWER
-    // -------------------------------------------------------------------------
-    function detectFromEditorRange(range) {
-        const ed = getThoughtEditor();
-        if (!ed || !range || !ed.contains(range.startContainer)) return false;
-
-        let cur = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
-        let verseBlock = null;
-        while (cur && cur !== ed) {
-            if (cur.parentElement === ed && /^(DIV|P|SECTION|ARTICLE)$/i.test(cur.tagName)) {
-                verseBlock = cur;
-                break;
-            }
-            cur = cur.parentElement;
-        }
-        if (!verseBlock) verseBlock = window.__lexflowLastActiveBlock || ed;
-
-        let bookNum = parseInt((verseBlock.dataset && verseBlock.dataset.bookNum) || '0', 10);
-        let chapter = parseInt((verseBlock.dataset && verseBlock.dataset.chapterNum) || '0', 10);
-        let chapterBannerEl = null;
-
-        let prev = verseBlock === ed ? null : verseBlock.previousElementSibling;
-        while (prev) {
-            if (!bookNum || !chapter) {
-                if (prev.dataset && prev.dataset.bookNum && prev.dataset.chapterNum) {
-                    bookNum = parseInt(prev.dataset.bookNum, 10);
-                    chapter = parseInt(prev.dataset.chapterNum, 10);
-                } else {
-                    const parsed = parseRefFromText(prev.textContent);
-                    if (parsed) {
-                        bookNum = parsed.bookNum;
-                        chapter = parsed.chapter;
-                        chapterBannerEl = prev;
-                        break;
-                    }
-                }
-            }
-            if (prev.classList && prev.classList.contains('lex-chapter-banner')) {
-                chapterBannerEl = prev;
-                break;
-            }
-            prev = prev.previousElementSibling;
-        }
-
-        if (!bookNum || !chapter) {
-            const tb = getToolbarBookAndChapter();
-            if (tb) {
-                bookNum = tb.bookNum;
-                chapter = tb.chapter;
-            }
-        }
-        if (!bookNum || !chapter) return false;
-
-        let verse = parseInt((verseBlock.dataset && (verseBlock.dataset.verseNum || verseBlock.dataset.verse)) || '0', 10);
-        if (!verse) {
-            const scanStartEl = chapterBannerEl ? chapterBannerEl.nextElementSibling || verseBlock : ed;
-            let lastSeenVerse = 0;
-            const tw = document.createTreeWalker(ed, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-            let n;
-            let pastStart = (scanStartEl === ed);
-
-            while ((n = tw.nextNode())) {
-                if (!pastStart) {
-                    if (n === scanStartEl || (n.nodeType === 1 && n.contains(scanStartEl))) {
-                        pastStart = true;
-                    } else {
-                        continue;
-                    }
-                }
-
-                const cmp = document.createRange();
-                try {
-                    if (n.nodeType === 3) cmp.setStart(n, 0);
-                    else cmp.setStartBefore(n);
-                    cmp.collapse(true);
-                    if (cmp.compareBoundaryPoints(Range.START_TO_START, range) > 0) break;
-                } catch (e) {}
-
-                if (n.nodeType === 1) {
-                    if (n.dataset && (n.dataset.verse || n.dataset.verseNum)) {
-                        const v = parseInt(n.dataset.verse || n.dataset.verseNum, 10);
-                        if (v >= 1 && v <= 176) lastSeenVerse = v;
-                    } else if (
-                        (n.classList && /verse|vnum/i.test(n.className)) ||
-                        n.tagName === 'SUP' ||
-                        n.tagName === 'B' ||
-                        n.tagName === 'STRONG'
-                    ) {
-                        const raw = (n.textContent || '').trim();
-                        const vm = raw.match(/^(?:\d{1,3}\s*[:.])?\s*\[?(\d{1,3})\]?\.?$/);
-                        if (vm) {
-                            const v = parseInt(vm[1], 10);
-                            if (v >= 1 && v <= 176) lastSeenVerse = v;
-                        }
-                    }
-                } else if (n.nodeType === 3) {
-                    const p = n.parentElement;
-                    if (p && (p.tagName === 'SUP' || (p.classList && /verse|vnum/i.test(p.className)))) continue;
-                    const prevSib = n.previousSibling;
-                    const atLineStart = !prevSib || prevSib.tagName === 'BR' || (p && p.firstChild === n && /^(DIV|P|SPAN)$/i.test(p.tagName));
-                    if (atLineStart) {
-                        const vm = n.nodeValue.match(/^\s*(?:\d{1,3}\s*[:.])?\s*\[?(\d{1,3})\]?(?:\s+|(?=[A-Za-z“"‘'(\[]))/);
-                        if (vm) {
-                            const v = parseInt(vm[1], 10);
-                            if (v >= 1 && v <= 176) lastSeenVerse = v;
-                        }
-                    }
-                }
-            }
-            verse = lastSeenVerse || 1;
-        }
-
-        return setActiveRef(bookNum, chapter, verse);
-    }
-
-    function detectFromLxxDrawerNode(node) {
-        const drawer = document.getElementById('lfLxxDrawer');
-        if (!drawer || !node || !drawer.contains(node)) return false;
-
-        let cur = node.nodeType === 3 ? node.parentElement : node;
-        let verseRow = null;
-        while (cur && cur !== drawer) {
-            if (cur.dataset && (cur.dataset.verse || cur.dataset.verseNum || cur.dataset.ref)) {
-                verseRow = cur;
-                break;
-            }
-            if (!verseRow && /^(DIV|LI|P|TR)$/i.test(cur.tagName) && /^\s*\d{1,3}\b/.test(cur.textContent || '')) {
-                verseRow = cur;
-            }
-            cur = cur.parentElement;
-        }
-
-        let bookNum = 0;
-        let chapter = 0;
-        let verse = 0;
-
-        if (verseRow && verseRow.dataset) {
-            bookNum = parseInt(verseRow.dataset.bookNum || verseRow.dataset.book || '0', 10);
-            chapter = parseInt(verseRow.dataset.chapterNum || verseRow.dataset.chapter || '0', 10);
-            verse = parseInt(verseRow.dataset.verseNum || verseRow.dataset.verse || '0', 10);
-            if ((!bookNum || !chapter || !verse) && verseRow.dataset.ref) {
-                const parsed = parseRefFromText(verseRow.dataset.ref);
-                if (parsed) {
-                    bookNum = parsed.bookNum;
-                    chapter = parsed.chapter;
-                    verse = parsed.verse;
-                }
-            }
-        }
-
-        if (!bookNum || !chapter) {
-            const selects = drawer.querySelectorAll('select');
-            selects.forEach((sel) => {
-                const opt = sel.options && sel.options[sel.selectedIndex];
-                const txt = ((opt && opt.textContent) || sel.value || '').trim();
-                const b = NAME_TO_BOOK.get(txt.toLowerCase().replace(/\.+$/, ''));
-                if (b) bookNum = b.num;
-                else if (/^\d{1,3}$/.test(txt)) chapter = parseInt(txt, 10);
-            });
-            if (!bookNum || !chapter) {
-                const hdr = drawer.querySelector('h2, h3, .lxx-header, .lxx-passage-title');
-                const parsed = parseRefFromText(hdr && hdr.textContent);
-                if (parsed) {
-                    bookNum = parsed.bookNum;
-                    chapter = parsed.chapter;
-                }
-            }
-        }
-
-        if (!verse && verseRow) {
-            const vm = (verseRow.textContent || '').trim().match(/^(\d{1,3})\b/);
-            if (vm) verse = parseInt(vm[1], 10);
-        }
-
-        return setActiveRef(bookNum, chapter, verse);
-    }
-
-    function syncFromCurrentSelection() {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount && detectFromEditorRange(sel.getRangeAt(0))) {
-            return;
-        }
-        if (!activeRef && window.__lexflowLastActiveBlock) {
-            const blk = window.__lexflowLastActiveBlock;
-            if (blk.dataset && blk.dataset.bookNum && blk.dataset.chapterNum) {
-                setActiveRef(blk.dataset.bookNum, blk.dataset.chapterNum, blk.dataset.verseNum || blk.dataset.verse || 1);
-            }
-        }
-    }
-
-    document.addEventListener('selectionchange', syncFromCurrentSelection);
-    document.addEventListener('keyup', syncFromCurrentSelection, true);
-    document.addEventListener('mouseup', (e) => {
-        syncFromCurrentSelection();
-        detectFromLxxDrawerNode(e.target);
-    }, true);
-    document.addEventListener('click', (e) => {
-        syncFromCurrentSelection();
-        detectFromLxxDrawerNode(e.target);
-        setTimeout(() => refreshAllLexiconHighlights(true), 60);
-        setTimeout(() => refreshAllLexiconHighlights(false), 320);
-    }, true);
-
-    // -------------------------------------------------------------------------
-    // 2. HIGHLIGHT MATCHING CITATIONS ACROSS TEXT NODES (LSJ & THAYER'S)
-    // -------------------------------------------------------------------------
-    function findLsjContainer() {
-        const byId = document.getElementById('lfLsjModalOverlay');
-        if (byId && isElementVisible(byId)) return byId;
-        const heading = Array.from(document.querySelectorAll('h1, h2, h3, div, span')).find((el) =>
-            isElementVisible(el) &&
-            /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) &&
-            el.children.length <= 2
-        );
-        if (!heading) return null;
-        let box = heading.parentElement;
-        while (box && box !== document.body) {
-            if (box.querySelector('input') && box.textContent.length > 120) return box;
-            box = box.parentElement;
-        }
-        return heading.parentElement;
-    }
-
-    function unwrapOldMarks(container) {
-        if (!container) return;
-        const marks = container.querySelectorAll('mark.lf-verse-match-pill');
-        if (!marks.length) return;
-        marks.forEach((m) => {
-            const parent = m.parentNode;
-            if (!parent) return;
-            while (m.firstChild) parent.insertBefore(m.firstChild, m);
-            m.remove();
-            parent.normalize();
+    function buildBookStartRegex(book, mode) {
+        const list = mode === 'lsj' ? book.lsj : (mode === 'ot' ? book.ot : book.gnt);
+        const set = new Set();
+        list.forEach((a) => {
+            const c = a.toLowerCase().replace(/\s+/g, ' ').trim();
+            set.add(c);
+            if (!c.endsWith('.')) set.add(`${c}.`);
+            else set.add(c.replace(/\.+$/, ''));
         });
+        const escaped = Array.from(set)
+            .sort((a, b) => b.length - a.length)
+            .map((a) => {
+                let e = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                e = mode === 'lsj'
+                    ? e.replace(/\\\.\s+/g, '\\.\\s*').replace(/\s+/g, '\\s+')
+                    : e.replace(/\s+/g, '\\s+');
+                return e;
+            })
+            .join('|');
+        const chPart = mode === 'ot'
+            ? '(?:(\\d{1,3})|([ivxlc]{1,7}))(?:\\s*\\(\\d{1,3}\\))?\\s*[:.,]\\s*'
+            : '(\\d{1,3})(?:\\s*\\(\\d{1,3}\\))?\\s*[:.]\\s*';
+        const pat = `\\b(?:${escaped})(?=\\s|\\d|\\(|$)\\s*${chPart}(\\d{1,3})[a-c]?(?:\\s*[–—-]\\s*(\\d{1,3})[a-c]?)?`;
+        return new RegExp(pat, 'gi');
     }
 
-    function highlightElementCitations(el, mode) {
-        if (!el || !activeRef) return 0;
-        const { regex, aliasMap } = MATCHERS[mode];
+    const CHAIN_CONT_RE = /^\s*[;,]\s*(?:(?:(\d{1,3})|([ivxlc]{1,7}))(?:\s*\(\d{1,3}\))?\s*[:.,]\s*)?(\d{1,3})[a-c]?(?:\s*[–—-]\s*(\d{1,3})[a-c]?)?/i;
+
+    function findVerseMatchesInText(plainText, parsed, mode, cachedRegex) {
+        if (!plainText) return [];
+        if (mode !== 'ot' && !plainText.includes(String(parsed.chapter))) return [];
+        const startRe = cachedRegex || buildBookStartRegex(parsed.book, mode);
+        startRe.lastIndex = 0;
+        const hits = [];
+        let m;
+
+        while ((m = startRe.exec(plainText)) !== null) {
+            let curCh = 0, vsStart = 0, vsEnd = 0;
+            if (mode === 'ot') {
+                curCh = m[1] ? parseInt(m[1], 10) : romanToInt(m[2]);
+                vsStart = parseInt(m[3], 10);
+                vsEnd = m[4] ? parseInt(m[4], 10) : vsStart;
+            } else {
+                curCh = parseInt(m[1], 10);
+                vsStart = parseInt(m[2], 10);
+                vsEnd = m[3] ? parseInt(m[3], 10) : vsStart;
+            }
+
+            if (curCh === parsed.chapter && parsed.verse >= vsStart && parsed.verse <= vsEnd) {
+                hits.push({ start: m.index, end: m.index + m[0].length });
+            }
+
+            let cursor = m.index + m[0].length;
+            let guard = 0;
+            while (cursor < plainText.length && guard < 40) {
+                guard++;
+                const rest = plainText.slice(cursor, cursor + 36);
+                const cm = rest.match(CHAIN_CONT_RE);
+                if (!cm) break;
+                if (cm[1]) curCh = parseInt(cm[1], 10);
+                else if (cm[2]) curCh = romanToInt(cm[2]);
+                const cVsStart = parseInt(cm[3], 10);
+                const cVsEnd = cm[4] ? parseInt(cm[4], 10) : cVsStart;
+                if (curCh === parsed.chapter && parsed.verse >= cVsStart && parsed.verse <= cVsEnd) {
+                    const leadTrim = cm[0].match(/^[\s;,]+/);
+                    const sIdx = cursor + (leadTrim ? leadTrim[0].length : 0);
+                    hits.push({ start: sIdx, end: cursor + cm[0].length });
+                }
+                cursor += cm[0].length;
+            }
+        }
+        return hits;
+    }
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function stripTags(str) {
+        return String(str || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function buildHighlightedExcerpt(plainText, hits) {
+        const first = hits[0];
+        const winStart = Math.max(0, first.start - 85);
+        const winEnd = Math.min(plainText.length, first.end + 135);
+        let out = winStart > 0 ? '…' : '';
+        let pos = winStart;
+        hits.forEach((h) => {
+            if (h.end <= winStart || h.start >= winEnd) return;
+            const s = Math.max(pos, h.start);
+            const e = Math.min(winEnd, h.end);
+            if (s > pos) out += escapeHtml(plainText.slice(pos, s));
+            out += `<mark class="lf-scripture-hit-mark">${escapeHtml(plainText.slice(s, e))}</mark>`;
+            pos = e;
+        });
+        if (pos < winEnd) out += escapeHtml(plainText.slice(pos, winEnd));
+        if (winEnd < plainText.length) out += '…';
+        return out;
+    }
+
+    // -------------------------------------------------------------------------
+    // ONE-SHOT VERSE HIGHLIGHTING INSIDE AN OPENED ENTRY
+    // -------------------------------------------------------------------------
+    function highlightOpenedEntryContainer(container, parsed, mode) {
+        if (!container || !parsed) return 0;
+        container.querySelectorAll('mark.lf-scripture-hit-mark').forEach((mk) => {
+            const p = mk.parentNode;
+            if (!p) return;
+            while (mk.firstChild) p.insertBefore(mk.firstChild, mk);
+            mk.remove();
+            p.normalize();
+        });
 
         const textNodes = [];
-        const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+        const tw = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
             acceptNode(n) {
-                if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_ACCEPT;
                 const p = n.parentElement;
-                if (!p || /^(SCRIPT|STYLE|INPUT|TEXTAREA|BUTTON|MARK)$/i.test(p.tagName)) {
-                    return NodeFilter.FILTER_REJECT;
-                }
+                if (!p || /^(SCRIPT|STYLE|BUTTON|INPUT|SELECT|MARK)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+                if (p.closest('.lf-scripture-back-bar, .lf-verse-fallback-box')) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
         });
-
-        let cur;
-        let fullText = '';
-        while ((cur = tw.nextNode())) {
-            const start = fullText.length;
-            fullText += cur.nodeValue;
-            textNodes.push({ node: cur, start, end: fullText.length });
-        }
-        if (!textNodes.length) return 0;
-
-        regex.lastIndex = 0;
-        let currentBookNum = 0;
-        let currentChapter = 0;
-        let lastMatchEnd = -1;
-        const hitSpans = [];
-        let m;
-
-        while ((m = regex.exec(fullText)) !== null) {
-            const bookStr = m[1];
-            const sep = m[2];
-            const chStr = m[3];
-            const vsStart = parseInt(m[4], 10);
-            const vsEnd = m[5] ? parseInt(m[5], 10) : vsStart;
-
-            if (bookStr) {
-                const key = bookStr.toLowerCase().replace(/\s+/g, ' ');
-                currentBookNum = aliasMap.get(key) || 0;
-                currentChapter = 0;
-            } else if (sep) {
-                const between = fullText.slice(Math.max(0, lastMatchEnd), m.index);
-                if (lastMatchEnd < 0 || /[A-Za-z]{3,}/.test(between)) {
-                    currentBookNum = 0;
-                    currentChapter = 0;
-                }
-            }
-
-            if (chStr) {
-                currentChapter = parseInt(chStr, 10);
-            }
-            lastMatchEnd = m.index + m[0].length;
-
-            if (
-                currentBookNum === activeRef.bookNum &&
-                currentChapter === activeRef.chapter &&
-                activeRef.verse >= vsStart &&
-                activeRef.verse <= vsEnd
-            ) {
-                const leadTrim = m[0].match(/^[\s;,]+/);
-                const startIdx = m.index + (leadTrim ? leadTrim[0].length : 0);
-                const endIdx = m.index + m[0].length;
-                if (endIdx > startIdx) {
-                    hitSpans.push({ start: startIdx, end: endIdx });
-                }
-            }
+        let node, full = '';
+        while ((node = tw.nextNode())) {
+            const start = full.length;
+            full += node.nodeValue;
+            textNodes.push({ node, start, end: full.length });
         }
 
-        if (!hitSpans.length) return 0;
+        const hits = findVerseMatchesInText(full, parsed, mode);
+        if (!hits.length) return 0;
 
-        for (let i = hitSpans.length - 1; i >= 0; i--) {
-            const { start, end } = hitSpans[i];
+        for (let i = hits.length - 1; i >= 0; i--) {
+            const { start, end } = hits[i];
             for (let j = textNodes.length - 1; j >= 0; j--) {
                 const tn = textNodes[j];
                 if (tn.end <= start || tn.start >= end) continue;
-                const localStart = Math.max(0, start - tn.start);
-                const localEnd = Math.min(tn.node.nodeValue.length, end - tn.start);
-                if (localEnd <= localStart) continue;
-
-                let targetNode = tn.node;
-                if (localEnd < targetNode.nodeValue.length) {
-                    targetNode.splitText(localEnd);
-                }
-                if (localStart > 0) {
-                    targetNode = targetNode.splitText(localStart);
-                }
-                const mark = document.createElement('mark');
-                mark.className = 'lf-verse-match-pill';
-                mark.title = `Active study verse: ${activeRef.label}`;
-                targetNode.parentNode.insertBefore(mark, targetNode);
-                mark.appendChild(targetNode);
+                const lStart = Math.max(0, start - tn.start);
+                const lEnd = Math.min(tn.node.nodeValue.length, end - tn.start);
+                if (lEnd <= lStart) continue;
+                let target = tn.node;
+                if (lEnd < target.nodeValue.length) target.splitText(lEnd);
+                if (lStart > 0) target = target.splitText(lStart);
+                const mk = document.createElement('mark');
+                mk.className = 'lf-scripture-hit-mark';
+                mk.title = `Matched Scripture: ${parsed.label}`;
+                target.parentNode.insertBefore(mk, target);
+                mk.appendChild(target);
             }
         }
-
-        return hitSpans.length;
+        const firstMark = container.querySelector('mark.lf-scripture-hit-mark');
+        if (firstMark) firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return hits.length;
     }
 
-    function updateLsjHeaderPill(modal, matchCount) {
-        if (!modal) return;
-        let pill = document.getElementById('lfLsjActiveVersePill');
-        if (!pill) {
-            const titleEl = Array.from(modal.querySelectorAll('h1, h2, h3, div, span')).find((el) =>
-                /LSJ Greek-English Lexicon/i.test((el.textContent || '').trim()) && el.children.length <= 2
-            );
-            if (titleEl) {
-                pill = document.createElement('span');
-                pill.id = 'lfLsjActiveVersePill';
-                pill.title = 'Click to jump to highlighted verse (or set verse)';
-                pill.addEventListener('click', () => {
-                    const first = modal.querySelector('mark.lf-verse-match-pill');
-                    if (first) {
-                        first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else {
-                        const manual = prompt('Enter active verse (e.g., Genesis 1:2):', activeRef ? activeRef.label : 'Genesis 1:2');
-                        const parsed = parseRefFromText(manual);
-                        if (parsed && parsed.verse) {
-                            setActiveRef(parsed.bookNum, parsed.chapter, parsed.verse);
-                            refreshAllLexiconHighlights(true);
-                        }
-                    }
-                });
-                titleEl.appendChild(pill);
-            }
+    // -------------------------------------------------------------------------
+    // UNIVERSAL DATA UNPACKER FOR ALL 4 LEXICONS
+    // -------------------------------------------------------------------------
+    function openIdb(name) {
+        return new Promise((resolve) => {
+            try {
+                const req = indexedDB.open(name);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            } catch (e) { resolve(null); }
+        });
+    }
+
+    function readIdbStoreEntries(db, storeName) {
+        return new Promise((resolve) => {
+            try {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const vReq = store.getAll();
+                const kReq = store.getAllKeys();
+                let vals = null, keys = null;
+                const done = () => { if (vals !== null && keys !== null) resolve({ keys, vals }); };
+                vReq.onsuccess = () => { vals = vReq.result || []; done(); };
+                kReq.onsuccess = () => { keys = kReq.result || []; done(); };
+                vReq.onerror = kReq.onerror = () => resolve({ keys: [], vals: [] });
+            } catch (e) { resolve({ keys: [], vals: [] }); }
+        });
+    }
+
+    async function decodeBinaryToText(val) {
+        let bytes = null;
+        if (typeof Blob !== 'undefined' && val instanceof Blob) {
+            bytes = new Uint8Array(await val.arrayBuffer());
+        } else if (val instanceof ArrayBuffer) {
+            bytes = new Uint8Array(val);
+        } else if (ArrayBuffer.isView(val)) {
+            bytes = new Uint8Array(val.buffer, val.byteOffset, val.byteLength);
         }
-        if (pill) {
-            if (!activeRef) {
-                pill.textContent = 'Click verse in editor';
+        if (!bytes || !bytes.length) return '';
+        if (bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b && typeof DecompressionStream !== 'undefined') {
+            try {
+                const ds = new DecompressionStream('gzip');
+                const stream = new Blob([bytes]).stream().pipeThrough(ds);
+                return await new Response(stream).text();
+            } catch (e) {}
+        }
+        try { return new TextDecoder('utf-8').decode(bytes); } catch (e) { return ''; }
+    }
+
+    function extractTextFromObj(val) {
+        if (typeof val === 'string') return val;
+        if (!val || typeof val !== 'object') return '';
+        const fields = [
+            val.entry, val.text, val.html, val.xml, val.definition, val.def, val.body,
+            val.content, val.abbottSmith, val.abbott_smith, val.gesenius, val.bdb,
+            val.strongs_def, val.kjv_def, val.senses ? JSON.stringify(val.senses) : ''
+        ].filter(Boolean);
+        return fields.length ? fields.join(' ') : JSON.stringify(val);
+    }
+
+    function isValidStrongGreek(code) {
+        return /^[Gg]0*\d{1,4}[a-z]?$/i.test(String(code || '').trim());
+    }
+
+    function getGreekMeta(strongCode) {
+        if (!isValidStrongGreek(strongCode)) return { strongs: '', headword: String(strongCode || ''), translit: '' };
+        const norm = 'G' + String(strongCode).trim().replace(/^[Gg]0*/, '').toUpperCase();
+        const byStrong = (typeof scriptureDataCache !== 'undefined' && scriptureDataCache.thayersByStrong) || {};
+        if (byStrong[norm]) {
+            return { strongs: norm, headword: byStrong[norm].lemma || norm, translit: byStrong[norm].translit || '' };
+        }
+        if (typeof strongsGreekDictionary !== 'undefined') {
+            const raw = strongsGreekDictionary[norm] || strongsGreekDictionary[strongCode];
+            if (raw) return { strongs: norm, headword: raw.lemma || norm, translit: raw.translit || '' };
+        }
+        return { strongs: norm, headword: norm, translit: '' };
+    }
+
+    function getHebrewMeta(strongCode, fallbackHead) {
+        const isValid = /^[Hh]0*\d{1,4}[a-z]?$/i.test(String(strongCode || '').trim());
+        const norm = isValid ? ('H' + String(strongCode).trim().replace(/^[Hh]0*/, '').toUpperCase()) : '';
+        if (norm && typeof strongsHebrewDictionary !== 'undefined') {
+            const raw = strongsHebrewDictionary[norm] || strongsHebrewDictionary[strongCode];
+            if (raw) return { strongs: norm, headword: raw.lemma || fallbackHead || norm, translit: raw.xlit || raw.translit || '' };
+        }
+        return { strongs: norm, headword: fallbackHead || norm || 'Entry', translit: '' };
+    }
+
+    function parseXmlEntries(xmlStr, kind, onRecord) {
+        const entryRe = /<(?:entryFree|entry)\b([^>]*)>([\s\S]*?)<\/(?:entryFree|entry)>/gi;
+        let m, foundAny = false;
+        while ((m = entryRe.exec(xmlStr)) !== null) {
+            foundAny = true;
+            const attrs = m[1] || '';
+            const inner = m[2] || '';
+            if (kind === 'lsj') {
+                const orthMatch = inner.match(/<orth\b[^>]*>([\s\S]*?)<\/orth>/i);
+                const keyMatch = attrs.match(/\bkey\s*=\s*["']([^"']+)["']/i);
+                const head = orthMatch ? stripTags(orthMatch[1]).replace(/[,;·]+$/, '') : (keyMatch ? keyMatch[1].replace(/\d+$/, '') : 'LSJ Entry');
+                onRecord({ lexicon: 'lsj', headword: head, translit: '', strongs: '', queryTerm: head, badge: 'LSJ', plainText: stripTags(inner) });
             } else {
-                pill.textContent = matchCount > 0
-                    ? `${activeRef.label} (${matchCount} match${matchCount === 1 ? '' : 'es'})`
-                    : `Verse: ${activeRef.label}`;
+                const idMatch = attrs.match(/\bid\s*=\s*["']([^"']+)["']/i);
+                const strongMatch = (attrs + ' ' + inner).match(/\b(?:strong|H)\s*=?\s*["']?H?0*(\d{1,4})\b/i);
+                const wMatch = inner.match(/<w\b[^>]*>([\s\S]*?)<\/w>/i);
+                const bdbId = idMatch ? idMatch[1] : '';
+                const strongCode = strongMatch ? ('H' + strongMatch[1]) : '';
+                const meta = getHebrewMeta(strongCode, wMatch ? stripTags(wMatch[1]) : bdbId);
+                onRecord({
+                    lexicon: kind,
+                    headword: meta.headword,
+                    translit: meta.translit,
+                    strongs: meta.strongs,
+                    queryTerm: meta.strongs || bdbId || meta.headword,
+                    badge: meta.strongs || bdbId,
+                    plainText: stripTags(inner)
+                });
+            }
+        }
+        return foundAny;
+    }
+
+    async function unpackAnyContainer(container, kind, onRecord, depth = 0) {
+        if (!container || depth > 4) return;
+
+        if ((typeof Blob !== 'undefined' && container instanceof Blob) || container instanceof ArrayBuffer || ArrayBuffer.isView(container)) {
+            const decoded = await decodeBinaryToText(container);
+            if (decoded) await unpackAnyContainer(decoded, kind, onRecord, depth + 1);
+            return;
+        }
+
+        if (typeof container === 'string') {
+            const trimmed = container.trim();
+            if (!trimmed || trimmed.length < 10) return;
+            if (trimmed.includes('<entryFree') || trimmed.includes('<entry')) {
+                if (parseXmlEntries(trimmed, kind, onRecord)) return;
+            }
+            if ((trimmed[0] === '{' || trimmed[0] === '[') && trimmed.length > 30) {
+                try {
+                    const parsedJson = JSON.parse(trimmed);
+                    await unpackAnyContainer(parsedJson, kind, onRecord, depth + 1);
+                    return;
+                } catch (e) {}
+            }
+            return;
+        }
+
+        if (container instanceof Map) {
+            for (const [k, v] of container.entries()) {
+                if (typeof v === 'object' && v && (Array.isArray(v) || v instanceof Map || v instanceof Blob || v instanceof ArrayBuffer)) {
+                    await unpackAnyContainer(v, kind, onRecord, depth + 1);
+                    continue;
+                }
+                const txt = stripTags(extractTextFromObj(v));
+                if (!txt) continue;
+                emitSingleObject(k, v, txt, kind, onRecord);
+            }
+            return;
+        }
+
+        if (Array.isArray(container)) {
+            for (let i = 0; i < container.length; i++) {
+                const item = container[i];
+                if (!item) continue;
+                if (typeof item === 'string' && (item.includes('<entry') || item.trim()[0] === '{')) {
+                    await unpackAnyContainer(item, kind, onRecord, depth + 1);
+                } else if (typeof item === 'object') {
+                    const txt = stripTags(extractTextFromObj(item));
+                    if (!txt) continue;
+                    emitSingleObject('', item, txt, kind, onRecord);
+                }
+            }
+            return;
+        }
+
+        if (typeof container === 'object') {
+            const keys = Object.keys(container);
+            const wrapperProps = ['entries', 'data', 'xml', 'json', 'payload', 'blob', 'buffer', 'compressed', 'raw', 'items', 'words', 'lemmas', 'dict', 'map', 'content', 'text', 'html'];
+            if (keys.length <= 12) {
+                let unpackedWrapper = false;
+                for (const prop of wrapperProps) {
+                    const sub = container[prop];
+                    if (!sub) continue;
+                    if (
+                        Array.isArray(sub) || sub instanceof Map ||
+                        (typeof Blob !== 'undefined' && sub instanceof Blob) ||
+                        sub instanceof ArrayBuffer || ArrayBuffer.isView(sub) ||
+                        (typeof sub === 'object' && Object.keys(sub).length > 10) ||
+                        (typeof sub === 'string' && (sub.includes('<entry') || sub.trim()[0] === '{' || sub.trim()[0] === '['))
+                    ) {
+                        unpackedWrapper = true;
+                        await unpackAnyContainer(sub, kind, onRecord, depth + 1);
+                    }
+                }
+                if (unpackedWrapper) return;
+                const txt = stripTags(extractTextFromObj(container));
+                if (txt.length >= 10) emitSingleObject('', container, txt, kind, onRecord);
+                return;
+            }
+
+            for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                const v = container[k];
+                if (!v) continue;
+                if (typeof v === 'string' && (v.includes('<entryFree') || v.includes('<entry'))) {
+                    parseXmlEntries(v, kind, onRecord);
+                    continue;
+                }
+                const txt = stripTags(extractTextFromObj(v));
+                if (!txt || txt.length < 8) continue;
+                emitSingleObject(k, v, txt, kind, onRecord);
             }
         }
     }
 
-    let isHighlighting = false;
+    function emitSingleObject(fallbackKey, v, txt, kind, onRecord) {
+        const obj = (v && typeof v === 'object') ? v : {};
+        if (kind === 'abbott') {
+            const rawKey = String(fallbackKey || '').trim();
+            const keyStrong = isValidStrongGreek(rawKey) ? rawKey : '';
+            const objStrong = isValidStrongGreek(obj.strongs || obj.strong) ? (obj.strongs || obj.strong) : '';
+            const validStrong = keyStrong || objStrong;
+            // Skip duplicate non-Strong Greek-word index aliases (prevents duplicate GΑΒΥΣΣΟΣ cards)
+            if (!validStrong && rawKey && !obj.lemma && !obj.headword) return;
+            const meta = validStrong ? getGreekMeta(validStrong) : { strongs: '', headword: obj.lemma || obj.headword || rawKey, translit: '' };
+            onRecord({
+                lexicon: 'abbott',
+                headword: obj.lemma || obj.headword || obj.word || meta.headword,
+                translit: obj.translit || meta.translit,
+                strongs: meta.strongs,
+                queryTerm: meta.strongs || rawKey,
+                badge: meta.strongs || rawKey,
+                plainText: txt
+            });
+        } else if (kind === 'lsj') {
+            const hw = obj.orth || obj.lemma || obj.headword || obj.word || obj.head || obj.key || fallbackKey || 'LSJ Entry';
+            onRecord({
+                lexicon: 'lsj',
+                headword: String(hw).replace(/[,;·]+$/, '').trim(),
+                translit: '',
+                strongs: '',
+                queryTerm: String(hw).replace(/[,;·]+$/, '').trim(),
+                badge: 'LSJ',
+                plainText: txt
+            });
+        } else {
+            const rawKey = String(fallbackKey || '').trim();
+            const st = /^[Hh]0*\d+$/i.test(rawKey) ? rawKey.toUpperCase() : (obj.strongs || obj.strong || '');
+            const hw = obj.lemma || obj.headword || obj.word || obj.hebrew || '';
+            const meta = getHebrewMeta(st, hw || rawKey);
+            onRecord({
+                lexicon: kind,
+                headword: meta.headword,
+                translit: obj.translit || obj.xlit || meta.translit,
+                strongs: meta.strongs,
+                queryTerm: meta.strongs || obj.id || rawKey || meta.headword,
+                badge: meta.strongs || obj.id || rawKey,
+                plainText: txt
+            });
+        }
+    }
 
-    function refreshAllLexiconHighlights(shouldScroll) {
-        if (isHighlighting) return;
-        isHighlighting = true;
-        try {
-            const ed = getThoughtEditor();
+    async function scanOneLexicon(parsed, kind) {
+        const mode = LEXICON_META[kind].mode;
+        const startRe = buildBookStartRegex(parsed.book, mode);
+        const results = [];
+        const seen = new Set();
+        let scannedCount = 0;
 
-            // 1. LSJ Modal
-            const lsjModal = findLsjContainer();
-            if (lsjModal) {
-                unwrapOldMarks(lsjModal);
-                let lsjHits = 0;
-                if (activeRef) {
-                    const bodyContainer =
-                        lsjModal.querySelector('#lfLsjResults, #lfLsjBody, .lf-lsj-results, .lf-lsj-entry') ||
-                        lsjModal;
-                    lsjHits = highlightElementCitations(bodyContainer, 'lsj');
-                }
-                updateLsjHeaderPill(lsjModal, lsjHits);
-                if (shouldScroll && lsjHits > 0) {
-                    const first = lsjModal.querySelector('mark.lf-verse-match-pill');
-                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const evaluateRecord = (rec) => {
+            scannedCount++;
+            if (!rec || !rec.plainText) return;
+            const hits = findVerseMatchesInText(rec.plainText, parsed, mode, startRe);
+            if (!hits.length) return;
+            const key = `${rec.headword}|${rec.badge}`.toLowerCase();
+            const textSig = `txt:${rec.plainText.slice(0, 90).toLowerCase()}`;
+            if (seen.has(key) || seen.has(textSig)) return;
+            seen.add(key);
+            seen.add(textSig);
+            results.push({
+                ...rec,
+                lexicon: kind,
+                hitCount: hits.length,
+                excerptHtml: buildHighlightedExcerpt(rec.plainText, hits)
+            });
+        };
+
+        if (kind === 'abbott') {
+            if (typeof getThayersEntries === 'function') await getThayersEntries();
+            let map = (typeof scriptureDataCache !== 'undefined' && scriptureDataCache.abbottSmithByStrong) || null;
+            if (!map && typeof ensureAbbottSmithLoaded === 'function') map = await ensureAbbottSmithLoaded();
+            if (!map && typeof getCachedFileData === 'function') map = await getCachedFileData('abbott_smith_map_v1');
+            if (map) await unpackAnyContainer(map, 'abbott', evaluateRecord);
+        } else if (kind === 'bdb' || kind === 'gesenius') {
+            const loaders = kind === 'gesenius'
+                ? ['ensureGeseniusLoaded', 'loadGeseniusLexicon', 'getGeseniusEntries']
+                : ['ensureBdbLoaded', 'loadBdbLexicon', 'getBdbEntries', 'loadBdbXmlData'];
+            for (const fn of loaders) {
+                try { if (typeof window[fn] === 'function') await window[fn](); } catch (e) {}
+            }
+            const keyRe = kind === 'gesenius' ? /gesen/i : /bdb(?!t)/i;
+            if (typeof scriptureDataCache !== 'undefined') {
+                for (const k of Object.keys(scriptureDataCache)) {
+                    if (keyRe.test(k) && scriptureDataCache[k]) {
+                        await unpackAnyContainer(scriptureDataCache[k], kind, evaluateRecord);
+                    }
                 }
             }
-
-            // 2. Thayer's Greek Lexicon cards / popovers / drawers (outside editor)
-            if (activeRef) {
-                const thayerCandidates = Array.from(document.querySelectorAll(
-                    '.thayer, [class*="thayer" i], [id*="thayer" i], [class*="lexicon" i], [id*="lexicon" i], [class*="popover" i], [class*="definition" i], #lfLxxDrawer'
-                )).filter((el) => isElementVisible(el) && (!ed || !ed.contains(el)) && (!lsjModal || !lsjModal.contains(el)));
-
-                thayerCandidates.forEach((box) => {
-                    if (box.id === 'lfLxxDrawer') {
-                        const subCards = box.querySelectorAll('[class*="lexicon" i], [class*="thayer" i], [class*="card" i], [class*="detail" i], [class*="def" i]');
-                        subCards.forEach((card) => {
-                            if (/Thayer|Strong|Lexicon|Definition/i.test(card.textContent || '')) {
-                                unwrapOldMarks(card);
-                                const hits = highlightElementCitations(card, 'thayer');
-                                if (shouldScroll && hits > 0) {
-                                    const first = card.querySelector('mark.lf-verse-match-pill');
-                                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                }
-                            }
-                        });
-                        return;
+            const db = await openIdb('LexFlowCleanCacheV3');
+            if (db && db.objectStoreNames.contains('files')) {
+                const { keys, vals } = await readIdbStoreEntries(db, 'files');
+                for (let i = 0; i < keys.length; i++) {
+                    if (keyRe.test(String(keys[i]))) {
+                        await unpackAnyContainer(vals[i], kind, evaluateRecord);
                     }
-
-                    if (/Thayer|Strong|G\d{1,4}/i.test(box.textContent || '')) {
-                        unwrapOldMarks(box);
-                        const hits = highlightElementCitations(box, 'thayer');
-                        if (shouldScroll && hits > 0) {
-                            const first = box.querySelector('mark.lf-verse-match-pill');
-                            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                db.close();
+            }
+        } else if (kind === 'lsj') {
+            if (typeof scriptureDataCache !== 'undefined') {
+                for (const k of Object.keys(scriptureDataCache)) {
+                    if (/lsj/i.test(k) && scriptureDataCache[k]) {
+                        await unpackAnyContainer(scriptureDataCache[k], 'lsj', evaluateRecord);
+                    }
+                }
+            }
+            const mainDb = await openIdb('LexFlowCleanCacheV3');
+            if (mainDb && mainDb.objectStoreNames.contains('files')) {
+                const { keys, vals } = await readIdbStoreEntries(mainDb, 'files');
+                for (let i = 0; i < keys.length; i++) {
+                    if (/lsj/i.test(String(keys[i]))) {
+                        await unpackAnyContainer(vals[i], 'lsj', evaluateRecord);
+                    }
+                }
+                mainDb.close();
+            }
+            if (window.indexedDB && typeof indexedDB.databases === 'function') {
+                const dbs = await indexedDB.databases();
+                for (let d = 0; d < dbs.length; d++) {
+                    const name = dbs[d].name;
+                    if (!name || name === 'LexFlowCleanCacheV3') continue;
+                    if (!/lsj|perseus|celano|greek/i.test(name)) continue;
+                    const db = await openIdb(name);
+                    if (!db) continue;
+                    const stores = Array.from(db.objectStoreNames);
+                    for (let s = 0; s < stores.length; s++) {
+                        const { vals } = await readIdbStoreEntries(db, stores[s]);
+                        for (let i = 0; i < vals.length; i++) {
+                            await unpackAnyContainer(vals[i], 'lsj', evaluateRecord);
+                            if (i % 4 === 0) await new Promise((r) => setTimeout(r, 0));
                         }
                     }
-                });
+                    db.close();
+                }
+            }
+        }
+
+        results.sort((a, b) => b.hitCount - a.hitCount);
+        return { kind, results, scannedCount };
+    }
+
+    async function scanAllLexicons(parsed) {
+        const order = ['abbott', 'bdb', 'gesenius', 'lsj'];
+        const byLexicon = {};
+        const allResults = [];
+        for (const kind of order) {
+            const res = await scanOneLexicon(parsed, kind);
+            byLexicon[kind] = res;
+            allResults.push(...res.results);
+            await new Promise((r) => setTimeout(r, 0));
+        }
+        return { parsed, order, byLexicon, allResults };
+    }
+
+    // -------------------------------------------------------------------------
+    // VERSE-WORDS FALLBACK FOR ENGLISH -> GREEK LOOKUPS (NO GUESSWORK ON BSB/EMTV)
+    // -------------------------------------------------------------------------
+    let greekLemmaToStrongMap = null;
+    const MINOR_GREEK_STRONGS = new Set(['G3588', 'G2532', 'G1161', 'G1722', 'G1519', 'G1537', 'G575', 'G1223', 'G1909', 'G4314', 'G3326', 'G3754', 'G1063', 'G3739', 'G846']);
+
+    function getGreekLemmaMap() {
+        if (greekLemmaToStrongMap) return greekLemmaToStrongMap;
+        greekLemmaToStrongMap = new Map();
+        if (typeof strongsGreekDictionary !== 'undefined' && typeof normalizeGreekWord === 'function') {
+            Object.keys(strongsGreekDictionary).forEach((code) => {
+                const item = strongsGreekDictionary[code];
+                if (!item || !item.lemma) return;
+                const normCode = 'G' + code.replace(/^[Gg]0*/, '').toUpperCase();
+                const normLem = normalizeGreekWord(item.lemma);
+                if (normLem && !greekLemmaToStrongMap.has(normLem)) {
+                    greekLemmaToStrongMap.set(normLem, {
+                        strongs: normCode,
+                        lemma: item.lemma,
+                        gloss: (item.strongs_def || item.kjv_def || '').replace(/^:\s*--+/, '').trim()
+                    });
+                }
+            });
+        }
+        return greekLemmaToStrongMap;
+    }
+
+    function resolveGreekTokenInfo(tok) {
+        const map = getGreekLemmaMap();
+        let strongs = isValidStrongGreek(tok.strongs) ? ('G' + tok.strongs.replace(/^[Gg]0*/, '').toUpperCase()) : '';
+        let gloss = '';
+
+        if (strongs && typeof strongsGreekDictionary !== 'undefined') {
+            const raw = strongsGreekDictionary[strongs];
+            if (raw) gloss = (raw.strongs_def || raw.kjv_def || '').replace(/^:\s*--+/, '').trim();
+        }
+        if (!strongs && typeof normalizeGreekWord === 'function') {
+            const norm = normalizeGreekWord(tok.lemma || tok.surface);
+            const hit = norm && map.get(norm);
+            if (hit) {
+                strongs = hit.strongs;
+                gloss = hit.gloss;
+            }
+        }
+        if (gloss.length > 52) gloss = gloss.slice(0, 49).trim() + '…';
+        return {
+            surface: tok.surface || tok.lemma || '',
+            lemma: tok.lemma || tok.surface || '',
+            strongs,
+            gloss,
+            isMinor: strongs ? MINOR_GREEK_STRONGS.has(strongs) : false
+        };
+    }
+
+    function getLockedSideBySideGreekWord() {
+        const bar = document.getElementById('parallelHoverInfoBar');
+        if (!bar) return null;
+        const txt = bar.textContent || '';
+        if (!/Word Locked/i.test(txt)) return null;
+        const stMatch = txt.match(/\b(G\d{1,4})\b/i);
+        const grMatch = txt.match(/[\u0370-\u03FF\u1F00-\u1FFF]+/);
+        if (!stMatch && !grMatch) return null;
+        return {
+            strongs: stMatch ? stMatch[1].toUpperCase() : '',
+            surface: grMatch ? grMatch[0] : ''
+        };
+    }
+
+    function getActiveNtClauseVerse() {
+        const blk =
+            (typeof activeThayersClauseBlock !== 'undefined' && activeThayersClauseBlock) ||
+            (typeof lastSelectedBlock !== 'undefined' && lastSelectedBlock) ||
+            (typeof findTopVisibleVerseBlock === 'function' ? findTopVisibleVerseBlock() : null);
+
+        if (blk && blk.dataset && blk.dataset.bookNum && blk.dataset.chapterNum && blk.dataset.verseNum) {
+            const book = parseInt(blk.dataset.bookNum, 10);
+            const chapter = parseInt(blk.dataset.chapterNum, 10);
+            const verse = parseInt(blk.dataset.verseNum, 10);
+            const bookName = blk.dataset.bookName || (BOOKS.find((b) => b.num === book)?.name || '');
+            if (book >= 40 && chapter && verse) return { book, chapter, verse, label: `${bookName} ${chapter}:${verse}` };
+        }
+        if (typeof parseCurrentRefRange === 'function') {
+            const ref = parseCurrentRefRange(blk);
+            if (ref && ref.book >= 40) {
+                const bookName = BOOKS.find((b) => b.num === ref.book)?.name || '';
+                return { book: ref.book, chapter: ref.chapter, verse: ref.startVerse, label: `${bookName} ${ref.chapter}:${ref.startVerse}` };
+            }
+        }
+        return null;
+    }
+
+    async function maybeInjectGreekVerseFallback() {
+        const gntModal = document.getElementById('thayersModal');
+        const gntInput = document.getElementById('thayersSearchInput');
+        const container = document.getElementById('thayersResultsContainer');
+        if (!gntModal || !gntInput || !container) return;
+
+        const fieldSel = gntModal.querySelector('.lf-field-select[data-modal="gnt"]');
+        if (fieldSel && fieldSel.value === 'scripture') return;
+
+        const queryRaw = (gntInput.value || '').trim();
+        // Only trigger for English word lookups (not Strong's # or Greek queries)
+        if (!queryRaw || isValidStrongGreek(queryRaw) || /[\u0370-\u03FF\u1F00-\u1FFF]/.test(queryRaw)) return;
+
+        // If the opened entry already appears in this verse, no fallback needed
+        const alreadyInVerse =
+            (typeof currentThayersState !== 'undefined' && currentThayersState && currentThayersState.inCurrentVerse) ||
+            /USED IN THIS VERSE/i.test(container.textContent || '');
+        if (alreadyInVerse) return;
+
+        const ref = getActiveNtClauseVerse();
+        if (!ref || typeof getSrgntTokensForSingleVerse !== 'function') return;
+
+        const rawTokens = await getSrgntTokensForSingleVerse(ref.book, ref.chapter, ref.verse);
+        if (!rawTokens || !rawTokens.length) return;
+
+        const locked = getLockedSideBySideGreekWord();
+        const tokens = rawTokens.filter((t) => t && t.surface).map(resolveGreekTokenInfo);
+        if (!tokens.length) return;
+
+        const entryPanel = document.getElementById('thayersEntryTabPanel') || container;
+        const oldBox = entryPanel.querySelector('.lf-verse-fallback-box');
+        if (oldBox) oldBox.remove();
+
+        const box = document.createElement('div');
+        box.className = 'lf-verse-fallback-box p-3.5 rounded-xl bg-amber-50/95 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 space-y-2.5';
+
+        const lockedBtnHtml = (locked && (locked.strongs || locked.surface))
+            ? `<button type="button" class="lf-jump-locked-btn px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold shadow-sm cursor-pointer">
+                    Open Locked Side-by-Side: ${escapeHtml(locked.surface || locked.strongs)} ${locked.strongs ? `(${escapeHtml(locked.strongs)})` : ''} →
+               </button>`
+            : '';
+
+        const chipsHtml = tokens.map((tok, idx) => {
+            const isLockedChip = locked && ((locked.strongs && tok.strongs === locked.strongs) || (locked.surface && tok.surface === locked.surface));
+            const borderCls = isLockedChip
+                ? 'border-purple-500 ring-1 ring-purple-400 bg-purple-50 dark:bg-purple-950/60'
+                : (tok.isMinor ? 'border-amber-200/70 bg-white/60 dark:bg-zinc-900/60 opacity-75' : 'border-amber-300 bg-white dark:bg-zinc-800 hover:border-purple-500');
+            return `
+                <button type="button" class="lf-verse-tok-chip text-left px-2.5 py-1.5 rounded-lg border ${borderCls} transition shadow-xs cursor-pointer" data-tok-idx="${idx}" title="${escapeHtml(tok.gloss || tok.lemma)}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-serif font-bold text-sm text-gray-900 dark:text-white">${escapeHtml(tok.surface)}</span>
+                        ${tok.strongs ? `<span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">${escapeHtml(tok.strongs)}</span>` : ''}
+                        ${isLockedChip ? `<span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-purple-600 text-white">Locked</span>` : ''}
+                    </div>
+                    ${tok.gloss && !tok.isMinor ? `<div class="text-[10px] text-gray-600 dark:text-gray-300 leading-tight mt-0.5 max-w-[175px] truncate">${escapeHtml(tok.gloss)}</div>` : ''}
+                </button>`;
+        }).join('');
+
+        box.innerHTML = `
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="text-xs font-bold text-amber-950 dark:text-amber-200">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1.5"></i>
+                    No Greek word in <span class="underline">${escapeHtml(ref.label)}</span> matched the English gloss “${escapeHtml(queryRaw)}”. Pick the exact Greek word from ${escapeHtml(ref.label)}:
+                </div>
+                ${lockedBtnHtml}
+            </div>
+            <div class="flex flex-wrap gap-1.5">${chipsHtml}</div>
+        `;
+
+        const openGreekChoice = (strongs, lemma, rawTok) => {
+            if (strongs && typeof openRelatedStrongEntry === 'function') {
+                gntInput.value = strongs;
+                openRelatedStrongEntry(strongs);
+            } else {
+                gntInput.value = strongs || lemma;
+                if (typeof executeThayersSearch === 'function') executeThayersSearch(rawTok || null);
+            }
+        };
+
+        box.querySelector('.lf-jump-locked-btn')?.addEventListener('click', () => {
+            openGreekChoice(locked.strongs, locked.surface, null);
+        });
+
+        box.querySelectorAll('.lf-verse-tok-chip').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.tokIdx, 10);
+                const tok = tokens[idx];
+                if (!tok) return;
+                openGreekChoice(tok.strongs, tok.lemma, rawTokens[idx]);
+            });
+        });
+
+        entryPanel.prepend(box);
+    }
+
+    // Wrap native Greek lexicon search & render hooks once so the fallback runs automatically
+    function hookGreekLookupFallback() {
+        if (typeof window.executeThayersSearch === 'function' && !window.executeThayersSearch.__lfFallbackWrapped) {
+            const origExec = window.executeThayersSearch;
+            window.executeThayersSearch = async function (...args) {
+                const res = await origExec.apply(this, args);
+                try { await maybeInjectGreekVerseFallback(); } catch (e) {}
+                return res;
+            };
+            window.executeThayersSearch.__lfFallbackWrapped = true;
+        }
+        if (typeof window.renderCurrentThayersView === 'function' && !window.renderCurrentThayersView.__lfFallbackWrapped) {
+            const origRender = window.renderCurrentThayersView;
+            window.renderCurrentThayersView = function (...args) {
+                const res = origRender.apply(this, args);
+                setTimeout(() => { maybeInjectGreekVerseFallback().catch(() => {}); }, 20);
+                return res;
+            };
+            window.renderCurrentThayersView.__lfFallbackWrapped = true;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // STYLES
+    // -------------------------------------------------------------------------
+    const oldStyle = document.getElementById('lfScriptureFieldStyles');
+    if (oldStyle) oldStyle.remove();
+    const styleEl = document.createElement('style');
+    styleEl.id = 'lfScriptureFieldStyles';
+    styleEl.textContent = `
+        mark.lf-scripture-hit-mark {
+            background: #fef08a !important;
+            color: #713f12 !important;
+            font-weight: 700 !important;
+            padding: 1px 4px !important;
+            border-radius: 4px !important;
+            border-bottom: 2px solid #eab308 !important;
+        }
+        .lf-field-wrap { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .lf-field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
+        html.dark .lf-field-label { color: #9ca3af; }
+        .lf-field-select {
+            font-size: 12px; font-weight: 700; padding: 7px 10px; border-radius: 8px;
+            border: 1.5px solid #cbd5e1; background: #f8fafc; color: #1e293b; cursor: pointer; outline: none;
+        }
+        html.dark .lf-field-select { background: #27272a; border-color: #3f3f46; color: #f4f4f5; }
+        .lf-field-select.lf-scripture-active { background: #fef9c3; border-color: #eab308; color: #854d0e; }
+        html.dark .lf-field-select.lf-scripture-active { background: #422006; border-color: #eab308; color: #fef08a; }
+        .lf-lex-tab-btn {
+            padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            border: 1px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer;
+            transition: all 0.12s ease; display: inline-flex; align-items: center; gap: 6px;
+        }
+        html.dark .lf-lex-tab-btn { background: #27272a; border-color: #3f3f46; color: #d4d4d8; }
+        .lf-lex-tab-btn.active { background: #ca8a04; border-color: #a16207; color: #ffffff; }
+        .lf-lex-tab-count {
+            font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px;
+            background: rgba(15, 23, 42, 0.08);
+        }
+        .lf-lex-tab-btn.active .lf-lex-tab-count { background: rgba(255, 255, 255, 0.25); color: #ffffff; }
+    `;
+    document.head.appendChild(styleEl);
+
+    // -------------------------------------------------------------------------
+    // GLOBAL REGISTRY OF MODALS + TABBED SCRIPTURE RESULTS RENDERER
+    // -------------------------------------------------------------------------
+    const modalContexts = {};
+    const bypassFlag = { gnt: false, hebrew: false, lsj: false };
+    let lastGlobalSearch = null;
+    let activeResultTab = 'all';
+
+    function hideWorkspaceVerseBridgeBars() {
+        const hb = document.getElementById('bdbVerseHebrewBar');
+        const gb = document.getElementById('thayersVerseGreekBar');
+        if (hb) hb.classList.add('hidden');
+        if (gb) gb.classList.add('hidden');
+    }
+
+    function renderTabbedResultsUI(modalType, ctx, searchBundle, selectedTab) {
+        const container = ctx.getResultsContainer();
+        if (!container || !searchBundle) return;
+
+        hideWorkspaceVerseBridgeBars();
+        if (modalType === 'gnt') {
+            const nav = document.getElementById('thayersNavTabsBar');
+            if (nav) nav.classList.add('hidden');
+        } else if (modalType === 'hebrew') {
+            const nav = document.getElementById('bdbNavTabsBar');
+            if (nav) nav.classList.add('hidden');
+        }
+
+        const { parsed, order, byLexicon, allResults } = searchBundle;
+        activeResultTab = selectedTab || 'all';
+        lastGlobalSearch = searchBundle;
+
+        const tabsHtml = [
+            `<button type="button" class="lf-lex-tab-btn ${activeResultTab === 'all' ? 'active' : ''}" data-tab="all">
+                <span>All Lexicons</span><span class="lf-lex-tab-count">${allResults.length}</span>
+            </button>`,
+            ...order.map((k) => {
+                const cnt = byLexicon[k].results.length;
+                return `<button type="button" class="lf-lex-tab-btn ${activeResultTab === k ? 'active' : ''}" data-tab="${k}">
+                    <span>${LEXICON_META[k].label}</span><span class="lf-lex-tab-count">${cnt}</span>
+                </button>`;
+            })
+        ].join('');
+
+        const activeItems = activeResultTab === 'all' ? allResults : (byLexicon[activeResultTab]?.results || []);
+        const totalScanned = activeResultTab === 'all'
+            ? order.reduce((sum, k) => sum + byLexicon[k].scannedCount, 0)
+            : (byLexicon[activeResultTab]?.scannedCount || 0);
+
+        let cardsHtml = '';
+        if (!activeItems.length) {
+            const tabLabel = activeResultTab === 'all' ? 'any cached lexicon' : LEXICON_META[activeResultTab].full;
+            const zeroHint = totalScanned === 0
+                ? `<div class="mt-1.5 text-xs opacity-85">This lexicon hasn't been cached in memory yet—open 1 word in <strong>${escapeHtml(tabLabel)}</strong> once to cache it, then search again.</div>`
+                : '';
+            cardsHtml = `
+                <div class="p-5 rounded-xl bg-amber-50/90 dark:bg-zinc-800 border border-amber-300 dark:border-amber-700 text-sm text-amber-900 dark:text-amber-200">
+                    <div>No references to <strong>${escapeHtml(parsed.label)}</strong> were found in <strong>${escapeHtml(tabLabel)}</strong> (${totalScanned.toLocaleString()} entries scanned).</div>
+                    ${zeroHint}
+                </div>`;
+        } else {
+            cardsHtml = activeItems.slice(0, 150).map((item, idx) => {
+                const meta = LEXICON_META[item.lexicon];
+                return `
+                    <div class="lf-scripture-hit-card p-4 rounded-xl bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-500 shadow-sm transition cursor-pointer" data-hit-idx="${idx}">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <span style="background:${meta.chipBg};color:${meta.chipText};border:1px solid ${meta.chipBorder};font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">${meta.label}</span>
+                                <span class="text-lg font-serif font-bold text-gray-900 dark:text-white">${escapeHtml(item.headword)}</span>
+                                ${item.translit ? `<span class="text-xs italic text-gray-500 dark:text-gray-400">(${escapeHtml(item.translit)})</span>` : ''}
+                                ${item.badge && item.badge !== 'LSJ' ? `<span class="px-2 py-0.5 text-[11px] font-mono font-bold rounded bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-200">${escapeHtml(item.badge)}</span>` : ''}
+                            </div>
+                            <span class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">Open in ${meta.label} →</span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">${item.excerptHtml}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        container.innerHTML = `
+            <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200">
+                        <i class="fa-solid fa-book-bible mr-1.5 text-amber-600"></i>
+                        All-Lexicon Scripture Search: <span class="underline">${escapeHtml(parsed.label)}</span>
+                    </div>
+                    <span class="text-[11px] text-amber-800 dark:text-amber-300">Scanned ${totalScanned.toLocaleString()} entries • Click any card to open</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5">${tabsHtml}</div>
+            </div>
+            <div class="space-y-2.5 mt-3">${cardsHtml}</div>
+        `;
+
+        container.querySelectorAll('.lf-lex-tab-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                renderTabbedResultsUI(modalType, ctx, searchBundle, btn.dataset.tab);
+            });
+        });
+
+        container.querySelectorAll('.lf-scripture-hit-card').forEach((card) => {
+            card.addEventListener('click', () => {
+                const hit = activeItems[parseInt(card.dataset.hitIdx, 10)];
+                if (!hit) return;
+                openHitInNativeLexicon(hit, parsed, activeResultTab);
+            });
+        });
+    }
+
+    function injectBackBarAndHighlight(targetModalType, parsed, mode, returnTab) {
+        const ctx = modalContexts[targetModalType];
+        if (!ctx) return;
+        const container = ctx.getResultsContainer();
+        if (!container) return;
+
+        const oldBar = container.querySelector('.lf-scripture-back-bar');
+        if (oldBar) oldBar.remove();
+
+        const total = lastGlobalSearch ? lastGlobalSearch.allResults.length : 0;
+        const bar = document.createElement('div');
+        bar.className = 'lf-scripture-back-bar mb-3 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 flex items-center justify-between gap-2 text-xs';
+        bar.innerHTML = `
+            <button type="button" class="lf-back-to-scripture-btn font-bold text-amber-900 dark:text-amber-200 hover:underline flex items-center space-x-1.5 cursor-pointer">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to All-Lexicon Results for ${escapeHtml(parsed.label)} (${total} total)</span>
+            </button>
+            <span class="text-amber-700 dark:text-amber-300 font-semibold">Highlighting ${escapeHtml(parsed.label)}</span>
+        `;
+        bar.querySelector('.lf-back-to-scripture-btn').addEventListener('click', () => {
+            if (lastGlobalSearch) renderTabbedResultsUI(targetModalType, ctx, lastGlobalSearch, returnTab);
+        });
+        container.prepend(bar);
+        highlightOpenedEntryContainer(container, parsed, mode);
+    }
+
+    function openHitInNativeLexicon(hit, parsed, returnTab) {
+        const meta = LEXICON_META[hit.lexicon];
+        const targetModalType = meta.modal;
+
+        if (targetModalType !== 'gnt') {
+            const tm = document.getElementById('thayersModal');
+            if (tm && !tm.classList.contains('hidden')) tm.classList.add('hidden');
+        }
+        if (targetModalType !== 'hebrew') {
+            const bm = document.getElementById('bdbModal');
+            if (bm && !bm.classList.contains('hidden')) bm.classList.add('hidden');
+        }
+        if (targetModalType !== 'lsj') {
+            const lm = document.getElementById('lfLsjModalOverlay');
+            if (lm && lm.style.display !== 'none') lm.style.display = 'none';
+        }
+
+        bypassFlag[targetModalType] = true;
+        try {
+            if (targetModalType === 'gnt') {
+                const tm = document.getElementById('thayersModal');
+                if (tm) tm.classList.remove('hidden');
+                const abbottBtn = tm && Array.from(tm.querySelectorAll('button')).find((b) => /Abbott-Smith/i.test(b.textContent || ''));
+                if (abbottBtn) abbottBtn.click();
+                else if (typeof activeGreekLexiconSource !== 'undefined') activeGreekLexiconSource = 'abbott';
+
+                if (hit.strongs && typeof openRelatedStrongEntry === 'function') {
+                    openRelatedStrongEntry(hit.strongs);
+                } else if (modalContexts.gnt) {
+                    modalContexts.gnt.input.value = hit.queryTerm || hit.headword;
+                    if (typeof executeThayersSearch === 'function') executeThayersSearch();
+                }
+            } else if (targetModalType === 'hebrew') {
+                const bm = document.getElementById('bdbModal');
+                if (bm) bm.classList.remove('hidden');
+                const tabRe = hit.lexicon === 'gesenius' ? /Gesenius/i : /BDB\s*\(Brown/i;
+                const tabBtn = bm && Array.from(bm.querySelectorAll('button')).find((b) => tabRe.test(b.textContent || ''));
+                if (tabBtn) tabBtn.click();
+                else if (typeof activeHebrewLexiconSource !== 'undefined') activeHebrewLexiconSource = hit.lexicon;
+
+                if (modalContexts.hebrew) {
+                    modalContexts.hebrew.input.value = hit.queryTerm || hit.headword;
+                    if (typeof executeBdbSearch === 'function') executeBdbSearch();
+                }
+            } else if (targetModalType === 'lsj') {
+                const lm = document.getElementById('lfLsjModalOverlay');
+                if (lm) lm.style.display = 'flex';
+                else if (typeof window.openLsjModal === 'function') window.openLsjModal(hit.headword);
+                if (modalContexts.lsj) {
+                    modalContexts.lsj.input.value = hit.headword;
+                    modalContexts.lsj.input.dispatchEvent(new Event('input', { bubbles: true }));
+                    const btn = modalContexts.lsj.getSearchButton();
+                    if (btn) btn.click();
+                }
             }
         } finally {
-            isHighlighting = false;
+            setTimeout(() => { bypassFlag[targetModalType] = false; }, 150);
+        }
+
+        setTimeout(() => injectBackBarAndHighlight(targetModalType, parsed, meta.mode, returnTab), 180);
+        setTimeout(() => {
+            const ctx = modalContexts[targetModalType];
+            const c = ctx && ctx.getResultsContainer();
+            if (c && !c.querySelector('mark.lf-scripture-hit-mark')) {
+                injectBackBarAndHighlight(targetModalType, parsed, meta.mode, returnTab);
+            }
+        }, 600);
+    }
+
+    async function executeAllLexiconScriptureSearch(modalType, ctx) {
+        const container = ctx.getResultsContainer();
+        hideWorkspaceVerseBridgeBars();
+        const parsed = parseVerseQuery(ctx.input.value);
+        if (!parsed) {
+            if (container) {
+                container.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 dark:bg-zinc-800 border border-amber-300 dark:border-amber-700 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                    Enter a Bible verse reference such as <strong>Gen 1:2</strong>, <strong>Heb 11:15</strong>, <strong>Rom 10:7</strong>, or <strong>John 1:1</strong>.
+                </div>`;
+            }
+            return;
+        }
+
+        if (container) {
+            container.innerHTML = `<div class="p-5 rounded-xl bg-amber-50 dark:bg-zinc-800 border border-amber-300 dark:border-amber-700 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Searching <strong>Abbott-Smith, BDB, Gesenius &amp; LSJ</strong> for <strong>${escapeHtml(parsed.label)}</strong>…
+            </div>`;
+        }
+
+        const bundle = await scanAllLexicons(parsed);
+        renderTabbedResultsUI(modalType, ctx, bundle, 'all');
+    }
+
+    function attachFieldDropdownToModal(modalType, ctx) {
+        modalContexts[modalType] = ctx;
+        if (!ctx.modal || !ctx.input || ctx.modal.querySelector(`.lf-field-select[data-modal="${modalType}"]`)) return;
+
+        const origPlaceholder = ctx.input.getAttribute('placeholder') || '';
+        const wrap = document.createElement('div');
+        wrap.className = 'lf-field-wrap';
+        wrap.innerHTML = `
+            <span class="lf-field-label">Field:</span>
+            <select class="lf-field-select" data-modal="${modalType}" title="Switch between Word lookup and All-Lexicon Scripture search">
+                <option value="word">Word</option>
+                <option value="scripture">Scripture (All Lexicons)</option>
+            </select>
+        `;
+
+        const select = wrap.querySelector('select');
+        const inputBox = ctx.input.closest('div') || ctx.input;
+        inputBox.parentElement.insertBefore(wrap, inputBox);
+
+        select.addEventListener('change', () => {
+            const isScripture = select.value === 'scripture';
+            select.classList.toggle('lf-scripture-active', isScripture);
+            if (isScripture) hideWorkspaceVerseBridgeBars();
+            ctx.input.setAttribute(
+                'placeholder',
+                isScripture ? 'Search ALL lexicons for a verse (e.g. Gen 1:2, Heb 11:15, Rom 10:7)...' : origPlaceholder
+            );
+            ctx.input.focus();
+        });
+
+        ctx.modal.addEventListener('keydown', (e) => {
+            if (bypassFlag[modalType] || select.value !== 'scripture') return;
+            if (e.target === ctx.input && e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                executeAllLexiconScriptureSearch(modalType, ctx);
+            }
+        }, true);
+
+        ctx.modal.addEventListener('click', (e) => {
+            if (bypassFlag[modalType] || select.value !== 'scripture') return;
+            const btn = e.target && e.target.closest('button');
+            if (!btn) return;
+            if (btn === ctx.getSearchButton()) {
+                e.preventDefault();
+                e.stopPropagation();
+                executeAllLexiconScriptureSearch(modalType, ctx);
+            }
+        }, true);
+    }
+
+    function initLexiconFieldDropdowns() {
+        hookGreekLookupFallback();
+
+        const gntModal = document.getElementById('thayersModal');
+        const gntInput = document.getElementById('thayersSearchInput');
+        if (gntModal && gntInput) {
+            attachFieldDropdownToModal('gnt', {
+                modal: gntModal,
+                input: gntInput,
+                getResultsContainer: () => document.getElementById('thayersResultsContainer'),
+                getSearchButton: () => Array.from(gntModal.querySelectorAll('button')).find((b) => /Search\s+Lexicon/i.test(b.textContent || ''))
+            });
+        }
+
+        const bdbModal = document.getElementById('bdbModal');
+        const bdbInput = document.getElementById('bdbSearchInput');
+        if (bdbModal && bdbInput) {
+            attachFieldDropdownToModal('hebrew', {
+                modal: bdbModal,
+                input: bdbInput,
+                getResultsContainer: () => document.getElementById('bdbResultsContainer'),
+                getSearchButton: () => Array.from(bdbModal.querySelectorAll('button')).find((b) => /Search\s+(BDB|Hebrew|Lexicon)/i.test(b.textContent || ''))
+            });
+        }
+
+        const wireLsjIfPresent = () => {
+            const lsjModal = document.getElementById('lfLsjModalOverlay');
+            if (!lsjModal) return false;
+            const lsjInput = lsjModal.querySelector('input[type="text"], input[type="search"], input:not([type])');
+            if (!lsjInput) return false;
+            attachFieldDropdownToModal('lsj', {
+                modal: lsjModal,
+                input: lsjInput,
+                getResultsContainer: () => lsjModal.querySelector('#lfLsjResults, #lfLsjBody, .lf-lsj-results') || lsjInput.closest('div').parentElement.nextElementSibling,
+                getSearchButton: () => Array.from(lsjModal.querySelectorAll('button')).find((b) => /^\s*Search(\s+LSJ|\s+Lexicon)?\s*$/i.test(b.textContent || ''))
+            });
+            return true;
+        };
+
+        if (!wireLsjIfPresent()) {
+            const obs = new MutationObserver(() => {
+                if (wireLsjIfPresent()) obs.disconnect();
+            });
+            obs.observe(document.body, { childList: true });
         }
     }
 
-    // Re-check whenever LSJ is open so async IndexedDB results highlight immediately
-    setInterval(() => {
-        const lsjModal = findLsjContainer();
-        if (lsjModal && (!lsjModal.querySelector('mark.lf-verse-match-pill') || !document.getElementById('lfLsjActiveVersePill'))) {
-            refreshAllLexiconHighlights(false);
-        }
-    }, 450);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLexiconFieldDropdowns);
+    } else {
+        initLexiconFieldDropdowns();
+    }
 })();
 
     </script>
