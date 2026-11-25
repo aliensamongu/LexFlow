@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 1 MODULE: COMMAND PALETTE (Cmd+K), WORKSPACE MODES & SHORTCUTS === */
+/* === LEXFLOW PHASE 1 MODULE: COMMAND PALETTE (Cmd+K), WORKSPACE MODES, BRAND ICON & SHORTCUTS === */
 (function () {
     if (window.__lfPhase1Loaded) return;
     window.__lfPhase1Loaded = true;
@@ -6,12 +6,42 @@
     const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent || '');
     const MOD = isMac ? '⌘' : 'Ctrl+';
 
+    // Exact SVG fallback matching lexflow-icon.png in case the PNG hasn't finished caching yet
+    const BRAND_ICON_SVG_FALLBACK =
+        'data:image/svg+xml;utf8,' +
+        encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+            '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#0284c7"/>' +
+            '</linearGradient></defs>' +
+            '<rect width="512" height="512" rx="112" fill="url(#g)"/>' +
+            '<rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="6"/>' +
+            '<rect x="118" y="118" width="34" height="276" rx="17" fill="#ffffff"/>' +
+            '<rect x="188" y="134" width="204" height="40" rx="20" fill="#ffffff"/>' +
+            '<circle cx="188" cy="256" r="16" fill="#fde047"/>' +
+            '<rect x="226" y="236" width="166" height="40" rx="20" fill="#e0f2fe"/>' +
+            '<circle cx="226" cy="358" r="16" fill="#a7f3d0"/>' +
+            '<rect x="264" y="338" width="128" height="40" rx="20" fill="#bae6fd"/>' +
+            '</svg>'
+        );
+
     // -------------------------------------------------------------------------
     // 1. STYLES (Matches LexFlow Glassy Light & Dark Theme)
     // -------------------------------------------------------------------------
     const styleEl = document.createElement('style');
     styleEl.id = 'lfPhase1Styles';
     styleEl.textContent = `
+        /* Toolbar Brand Icon matching Dock Icon */
+        .lf-brand-dock-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+            display: inline-block;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+        }
+
         /* Workspace Mode Switcher Pill Bar */
         #lfModeSwitcherBar {
             display: inline-flex;
@@ -212,6 +242,47 @@
     }
 
     // -------------------------------------------------------------------------
+    // 1B. SWAP TOOLBAR LOGO ICON TO MATCH DOCK ICON (lexflow-icon.png)
+    // -------------------------------------------------------------------------
+    function swapHeaderBrandIcon() {
+        const header = document.querySelector('header');
+        if (!header || header.querySelector('.lf-brand-dock-icon')) return;
+
+        const candidates = Array.from(header.querySelectorAll('div, a, button, span'));
+        let brandBox = null;
+        for (let i = 0; i < candidates.length; i++) {
+            const el = candidates[i];
+            if (el.closest('#lfModeSwitcherBar, #lfOpenCmdPaletteBtn, #lfToggleStudyDockBtn, #lfOpenExportStudioBtn')) continue;
+            const txt = (el.textContent || '').replace(/\s+/g, '');
+            if (txt !== 'LexFlow') continue;
+            if (el.querySelector('svg, i')) {
+                brandBox = el;
+            }
+        }
+        if (!brandBox) return;
+
+        const oldIcon = brandBox.querySelector('svg, i');
+        if (!oldIcon) return;
+
+        const img = document.createElement('img');
+        img.src = './lexflow-icon.png';
+        img.alt = 'LexFlow';
+        img.className = 'lf-brand-dock-icon';
+        img.onerror = function () {
+            if (this.src !== BRAND_ICON_SVG_FALLBACK) {
+                this.src = BRAND_ICON_SVG_FALLBACK;
+            }
+        };
+
+        const parent = oldIcon.parentElement;
+        if (parent && parent !== brandBox && (parent.textContent || '').trim() === '') {
+            parent.replaceWith(img);
+        } else {
+            oldIcon.replaceWith(img);
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // 2. HELPERS TO CALL EXISTING LEXFLOW FEATURES SAFELY
     // -------------------------------------------------------------------------
     function isParallelOpen() {
@@ -374,7 +445,6 @@
         leftGroup.appendChild(modeBar);
         leftGroup.appendChild(cmdBtn);
 
-        // Reflect current state on the pills without changing user's current view on load
         const currentFlowShown = !document.body.classList.contains('hide-text-flow');
         const initialPill = currentFlowShown ? 'flow' : (activeWorkspaceMode === 'research' ? 'research' : 'read');
         modeBar.querySelectorAll('.lf-mode-pill').forEach((btn) => {
@@ -509,7 +579,6 @@
         if (!q) return [];
         const items = [];
 
-        // 1. Check if user typed a Bible passage reference (e.g., "Gen 1:2", "Heb 1", "Rom 8:1-4")
         const parsedRef = typeof window.parseScriptureReference === 'function' ? window.parseScriptureReference(q) : null;
         if (parsedRef) {
             const label = parsedRef.startVerse && q.includes(':')
@@ -535,7 +604,6 @@
             }
         }
 
-        // 2. Check if user typed a Strong's # or word
         if (/^[Gg]\d{1,4}$/.test(q)) {
             items.push({
                 id: 'dyn_strong_g',
@@ -663,7 +731,6 @@
 
         const key = (e.key || '').toLowerCase();
 
-        // Cmd/Ctrl + K -> Command Palette
         if (!e.shiftKey && key === 'k') {
             e.preventDefault();
             const overlay = document.getElementById('lfCmdPaletteOverlay');
@@ -672,7 +739,6 @@
             return;
         }
 
-        // Ignore Shift shortcuts if typing inside a text box (except flowEditor)
         const tag = (e.target && e.target.tagName) || '';
         const inFormField = /^(INPUT|TEXTAREA|SELECT)$/.test(tag);
         if (inFormField) return;
@@ -698,6 +764,7 @@
     // 6. INITIALIZE
     // -------------------------------------------------------------------------
     function initPhase1() {
+        swapHeaderBrandIcon();
         injectTopBarControls();
         buildPaletteDOM();
     }
