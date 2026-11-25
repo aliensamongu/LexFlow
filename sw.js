@@ -1,6 +1,6 @@
-/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT) === */
-const APP_CACHE = 'lexflow-app-shell-v1';
-const CDN_CACHE = 'lexflow-cdn-assets-v1';
+/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v2) === */
+const APP_CACHE = 'lexflow-app-shell-v2';
+const CDN_CACHE = 'lexflow-cdn-assets-v2';
 
 const APP_SHELL_URLS = [
     './',
@@ -11,7 +11,8 @@ const APP_SHELL_URLS = [
     './js/lexflow-phase1.js',
     './js/lexflow-phase2-dock.js',
     './js/lexflow-phase3-exegesis.js',
-    './js/lexflow-phase4-export.js'
+    './js/lexflow-phase4-export.js',
+    './js/lexflow-tablet-mode.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -45,7 +46,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(req.url);
     const isSameOrigin = url.origin === self.location.origin;
 
-    // 1. Same-origin app files (index.html, js/*.js): Network-First so GitHub updates always show up right away
+    // 1. Same-origin app files: Network-First so GitHub updates always arrive immediately
     if (isSameOrigin) {
         event.respondWith(
             fetch(req)
@@ -61,7 +62,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 2. Static CDN libraries & fonts (Tailwind, FontAwesome, Strong's, Google Fonts, jsDelivr): Cache-First for instant offline speed
+    // 2. Static CDN libraries & fonts: Cache-First for instant offline speed
     const isStaticCdn =
         /cdn\.tailwindcss\.com|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/i.test(url.hostname);
 
