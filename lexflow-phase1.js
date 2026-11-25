@@ -33,13 +33,15 @@
     styleEl.textContent = `
         /* Toolbar Brand Icon matching Dock Icon */
         .lf-brand-dock-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            object-fit: cover;
-            flex-shrink: 0;
-            display: inline-block;
-            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+            width: 24px !important;
+            height: 24px !important;
+            min-width: 24px !important;
+            border-radius: 6px !important;
+            object-fit: cover !important;
+            flex-shrink: 0 !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.24) !important;
         }
 
         /* Workspace Mode Switcher Pill Bar */
@@ -242,28 +244,9 @@
     }
 
     // -------------------------------------------------------------------------
-    // 1B. SWAP TOOLBAR LOGO ICON TO MATCH DOCK ICON (lexflow-icon.png)
+    // 1B. SWAP TOOLBAR LOGO ICON TO MATCH DOCK ICON (Bulletproof Selector)
     // -------------------------------------------------------------------------
-    function swapHeaderBrandIcon() {
-        const header = document.querySelector('header');
-        if (!header || header.querySelector('.lf-brand-dock-icon')) return;
-
-        const candidates = Array.from(header.querySelectorAll('div, a, button, span'));
-        let brandBox = null;
-        for (let i = 0; i < candidates.length; i++) {
-            const el = candidates[i];
-            if (el.closest('#lfModeSwitcherBar, #lfOpenCmdPaletteBtn, #lfToggleStudyDockBtn, #lfOpenExportStudioBtn')) continue;
-            const txt = (el.textContent || '').replace(/\s+/g, '');
-            if (txt !== 'LexFlow') continue;
-            if (el.querySelector('svg, i')) {
-                brandBox = el;
-            }
-        }
-        if (!brandBox) return;
-
-        const oldIcon = brandBox.querySelector('svg, i');
-        if (!oldIcon) return;
-
+    function createBrandDockIconImg() {
         const img = document.createElement('img');
         img.src = './lexflow-icon.png';
         img.alt = 'LexFlow';
@@ -273,13 +256,63 @@
                 this.src = BRAND_ICON_SVG_FALLBACK;
             }
         };
+        return img;
+    }
 
-        const parent = oldIcon.parentElement;
-        if (parent && parent !== brandBox && (parent.textContent || '').trim() === '') {
-            parent.replaceWith(img);
-        } else {
-            oldIcon.replaceWith(img);
+    function swapHeaderBrandIcon() {
+        const header = document.querySelector('header');
+        if (!header || header.querySelector('.lf-brand-dock-icon')) return true;
+
+        // Walk every element inside <header> (supports div, h1, h2, a, button, span, etc.)
+        const allEls = Array.from(header.querySelectorAll('*'));
+        const lexFlowMatches = [];
+
+        for (let i = 0; i < allEls.length; i++) {
+            const el = allEls[i];
+            if (el.closest('#lfModeSwitcherBar, #lfOpenCmdPaletteBtn, #lfToggleStudyDockBtn, #lfOpenExportStudioBtn, #lfTabletTurboBtn')) continue;
+            const norm = (el.textContent || '').replace(/\s+/g, '');
+            if (norm.toLowerCase() === 'lexflow') {
+                lexFlowMatches.push(el);
+            }
         }
+
+        // Check from deepest match outward to find the pill holding both the icon and "LexFlow"
+        let brandBox = null;
+        let oldIcon = null;
+
+        for (let i = lexFlowMatches.length - 1; i >= 0; i--) {
+            let cur = lexFlowMatches[i];
+            for (let depth = 0; depth < 4 && cur && cur !== header; depth++) {
+                const fullTxt = (cur.textContent || '').replace(/\s+/g, '');
+                // Stop if we climbed into a parent that also contains "Tools" or "Read"
+                if (fullTxt.length > 24 || /Tools|Read|Jump/i.test(fullTxt)) break;
+
+                const iconEl = cur.querySelector('svg, i, img, canvas');
+                if (iconEl) {
+                    brandBox = cur;
+                    oldIcon = iconEl;
+                    break;
+                }
+                cur = cur.parentElement;
+            }
+            if (oldIcon) break;
+        }
+
+        if (!brandBox || !oldIcon) return false;
+
+        const img = createBrandDockIconImg();
+
+        // If the old icon sits inside an empty icon-wrapper div/span, replace that wrapper cleanly
+        let targetToReplace = oldIcon;
+        if (
+            oldIcon.parentElement &&
+            oldIcon.parentElement !== brandBox &&
+            (oldIcon.parentElement.textContent || '').trim() === ''
+        ) {
+            targetToReplace = oldIcon.parentElement;
+        }
+        targetToReplace.replaceWith(img);
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -764,9 +797,12 @@
     // 6. INITIALIZE
     // -------------------------------------------------------------------------
     function initPhase1() {
-        swapHeaderBrandIcon();
         injectTopBarControls();
         buildPaletteDOM();
+        if (!swapHeaderBrandIcon()) {
+            setTimeout(swapHeaderBrandIcon, 350);
+            setTimeout(swapHeaderBrandIcon, 1200);
+        }
     }
 
     if (document.readyState === 'loading') {
