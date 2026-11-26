@@ -1,6 +1,6 @@
-/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v3) === */
-const APP_CACHE = 'lexflow-app-shell-v3';
-const CDN_CACHE = 'lexflow-cdn-assets-v3';
+/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v4) === */
+const APP_CACHE = 'lexflow-app-shell-v4';
+const CDN_CACHE = 'lexflow-cdn-assets-v4';
 
 const APP_SHELL_URLS = [
     './',
