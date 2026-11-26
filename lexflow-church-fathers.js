@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE (v2): CHURCH FATHERS & CCEL INTEGRATION ===
+/* === LEXFLOW PHASE 6 MODULE (v3): CHURCH FATHERS & CCEL INTEGRATION (CCEL Live Search Fix) ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -61,7 +61,7 @@
             vol: 'NPNF2-04',
             summary: 'Because humanity lay under the sentence of death, the immortal Word took a mortal body to offer His flesh as a sacrifice on behalf of all, paying the debt of death and defeating corruption.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf204.vii.ii.i.html',
-            ccelSearch: 'title:(NPNF2-04) AND "On the Incarnation" AND (debt OR sacrifice OR death)'
+            ccelSearch: '"On the Incarnation" debt sacrifice death'
         },
         {
             topics: ['atonement', 'redemption', 'recapitulation', 'cross', 'salvation'],
@@ -70,7 +70,7 @@
             vol: 'ANF01',
             summary: 'Presents recapitulation: Christ summed up humanity in Himself, undoing Adam’s disobedience by His obedience unto death and redeeming us by His own blood.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Irenaeus AND (recapitulated OR ransom OR "own blood")'
+            ccelSearch: 'Irenaeus recapitulated ransom "own blood"'
         },
         {
             topics: ['atonement', 'substitution', 'justification', 'cross', 'sacrifice', 'righteousness'],
@@ -79,7 +79,7 @@
             vol: 'ANF01',
             summary: 'Christ "gave His blood for us by the will of God; His flesh for our flesh, and His soul for our souls." In Diognetus: "O sweet exchange! The righteousness of One justifies many sinners."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND ("flesh for our flesh" OR "sweet exchange")'
+            ccelSearch: '"flesh for our flesh" "sweet exchange"'
         },
         {
             topics: ['atonement', 'cross', 'ransom', 'sacrifice', 'redemption'],
@@ -88,7 +88,7 @@
             vol: 'NPNF2-07',
             summary: 'Critiques the idea of a ransom paid to Satan ("Fie upon the outrage!") and asks why the precious blood of God was poured out—offered to the Father for our sanctification.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf207.toc.html',
-            ccelSearch: 'title:(NPNF2-07) AND "To Whom was that Blood offered"'
+            ccelSearch: '"To Whom was that Blood offered"'
         },
         {
             topics: ['atonement', 'cross', 'redemption', 'mediator', 'sacrifice'],
@@ -97,7 +97,7 @@
             vol: 'NPNF1-03',
             summary: 'Christ is both Priest and Sacrifice, overcoming the devil not by sheer power first, but by justice—shedding innocent blood to cancel the bond of our guilt.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf103.toc.html',
-            ccelSearch: 'title:(NPNF1-03) AND (sacrifice OR mediator) AND "precious blood"'
+            ccelSearch: 'sacrifice mediator "precious blood"'
         },
         {
             topics: ['atonement', 'cross', 'sacrifice', 'redemption'],
@@ -106,7 +106,7 @@
             vol: 'NPNF1-11',
             summary: 'Expounds Christ as the true mercy-seat (propitiation) who bore the curse and condemnation due to sinners, exchanging our sin for the very righteousness of God.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf111.toc.html',
-            ccelSearch: 'title:(NPNF1-11 OR NPNF1-12) AND (propitiation OR "made Him to be sin")'
+            ccelSearch: 'propitiation "made Him to be sin"'
         },
 
         // BAPTISM
@@ -117,7 +117,7 @@
             vol: 'ANF07',
             summary: 'Earliest church manual on baptism: baptize in the name of the Father, Son, and Holy Spirit in living (running) water; if unavailable, other water or pouring three times on the head after fasting.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf07.toc.html',
-            ccelSearch: 'title:(ANF07) AND "Concerning baptism" AND "living water"'
+            ccelSearch: '"Concerning baptism" "living water"'
         },
         {
             topics: ['baptism', 'regeneration', 'illumination', 'sacrament', 'worship'],
@@ -126,7 +126,7 @@
             vol: 'ANF01',
             summary: 'Describes believers who are persuaded of the truth, fast and pray, and are brought to water to be "regenerated" in the name of the Father, Jesus Christ, and the Holy Spirit—called "illumination."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND "First Apology" AND "washing with water" AND illumination'
+            ccelSearch: '"First Apology" "washing with water" illumination'
         },
         {
             topics: ['baptism', 'infant baptism', 'water', 'regeneration', 'sacrament'],
@@ -135,7 +135,7 @@
             vol: 'ANF03',
             summary: 'First full treatise devoted entirely to baptism ("We, little fishes, after the example of our ICHTHYS Jesus Christ, are born in water"). Also discusses the timing of baptizing children (Ch. 18).',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf03.toc.html',
-            ccelSearch: 'title:(ANF03) AND "On Baptism" AND "little fishes"'
+            ccelSearch: '"On Baptism" "little fishes"'
         },
         {
             topics: ['baptism', 'infant baptism', 'sacrament', 'grace'],
@@ -144,7 +144,7 @@
             vol: 'ANF05',
             summary: 'Reports the Council of Carthage’s ruling that infants need not wait until the eighth day (as in circumcision) to receive baptism and the mercy of Christ.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf05.toc.html',
-            ccelSearch: 'title:(ANF05) AND Fidus AND "baptism of infants"'
+            ccelSearch: 'Fidus "baptism of infants"'
         },
         {
             topics: ['baptism', 'water', 'spirit', 'regeneration', 'catechism'],
@@ -153,7 +153,7 @@
             vol: 'NPNF2-07',
             summary: 'Explains baptism as burial and resurrection with Christ (Rom 6), renunciation of Satan, triple immersion, and the sealing of the Holy Spirit.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf207.toc.html',
-            ccelSearch: 'title:(NPNF2-07) AND "On Baptism" AND "Mystagogical"'
+            ccelSearch: '"On Baptism" "Mystagogical"'
         },
         {
             topics: ['baptism', 'infant baptism', 'original sin', 'grace', 'sacrament'],
@@ -162,7 +162,7 @@
             vol: 'NPNF1-04',
             summary: 'Defends the validity of baptism based on Christ (not the moral perfection of the minister) and argues for infant baptism in connection with original sin.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf104.toc.html',
-            ccelSearch: 'title:(NPNF1-04 OR NPNF1-05) AND "On Baptism" AND Donatists'
+            ccelSearch: '"On Baptism" Donatists'
         },
 
         // LORD'S SUPPER / EUCHARIST
@@ -173,7 +173,7 @@
             vol: 'ANF07',
             summary: 'Preserves the earliest non-canonical Eucharistic prayers over the cup and broken bread ("Even as this broken bread was scattered over the hills... so let Thy Church be gathered") and Sunday breaking of bread.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf07.toc.html',
-            ccelSearch: 'title:(ANF07) AND "Concerning the Thanksgiving" AND "broken bread"'
+            ccelSearch: '"Concerning the Thanksgiving" "broken bread"'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'sacrament', 'church'],
@@ -182,7 +182,7 @@
             vol: 'ANF01',
             summary: 'Calls the Eucharist "the medicine of immortality" and rebukes Docetists who abstain from the Eucharist because they deny Christ’s true flesh.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Ignatius AND ("medicine of immortality" OR "Smyrnaeans" AND Eucharist)'
+            ccelSearch: 'Ignatius "medicine of immortality" "Smyrnaeans" Eucharist'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'worship', 'sunday'],
@@ -191,7 +191,7 @@
             vol: 'ANF01',
             summary: 'Describes weekly Sunday worship—Scripture readings, exhortation, prayers, bread and wine blessed by prayer ("not as common bread and common drink") distributed by deacons.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND "common bread and common drink" AND Eucharist'
+            ccelSearch: '"common bread and common drink" Eucharist'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'resurrection', 'sacrament'],
@@ -200,7 +200,7 @@
             vol: 'ANF01',
             summary: 'Teaches that the bread receiving the invocation of God consists of two realities—earthly and heavenly—and nourishes our bodies for the hope of the resurrection.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Irenaeus AND "earthly and a heavenly" AND Eucharist'
+            ccelSearch: 'Irenaeus "earthly and a heavenly" Eucharist'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'sacrament'],
@@ -209,7 +209,7 @@
             vol: 'NPNF2-07',
             summary: 'Instructs newly baptized believers on 1 Cor 11, the epiclesis (calling on the Holy Spirit), and approaching the table with reverence.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf207.toc.html',
-            ccelSearch: 'title:(NPNF2-07) AND "Body and Blood of Christ" AND Cyril'
+            ccelSearch: '"Body and Blood of Christ" Cyril'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'sacrament'],
@@ -218,7 +218,7 @@
             vol: 'NPNF1-07',
             summary: 'Explains John 6 ("Believe, and thou hast eaten") and distinguishes the outward sign (sacramentum) from the spiritual reality (res) of union with Christ and His Body, the Church.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf107.toc.html',
-            ccelSearch: 'title:(NPNF1-07) AND "Believe, and thou hast eaten"'
+            ccelSearch: '"Believe, and thou hast eaten"'
         },
         {
             topics: ["lord's supper", 'lords supper', 'eucharist', 'communion', 'sacrament'],
@@ -227,7 +227,7 @@
             vol: 'NPNF1-12',
             summary: 'Preaches fervently on 1 Cor 10–11, emphasizing Christ’s presence at the table, self-examination, and love for the poor as inseparable from communion.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf112.toc.html',
-            ccelSearch: 'title:(NPNF1-12) AND "cup of blessing" AND "table"'
+            ccelSearch: '"cup of blessing" "table"'
         },
 
         // TRINITY
@@ -238,7 +238,7 @@
             vol: 'ANF03',
             summary: 'First Latin Father to coin the terminology "Trinity" (Trinitas), "one substance" (una substantia), and "three persons" (tres personae) against modalism.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf03.toc.html',
-            ccelSearch: 'title:(ANF03) AND "Against Praxeas" AND "one substance"'
+            ccelSearch: '"Against Praxeas" "one substance"'
         },
         {
             topics: ['trinity', 'deity of christ', 'son', 'arians', 'homoousios'],
@@ -247,7 +247,7 @@
             vol: 'NPNF2-04',
             summary: 'Defends the eternal generation and full deity of the Son (homoousios with the Father) against Arius ("There was never a time when the Son was not").',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf204.toc.html',
-            ccelSearch: 'title:(NPNF2-04) AND "Discourses Against the Arians" AND "coessential"'
+            ccelSearch: '"Discourses Against the Arians" "coessential"'
         },
         {
             topics: ['trinity', 'holy spirit', 'godhead', 'cappadocians'],
@@ -256,7 +256,7 @@
             vol: 'NPNF2-07',
             summary: 'Classic Nicene synthesis: "No sooner do I conceive of the One than I am illumined by the splendor of the Three; no sooner do I distinguish Them than I am carried back to the One."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf207.toc.html',
-            ccelSearch: 'title:(NPNF2-07) AND "Theological Oration" AND Trinity'
+            ccelSearch: '"Theological Oration" Trinity'
         },
         {
             topics: ['trinity', 'godhead', 'persons', 'essence'],
@@ -265,7 +265,7 @@
             vol: 'NPNF2-05',
             summary: 'Explains why confessing Father, Son, and Holy Spirit is strict monotheism—one undivided divine nature and inseparable operation across all three Persons.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf205.toc.html',
-            ccelSearch: 'title:(NPNF2-05) AND "Not Three Gods"'
+            ccelSearch: '"Not Three Gods"'
         },
         {
             topics: ['trinity', 'godhead', 'love', 'image of god'],
@@ -274,7 +274,7 @@
             vol: 'NPNF1-03',
             summary: 'Landmark 15-book treatise on the equality of the Three Persons, Scriptural missions, and psychological analogies of the Trinity in the human mind (memory, understanding, will).',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf103.toc.html',
-            ccelSearch: 'title:(NPNF1-03) AND "On the Trinity" AND "memory, understanding"'
+            ccelSearch: '"On the Trinity" "memory, understanding"'
         },
         {
             topics: ['trinity', 'godhead', 'orthodox faith'],
@@ -283,7 +283,7 @@
             vol: 'NPNF2-09',
             summary: 'Synthesizes Eastern patristic Trinitarian theology, clearly defining perichoresis (mutual indwelling) of Father, Son, and Holy Spirit.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf209.toc.html',
-            ccelSearch: 'title:(NPNF2-09) AND "Orthodox Faith" AND "Holy Trinity"'
+            ccelSearch: '"Orthodox Faith" "Holy Trinity"'
         },
 
         // INCARNATION & CHRISTOLOGY
@@ -294,7 +294,7 @@
             vol: 'NPNF2-04',
             summary: 'One of the most celebrated books in Christian history: why God became man—"For He was made man that we might be made God" (participating in His incorruption and divine life).',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf204.vii.ii.i.html',
-            ccelSearch: 'title:(NPNF2-04) AND "On the Incarnation" AND "made man"'
+            ccelSearch: '"On the Incarnation" "made man"'
         },
         {
             topics: ['incarnation', 'christology', 'two natures', 'docetism'],
@@ -303,7 +303,7 @@
             vol: 'ANF01',
             summary: 'Confesses Christ as "both flesh and spirit, both made and not made, God existing in flesh, true life in death, both of Mary and of God."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Ignatius AND "both flesh and spirit"'
+            ccelSearch: 'Ignatius "both flesh and spirit"'
         },
         {
             topics: ['incarnation', 'christology', 'humanity of christ', 'salvation'],
@@ -312,7 +312,7 @@
             vol: 'NPNF2-07',
             summary: 'Famous Christological axiom: "For that which He has not assumed He has not healed; but that which is united to His Godhead is also saved."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf207.toc.html',
-            ccelSearch: 'title:(NPNF2-07) AND "not assumed" AND "not healed"'
+            ccelSearch: '"not assumed" "not healed"'
         },
 
         // GRACE, FREE WILL & JUSTIFICATION
@@ -323,7 +323,7 @@
             vol: 'ANF01',
             summary: 'Earliest post-apostolic witness to justification by faith: "We are not justified by ourselves, nor by our own wisdom, or understanding, or godliness, or works... but by that faith through which Almighty God has justified all men from the beginning."',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND "not justified by ourselves" AND Clement'
+            ccelSearch: '"not justified by ourselves" Clement'
         },
         {
             topics: ['grace', 'justification', 'free will', 'predestination', 'faith & works', 'pelagianism'],
@@ -332,7 +332,7 @@
             vol: 'NPNF1-05',
             summary: 'Augustine’s classic Anti-Pelagian writings defending sovereign, prevenient grace—God commands what we cannot do in our own strength and gives what He commands.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf105.toc.html',
-            ccelSearch: 'title:(NPNF1-05) AND "Spirit and the Letter" AND justification'
+            ccelSearch: '"Spirit and the Letter" justification'
         },
         {
             topics: ['grace', 'justification', 'faith & works', 'faith', 'law'],
@@ -341,7 +341,7 @@
             vol: 'NPNF1-11',
             summary: 'Highlights the astonishing free gift of righteousness through faith apart from works of the Law, while exhorting believers to a transformed, holy life.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf111.toc.html',
-            ccelSearch: 'title:(NPNF1-11) AND justified AND "without the deeds of the law"'
+            ccelSearch: 'justified "without the deeds of the law"'
         },
         {
             topics: ['grace', 'free will', 'salvation'],
@@ -350,7 +350,7 @@
             vol: 'ANF04',
             summary: 'Major early Eastern treatment defending human moral responsibility alongside divine grace and providence.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf04.toc.html',
-            ccelSearch: 'title:(ANF04) AND "De Principiis" AND "freedom of the will"'
+            ccelSearch: '"De Principiis" "freedom of the will"'
         },
 
         // HOLY SPIRIT
@@ -361,7 +361,7 @@
             vol: 'NPNF2-08',
             summary: 'Foundational treatise proving the full deity, equality, and worship of the Holy Spirit alongside the Father and the Son.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf208.vii.html',
-            ccelSearch: 'title:(NPNF2-08) AND "De Spiritu Sancto" AND glory'
+            ccelSearch: '"De Spiritu Sancto" glory'
         },
         {
             topics: ['holy spirit', 'trinity', 'sanctification'],
@@ -370,7 +370,7 @@
             vol: 'NPNF2-10',
             summary: 'Western patristic defense of the Spirit’s divinity, creative power, and indwelling work in believers.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf210.toc.html',
-            ccelSearch: 'title:(NPNF2-10) AND "On the Holy Spirit" AND Ambrose'
+            ccelSearch: '"On the Holy Spirit" Ambrose'
         },
 
         // SCRIPTURE & CANON
@@ -381,7 +381,7 @@
             vol: 'NPNF2-04',
             summary: 'First surviving Christian document listing the exact 27 books of the New Testament ("In these alone is proclaimed the doctrine of godliness").',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf204.toc.html',
-            ccelSearch: 'title:(NPNF2-04) AND "Letter XXXIX" AND "springs of salvation"'
+            ccelSearch: '"Letter XXXIX" "springs of salvation"'
         },
         {
             topics: ['scripture', 'bible', 'interpretation', 'hermeneutics', 'preaching'],
@@ -390,7 +390,7 @@
             vol: 'NPNF1-02',
             summary: 'The classic early Christian manual of biblical interpretation: every faithful reading of Scripture must build up the twofold love of God and neighbor.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf102.toc.html',
-            ccelSearch: 'title:(NPNF1-02) AND "Christian Doctrine" AND "love of God"'
+            ccelSearch: '"Christian Doctrine" "love of God"'
         },
         {
             topics: ['scripture', 'canon', 'gospels', 'tradition'],
@@ -399,7 +399,7 @@
             vol: 'ANF01',
             summary: 'Defends the authority and harmony of the four canonical Gospels (Matthew, Mark, Luke, John) against Gnostic fabrications.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Irenaeus AND "four-formed" AND Gospel'
+            ccelSearch: 'Irenaeus "four-formed" Gospel'
         },
         {
             topics: ['scripture', 'bible', 'canon', 'translation'],
@@ -408,7 +408,7 @@
             vol: 'NPNF2-06',
             summary: 'Urges deep daily study of every book of Scripture ("Ignorance of Scripture is ignorance of Christ") and explains his Hebrew-to-Latin translation work.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf206.toc.html',
-            ccelSearch: 'title:(NPNF2-06) AND "To Paulinus" AND Scriptures'
+            ccelSearch: '"To Paulinus" Scriptures'
         },
 
         // RESURRECTION & ESCHATOLOGY
@@ -419,7 +419,7 @@
             vol: 'ANF03',
             summary: 'Comprehensive defense of the bodily resurrection of believers against Gnostic dualism ("The flesh is the hinge of salvation").',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf03.toc.html',
-            ccelSearch: 'title:(ANF03) AND "Resurrection of the Flesh"'
+            ccelSearch: '"Resurrection of the Flesh"'
         },
         {
             topics: ['resurrection', 'eschatology', 'heaven', 'city of god', 'second coming'],
@@ -428,7 +428,7 @@
             vol: 'NPNF1-02',
             summary: 'Expounds the final judgment, the millennium (Rev 20), the resurrection of the body, and eternal joy in the City of God.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf102.toc.html',
-            ccelSearch: 'title:(NPNF1-02) AND "City of God" AND "thousand years"'
+            ccelSearch: '"City of God" "thousand years"'
         },
 
         // CHURCH, UNITY & MINISTRY
@@ -439,7 +439,7 @@
             vol: 'ANF01',
             summary: 'Earliest witness to the threefold ministry (bishop, presbyters/elders, deacons) and first surviving use of the phrase "catholic [universal] church" (Smyrnaeans 8).',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND Ignatius AND "catholic church"'
+            ccelSearch: 'Ignatius "catholic church"'
         },
         {
             topics: ['church', 'unity', 'schism', 'ministry'],
@@ -448,7 +448,7 @@
             vol: 'ANF05',
             summary: 'Pleads for visible Christian unity against schism, comparing the Church to the sun’s many rays, a tree’s branches, and Christ’s seamless garment.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf05.toc.html',
-            ccelSearch: 'title:(ANF05) AND "Unity of the Church" AND Cyprian'
+            ccelSearch: '"Unity of the Church" Cyprian'
         },
 
         // PRAYER & LORD'S PRAYER
@@ -459,7 +459,7 @@
             vol: 'ANF05',
             summary: 'Line-by-line exposition of Matthew 6:9–13, emphasizing communal prayer ("Our Father", not "My Father"), daily bread, and forgiving others.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf05.toc.html',
-            ccelSearch: 'title:(ANF05) AND "On the Lord\'s Prayer" AND Cyprian'
+            ccelSearch: '"On the Lord\'s Prayer" AND Cyprian'
         },
         {
             topics: ['prayer', "lord's prayer", 'worship'],
@@ -468,7 +468,7 @@
             vol: 'ANF03',
             summary: 'Earliest commentary on the Lord’s Prayer ("a summary of the whole Gospel") plus notes on early Christian postures and times of prayer.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf03.toc.html',
-            ccelSearch: 'title:(ANF03) AND "On Prayer" AND "summary of the whole Gospel"'
+            ccelSearch: '"On Prayer" "summary of the whole Gospel"'
         },
 
         // CREATION
@@ -479,7 +479,7 @@
             vol: 'NPNF2-08',
             summary: 'Classic nine-homily exposition of Genesis 1 defending creation ex nihilo (out of nothing) and marveling at the Creator’s wisdom in nature.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf208.toc.html',
-            ccelSearch: 'title:(NPNF2-08) AND Hexaemeron AND "In the beginning"'
+            ccelSearch: 'Hexaemeron "In the beginning"'
         },
         {
             topics: ['creation', 'genesis', 'time', 'confessions'],
@@ -488,7 +488,7 @@
             vol: 'NPNF1-01',
             summary: 'Profound meditation on Genesis 1:1, eternity vs. time ("God created time itself along with the world"), and the Trinity in creation.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/npnf101.toc.html',
-            ccelSearch: 'title:(NPNF1-01) AND Confessions AND "In the beginning God made"'
+            ccelSearch: 'Confessions "In the beginning God made"'
         },
 
         // MARTYRDOM & SUFFERING
@@ -499,7 +499,7 @@
             vol: 'ANF01',
             summary: 'Eyewitness letter of Polycarp’s faithfulness at age 86: "Eighty and six years have I served Him, and He never did me any injury: how then can I blaspheme my King and my Saviour?"',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf01.toc.html',
-            ccelSearch: 'title:(ANF01) AND "Eighty and six years" AND Polycarp'
+            ccelSearch: '"Eighty and six years" Polycarp'
         },
         {
             topics: ['martyrdom', 'persecution', 'suffering', 'apologetics'],
@@ -508,7 +508,7 @@
             vol: 'ANF03',
             summary: 'Defends Christians before Roman magistrates with the immortal line: "The blood of Christians is seed!"',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf03.toc.html',
-            ccelSearch: 'title:(ANF03) AND "blood of Christians is seed"'
+            ccelSearch: '"blood of Christians is seed"'
         }
     ];
 
@@ -551,17 +551,19 @@
     const VERSE_CITATIONS = {
         // GENESIS (Book 1)
         '1_1_1': [
-            { fatherId: 'basil', work: 'Hexaemeron, Homily 1', note: 'Refutes eternal matter: God spoke the universe into being ex nihilo ("out of nothing") by His sovereign will.' },
-            { fatherId: 'augustine', work: 'Confessions, Book XI–XII', note: 'Time itself is part of creation; God created heaven and earth "in the Beginning"—in His eternal Word (Christ).' },
-            { fatherId: 'irenaeus', work: 'Against Heresies, II.10', note: 'Against Gnostics: the one supreme God, not a lesser demiurge, freely created all things from nothing.' }
+            { fatherId: 'basil', work: 'Hexaemeron, Homily 1', note: 'Refutes eternal matter: God spoke the universe into being ex nihilo ("out of nothing") by His sovereign will.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf208.viii.ii.html' },
+            { fatherId: 'augustine', work: 'Confessions, Book XII, Ch. 7', note: 'Time itself is part of creation; God created heaven and earth "in the Beginning"—out of nothing, through His eternal Wisdom.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf101.vi.XII.VII.html' },
+            { fatherId: 'irenaeus', work: 'Against Heresies, II.10', note: 'Against Gnostics: the one supreme God, not a lesser demiurge, freely created all things from nothing.', searchTerms: 'Irenaeus created nothing heaven earth' }
         ],
         '1_1_2': [
-            { fatherId: 'basil', work: 'Hexaemeron, Homily 2.6', note: 'The "Spirit of God" hovering (brooding like a bird warming eggs) prepares the waters to bring forth life.' },
-            { fatherId: 'tertullian', work: 'On Baptism, Ch. 4', note: 'Links the Spirit moving upon the primordial waters to the Spirit’s sanctifying work in Christian baptism.' }
+            { fatherId: 'basil', work: 'Hexaemeron, Homily 2', note: 'The "Spirit of God" hovering (brooding like a bird warming eggs) prepares the waters to bring forth life.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf208.viii.iii.html' },
+            { fatherId: 'ambrose', work: 'On the Holy Spirit, Book II, Ch. 5', note: 'When the Spirit moved upon the waters, the world gained the beauty and grace of creation—proving the Spirit is Creator with the Father and Son.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf210.iv.ii.iii.vi.html' },
+            { fatherId: 'tertullian', work: 'On Baptism, Ch. 4', note: 'Links the Spirit moving upon the primordial waters to the Spirit’s sanctifying work in Christian baptism.', searchTerms: 'Spirit of God moved upon the waters baptism' }
         ],
         '1_1_3': [
-            { fatherId: 'basil', work: 'Hexaemeron, Homily 2.7', note: 'God’s speech is not vibration in air, but the instantaneous creative command of His will through the Son.' },
-            { fatherId: 'ambrose', work: 'Hexaemeron, Day 1', note: 'Light was created before the sun so humanity would worship the Creator, not the sun.' }
+            { fatherId: 'basil', work: 'Hexaemeron, Homily 2 (§7)', note: 'God’s speech is not vibration in air, but the instantaneous creative command of His will through the Son.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf208.viii.iii.html' },
+            { fatherId: 'augustine', work: 'Confessions, Book XIII, Ch. 3', note: 'Meditates on "Let there be light, and there was light" as both physical creation and the spiritual illumination of creatures by God’s grace.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf101.vi.XIII.III.html' },
+            { fatherId: 'ambrose', work: 'On the Holy Spirit, Book II, Ch. 5', note: 'Reflects on creation’s illumination by the Spirit moving over the waters and establishing the heavens by the Word of the Lord.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf210.iv.ii.iii.vi.html' }
         ],
         '1_1_26': [
             { fatherId: 'irenaeus', work: 'Against Heresies, IV.20.1', note: '"Let Us make man"—God spoke to His "two hands," the Son and the Holy Spirit, who are ever with Him.' },
@@ -688,7 +690,7 @@
 
         // JOHN (Book 43)
         '43_1_1': [
-            { fatherId: 'augustine', work: 'Tractates on John, 1 & Confessions VII', note: 'The Word was eternally with God and IS God—co-eternal with the Father before all ages.' },
+            { fatherId: 'augustine', work: 'Tractates on John, Tractate 1', note: 'The Word was eternally with God and IS God—co-eternal with the Father before all ages.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf107.iii.ii.html' },
             { fatherId: 'chrysostom', work: 'Homilies on John, 2–4', note: 'John begins higher than Genesis: "In the beginning WAS the Word"—implying eternal existence without origin.' },
             { fatherId: 'irenaeus', work: 'Against Heresies, III.11', note: 'John wrote this opening specifically to refute early heretics who denied Christ’s eternal deity and role as Creator.' },
             { fatherId: 'athanasius', work: 'Against the Arians, I.11', note: 'Refutes Arius: if the Word "was" in the beginning, there was never a time when He was not.' }
@@ -930,38 +932,52 @@
         return fallback[bookNum] || 'Scripture';
     }
 
-    // Build exact CCEL Full-Text Lucene search URL
-    function buildCcelSearchUrl(luceneQuery) {
-        return `https://www.ccel.org/search/fulltext/${encodeURIComponent(luceneQuery.trim())}`;
+    // Convert volume code like "NPNF2-10" or "ANF01" into CCEL's lowercase slug ("npnf210", "anf01")
+    function toCcelWorkSlug(volCode) {
+        return String(volCode || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // Build CCEL's active search URL (authorID[]=schaff, optional workID[]/versionID[], highlight=1, text=...)
+    function buildCcelSearchUrl(queryText, volCodes) {
+        const params = [];
+        params.push('authorID%5B%5D=schaff');
+        const vols = Array.isArray(volCodes) ? volCodes : (volCodes ? [volCodes] : []);
+        vols.forEach((v) => {
+            const slug = toCcelWorkSlug(v);
+            if (slug) {
+                params.push(`workID%5B%5D=${encodeURIComponent(slug)}`);
+                params.push(`versionID%5B%5D=${encodeURIComponent(slug)}`);
+            }
+        });
+        params.push('highlight=1');
+        params.push(`text=${encodeURIComponent(String(queryText || '').trim())}`);
+        return `https://www.ccel.org/search?${params.join('&')}`;
     }
 
     function buildCcelTopicSearchUrl(topic, fatherId) {
         const cleanTopic = (topic || '').trim();
-        const quoted = /\s/.test(cleanTopic) ? `"${cleanTopic}"` : cleanTopic;
         if (!fatherId || fatherId === 'all') {
-            return buildCcelSearchUrl(`title:(ANF* OR NPNF*) AND ${quoted}`);
+            return buildCcelSearchUrl(cleanTopic, []);
         }
         const f = FATHER_BY_ID[fatherId];
-        if (!f) return buildCcelSearchUrl(`title:(ANF* OR NPNF*) AND ${quoted}`);
-        const volClause = f.vols.map((v) => `${v}*`).join(' OR ');
-        // If volume holds multiple Fathers (like ANF01), include Father name for precision
+        if (!f) return buildCcelSearchUrl(cleanTopic, []);
+        // If volume holds multiple Fathers (like ANF01), include Father name in search text for precision
         const multiAuthorVols = ['ANF01', 'ANF02', 'ANF03', 'ANF04', 'ANF05', 'ANF07', 'NPNF2-07', 'NPNF2-09'];
         const needsAuthor = f.vols.some((v) => multiAuthorVols.includes(v));
-        const q = needsAuthor
-            ? `title:(${volClause}) AND "${f.queryName}" AND ${quoted}`
-            : `title:(${volClause}) AND ${quoted}`;
-        return buildCcelSearchUrl(q);
+        const q = (needsAuthor && !cleanTopic.toLowerCase().includes(f.queryName.toLowerCase()))
+            ? `${f.queryName} ${cleanTopic}`
+            : cleanTopic;
+        return buildCcelSearchUrl(q, f.vols);
     }
 
-    function buildCcelScriptureSearchUrl(bookName, chapter, verse, fatherId) {
-        // CCEL scriptureRef uses standard names like "John 1:1" or "1 Cor 11:23"
+    function buildCcelScriptureSearchUrl(bookName, chapter, verse, fatherId, extraTerms) {
         const ref = `${bookName} ${chapter}:${verse}`;
+        const query = extraTerms ? `${extraTerms}` : ref;
         if (fatherId && fatherId !== 'all' && FATHER_BY_ID[fatherId]) {
             const f = FATHER_BY_ID[fatherId];
-            const volClause = f.vols.map((v) => `${v}*`).join(' OR ');
-            return buildCcelSearchUrl(`title:(${volClause}) AND scriptureRef:"${ref}"`);
+            return buildCcelSearchUrl(query, f.vols);
         }
-        return buildCcelSearchUrl(`title:(ANF* OR NPNF*) AND scriptureRef:"${ref}"`);
+        return buildCcelSearchUrl(query, []);
     }
 
     // -------------------------------------------------------------------------
@@ -1554,7 +1570,7 @@
         const cardsHtml = matches.length
             ? matches.map((m, idx) => {
                 const f = FATHER_BY_ID[m.fatherId] || { name: 'Church Father', era: '', ccelUrl: 'https://www.ccel.org/fathers' };
-                const searchUrl = buildCcelSearchUrl(m.ccelSearch);
+                const searchUrl = buildCcelSearchUrl(m.ccelSearch, m.vol ? [m.vol] : f.vols);
                 return `
                     <div class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-gray-200 dark:border-zinc-700 space-y-1.5">
                         <div class="flex items-start justify-between gap-2">
@@ -1630,7 +1646,12 @@
         const hitsHtml = hits.length
             ? hits.map((h) => {
                 const f = FATHER_BY_ID[h.fatherId] || { name: 'Church Father', era: '', vols: ['ANF01'], ccelUrl: 'https://www.ccel.org/fathers' };
-                const directVerseSearch = buildCcelScriptureSearchUrl(ref.bookName, ref.chapter, ref.verse, f.id);
+                const workKeyword = (h.work || '').split(/[,(]/)[0].trim();
+                const searchFallbackTerms = h.searchTerms || `${ref.bookName} ${ref.chapter}:${ref.verse} ${workKeyword}`;
+                const primaryUrl = h.directUrl || buildCcelScriptureSearchUrl(ref.bookName, ref.chapter, ref.verse, f.id, searchFallbackTerms);
+                const primaryBtnText = h.directUrl
+                    ? `Read ${f.name} on ${refLabel} ↗`
+                    : `Search ${f.name} on ${refLabel} ↗`;
                 return `
                     <div class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-amber-200/90 dark:border-amber-800/70 space-y-1.5">
                         <div class="flex items-center justify-between gap-2">
@@ -1643,8 +1664,8 @@
                         <div class="text-[11.5px] font-bold text-indigo-700 dark:text-indigo-300">${escapeHtml(h.work)}</div>
                         <p class="text-xs leading-relaxed text-gray-700 dark:text-gray-200">${escapeHtml(h.note)}</p>
                         <div class="flex flex-wrap gap-1.5 pt-1">
-                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(directVerseSearch)}" data-label="${escapeHtml(f.name + ' on ' + refLabel)}">
-                                Open ${escapeHtml(f.name)} on ${escapeHtml(refLabel)} ↗
+                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(primaryUrl)}" data-label="${escapeHtml(f.name + ' on ' + refLabel)}">
+                                ${escapeHtml(primaryBtnText)}
                             </button>
                             <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-700 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(f.ccelUrl)}" data-label="${escapeHtml(f.name + ' on CCEL')}">
                                 Browse Volume ↗
