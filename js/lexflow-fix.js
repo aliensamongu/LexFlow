@@ -1,10 +1,13 @@
-/* === LEXFLOW FIX PATCH (v3): ESCAPE STACKING CONTEXTS SO LSJ/DOCK POPS ABOVE LXX PANE ===
- * Drop this file into ./js/lexflow-fix.js (replacing v2).
+/* === LEXFLOW FIX PATCH (v4): ALWAYS LAYER STUDY DOCK & LSJ ABOVE LXX DRAWER + TOUCH & DESKTOP GUARD ===
+ * Save as exact filename: ./js/lexflow-fix.js (replace any previous version).
  */
 (function () {
-    if (window.__lfFixPatchLoaded) return;
-    window.__lfFixPatchLoaded = true;
+    if (window.__lfFixPatchLoaded === 'v4') return;
+    window.__lfFixPatchLoaded = 'v4';
+    window.__lfFixVersion = 'v4';
+    try { console.info('[LexFlow Fix v4] Active'); } catch (_) {}
 
+    // 1. Real touch/mobile/tablet vs desktop detection (keeps desktop from collapsing when DevTools is docked)
     function isRealTouchDevice() {
         const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
@@ -17,9 +20,15 @@
         const touchMode = isRealTouchDevice();
         document.documentElement.classList.toggle('lf-touch-device', touchMode);
         document.documentElement.classList.toggle('lf-desktop-device', !touchMode);
-        document.body.classList.toggle('lf-touch-device', touchMode);
-        document.body.classList.toggle('lf-desktop-device', !touchMode);
+        if (document.body) {
+            document.body.classList.toggle('lf-touch-device', touchMode);
+            document.body.classList.toggle('lf-desktop-device', !touchMode);
+        }
     }
+
+    // 2. Styles: responsive touch taps + guarantee Study Dock / LSJ sits ABOVE the full-height LXX drawer
+    const oldStyle = document.getElementById('lfFixPatchStyles');
+    if (oldStyle) oldStyle.remove();
 
     const css = document.createElement('style');
     css.id = 'lfFixPatchStyles';
@@ -34,71 +43,134 @@
         html.lf-desktop-device body {
             min-width: 980px;
         }
-        /* Escape parent stacking contexts and layer cleanly above LXX / parallel panels */
+        /* Keep Study Dock & LSJ cleanly above the LXX right-hand drawer whenever open */
+        #lfStudyDock.open,
         #lfStudyDock.lf-dock-front {
-            position: fixed !important;
             z-index: 2147483000 !important;
-            right: 12px;
-            bottom: 12px;
-            max-width: min(680px, calc(100vw - 24px));
-            max-height: calc(100vh - 72px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+        }
+        #lfStudyDock.lf-dock-lifted {
+            position: fixed !important;
+            left: 10px !important;
+            right: 10px !important;
+            bottom: 10px !important;
+            width: auto !important;
+            max-width: calc(100vw - 20px) !important;
+            max-height: min(62vh, calc(100vh - 80px)) !important;
+            box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.34) !important;
+            z-index: 2147483000 !important;
         }
     `;
     document.head.appendChild(css);
 
-    function findLxxPanel() {
-        const byId = document.querySelector('#lfLxxPanel, #lxxPanel, [id*="lxx" i], [data-panel*="lxx" i]');
-        if (byId) return byId;
-        const nodes = document.querySelectorAll('div, section, aside');
-        for (let i = 0; i < nodes.length; i++) {
-            const el = nodes[i];
+    // 3. Reliably find the outermost LXX drawer container (including full-height 100vh fixed drawers)
+    function findLxxDrawer() {
+        const direct = document.querySelector('#lfLxxPanel, #lxxPanel, #lxxDrawer, #taggedLxxPanel');
+        if (direct) return direct;
+
+        const candidates = document.querySelectorAll('aside, section, div');
+        let innerMatch = null;
+        for (let i = 0; i < candidates.length; i++) {
+            const el = candidates[i];
             if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
-            const txt = (el.textContent || '');
-            if (txt.includes('Tagged Septuagint (LXX)') && el.offsetHeight > 120 && el.offsetHeight < window.innerHeight) {
-                return el;
+            // Match the header text node directly so we don't match document wrappers
+            if (el.children.length <= 6 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
+                innerMatch = el;
+                break;
             }
+        }
+        if (!innerMatch) return null;
+
+        // Walk upward to the outermost fixed/absolute panel (stopping before body)
+        let cur = innerMatch;
+        let outermostFixed = null;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+            const cs = getComputedStyle(cur);
+            if (cs.position === 'fixed' || cs.position === 'absolute') {
+                outermostFixed = cur;
+            }
+            cur = cur.parentElement;
+        }
+        return outermostFixed || innerMatch.parentElement;
+    }
+
+    function hasTrappingStackingAncestor(el) {
+        let cur = el.parentElement;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+            const cs = getComputedStyle(cur);
+            const createsContext =
+                (cs.position !== 'static' && cs.zIndex !== 'auto') ||
+                cs.transform !== 'none' ||
+                cs.filter !== 'none' ||
+                cs.backdropFilter !== 'none' ||
+                cs.isolation === 'isolate' ||
+                cs.contain.includes('layout') ||
+                cs.contain.includes('paint') ||
+                parseFloat(cs.opacity) < 1;
+            if (createsContext) return cur;
+            cur = cur.parentElement;
         }
         return null;
     }
 
-    function bringLexiconDockToFront() {
+    // 4. Elevate Study Dock (and any standalone LSJ container) cleanly above the LXX drawer
+    function ensureDockAboveLxx(forceLexiconTab) {
         const dock = document.getElementById('lfStudyDock');
         if (!dock) return;
 
-        if (!dock.classList.contains('open') && typeof window.lfOpenStudyDock === 'function') {
+        if (forceLexiconTab && !dock.classList.contains('open') && typeof window.lfOpenStudyDock === 'function') {
             try { window.lfOpenStudyDock('lexicon'); } catch (_) {}
         }
 
-        dock.querySelectorAll('.lf-dock-tab-btn').forEach((b) => {
-            b.classList.toggle('active', b.dataset.dockTab === 'lexicon');
-        });
-        ['lexicon', 'compare', 'notes', 'brief', 'fathers'].forEach((t) => {
-            const p = document.getElementById(`lfDockPanel_${t}`);
-            if (p) p.classList.toggle('hidden', t !== 'lexicon');
-        });
+        const isOpen = dock.classList.contains('open') || getComputedStyle(dock).display !== 'none';
+        if (!isOpen && !forceLexiconTab) return;
 
-        // If LXX panel is covering the area, nudge it slightly left/down or push dock to top stacking level
-        const lxx = findLxxPanel();
+        if (forceLexiconTab) {
+            dock.querySelectorAll('.lf-dock-tab-btn').forEach((b) => {
+                b.classList.toggle('active', b.dataset.dockTab === 'lexicon');
+            });
+            ['lexicon', 'compare', 'notes', 'brief', 'fathers'].forEach((t) => {
+                const p = document.getElementById(`lfDockPanel_${t}`);
+                if (p) p.classList.toggle('hidden', t !== 'lexicon');
+            });
+        }
+
+        const lxx = findLxxDrawer();
+        let targetZ = 2147483000;
+
         if (lxx) {
-            const lxxZ = parseInt(getComputedStyle(lxx).zIndex, 10);
-            if (!Number.isNaN(lxxZ) && lxxZ >= 2147483000) {
-                lxx.style.zIndex = String(lxxZ - 10);
+            const lxxCs = getComputedStyle(lxx);
+            const lxxZ = parseInt(lxxCs.zIndex, 10);
+            if (!Number.isNaN(lxxZ) && lxxZ >= targetZ) {
+                lxx.style.setProperty('z-index', String(targetZ - 100), 'important');
+            }
+            // If LXX is visible and overlapping, lift dock to body if trapped in a parent stacking context
+            const lxxRect = lxx.getBoundingClientRect();
+            const lxxVisible = lxxRect.width > 40 && lxxRect.height > 40 && lxxCs.display !== 'none' && lxxCs.visibility !== 'hidden';
+            if (lxxVisible) {
+                const trap = hasTrappingStackingAncestor(dock);
+                if (trap && dock.parentElement !== document.body) {
+                    document.body.appendChild(dock);
+                }
+                if (dock.parentElement === document.body) {
+                    dock.classList.add('lf-dock-lifted');
+                }
             }
         }
 
-        // Attach dock directly to body when brought to front so no parent container traps its z-index
-        if (dock.parentElement !== document.body) {
-            dock.dataset.lfOrigParentId = dock.parentElement ? (dock.parentElement.id || '') : '';
-            document.body.appendChild(dock);
-        }
-
-        dock.style.display = 'flex';
-        dock.style.visibility = 'visible';
-        dock.style.opacity = '1';
         dock.classList.add('lf-dock-front');
+        dock.style.setProperty('z-index', String(targetZ), 'important');
+
+        // Also elevate any standalone LSJ modal/panel if one exists outside #lfStudyDock
+        document.querySelectorAll('[id*="lsj" i], [class*="lsj" i]').forEach((el) => {
+            if (el === dock || el.closest('#lfStudyDock')) return;
+            const cs = getComputedStyle(el);
+            if ((cs.position === 'fixed' || cs.position === 'absolute') && cs.display !== 'none') {
+                el.style.setProperty('z-index', String(targetZ + 10), 'important');
+            }
+        });
     }
 
+    // 5. Unstick any accidentally disabled buttons after errors
     function unstickInteractiveControls() {
         document.querySelectorAll('button[disabled], [aria-disabled="true"]').forEach((el) => {
             if (el.dataset.lfUserDisabled === 'true') return;
@@ -121,23 +193,67 @@
         unstickInteractiveControls();
     });
 
-    document.addEventListener('click', (e) => {
-        const btn = e.target && e.target.closest('button, [role="button"], a');
+    // 6. CAPTURE-phase listener so stopPropagation() inside the LXX panel can NEVER block us
+    function handlePossibleLsjTrigger(e) {
+        const btn = e.target && e.target.closest('button, [role="button"], a, span');
         if (!btn) return;
-        const txt = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.textContent || ''}`.toLowerCase();
-        if (/\blsj\b/.test(txt)) {
+        const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`.toLowerCase();
+        if (meta.includes('lsj') || meta.includes('lexicon')) {
             unstickInteractiveControls();
-            setTimeout(bringLexiconDockToFront, 40);
-            setTimeout(bringLexiconDockToFront, 220);
-            setTimeout(bringLexiconDockToFront, 500);
+            setTimeout(() => ensureDockAboveLxx(true), 20);
+            setTimeout(() => ensureDockAboveLxx(true), 150);
+            setTimeout(() => ensureDockAboveLxx(false), 450);
         }
-    }, false);
+    }
+
+    document.addEventListener('click', handlePossibleLsjTrigger, true);
+    document.addEventListener('pointerdown', (e) => {
+        const dock = document.getElementById('lfStudyDock');
+        if (dock && dock.contains(e.target)) {
+            ensureDockAboveLxx(false);
+        }
+    }, true);
+
+    // 7. Wrap lfOpenStudyDock & observe #lfStudyDock so ANY open/update stays above LXX
+    function hookStudyDock() {
+        if (typeof window.lfOpenStudyDock === 'function' && !window.lfOpenStudyDock.__lfFixV4Wrapped) {
+            const orig = window.lfOpenStudyDock;
+            const wrapped = function (...args) {
+                const res = orig.apply(this, args);
+                setTimeout(() => ensureDockAboveLxx(false), 20);
+                setTimeout(() => ensureDockAboveLxx(false), 180);
+                return res;
+            };
+            wrapped.__lfFixV4Wrapped = true;
+            window.lfOpenStudyDock = wrapped;
+        }
+
+        const dock = document.getElementById('lfStudyDock');
+        if (dock && !dock.dataset.lfFixV4Observed) {
+            dock.dataset.lfFixV4Observed = '1';
+            const mo = new MutationObserver(() => {
+                if (dock.classList.contains('open')) {
+                    ensureDockAboveLxx(false);
+                }
+            });
+            mo.observe(dock, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+    }
 
     function init() {
         applyResponsiveModeClass();
         unstickInteractiveControls();
+        hookStudyDock();
+        setTimeout(hookStudyDock, 500);
+        setTimeout(hookStudyDock, 1500);
         window.addEventListener('resize', applyResponsiveModeClass, { passive: true });
-        setInterval(unstickInteractiveControls, 1500);
+        setInterval(() => {
+            unstickInteractiveControls();
+            const dock = document.getElementById('lfStudyDock');
+            if (dock && dock.classList.contains('open')) {
+                ensureDockAboveLxx(false);
+            }
+        }, 1200);
     }
 
     if (document.readyState === 'loading') {
