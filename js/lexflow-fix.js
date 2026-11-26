@@ -1,19 +1,21 @@
-/* === LEXFLOW FIX PATCH (v5): CF & OT-IN-NT TAGS OFF BY DEFAULT + LSJ ABOVE LXX + TOUCH & DESKTOP GUARD ===
+/* === LEXFLOW FIX PATCH (v6): STANDALONE LSJ MODAL ABOVE LXX + GUARANTEED CLOSE + STUCK-LOOKUP RECOVERY + CF & OT-IN-NT OFF BY DEFAULT ===
  * Save as exact filename: ./js/lexflow-fix.js (replace any previous version).
  */
 (function () {
-    if (window.__lfFixPatchLoaded === 'v5') return;
-    window.__lfFixPatchLoaded = 'v5';
-    window.__lfFixVersion = 'v5';
-    try { console.info('[LexFlow Fix v5] Active (CF & OT-in-NT tags default OFF)'); } catch (_) {}
+    if (window.__lfFixPatchLoaded === 'v6') return;
+    window.__lfFixPatchLoaded = 'v6';
+    window.__lfFixVersion = 'v6';
+    try { console.info('[LexFlow Fix v6] Active'); } catch (_) {}
 
-    // Tag visibility state: BOTH OFF by default
     const tagState = {
         cf: false,
         otnt: false
     };
 
-    // 1. Real touch/mobile/tablet vs desktop detection (keeps desktop from collapsing when DevTools is docked)
+    let lastRuntimeError = '';
+    let lsjLookupStartedAt = 0;
+
+    // 1. Real touch/mobile/tablet vs desktop detection
     function isRealTouchDevice() {
         const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
@@ -32,10 +34,10 @@
         }
     }
 
-    // Apply default-off classes immediately (before first paint finishes)
+    // Apply default-off tag classes immediately
     document.documentElement.classList.add('lf-hide-cf-tags', 'lf-hide-otnt-tags');
 
-    // 2. Styles: fast touch taps + Study Dock above LXX + hide CF & OT-in-NT inline verse tags when OFF
+    // 2. Styles
     const oldStyle = document.getElementById('lfFixPatchStyles');
     if (oldStyle) oldStyle.remove();
 
@@ -53,24 +55,26 @@
             min-width: 980px;
         }
 
-        /* Keep Study Dock & LSJ cleanly above the LXX right-hand drawer whenever open */
+        /* Standalone LSJ modal always sits cleanly above LXX drawer & Study Dock */
+        [data-lf-lsj-modal-root="1"] {
+            z-index: 2147483500 !important;
+        }
+        [data-lf-lsj-modal-card="1"] {
+            z-index: 2147483505 !important;
+            pointer-events: auto !important;
+        }
+        [data-lf-lsj-modal-card="1"] button,
+        [data-lf-lsj-modal-card="1"] input {
+            pointer-events: auto !important;
+        }
+
+        /* Study Dock stays above LXX drawer when open, but below standalone LSJ modal */
         #lfStudyDock.open,
         #lfStudyDock.lf-dock-front {
             z-index: 2147483000 !important;
         }
-        #lfStudyDock.lf-dock-lifted {
-            position: fixed !important;
-            left: 10px !important;
-            right: 10px !important;
-            bottom: 10px !important;
-            width: auto !important;
-            max-width: calc(100vw - 20px) !important;
-            max-height: min(62vh, calc(100vh - 80px)) !important;
-            box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.34) !important;
-            z-index: 2147483000 !important;
-        }
 
-        /* Hide inline Church Fathers verse tags when OFF (never hides the Study Dock tab/panel) */
+        /* Hide inline Church Fathers verse tags when OFF (never hides Study Dock tab/panel) */
         html.lf-hide-cf-tags [data-lf-inline-tag="cf"],
         html.lf-hide-cf-tags #flowEditor .lf-cf-badge,
         html.lf-hide-cf-tags #flowEditor .lf-cf-verse-badge,
@@ -88,7 +92,7 @@
             display: none !important;
         }
 
-        /* Hide inline OT-in-NT verse tags when OFF (never hides the Study Dock) */
+        /* Hide inline OT-in-NT verse tags when OFF (never hides Study Dock) */
         html.lf-hide-otnt-tags [data-lf-inline-tag="otnt"],
         html.lf-hide-otnt-tags #flowEditor .ot-in-nt-badge,
         html.lf-hide-otnt-tags #flowEditor .ot-in-nt-tag,
@@ -122,20 +126,327 @@
             cursor: pointer;
             white-space: nowrap;
             touch-action: manipulation;
-            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
         .lf-tag-toggle-pill.active {
             background: #eef2ff;
             color: #3730a3;
             border-color: #6366f1;
         }
+
+        /* Recovery box shown only if LSJ lookup hangs > 4.5s */
+        #lfLsjRecoveryBox {
+            margin: 14px auto 4px;
+            max-width: 520px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #fca5a5;
+            background: #fef2f2;
+            color: #7f1d1d;
+            font-size: 13px;
+            text-align: center;
+        }
+        #lfLsjRecoveryBox .lf-rec-btns {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        #lfLsjRecoveryBox button {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #lfLsjRecoveryBox button.lf-rec-primary {
+            background: #0f766e;
+            color: #ffffff;
+            border-color: #0f766e;
+        }
     `;
     document.head.appendChild(css);
 
-    // 3. Classify inline Church Fathers & OT-in-NT tags inside scripture/editor panes (excluding docks & navbars)
+    // 3. Locate the standalone LSJ modal ("LSJ Greek-English Lexicon (1940)")
+    function findStandaloneLsjModal() {
+        const candidates = document.querySelectorAll('h1, h2, h3, h4, div, span');
+        let titleEl = null;
+        for (let i = 0; i < candidates.length; i++) {
+            const el = candidates[i];
+            if (el.closest('#lfStudyDock')) continue;
+            if (el.children.length > 4) continue;
+            const txt = (el.textContent || '').trim();
+            if (/LSJ Greek[–-]English Lexicon/i.test(txt) && txt.length < 80) {
+                titleEl = el;
+                break;
+            }
+        }
+        if (!titleEl) return null;
+
+        let cur = titleEl;
+        let card = null;
+        let outermostFixed = null;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+            const cs = getComputedStyle(cur);
+            if (!card && cur.querySelector('input') && cur.querySelector('button')) {
+                card = cur;
+            }
+            if (cs.position === 'fixed') {
+                outermostFixed = cur;
+            }
+            cur = cur.parentElement;
+        }
+
+        const root = outermostFixed || card || titleEl.parentElement;
+        return { root, card: card || root };
+    }
+
+    function isElementVisible(el) {
+        if (!el) return false;
+        const cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 20 && rect.height > 20;
+    }
+
+    function findLxxDrawer() {
+        const direct = document.querySelector('#lfLxxPanel, #lxxPanel, #lxxDrawer, #taggedLxxPanel');
+        if (direct) return direct;
+        const nodes = document.querySelectorAll('aside, section, div');
+        let match = null;
+        for (let i = 0; i < nodes.length; i++) {
+            const el = nodes[i];
+            if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
+            if (el.children.length <= 6 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
+                match = el;
+                break;
+            }
+        }
+        if (!match) return null;
+        let cur = match;
+        let outermostFixed = null;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+            const cs = getComputedStyle(cur);
+            if (cs.position === 'fixed' || cs.position === 'absolute') outermostFixed = cur;
+            cur = cur.parentElement;
+        }
+        return outermostFixed || match.parentElement;
+    }
+
+    // 4. Elevate the standalone LSJ modal cleanly above the LXX panel (and wire guaranteed close)
+    function forceCloseStandaloneLsjModal() {
+        const info = findStandaloneLsjModal();
+        // Try native close functions first if they exist
+        ['closeLsjModal', 'closeLSJModal', 'hideLsjModal', 'lfCloseLsjModal'].forEach((fn) => {
+            if (typeof window[fn] === 'function') {
+                try { window[fn](); } catch (_) {}
+            }
+        });
+
+        if (info && info.root) {
+            info.root.classList.add('hidden');
+            info.root.classList.remove('open', 'active', 'show', 'flex');
+            info.root.style.setProperty('display', 'none', 'important');
+            info.root.dataset.lfForceHidden = '1';
+        }
+
+        // Also clear any orphaned dark backdrop sibling if present
+        document.querySelectorAll('[id*="lsj" i][id*="backdrop" i], [class*="lsj" i][class*="backdrop" i], [id*="lsj" i][id*="overlay" i]').forEach((bg) => {
+            bg.style.setProperty('display', 'none', 'important');
+            bg.dataset.lfForceHidden = '1';
+        });
+
+        if (document.body && document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
+        }
+        lsjLookupStartedAt = 0;
+        const rec = document.getElementById('lfLsjRecoveryBox');
+        if (rec) rec.remove();
+    }
+
+    function clearForceHiddenOnLsjModal() {
+        document.querySelectorAll('[data-lf-force-hidden="1"]').forEach((el) => {
+            el.style.removeProperty('display');
+            el.classList.remove('hidden');
+            delete el.dataset.lfForceHidden;
+        });
+    }
+
+    function elevateStandaloneLsjModal() {
+        const info = findStandaloneLsjModal();
+        if (!info || !info.root) return false;
+        if (!isElementVisible(info.root)) return false;
+
+        // If trapped inside a non-body container with lower z-index, lift root to body
+        if (info.root.parentElement && info.root.parentElement !== document.body) {
+            document.body.appendChild(info.root);
+        }
+
+        info.root.setAttribute('data-lf-lsj-modal-root', '1');
+        info.card.setAttribute('data-lf-lsj-modal-card', '1');
+        info.root.style.setProperty('z-index', '2147483500', 'important');
+        info.card.style.setProperty('z-index', '2147483505', 'important');
+
+        // Keep LXX drawer strictly below the LSJ modal
+        const lxx = findLxxDrawer();
+        if (lxx) {
+            const lxxZ = parseInt(getComputedStyle(lxx).zIndex, 10);
+            if (!Number.isNaN(lxxZ) && lxxZ >= 2147483500) {
+                lxx.style.setProperty('z-index', '2147482000', 'important');
+            }
+        }
+
+        // Ensure close button inside the LSJ modal is NEVER disabled or unresponsive
+        info.card.querySelectorAll('button').forEach((btn) => {
+            const txt = (btn.textContent || '').trim();
+            const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''}`.toLowerCase();
+            const isCloseBtn = /^[×✕✖x]$/.test(txt) || meta.includes('close');
+            if (isCloseBtn) {
+                btn.disabled = false;
+                btn.removeAttribute('aria-disabled');
+                btn.style.pointerEvents = 'auto';
+                if (!btn.dataset.lfFixCloseBound) {
+                    btn.dataset.lfFixCloseBound = '1';
+                    btn.addEventListener('click', () => {
+                        setTimeout(() => {
+                            const cur = findStandaloneLsjModal();
+                            if (cur && isElementVisible(cur.root)) {
+                                forceCloseStandaloneLsjModal();
+                            }
+                        }, 60);
+                    });
+                }
+            }
+        });
+
+        // Clicking on the dimmed backdrop outside the modal card also closes it reliably
+        if (info.root !== info.card && !info.root.dataset.lfFixBackdropBound) {
+            info.root.dataset.lfFixBackdropBound = '1';
+            info.root.addEventListener('click', (e) => {
+                if (e.target === info.root) {
+                    setTimeout(() => {
+                        if (isElementVisible(info.root)) forceCloseStandaloneLsjModal();
+                    }, 60);
+                }
+            });
+        }
+
+        return true;
+    }
+
+    // 5. Detect stuck "Looking up ... in LSJ..." state and provide instant recovery
+    function checkStuckLsjLookup() {
+        const info = findStandaloneLsjModal();
+        if (!info || !isElementVisible(info.root)) {
+            lsjLookupStartedAt = 0;
+            return;
+        }
+
+        const txt = info.card.textContent || '';
+        const isLookingUp = /Looking up\s+.+\s+in LSJ/i.test(txt);
+
+        if (!isLookingUp) {
+            lsjLookupStartedAt = 0;
+            const oldRec = document.getElementById('lfLsjRecoveryBox');
+            if (oldRec) oldRec.remove();
+            return;
+        }
+
+        if (!lsjLookupStartedAt) {
+            lsjLookupStartedAt = Date.now();
+            return;
+        }
+
+        if (Date.now() - lsjLookupStartedAt < 4500) return;
+        if (document.getElementById('lfLsjRecoveryBox')) return;
+
+        // Find the container showing "Looking up ... in LSJ..."
+        let statusNode = null;
+        info.card.querySelectorAll('div, p, span').forEach((el) => {
+            if (!statusNode && el.children.length <= 2 && /Looking up\s+.+\s+in LSJ/i.test(el.textContent || '')) {
+                statusNode = el;
+            }
+        });
+        const host = (statusNode && statusNode.parentElement) || info.card;
+
+        const box = document.createElement('div');
+        box.id = 'lfLsjRecoveryBox';
+
+        const msg = document.createElement('div');
+        msg.textContent = lastRuntimeError
+            ? `LSJ lookup stalled (${lastRuntimeError}).`
+            : 'LSJ lookup is taking too long (IndexedDB cache may be blocked or corrupted).';
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'lf-rec-btns';
+
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'lf-rec-primary';
+        retryBtn.textContent = 'Retry Search';
+        retryBtn.addEventListener('click', () => {
+            box.remove();
+            lsjLookupStartedAt = Date.now();
+            lastRuntimeError = '';
+            const searchBtn = Array.from(info.card.querySelectorAll('button')).find((b) => /^\s*search\s*$/i.test(b.textContent || ''));
+            if (searchBtn) {
+                searchBtn.disabled = false;
+                searchBtn.click();
+            }
+        });
+
+        const repairBtn = document.createElement('button');
+        repairBtn.type = 'button';
+        repairBtn.textContent = 'Reset LSJ Offline Cache';
+        repairBtn.addEventListener('click', async () => {
+            repairBtn.textContent = 'Clearing cache...';
+            try {
+                if (indexedDB && typeof indexedDB.databases === 'function') {
+                    const dbs = await indexedDB.databases();
+                    dbs.forEach((d) => {
+                        if (d && d.name && /lsj|lexicon|greek/i.test(d.name)) {
+                            indexedDB.deleteDatabase(d.name);
+                        }
+                    });
+                } else {
+                    ['lexflow_lsj', 'lsj_db', 'lsj_cache', 'LSJ_DB', 'LexFlowLSJ'].forEach((n) => {
+                        try { indexedDB.deleteDatabase(n); } catch (_) {}
+                    });
+                }
+            } catch (_) {}
+            setTimeout(() => window.location.reload(), 350);
+        });
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.textContent = 'Close LSJ';
+        closeBtn.addEventListener('click', forceCloseStandaloneLsjModal);
+
+        btnRow.appendChild(retryBtn);
+        btnRow.appendChild(repairBtn);
+        btnRow.appendChild(closeBtn);
+        box.appendChild(msg);
+        box.appendChild(btnRow);
+        host.appendChild(box);
+    }
+
+    // 6. Keep Study Dock above LXX drawer when Study Dock itself is opened (without conflicting with standalone LSJ modal)
+    function ensureDockAboveLxxIfOpen() {
+        const dock = document.getElementById('lfStudyDock');
+        if (!dock) return;
+        const isOpen = dock.classList.contains('open') || (getComputedStyle(dock).display !== 'none' && dock.offsetHeight > 40);
+        if (!isOpen) return;
+        dock.classList.add('lf-dock-front');
+        dock.style.setProperty('z-index', '2147483000', 'important');
+    }
+
+    // 7. Inline Church Fathers & OT-in-NT tag hiding (OFF by default)
     function isInsideUiChrome(el) {
         return Boolean(el.closest(
-            '#lfStudyDock, header, nav, #lfTopBar, .lf-tag-toggle-pill, #lfTagToggleWrap, [role="dialog"], .modal'
+            '#lfStudyDock, [data-lf-lsj-modal-root="1"], header, nav, #lfTopBar, .lf-tag-toggle-pill, #lfTagToggleWrap, [role="dialog"], .modal'
         ));
     }
 
@@ -156,7 +467,6 @@
 
                 const txt = (el.textContent || '').trim();
                 if (!txt || txt.length > 52) return;
-                // Skip elements with many child nodes (containers, whole verses, paragraphs)
                 if (el.children.length > 3) return;
 
                 const meta = `${el.id || ''} ${el.className || ''} ${el.title || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('data-type') || ''} ${el.getAttribute('data-badge') || ''}`.toLowerCase();
@@ -169,7 +479,6 @@
 
                 if (!isStyledChip) return;
 
-                // Match Church Fathers inline tags/chips
                 const isCfMeta = /(cf[-_]?badge|cf[-_]?tag|cf[-_]?chip|cf[-_]?verse|church\s*father|patristic|fathers?\s*(tag|badge|cite|citation|ref))/i.test(meta);
                 const isCfText = /^(🏛️?|⛪|📜|✝️?)?\s*(cf|fathers?|church\s*fathers?|patristic)(\s*[:•·-]?\s*\d+|\s*\(\d+\))?$/i.test(txt);
 
@@ -178,7 +487,6 @@
                     return;
                 }
 
-                // Match OT-in-NT inline tags/chips
                 const isOtNtMeta = /(ot[-_\s]?in[-_\s]?nt|otnt|ot[-_]nt|ot\s*(→|->|↔|\/)\s*nt|old\s*testament\s*in\s*(the\s*)?new|ot\s*(quote|allusion|echo))/i.test(meta);
                 const isOtNtText = /^(🔗|📖|✦|★|↪)?\s*(ot\s*(in|→|->|↔|\/)\s*nt|ot\s*(quote|allusion|echo|ref)|nt\s*←\s*ot)(\s*[:•·-]?\s*[\w\s.:;-]{0,24})?$/i.test(txt);
 
@@ -214,13 +522,12 @@
         syncTagClassesAndButtons();
     };
 
-    // Turn off any native checkboxes/toggles for CF tags or OT-in-NT tags once on startup
     let nativeTogglesSyncedOnce = false;
     function syncNativeTagControlsOnStartup() {
         if (nativeTogglesSyncedOnce) return;
         let foundAny = false;
         document.querySelectorAll('input[type="checkbox"], button, [role="switch"]').forEach((el) => {
-            if (el.closest('#lfStudyDock, #lfTagToggleWrap')) return;
+            if (el.closest('#lfStudyDock, #lfTagToggleWrap, [data-lf-lsj-modal-root="1"]')) return;
             const labelText = (
                 (el.labels && el.labels[0] ? el.labels[0].textContent : '') + ' ' +
                 (el.textContent || '') + ' ' +
@@ -255,7 +562,6 @@
         if (foundAny) nativeTogglesSyncedOnce = true;
     }
 
-    // Add compact CF Tags & OT->NT toggle pills right beside Turbo (or in the top toolbar)
     function injectTagToggleButtons() {
         if (document.getElementById('lfTagToggleWrap')) return;
 
@@ -290,7 +596,6 @@
         wrap.appendChild(cfBtn);
         wrap.appendChild(otBtn);
 
-        // Place right next to the Turbo button if present, otherwise in the document/header bar
         let anchor = null;
         document.querySelectorAll('button').forEach((b) => {
             if (!anchor && /turbo\s*:/i.test(b.textContent || '')) anchor = b;
@@ -306,116 +611,12 @@
         syncTagClassesAndButtons();
     }
 
-    // 4. Reliably find the outermost LXX drawer container (including full-height 100vh fixed drawers)
-    function findLxxDrawer() {
-        const direct = document.querySelector('#lfLxxPanel, #lxxPanel, #lxxDrawer, #taggedLxxPanel');
-        if (direct) return direct;
-
-        const candidates = document.querySelectorAll('aside, section, div');
-        let innerMatch = null;
-        for (let i = 0; i < candidates.length; i++) {
-            const el = candidates[i];
-            if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
-            if (el.children.length <= 6 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
-                innerMatch = el;
-                break;
-            }
-        }
-        if (!innerMatch) return null;
-
-        let cur = innerMatch;
-        let outermostFixed = null;
-        while (cur && cur !== document.body && cur !== document.documentElement) {
-            const cs = getComputedStyle(cur);
-            if (cs.position === 'fixed' || cs.position === 'absolute') {
-                outermostFixed = cur;
-            }
-            cur = cur.parentElement;
-        }
-        return outermostFixed || innerMatch.parentElement;
-    }
-
-    function hasTrappingStackingAncestor(el) {
-        let cur = el.parentElement;
-        while (cur && cur !== document.body && cur !== document.documentElement) {
-            const cs = getComputedStyle(cur);
-            const createsContext =
-                (cs.position !== 'static' && cs.zIndex !== 'auto') ||
-                cs.transform !== 'none' ||
-                cs.filter !== 'none' ||
-                cs.backdropFilter !== 'none' ||
-                cs.isolation === 'isolate' ||
-                cs.contain.includes('layout') ||
-                cs.contain.includes('paint') ||
-                parseFloat(cs.opacity) < 1;
-            if (createsContext) return cur;
-            cur = cur.parentElement;
-        }
-        return null;
-    }
-
-    // 5. Elevate Study Dock & LSJ cleanly above the LXX drawer
-    function ensureDockAboveLxx(forceLexiconTab) {
-        const dock = document.getElementById('lfStudyDock');
-        if (!dock) return;
-
-        if (forceLexiconTab && !dock.classList.contains('open') && typeof window.lfOpenStudyDock === 'function') {
-            try { window.lfOpenStudyDock('lexicon'); } catch (_) {}
-        }
-
-        const isOpen = dock.classList.contains('open') || getComputedStyle(dock).display !== 'none';
-        if (!isOpen && !forceLexiconTab) return;
-
-        if (forceLexiconTab) {
-            dock.querySelectorAll('.lf-dock-tab-btn').forEach((b) => {
-                b.classList.toggle('active', b.dataset.dockTab === 'lexicon');
-            });
-            ['lexicon', 'compare', 'notes', 'brief', 'fathers'].forEach((t) => {
-                const p = document.getElementById(`lfDockPanel_${t}`);
-                if (p) p.classList.toggle('hidden', t !== 'lexicon');
-            });
-        }
-
-        const lxx = findLxxDrawer();
-        const targetZ = 2147483000;
-
-        if (lxx) {
-            const lxxCs = getComputedStyle(lxx);
-            const lxxZ = parseInt(lxxCs.zIndex, 10);
-            if (!Number.isNaN(lxxZ) && lxxZ >= targetZ) {
-                lxx.style.setProperty('z-index', String(targetZ - 100), 'important');
-            }
-            const lxxRect = lxx.getBoundingClientRect();
-            const lxxVisible = lxxRect.width > 40 && lxxRect.height > 40 && lxxCs.display !== 'none' && lxxCs.visibility !== 'hidden';
-            if (lxxVisible) {
-                const trap = hasTrappingStackingAncestor(dock);
-                if (trap && dock.parentElement !== document.body) {
-                    document.body.appendChild(dock);
-                }
-                if (dock.parentElement === document.body) {
-                    dock.classList.add('lf-dock-lifted');
-                }
-            }
-        }
-
-        dock.classList.add('lf-dock-front');
-        dock.style.setProperty('z-index', String(targetZ), 'important');
-
-        document.querySelectorAll('[id*="lsj" i], [class*="lsj" i]').forEach((el) => {
-            if (el === dock || el.closest('#lfStudyDock')) return;
-            const cs = getComputedStyle(el);
-            if ((cs.position === 'fixed' || cs.position === 'absolute') && cs.display !== 'none') {
-                el.style.setProperty('z-index', String(targetZ + 10), 'important');
-            }
-        });
-    }
-
-    // 6. Unstick any accidentally disabled buttons after errors
+    // 8. Capture errors & button clicks safely (NEVER hijack clicks inside the LSJ modal!)
     function unstickInteractiveControls() {
         document.querySelectorAll('button[disabled], [aria-disabled="true"]').forEach((el) => {
             if (el.dataset.lfUserDisabled === 'true') return;
             const label = (el.textContent || el.title || el.id || '').toLowerCase();
-            if (/lsj|lexicon|study dock|quick jump|read|flow|research|turbo/.test(label)) {
+            if (/lsj|lexicon|study dock|quick jump|read|flow|research|turbo|close|search/.test(label)) {
                 el.disabled = false;
                 el.removeAttribute('aria-disabled');
             }
@@ -423,62 +624,50 @@
     }
 
     window.addEventListener('error', (ev) => {
-        unstickInteractiveControls();
-        if (ev && ev.message && /404|emtv\.xml|ot\.xml|ot\.json/i.test(ev.message)) {
-            ev.preventDefault();
+        if (ev && ev.message && !/404|emtv\.xml|ot\.xml|ot\.json/i.test(ev.message)) {
+            lastRuntimeError = String(ev.message).slice(0, 140);
         }
+        unstickInteractiveControls();
     }, true);
 
-    window.addEventListener('unhandledrejection', () => {
+    window.addEventListener('unhandledrejection', (ev) => {
+        const reason = ev && ev.reason ? (ev.reason.message || String(ev.reason)) : 'Promise rejected';
+        lastRuntimeError = String(reason).slice(0, 140);
         unstickInteractiveControls();
     });
 
-    // 7. Capture-phase listener so stopPropagation() inside the LXX panel cannot block LSJ elevation
-    function handlePossibleLsjTrigger(e) {
-        const btn = e.target && e.target.closest('button, [role="button"], a, span');
-        if (!btn) return;
-        const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`.toLowerCase();
-        if (meta.includes('lsj') || meta.includes('lexicon')) {
-            unstickInteractiveControls();
-            setTimeout(() => ensureDockAboveLxx(true), 20);
-            setTimeout(() => ensureDockAboveLxx(true), 150);
-            setTimeout(() => ensureDockAboveLxx(false), 450);
-        }
-    }
-
-    document.addEventListener('click', handlePossibleLsjTrigger, true);
-    document.addEventListener('pointerdown', (e) => {
-        const dock = document.getElementById('lfStudyDock');
-        if (dock && dock.contains(e.target)) {
-            ensureDockAboveLxx(false);
+    // Escape key ALWAYS closes the standalone LSJ modal if it's open
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const info = findStandaloneLsjModal();
+            if (info && isElementVisible(info.root)) {
+                setTimeout(() => {
+                    const cur = findStandaloneLsjModal();
+                    if (cur && isElementVisible(cur.root)) forceCloseStandaloneLsjModal();
+                }, 40);
+            }
         }
     }, true);
 
-    // 8. Hook Study Dock & observe chapter changes so new verse tags stay hidden until toggled on
-    function hookStudyDock() {
-        if (typeof window.lfOpenStudyDock === 'function' && !window.lfOpenStudyDock.__lfFixV5Wrapped) {
-            const orig = window.lfOpenStudyDock;
-            const wrapped = function (...args) {
-                const res = orig.apply(this, args);
-                setTimeout(() => ensureDockAboveLxx(false), 20);
-                setTimeout(() => ensureDockAboveLxx(false), 180);
-                return res;
-            };
-            wrapped.__lfFixV5Wrapped = true;
-            window.lfOpenStudyDock = wrapped;
-        }
+    // When clicking an LSJ trigger OUTSIDE the LSJ modal, clear any forced-hidden state & elevate modal cleanly
+    document.addEventListener('click', (e) => {
+        const btn = e.target && e.target.closest('button, [role="button"], a');
+        if (!btn) return;
 
-        const dock = document.getElementById('lfStudyDock');
-        if (dock && !dock.dataset.lfFixV5Observed) {
-            dock.dataset.lfFixV5Observed = '1';
-            const mo = new MutationObserver(() => {
-                if (dock.classList.contains('open')) {
-                    ensureDockAboveLxx(false);
-                }
-            });
-            mo.observe(dock, { attributes: true, attributeFilter: ['class', 'style'] });
+        // If click is INSIDE the standalone LSJ modal, do NOT touch Study Dock
+        if (btn.closest('[data-lf-lsj-modal-root="1"]')) return;
+
+        const txt = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.textContent || ''}`.toLowerCase();
+        if (/\blsj\b/.test(txt)) {
+            lastRuntimeError = '';
+            lsjLookupStartedAt = 0;
+            clearForceHiddenOnLsjModal();
+            unstickInteractiveControls();
+            setTimeout(elevateStandaloneLsjModal, 30);
+            setTimeout(elevateStandaloneLsjModal, 180);
+            setTimeout(elevateStandaloneLsjModal, 450);
         }
-    }
+    }, true);
 
     let tagScanTimer = null;
     function scheduleTagScan() {
@@ -486,19 +675,23 @@
         tagScanTimer = setTimeout(() => {
             scanAndClassifyInlineTags();
             syncTagClassesAndButtons();
-        }, 80);
+        }, 150);
     }
 
-    function observeChapterRenders() {
-        if (!document.body || document.body.dataset.lfFixTagObserver) return;
-        document.body.dataset.lfFixTagObserver = '1';
+    function observeDom() {
+        if (!document.body || document.body.dataset.lfFixV6Observed) return;
+        document.body.dataset.lfFixV6Observed = '1';
         const mo = new MutationObserver((mutations) => {
+            let sawNonModalChange = false;
             for (let i = 0; i < mutations.length; i++) {
+                const t = mutations[i].target;
+                if (t && t.closest && t.closest('[data-lf-lsj-modal-root="1"]')) continue;
                 if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
-                    scheduleTagScan();
+                    sawNonModalChange = true;
                     break;
                 }
             }
+            if (sawNonModalChange) scheduleTagScan();
         });
         mo.observe(document.body, { childList: true, subtree: true });
     }
@@ -506,17 +699,14 @@
     function init() {
         applyResponsiveModeClass();
         unstickInteractiveControls();
-        hookStudyDock();
         injectTagToggleButtons();
         syncNativeTagControlsOnStartup();
         scanAndClassifyInlineTags();
         syncTagClassesAndButtons();
-        observeChapterRenders();
+        observeDom();
 
-        // Catch modules that finish rendering slightly after DOMContentLoaded
-        [350, 900, 1800].forEach((ms) => {
+        [350, 1000, 2000].forEach((ms) => {
             setTimeout(() => {
-                hookStudyDock();
                 injectTagToggleButtons();
                 syncNativeTagControlsOnStartup();
                 scanAndClassifyInlineTags();
@@ -525,13 +715,13 @@
         });
 
         window.addEventListener('resize', applyResponsiveModeClass, { passive: true });
+
         setInterval(() => {
             unstickInteractiveControls();
-            const dock = document.getElementById('lfStudyDock');
-            if (dock && dock.classList.contains('open')) {
-                ensureDockAboveLxx(false);
-            }
-        }, 1200);
+            elevateStandaloneLsjModal();
+            checkStuckLsjLookup();
+            ensureDockAboveLxxIfOpen();
+        }, 700);
     }
 
     if (document.readyState === 'loading') {
