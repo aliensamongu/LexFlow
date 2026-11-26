@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE (v6): CHURCH FATHERS & CCEL INTEGRATION (Hardwired Direct Treatise URLs + Multi-Format Scripture Search) ===
+/* === LEXFLOW PHASE 6 MODULE (v7): CHURCH FATHERS, CCEL & UNIVERSAL STUDY DOCK AUTO-SYNC ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -892,7 +892,9 @@
         topicQuery: '',
         badgesEnabled: localStorage.getItem('lexflow_father_badges') !== 'false',
         activeVerse: { bookNum: 1, bookName: 'Genesis', chapter: 1, verse: 1 },
-        ccelPopupRef: null
+        ccelPopupRef: null,
+        autoSyncEnabled: localStorage.getItem('lexflow_dock_autosync') !== 'false',
+        lastAutoSyncedKey: ''
     };
 
     function escapeHtml(s) {
@@ -2193,6 +2195,7 @@
             }
         }
 
+        injectAutoSyncToggleInDock();
         return true;
     }
 
@@ -2210,9 +2213,198 @@
 
     window.lfOpenChurchFathers = (sub) => activateFathersTabInDock(sub || 'topics');
 
+
+    // -------------------------------------------------------------------------
+    // 12. UNIVERSAL STUDY DOCK AUTO-SYNC ENGINE
+    //     Automatically syncs Compare, Brief (MACULA), and Fathers ("This Verse")
+    //     whenever you tap/click a verse, move your cursor, or jump to a passage.
+    //     Never interrupts Lexicon reading or Note typing.
+    // -------------------------------------------------------------------------
+    function getActiveDockTabName() {
+        const dock = document.getElementById('lfStudyDock');
+        if (!dock || !dock.classList.contains('open')) return '';
+        const activeBtn = dock.querySelector('.lf-dock-tab-btn.active');
+        return activeBtn ? (activeBtn.dataset.dockTab || '') : '';
+    }
+
+    function syncOpenDockToBlock(blk, force) {
+        if (!state.autoSyncEnabled || !blk || !blk.dataset || !blk.dataset.bookNum) return;
+        const dock = document.getElementById('lfStudyDock');
+        if (!dock || !dock.classList.contains('open')) return;
+
+        const tab = getActiveDockTabName();
+        // Only auto-sync verse-bound tabs; never interrupt active Lexicon reading or Note typing
+        if (tab !== 'compare' && tab !== 'brief' && tab !== 'fathers') return;
+        if (tab === 'fathers' && state.activeSubTab !== 'verse') return;
+
+        const b = parseInt(blk.dataset.bookNum, 10) || 1;
+        const c = parseInt(blk.dataset.chapterNum, 10) || 1;
+        const v = parseInt(blk.dataset.verseNum, 10) || 1;
+        const syncKey = `${tab}_${b}_${c}_${v}`;
+        if (!force && state.lastAutoSyncedKey === syncKey) return;
+        state.lastAutoSyncedKey = syncKey;
+
+        // Keep LexFlow's global selected block aligned
+        try { window.lastSelectedBlock = blk; } catch (err) {}
+
+        const verseObj = {
+            bookNum: b,
+            bookName: blk.dataset.bookName || getBookName(b),
+            chapter: c,
+            verse: v
+        };
+        state.activeVerse = verseObj;
+
+        if (tab === 'fathers') {
+            const content = document.getElementById('lfFathersContent');
+            if (content) renderVerseCitationsView(content);
+            return;
+        }
+
+        if (tab === 'compare') {
+            const panel = document.getElementById('lfDockPanel_compare');
+            const syncBtn = panel && (
+                panel.querySelector('[id*="Sync" i], [id*="Refresh" i], button[title*="Sync" i], button[title*="Refresh" i]')
+            );
+            if (syncBtn) {
+                syncBtn.click();
+            } else if (typeof window.lfOpenStudyDock === 'function') {
+                window.lfOpenStudyDock('compare');
+            }
+            return;
+        }
+
+        if (tab === 'brief') {
+            const panel = document.getElementById('lfDockPanel_brief');
+            const syncBtn = panel && (
+                panel.querySelector('[id*="Sync" i], [id*="Refresh" i], button[title*="Sync" i], button[title*="Refresh" i]')
+            );
+            if (syncBtn) {
+                syncBtn.click();
+            } else if (typeof window.lfOpenPassageBrief === 'function') {
+                window.lfOpenPassageBrief();
+            }
+        }
+    }
+
+    function injectAutoSyncToggleInDock() {
+        const dock = document.getElementById('lfStudyDock');
+        if (!dock || document.getElementById('lfDockAutoSyncBtn')) return;
+
+        // Place neatly in the Study Dock utility controls row (next to A- / 100% / A+ / Original / X)
+        const closeBtn = document.getElementById('lfDockCloseBtn') || dock.querySelector('button[title*="Close" i]');
+        const targetRow = closeBtn ? closeBtn.parentElement : dock.firstElementChild;
+        if (!targetRow) return;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'lfDockAutoSyncBtn';
+        btn.className = `px-2 py-0.5 rounded-md text-[10.5px] font-bold border transition cursor-pointer flex items-center gap-1 shrink-0 ${
+            state.autoSyncEnabled
+                ? 'bg-emerald-600 border-emerald-600 text-white'
+                : 'bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300'
+        }`;
+        btn.title = 'Automatically sync Study Dock (Compare, Brief, Fathers) when you click, move cursor, or jump to a verse';
+        btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-[9.5px]"></i><span>${state.autoSyncEnabled ? 'Auto-Sync' : 'Sync: Manual'}</span>`;
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.autoSyncEnabled = !state.autoSyncEnabled;
+            try { localStorage.setItem('lexflow_dock_autosync', String(state.autoSyncEnabled)); } catch (err) {}
+            btn.className = `px-2 py-0.5 rounded-md text-[10.5px] font-bold border transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                state.autoSyncEnabled
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300'
+            }`;
+            btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-[9.5px]"></i><span>${state.autoSyncEnabled ? 'Auto-Sync' : 'Sync: Manual'}</span>`;
+            showToast(state.autoSyncEnabled
+                ? 'Study Dock Auto-Sync ON'
+                : 'Study Dock Auto-Sync OFF (Manual Sync only)');
+            if (state.autoSyncEnabled) {
+                const blk = (typeof lastSelectedBlock !== 'undefined' && lastSelectedBlock && lastSelectedBlock.dataset && lastSelectedBlock.dataset.bookNum)
+                    ? lastSelectedBlock
+                    : (typeof findTopVisibleVerseBlock === 'function' ? findTopVisibleVerseBlock() : null);
+                if (blk) syncOpenDockToBlock(blk, true);
+            }
+        });
+
+        if (closeBtn && closeBtn.parentElement === targetRow) {
+            targetRow.insertBefore(btn, closeBtn);
+        } else {
+            targetRow.appendChild(btn);
+        }
+    }
+
+    function installDockAutoSyncListeners() {
+        if (window.__lfDockAutoSyncWired) return;
+        window.__lfDockAutoSyncWired = true;
+
+        let syncTimer = 0;
+        const scheduleBlockSync = (blk, delayMs) => {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => {
+                if (blk && document.body.contains(blk)) {
+                    syncOpenDockToBlock(blk, false);
+                }
+            }, delayMs);
+        };
+
+        const scheduleTopVisibleSync = (delayMs) => {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => {
+                const topBlk = typeof findTopVisibleVerseBlock === 'function'
+                    ? findTopVisibleVerseBlock()
+                    : document.querySelector('#flowEditor > div[data-book-num][data-chapter-num][data-verse-num]');
+                if (topBlk) syncOpenDockToBlock(topBlk, false);
+            }, delayMs);
+        };
+
+        // 1. Click / tap on any verse inside #flowEditor
+        const ed = document.getElementById('flowEditor');
+        if (ed) {
+            ed.addEventListener('click', (e) => {
+                const blk = e.target && e.target.closest('div[data-book-num][data-chapter-num][data-verse-num]');
+                if (blk) scheduleBlockSync(blk, 180);
+            }, { passive: true });
+
+            // 2. Cursor / caret placement via keyboard arrows or PageUp/PageDown inside #flowEditor
+            ed.addEventListener('keyup', (e) => {
+                if (!/^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|PageUp|PageDown|Home|End)$/.test(e.key)) return;
+                const sel = window.getSelection();
+                if (!sel || !sel.anchorNode) return;
+                const el = sel.anchorNode.nodeType === Node.ELEMENT_NODE ? sel.anchorNode : sel.anchorNode.parentElement;
+                const blk = el && el.closest('div[data-book-num][data-chapter-num][data-verse-num]');
+                if (blk) scheduleBlockSync(blk, 260);
+            }, { passive: true });
+        }
+
+        // 3. Passage navigation via top "Jump to passage" bar (updatePassageContext)
+        if (typeof window.updatePassageContext === 'function' && !window.updatePassageContext.__lfAutoSyncWrapped) {
+            const origJump = window.updatePassageContext;
+            const wrappedJump = function (...args) {
+                const res = origJump.apply(this, args);
+                scheduleTopVisibleSync(360);
+                return res;
+            };
+            wrappedJump.__lfAutoSyncWrapped = true;
+            window.updatePassageContext = wrappedJump;
+        }
+
+        // 4. Quick Jump modal selection or clicking "Go"
+        document.addEventListener('click', (e) => {
+            const target = e.target && e.target.closest('button, [data-jump-ref], .lf-qj-item');
+            if (!target) return;
+            const txt = (target.textContent || '').trim();
+            if (txt === 'Go' || target.classList.contains('lf-qj-item') || target.hasAttribute('data-jump-ref')) {
+                scheduleTopVisibleSync(380);
+            }
+        }, true);
+    }
+
     function initChurchFathers() {
         installLazyVerseBadgeObserver();
         watchForKudosOpening();
+        installDockAutoSyncListeners();
 
         if (!mountFathersIntoStudyDock()) {
             let tries = 0;
