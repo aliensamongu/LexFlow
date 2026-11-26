@@ -1,6 +1,6 @@
-/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v4) === */
-const APP_CACHE = 'lexflow-app-shell-v4';
-const CDN_CACHE = 'lexflow-cdn-assets-v4';
+/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v5) === */
+const APP_CACHE = 'lexflow-app-shell-v5';
+const CDN_CACHE = 'lexflow-cdn-assets-v5';
 
 const APP_SHELL_URLS = [
     './',
@@ -12,7 +12,8 @@ const APP_SHELL_URLS = [
     './js/lexflow-phase2-dock.js',
     './js/lexflow-phase3-exegesis.js',
     './js/lexflow-phase4-export.js',
-    './js/lexflow-tablet-mode.js'
+    './js/lexflow-tablet-mode.js',
+    './js/lexflow-church-fathers.js'
 ];
 
 self.addEventListener('install', (event) => {
