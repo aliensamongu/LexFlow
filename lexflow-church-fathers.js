@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE (v5): CHURCH FATHERS & CCEL INTEGRATION (Direct Chapter Links + Schaff Roman Citations + CCEL Study Bible) ===
+/* === LEXFLOW PHASE 6 MODULE (v6): CHURCH FATHERS & CCEL INTEGRATION (Hardwired Direct Treatise URLs + Multi-Format Scripture Search) ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -849,7 +849,7 @@
 
         // HEBREWS (Book 58)
         '58_1_3': [
-            { fatherId: 'athanasius', work: 'Against the Arians, II.33', note: '"Radiance of His glory" proves co-eternity: just as the sun never exists without its radiance, the Father never existed without the Son.' },
+            { fatherId: 'athanasius', work: 'Against the Arians, II.33', note: '"Radiance of His glory" proves co-eternity: just as the sun never exists without its radiance, the Father never existed without the Son.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf204.xxi.ii.iii.v.html' },
             { fatherId: 'chrysostom', work: 'Homilies on Hebrews, Homily 2', note: '"Exact imprint of His nature" shows the Son possesses the complete substance of the Father while remaining distinct as Person.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf114.v.vi.html' }
         ],
         '58_11_1': [
@@ -953,7 +953,11 @@
         return out || 'i';
     }
 
-    // 19th-century Philip Schaff ANF/NPNF volumes cite Scripture as "Gen. i. 26", "John iii. 16", "Rom. iii. 25"
+    function toUpperRoman(num) {
+        return toLowerRoman(num).toUpperCase();
+    }
+
+    // 19th-century Philip Schaff ANF/NPNF volumes cite Scripture as "Gen. i. 26", "John iii. 16", "Heb. i. 3"
     const SCHAFF_BOOK_ABBR = {
         1: 'Gen.', 2: 'Exod.', 3: 'Lev.', 4: 'Num.', 5: 'Deut.', 6: 'Josh.', 7: 'Judg.', 8: 'Ruth',
         9: '1 Sam.', 10: '2 Sam.', 11: '1 Kings', 12: '2 Kings', 13: '1 Chron.', 14: '2 Chron.',
@@ -968,15 +972,181 @@
         64: '3 John', 65: 'Jude', 66: 'Rev.'
     };
 
-    function formatSchaffScriptureRef(bookNum, bookName, chapter, verse) {
-        const abbr = SCHAFF_BOOK_ABBR[bookNum] || `${bookName}.`;
-        return `"${abbr} ${toLowerRoman(chapter)}. ${verse}"`;
+    // Multi-format OR query covering ALL Scripture citation styles across CCEL's 37 ANF/NPNF volumes:
+    //   1) Schaff 19th-century Roman numeral ("Heb. i. 3")
+    //   2) Modern full book name ("Hebrews 1:3")
+    //   3) Abbreviated Arabic ("Heb 1:3")
+    function formatMultiFormatScriptureQuery(bookNum, bookName, chapter, verse) {
+        const abbrDot = SCHAFF_BOOK_ABBR[bookNum] || `${bookName}.`;
+        const abbrClean = abbrDot.replace(/\.$/, '');
+        const romanCh = toLowerRoman(chapter);
+        const variants = [
+            `"${abbrDot} ${romanCh}. ${verse}"`,
+            `"${bookName} ${chapter}:${verse}"`
+        ];
+        if (abbrClean.toLowerCase() !== String(bookName || '').toLowerCase()) {
+            variants.push(`"${abbrClean} ${chapter}:${verse}"`);
+        }
+        return variants.join(' OR ');
     }
 
-    // Direct CCEL World Wide Study Bible URL for any verse (e.g. https://www.ccel.org/study/Genesis_1:26)
+    // Direct CCEL World Wide Study Bible URL for any verse (e.g. https://www.ccel.org/study/Hebrews_1:3)
     function buildCcelStudyBibleUrl(bookName, chapter, verse) {
         const slugBook = String(bookName || 'Genesis').trim().replace(/\s+/g, '_');
         return `https://www.ccel.org/study/${encodeURIComponent(slugBook)}_${chapter}:${verse}`;
+    }
+
+    // Hardwired direct CCEL Treatise / Chapter URL resolver (verified ThML section paths across Schaff ANF/NPNF)
+    function resolveDirectTreatiseUrl(fatherId, workStr) {
+        const w = String(workStr || '');
+        const wLow = w.toLowerCase();
+        const firstNumMatch = w.match(/(?:homily|homilies|tractate|tractates|lecture|chapter|ch\.|§|psalm|epistle|book)\s*(?:on\s+[a-z0-9\s]+,\s*)?(\d+)/i);
+        const trailingNumMatch = w.match(/,\s*(\d+)/);
+        const num = firstNumMatch ? parseInt(firstNumMatch[1], 10) : (trailingNumMatch ? parseInt(trailingNumMatch[1], 10) : null);
+
+        // --- CHRYSOSTOM ---
+        if (fatherId === 'chrysostom') {
+            if (/matthew/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf110.iii.${toUpperRoman(num)}.html`;
+            if (/acts/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf111.vi.${toLowerRoman(num)}.html`;
+            if (/romans/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf111.vii.${toLowerRoman(num + 2)}.html`;
+            if (/1 corinthians/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf112.iv.${toLowerRoman(num + 1)}.html`;
+            if (/2 corinthians/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf112.v.${toLowerRoman(num)}.html`;
+            if (/galatians/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf113.iii.iii.html';
+            if (/ephesians/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf113.iii.iv.${toLowerRoman(num + 1)}.html`;
+            if (/philippians/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf113.iv.iii.${toLowerRoman(num + 1)}.html`;
+            if (/colossians/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf113.toc.html';
+            if (/2 timothy/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf113.toc.html';
+            if (/titus/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf113.v.v.html';
+            if (/john/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf114.iv.${toLowerRoman(num + 2)}.html`;
+            if (/hebrews/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf114.v.${toLowerRoman(num + 4)}.html`;
+        }
+
+        // --- AUGUSTINE ---
+        if (fatherId === 'augustine') {
+            if (/tractates? on john/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf107.iii.${toLowerRoman(num + 1)}.html`;
+            if (/homilies on 1 john/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf107.iv.${toLowerRoman(num + 3)}.html`;
+            if (/psalm\s*(\d+)/i.test(w)) {
+                const ps = parseInt(w.match(/psalm\s*(\d+)/i)[1], 10);
+                return `https://www.ccel.org/ccel/schaff/npnf108.ii.${toUpperRoman(ps)}.html`;
+            }
+            if (/sermon on the mount/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf106.v.ii.html';
+            if (/spirit and the letter/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf105.xi.iii.html';
+            if (/merits and forgiveness/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf105.x.iii.html';
+            if (/grace and free will/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf105.xix.iv.html';
+            if (/predestination of the saints/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf105.xxi.ii.html';
+            if (/enchiridion/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf103.iv.ii.html';
+            if (/on the trinity/i.test(w)) {
+                const romanBook = w.match(/book\s+([ivxlc]+)/i);
+                if (romanBook) {
+                    const mapR = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12, xiii: 13, xiv: 14, xv: 15 };
+                    const bNum = mapR[romanBook[1].toLowerCase()];
+                    if (bNum) return `https://www.ccel.org/ccel/schaff/npnf103.iv.i.${toLowerRoman(bNum + 2)}.html`;
+                }
+                return 'https://www.ccel.org/ccel/schaff/npnf103.iv.i.iii.html';
+            }
+            if (/city of god/i.test(w)) {
+                const romanBook = w.match(/(?:book\s+|god,\s*)([ivxlc]+)/i);
+                if (romanBook) return `https://www.ccel.org/ccel/schaff/npnf102.iv.${romanBook[1].toUpperCase()}.html`;
+                return 'https://www.ccel.org/ccel/schaff/npnf102.iv.I.html';
+            }
+            if (/christian doctrine/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf102.v.ii.html';
+        }
+
+        // --- ATHANASIUS ---
+        if (fatherId === 'athanasius') {
+            if (/on the incarnation/i.test(w)) {
+                const sec = w.match(/§\s*(\d+)/);
+                if (sec) return `https://www.ccel.org/ccel/schaff/npnf204.vii.ii.${toLowerRoman(parseInt(sec[1], 10))}.html`;
+                return 'https://www.ccel.org/ccel/schaff/npnf204.vii.ii.i.html';
+            }
+            if (/against the heathen|contra gentes/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf204.vi.ii.html';
+            if (/against the arians/i.test(w)) {
+                if (/iii\./i.test(w) || /discourse\s*iii/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf204.xxi.ii.iv.i.html';
+                if (/ii\./i.test(w) || /discourse\s*ii/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf204.xxi.ii.iii.i.html';
+                return 'https://www.ccel.org/ccel/schaff/npnf204.xxi.ii.i.i.html';
+            }
+        }
+
+        // --- BASIL ---
+        if (fatherId === 'basil') {
+            if (/hexaemeron/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf208.viii.${toLowerRoman(num + 1)}.html`;
+            if (/holy spirit|spiritu sancto/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/npnf208.vii.${toLowerRoman(num + 1)}.html`;
+        }
+
+        // --- CLEMENT OF ROME ---
+        if (fatherId === 'clement_rome') {
+            if (/1 clement|first epistle/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/anf01.ii.ii.${toLowerRoman(num)}.html`;
+            if (/diognetus/i.test(w)) return 'https://www.ccel.org/ccel/schaff/anf01.iii.ii.ix.html';
+        }
+
+        // --- IGNATIUS ---
+        if (fatherId === 'ignatius') {
+            if (/romans/i.test(w)) return 'https://www.ccel.org/ccel/schaff/anf01.v.v.html';
+        }
+
+        // --- JUSTIN MARTYR ---
+        if (fatherId === 'justin') {
+            if (/first apology/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/anf01.viii.ii.${toLowerRoman(num)}.html`;
+        }
+
+        // --- IRENAEUS ---
+        if (fatherId === 'irenaeus') {
+            if (/against heresies/i.test(w)) {
+                const m4 = w.match(/IV\.(\d+)/);
+                if (m4) return `https://www.ccel.org/ccel/schaff/anf01.ix.vi.${toLowerRoman(parseInt(m4[1], 10) + 1)}.html`;
+                const m5 = w.match(/V\.(\d+)/);
+                if (m5) return `https://www.ccel.org/ccel/schaff/anf01.ix.vii.${toLowerRoman(parseInt(m5[1], 10) + 1)}.html`;
+                const m3 = w.match(/III\.(\d+)/);
+                if (m3) return `https://www.ccel.org/ccel/schaff/anf01.ix.iv.${toLowerRoman(parseInt(m3[1], 10) + 1)}.html`;
+            }
+        }
+
+        // --- TERTULLIAN ---
+        if (fatherId === 'tertullian') {
+            if (/on baptism/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/anf03.vi.iii.${toLowerRoman(num)}.html`;
+            if (/against praxeas/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/anf03.v.ix.${toLowerRoman(num)}.html`;
+            if (/resurrection/i.test(w) && num) return `https://www.ccel.org/ccel/schaff/anf03.v.viii.${toLowerRoman(num)}.html`;
+        }
+
+        // --- CYPRIAN ---
+        if (fatherId === 'cyprian') {
+            if (/unity of the church/i.test(w)) return 'https://www.ccel.org/ccel/schaff/anf05.iv.v.i.html';
+            if (/lord.?s prayer/i.test(w)) return 'https://www.ccel.org/ccel/schaff/anf05.iv.v.iv.html';
+            if (/epistle\s*(\d+)/i.test(w)) {
+                const ep = parseInt(w.match(/epistle\s*(\d+)/i)[1], 10);
+                return `https://www.ccel.org/ccel/schaff/anf05.iv.iv.${toLowerRoman(ep)}.html`;
+            }
+        }
+
+        // --- CYRIL OF JERUSALEM ---
+        if (fatherId === 'cyril_jer') {
+            if (/catechetical lecture\s*(\d+)/i.test(w)) {
+                const lec = parseInt(w.match(/catechetical lecture\s*(\d+)/i)[1], 10);
+                return `https://www.ccel.org/ccel/schaff/npnf207.ii.${toLowerRoman(lec + 4)}.html`;
+            }
+        }
+
+        // --- GREGORY OF NAZIANZUS ---
+        if (fatherId === 'gregory_naz') {
+            if (/oration\s*45/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf207.iii.xxvii.html';
+        }
+
+        // --- GREGORY OF NYSSA ---
+        if (fatherId === 'gregory_nys') {
+            if (/not three gods/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf205.viii.v.html';
+            if (/making of man/i.test(w)) return 'https://www.ccel.org/ccel/schaff/npnf205.x.ii.ii.xvii.html';
+        }
+
+        // --- HILARY ---
+        if (fatherId === 'hilary') {
+            if (/on the trinity/i.test(w)) {
+                const romanBook = w.match(/book\s+([ivxlc]+)/i);
+                if (romanBook) return `https://www.ccel.org/ccel/schaff/npnf209.ii.v.ii.${romanBook[1].toLowerCase()}.html`;
+                return 'https://www.ccel.org/ccel/schaff/npnf209.ii.v.ii.i.html';
+            }
+        }
+
+        return '';
     }
 
     // Build CCEL's active search URL (authorID[]=schaff, optional workID[]/versionID[], highlight=1, text=...)
@@ -1012,8 +1182,8 @@
     }
 
     function buildCcelScriptureSearchUrl(bookNum, bookName, chapter, verse, fatherId, customTerms) {
-        // Use exact quoted Schaff Roman-numeral citation ("Gen. i. 26") so CCEL finds real patristic footnotes!
-        const query = customTerms ? customTerms : formatSchaffScriptureRef(bookNum, bookName, chapter, verse);
+        // Multi-format OR query searches Schaff Roman ("Heb. i. 3"), Modern ("Hebrews 1:3"), and Short ("Heb 1:3") simultaneously!
+        const query = customTerms ? customTerms : formatMultiFormatScriptureQuery(bookNum, bookName, chapter, verse);
         if (fatherId && fatherId !== 'all' && FATHER_BY_ID[fatherId]) {
             const f = FATHER_BY_ID[fatherId];
             return buildCcelSearchUrl(query, f.vols);
@@ -1629,7 +1799,9 @@
         const cardsHtml = matches.length
             ? matches.map((m, idx) => {
                 const f = FATHER_BY_ID[m.fatherId] || { name: 'Church Father', era: '', ccelUrl: 'https://www.ccel.org/fathers' };
+                const resolvedTopicDirect = resolveDirectTreatiseUrl(m.fatherId, m.work);
                 const searchUrl = buildCcelSearchUrl(m.ccelSearch, m.vol ? [m.vol] : f.vols);
+                const primaryTopicUrl = (m.ccelDirect && !m.ccelDirect.endsWith('.toc.html')) ? m.ccelDirect : (resolvedTopicDirect || searchUrl);
                 return `
                     <div class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-gray-200 dark:border-zinc-700 space-y-1.5">
                         <div class="flex items-start justify-between gap-2">
@@ -1644,8 +1816,11 @@
                         </div>
                         <p class="text-xs leading-relaxed text-gray-700 dark:text-gray-200">${escapeHtml(m.summary)}</p>
                         <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer transition" data-url="${escapeHtml(searchUrl)}" data-label="${escapeHtml(f.name + ' — ' + m.work)}">
-                                <i class="fa-solid fa-up-right-from-square mr-1"></i>Open Exact Passage on CCEL
+                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer transition" data-url="${escapeHtml(primaryTopicUrl)}" data-label="${escapeHtml(f.name + ' — ' + m.work)}">
+                                <i class="fa-solid fa-up-right-from-square mr-1"></i>Read Treatise on CCEL
+                            </button>
+                            <button type="button" class="lf-cf-pop-btn px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 text-[11px] font-bold cursor-pointer transition" data-url="${escapeHtml(searchUrl)}" data-label="${escapeHtml('Search ' + f.name + ' on CCEL')}">
+                                Search Vol ↗
                             </button>
                             <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-700 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 text-[11px] font-bold cursor-pointer transition" data-url="${escapeHtml(m.ccelDirect)}" data-label="${escapeHtml(m.vol + ' Contents')}">
                                 Browse ${escapeHtml(m.vol)} TOC ↗
@@ -1706,9 +1881,11 @@
         const hitsHtml = hits.length
             ? hits.map((h) => {
                 const f = FATHER_BY_ID[h.fatherId] || { name: 'Church Father', era: '', vols: ['ANF01'], ccelUrl: 'https://www.ccel.org/fathers' };
-                const primaryUrl = h.directUrl || buildCcelScriptureSearchUrl(ref.bookNum, ref.bookName, ref.chapter, ref.verse, f.id, h.searchTerms || '');
-                const primaryBtnText = h.directUrl
-                    ? `Read ${f.name} on ${refLabel} ↗`
+                const resolvedDirect = h.directUrl || resolveDirectTreatiseUrl(h.fatherId, h.work);
+                const multiFormatSearchUrl = buildCcelScriptureSearchUrl(ref.bookNum, ref.bookName, ref.chapter, ref.verse, f.id, h.searchTerms || '');
+                const primaryUrl = resolvedDirect || multiFormatSearchUrl;
+                const primaryBtnText = resolvedDirect
+                    ? `Read ${f.name} (${h.work.split(/[,(]/)[0].trim()}) ↗`
                     : `Find ${f.name} on ${refLabel} ↗`;
                 return `
                     <div class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-amber-200/90 dark:border-amber-800/70 space-y-1.5">
@@ -1722,11 +1899,12 @@
                         <div class="text-[11.5px] font-bold text-indigo-700 dark:text-indigo-300">${escapeHtml(h.work)}</div>
                         <p class="text-xs leading-relaxed text-gray-700 dark:text-gray-200">${escapeHtml(h.note)}</p>
                         <div class="flex flex-wrap gap-1.5 pt-1">
-                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(primaryUrl)}" data-label="${escapeHtml(f.name + ' on ' + refLabel)}">
+                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(primaryUrl)}" data-label="${escapeHtml(f.name + ' — ' + h.work)}">
                                 ${escapeHtml(primaryBtnText)}
                             </button>
-                            <button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-700 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(f.ccelUrl)}" data-label="${escapeHtml(f.name + ' on CCEL')}">
-                                Browse Volume ↗
+                            ${resolvedDirect ? `<button type="button" class="lf-cf-pop-btn px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(multiFormatSearchUrl)}" data-label="${escapeHtml('All ' + f.name + ' citations of ' + refLabel)}" title="Search all formats (Roman &amp; Arabic) in ${escapeHtml(f.name)}'s volumes">All Citations ↗</button>` : ''}
+                            <button type="button" class="lf-cf-pop-btn px-2 py-1 rounded-lg bg-gray-100 dark:bg-zinc-700 hover:bg-indigo-600 hover:text-white text-gray-700 dark:text-gray-200 text-[11px] font-bold cursor-pointer" data-url="${escapeHtml(f.ccelUrl)}" data-label="${escapeHtml(f.name + ' on CCEL')}">
+                                TOC ↗
                             </button>
                         </div>
                     </div>
