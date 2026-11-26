@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE: CHURCH FATHERS & CCEL INTEGRATION ===
+/* === LEXFLOW PHASE 6 MODULE (v2): CHURCH FATHERS & CCEL INTEGRATION ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -989,7 +989,7 @@
     window.lfOpenCcelPopout = openCcelPopout;
 
     // -------------------------------------------------------------------------
-    // 7. STYLES (Church Icon Verse Badge + Fathers Tab UI)
+    // 7. STYLES (External Margin Overlay for Church Icons — ZERO #flowEditor Pollution!)
     // -------------------------------------------------------------------------
     const styleEl = document.createElement('style');
     styleEl.id = 'lfChurchFathersStyles';
@@ -998,40 +998,64 @@
             zoom: var(--lf-dock-zoom, 1);
         }
 
-        /* Subtle, clickable Church Icon badge next to cited verses (ZERO textContent!) */
+        /* Ensure #wordProcessorPane anchors our external margin overlay cleanly */
+        #wordProcessorPane {
+            position: relative;
+        }
+
+        /* Dedicated clean left gutter ONLY while Church Father icons are switched ON */
+        body:not(.lf-hide-father-badges) #flowEditor {
+            padding-left: 42px !important;
+        }
+
+        /* External overlay layer (lives OUTSIDE #flowEditor so breaks/edits NEVER touch icons!) */
+        #lfFatherBadgesOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+        body.lf-hide-father-badges #lfFatherBadgesOverlay {
+            display: none !important;
+        }
+
+        /* Subtle, clickable Church Icon pill positioned in the clean left margin */
         .lf-father-badge {
+            position: absolute;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            vertical-align: middle;
-            margin-right: 6px;
-            margin-left: 1px;
             padding: 1px 6px;
             border-radius: 999px;
             font-family: 'Inter', system-ui, sans-serif;
             font-size: 10px;
-            line-height: 1.35;
+            line-height: 1.4;
             font-weight: 800;
             color: #b45309;
-            background: rgba(254, 243, 199, 0.88);
-            border: 1px solid rgba(217, 119, 6, 0.42);
+            background: rgba(254, 243, 199, 0.92);
+            border: 1px solid rgba(217, 119, 6, 0.45);
             cursor: pointer;
+            pointer-events: auto;
             user-select: none;
             -webkit-user-select: none;
+            white-space: nowrap;
             transition: transform 0.1s ease, background-color 0.12s ease;
             touch-action: manipulation;
         }
         html.dark .lf-father-badge {
             color: #fcd34d;
-            background: rgba(120, 53, 15, 0.42);
-            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(120, 53, 15, 0.52);
+            border-color: rgba(245, 158, 11, 0.48);
         }
         .lf-father-badge:hover,
         .lf-father-badge:active {
             background: #d97706;
             color: #ffffff !important;
             border-color: #d97706;
-            transform: scale(1.06);
+            transform: scale(1.07);
         }
         .lf-father-badge::after {
             content: attr(data-count);
@@ -1042,7 +1066,13 @@
         body.lf-hide-father-badges .lf-father-badge {
             display: none !important;
         }
+        /* Safety net: hide any legacy stray church icon if an old saved project still had one */
+        #flowEditor .lf-father-badge,
+        #flowEditor i.fa-church {
+            display: none !important;
+        }
         @media print {
+            #lfFatherBadgesOverlay,
             .lf-father-badge { display: none !important; }
         }
 
@@ -1101,109 +1131,238 @@
     }
 
     // -------------------------------------------------------------------------
-    // 8. CLICKABLE CHURCH ICON BADGE ENGINE (IntersectionObserver = Zero Lag!)
+    // 8. ZERO-POLLUTION EXTERNAL CHURCH ICON OVERLAY ENGINE
+    //    Never inserts anything into #flowEditor! Also scrubs any legacy icons
+    //    that were auto-saved by v1 so they vanish permanently.
     // -------------------------------------------------------------------------
-    function decorateSingleVerseBlock(blk) {
-        if (!blk || blk.dataset.lfFatherChecked === '1') return;
-        const b = blk.dataset.bookNum;
-        const c = blk.dataset.chapterNum;
-        const v = blk.dataset.verseNum;
-        if (!b || !c || !v) return;
+    let citedEntriesCache = [];
+    let overlayRafId = 0;
 
-        // Only place the church icon on the FIRST line of a split verse (not repeated on split continuations)
-        if (blk.dataset.verseCont === 'true') {
-            blk.dataset.lfFatherChecked = '1';
+    function scrubLegacyInlineIcons(triggerSave) {
+        const ed = document.getElementById('flowEditor');
+        if (!ed) return false;
+        let removedAny = false;
+
+        // 1. Remove any v1 span.lf-father-badge still sitting inside #flowEditor
+        ed.querySelectorAll('.lf-father-badge').forEach((el) => {
+            el.remove();
+            removedAny = true;
+        });
+
+        // 2. Remove any unwrapped <i class="fa-solid fa-church"> left behind after Flow/Enter edits
+        ed.querySelectorAll('i.fa-church').forEach((iconEl) => {
+            const parent = iconEl.parentElement;
+            iconEl.remove();
+            if (parent && parent.tagName === 'SPAN' && parent.parentElement && parent.parentElement.closest('#flowEditor') && (parent.textContent || '') === '' && parent.children.length === 0) {
+                parent.remove();
+            }
+            removedAny = true;
+        });
+
+        if (removedAny && triggerSave && typeof window.saveActiveProjectData === 'function') {
+            try { window.saveActiveProjectData(false); } catch (e) {}
+        }
+        return removedAny;
+    }
+
+    function ensureOverlayContainer() {
+        const pane = document.getElementById('wordProcessorPane');
+        if (!pane) return null;
+        let layer = document.getElementById('lfFatherBadgesOverlay');
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.id = 'lfFatherBadgesOverlay';
+            layer.setAttribute('aria-label', 'Church Father verse indicators');
+            pane.appendChild(layer);
+        }
+        return layer;
+    }
+
+    function rebuildCitedEntriesCache() {
+        const ed = document.getElementById('flowEditor');
+        if (!ed) {
+            citedEntriesCache = [];
+            return;
+        }
+        scrubLegacyInlineIcons(false);
+
+        const nextList = [];
+        const seenKeys = new Set();
+        const blocks = ed.querySelectorAll('div[data-book-num][data-chapter-num][data-verse-num]');
+
+        for (let i = 0; i < blocks.length; i++) {
+            const blk = blocks[i];
+            const b = blk.dataset.bookNum;
+            const c = blk.dataset.chapterNum;
+            const v = blk.dataset.verseNum;
+            if (!b || !c || !v) continue;
+            const key = `${b}_${c}_${v}`;
+            if (seenKeys.has(key)) continue;
+            if (!VERSE_CITATIONS[key]) continue;
+            if (blk.dataset.verseCont === 'true') continue;
+
+            seenKeys.add(key);
+            nextList.push({
+                blk,
+                key,
+                bookNum: parseInt(b, 10),
+                bookName: blk.dataset.bookName || getBookName(parseInt(b, 10)),
+                chapter: parseInt(c, 10),
+                verse: parseInt(v, 10),
+                hits: VERSE_CITATIONS[key]
+            });
+        }
+        citedEntriesCache = nextList;
+    }
+
+    function renderVisibleOverlayBadges() {
+        const layer = ensureOverlayContainer();
+        if (!layer) return;
+
+        // Strictly respect Icons: Off — empty & hide the overlay immediately
+        if (!state.badgesEnabled) {
+            if (layer.childNodes.length) layer.innerHTML = '';
             return;
         }
 
-        blk.dataset.lfFatherChecked = '1';
-        const key = `${b}_${c}_${v}`;
-        const hits = VERSE_CITATIONS[key];
-        if (!hits || !hits.length) return;
-        if (blk.querySelector('.lf-father-badge')) return;
+        const pane = document.getElementById('wordProcessorPane');
+        const ed = document.getElementById('flowEditor');
+        if (!pane || !ed) return;
 
-        const bookName = blk.dataset.bookName || getBookName(parseInt(b, 10));
-        const fatherNames = hits.map((h) => (FATHER_BY_ID[h.fatherId] ? FATHER_BY_ID[h.fatherId].name : '')).filter(Boolean).join(', ');
+        const paneRect = pane.getBoundingClientRect();
+        const edRect = ed.getBoundingClientRect();
+        const baseLeft = Math.max(6, (edRect.left - paneRect.left) + pane.scrollLeft - pane.clientLeft);
+        const minTop = paneRect.top - 500;
+        const maxTop = paneRect.bottom + 500;
 
-        const badge = document.createElement('span');
-        badge.className = 'lf-father-badge';
-        badge.setAttribute('contenteditable', 'false');
-        badge.setAttribute('role', 'button');
-        badge.setAttribute('tabindex', '0');
-        badge.dataset.count = String(hits.length);
-        badge.title = `${hits.length} Church Father citation${hits.length === 1 ? '' : 's'} on ${bookName} ${c}:${v} (${fatherNames}) — Click to view & open in CCEL`;
-        badge.innerHTML = `<i class="fa-solid fa-church" aria-hidden="true"></i>`;
-
-        const openVerseFathers = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            state.activeVerse = {
-                bookNum: parseInt(b, 10),
-                bookName,
-                chapter: parseInt(c, 10),
-                verse: parseInt(v, 10)
-            };
-            activateFathersTabInDock('verse');
-        };
-        // Stop pointerdown too so tablet drag cursor handle doesn't fire when tapping the church icon
-        badge.addEventListener('pointerdown', (e) => e.stopPropagation());
-        badge.addEventListener('click', openVerseFathers);
-        badge.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') openVerseFathers(e);
+        // Reuse existing badge buttons by key so scroll updates do zero extra DOM churn
+        const existingByKey = new Map();
+        Array.from(layer.children).forEach((child) => {
+            if (child.dataset && child.dataset.cfKey) {
+                existingByKey.set(child.dataset.cfKey, child);
+            } else {
+                child.remove();
+            }
         });
 
-        // Insert right after the verse number span/sup if one exists, otherwise at start of block
-        const vNumEl = blk.querySelector('.verse-num, sup');
-        if (vNumEl && vNumEl.nextSibling) {
-            vNumEl.parentNode.insertBefore(badge, vNumEl.nextSibling);
-        } else {
-            blk.insertBefore(badge, blk.firstChild);
+        const keptKeys = new Set();
+
+        for (let i = 0; i < citedEntriesCache.length; i++) {
+            const item = citedEntriesCache[i];
+            if (!document.body.contains(item.blk)) continue;
+
+            const r = item.blk.getBoundingClientRect();
+            if (r.height === 0 || r.bottom < minTop || r.top > maxTop) continue;
+
+            const topInPane = Math.round((r.top - paneRect.top) + pane.scrollTop - pane.clientTop + 3);
+            keptKeys.add(item.key);
+
+            let badge = existingByKey.get(item.key);
+            if (!badge) {
+                const fatherNames = item.hits
+                    .map((h) => (FATHER_BY_ID[h.fatherId] ? FATHER_BY_ID[h.fatherId].name : ''))
+                    .filter(Boolean)
+                    .join(', ');
+
+                badge = document.createElement('button');
+                badge.type = 'button';
+                badge.className = 'lf-father-badge';
+                badge.dataset.cfKey = item.key;
+                badge.dataset.count = String(item.hits.length);
+                badge.title = `${item.hits.length} Church Father citation${item.hits.length === 1 ? '' : 's'} on ${item.bookName} ${item.chapter}:${item.verse} (${fatherNames}) — Click to view & open in CCEL`;
+                badge.innerHTML = `<i class="fa-solid fa-church" aria-hidden="true"></i>`;
+
+                badge.addEventListener('pointerdown', (e) => e.stopPropagation());
+                badge.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    state.activeVerse = {
+                        bookNum: item.bookNum,
+                        bookName: item.bookName,
+                        chapter: item.chapter,
+                        verse: item.verse
+                    };
+                    activateFathersTabInDock('verse');
+                });
+                layer.appendChild(badge);
+            }
+
+            badge.style.top = `${topInPane}px`;
+            badge.style.left = `${Math.round(baseLeft)}px`;
         }
+
+        // Remove badges that scrolled far out of view
+        existingByKey.forEach((node, k) => {
+            if (!keptKeys.has(k)) node.remove();
+        });
+    }
+
+    function scheduleOverlayRender() {
+        if (overlayRafId) return;
+        overlayRafId = requestAnimationFrame(() => {
+            overlayRafId = 0;
+            renderVisibleOverlayBadges();
+        });
     }
 
     function installLazyVerseBadgeObserver() {
         const ed = document.getElementById('flowEditor');
-        if (!ed || ed.dataset.lfFatherObserver) return;
+        const pane = document.getElementById('wordProcessorPane');
+        if (!ed || !pane || ed.dataset.lfFatherObserver) return;
         ed.dataset.lfFatherObserver = '1';
 
-        const io = new IntersectionObserver((entries) => {
-            for (let i = 0; i < entries.length; i++) {
-                if (entries[i].isIntersecting) {
-                    const el = entries[i].target;
-                    decorateSingleVerseBlock(el);
-                    io.unobserve(el);
-                }
-            }
-        }, { root: document.getElementById('wordProcessorPane') || null, rootMargin: '250px 0px' });
+        // Clean up any legacy v1 inline church icons that were saved into the project
+        scrubLegacyInlineIcons(true);
+        rebuildCitedEntriesCache();
+        scheduleOverlayRender();
 
-        function registerUncheckedVerses() {
-            const blocks = ed.querySelectorAll('div[data-book-num][data-chapter-num][data-verse-num]:not([data-lf-father-checked="1"])');
-            for (let i = 0; i < blocks.length; i++) {
-                const blk = blocks[i];
-                const key = `${blk.dataset.bookNum}_${blk.dataset.chapterNum}_${blk.dataset.verseNum}`;
-                if (VERSE_CITATIONS[key] && blk.dataset.verseCont !== 'true') {
-                    io.observe(blk);
-                } else {
-                    blk.dataset.lfFatherChecked = '1';
-                }
-            }
-        }
+        // Sync overlay smoothly on scroll & resize
+        pane.addEventListener('scroll', scheduleOverlayRender, { passive: true });
+        window.addEventListener('resize', scheduleOverlayRender, { passive: true });
 
-        registerUncheckedVerses();
-
-        // Re-scan gently whenever the user loads a new Bible text or splits verses
+        // Whenever #flowEditor changes (line breaks, indents, Bible switches, project loads),
+        // rebuild the lightweight ~60-item index and reposition external badges cleanly
         let mutTimer = 0;
         const mo = new MutationObserver(() => {
             clearTimeout(mutTimer);
-            mutTimer = setTimeout(registerUncheckedVerses, 220);
+            mutTimer = setTimeout(() => {
+                scrubLegacyInlineIcons(false);
+                rebuildCitedEntriesCache();
+                scheduleOverlayRender();
+            }, 90);
         });
-        mo.observe(ed, { childList: true });
+        mo.observe(ed, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+        // Also resync when switching Read / Flow / Research mode or opening Study Dock
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.closest('.lf-mode-pill, #lfToggleStudyDockBtn, #btnLoadSelectedText')) {
+                setTimeout(() => {
+                    rebuildCitedEntriesCache();
+                    scheduleOverlayRender();
+                }, 140);
+            }
+        }, true);
     }
 
     function toggleVerseBadges() {
         state.badgesEnabled = !state.badgesEnabled;
         document.body.classList.toggle('lf-hide-father-badges', !state.badgesEnabled);
         try { localStorage.setItem('lexflow_father_badges', String(state.badgesEnabled)); } catch (e) {}
+
+        // Also scrub any stray legacy icons immediately when toggling
+        scrubLegacyInlineIcons(true);
+        if (state.badgesEnabled) {
+            rebuildCitedEntriesCache();
+        }
+        scheduleOverlayRender();
+
+        // Resync LexFlow's own Flow lines/controls if padding changed
+        if (typeof window.syncOverlayControls === 'function') {
+            setTimeout(() => {
+                try { window.syncOverlayControls(); } catch (e) {}
+            }, 60);
+        }
+
         const btn = document.getElementById('lfCfBadgeToggleBtn');
         if (btn) {
             btn.classList.toggle('!bg-amber-600', state.badgesEnabled);
