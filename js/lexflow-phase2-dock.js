@@ -637,7 +637,7 @@
 
     function isLsjOverlayVisible(lm) {
         if (!lm) return false;
-        if (lm.classList.contains('hidden') || lm.classList.contains('lf-lsj-force-closed')) return false;
+        if (lm.classList.contains('lf-lsj-force-closed')) return false;
         if (lm.style.display === 'none') return false;
         try {
             const cs = getComputedStyle(lm);
@@ -665,16 +665,22 @@
         }
     }
 
-    function clearForceClosedLsj(lm) {
+    function prepareLsjOverlayForOpen(lm, forceShow) {
         if (!lm) return;
         const prevSuppress = state.suppressObservers;
         state.suppressObservers = true;
         try {
             lm.classList.remove('lf-lsj-force-closed', 'hidden', 'lf-docked-modal-host');
-            if (lm.style.getPropertyValue('display') === 'none') {
+            delete lm.dataset.lfForceHidden;
+            // Clear any display:none!important left behind by older patches so native style.display='flex' works cleanly
+            if (lm.style.getPropertyPriority('display') === 'important') {
                 lm.style.removeProperty('display');
             }
+            if (forceShow) {
+                lm.style.display = 'flex';
+            }
             ensureFloatingLsjOnTop(lm);
+            wireLsjCloseHandlers(lm);
         } finally {
             setTimeout(() => { state.suppressObservers = prevSuppress; }, 0);
         }
@@ -692,7 +698,9 @@
                 document.activeElement.blur();
             }
 
-            lm.classList.remove('lf-docked-modal-host', 'open', 'show', 'active', 'flex');
+            // Never add Tailwind .hidden or remove .flex here — native openLsjModal() only toggles style.display = 'flex'/'none'
+            lm.classList.remove('lf-docked-modal-host');
+            delete lm.dataset.lfForceHidden;
 
             ['closeLsjModal', 'closeLSJModal', 'hideLsjModal'].forEach((fn) => {
                 if (typeof window[fn] === 'function') {
@@ -700,14 +708,20 @@
                 }
             });
 
+            lm.style.removeProperty('display');
             lm.style.display = 'none';
-            lm.classList.add('hidden');
 
+            // Only apply force-closed fallback if an external stylesheet still forces it visible
             try {
                 if (getComputedStyle(lm).display !== 'none') {
                     lm.classList.add('lf-lsj-force-closed');
                 }
             } catch (e) {}
+
+            // Allow citation highlight to re-evaluate cleanly on next open
+            lm.querySelectorAll('[data-lf-lsj-auto-sig]').forEach((el) => {
+                delete el.dataset.lfLsjAutoSig;
+            });
 
             if (document.body && document.body.style.overflow === 'hidden') {
                 document.body.style.overflow = '';
@@ -731,7 +745,7 @@
             // Clicking the dimmed backdrop outside the modal card closes LSJ immediately
             if (e.target === lm) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeFloatingLsjModal();
                 return;
             }
@@ -744,15 +758,35 @@
             const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''} ${btn.getAttribute('onclick') || ''}`.toLowerCase();
             const isCloseBtn =
                 /^[×✕✖x]$/.test(txt) ||
-                /close|closelsj|fa-xmark|fa-times/.test(meta) ||
+                /\bclose\b|closelsj|fa-xmark|fa-times/.test(meta) ||
                 Boolean(btn.querySelector('.fa-xmark, .fa-times'));
 
             if (isCloseBtn) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeFloatingLsjModal();
             }
         }, true);
+    }
+
+    function hookGlobalOpenLsjModal() {
+        if (typeof window.openLsjModal === 'function' && !window.openLsjModal.__lfDockFloatWrapped) {
+            const origOpen = window.openLsjModal;
+            const wrapped = function (...args) {
+                const beforeLm = document.getElementById('lfLsjModalOverlay');
+                if (beforeLm) prepareLsjOverlayForOpen(beforeLm, false);
+                const result = origOpen.apply(this, args);
+                const afterLm = document.getElementById('lfLsjModalOverlay');
+                if (afterLm) prepareLsjOverlayForOpen(afterLm, true);
+                setTimeout(() => {
+                    const lateLm = document.getElementById('lfLsjModalOverlay');
+                    if (lateLm && !isClosingLsjOverlay) prepareLsjOverlayForOpen(lateLm, true);
+                }, 60);
+                return result;
+            };
+            wrapped.__lfDockFloatWrapped = true;
+            window.openLsjModal = wrapped;
+        }
     }
 
     function dockAllSupportedPanels() {
@@ -783,9 +817,7 @@
     function triggerNativeLsjOpen() {
         const existing = document.getElementById('lfLsjModalOverlay');
         if (existing) {
-            clearForceClosedLsj(existing);
-            wireLsjCloseHandlers(existing);
-            existing.style.display = 'flex';
+            prepareLsjOverlayForOpen(existing, true);
             return;
         }
         if (typeof window.openLsjModal === 'function') {
@@ -796,11 +828,7 @@
         }
         setTimeout(() => {
             const lm = document.getElementById('lfLsjModalOverlay');
-            if (lm) {
-                clearForceClosedLsj(lm);
-                wireLsjCloseHandlers(lm);
-                lm.style.display = 'flex';
-            }
+            if (lm) prepareLsjOverlayForOpen(lm, true);
         }, 80);
     }
 
@@ -1048,12 +1076,17 @@
             const obs = new MutationObserver(() => {
                 if (state.suppressObservers || isClosingLsjOverlay) return;
                 const displayVal = lm.style.display;
-                // If native code sets display to flex/block to reopen, clear any force-closed state
-                if (displayVal && displayVal !== 'none' && lm.classList.contains('lf-lsj-force-closed')) {
-                    clearForceClosedLsj(lm);
-                    return;
-                }
-                if (isLsjOverlayVisible(lm)) {
+                // Whenever native code reopens LSJ (display: flex/block), strip any stale .hidden or force-closed state
+                if (displayVal && displayVal !== 'none') {
+                    if (
+                        lm.classList.contains('hidden') ||
+                        lm.classList.contains('lf-lsj-force-closed') ||
+                        lm.classList.contains('lf-docked-modal-host') ||
+                        lm.dataset.lfForceHidden === '1'
+                    ) {
+                        prepareLsjOverlayForOpen(lm, true);
+                        return;
+                    }
                     ensureFloatingLsjOnTop(lm);
                 }
             });
@@ -1068,10 +1101,15 @@
             if (lm && !lm.__lfFloatWatched) {
                 keepLsjFloatingAboveLxx(lm);
             }
+            hookGlobalOpenLsjModal();
         });
         bodyObs.observe(document.body, { childList: true });
 
-        // Ensure reopening LSJ from any external button (e.g. LXX word card) always clears force-closed state cleanly
+        hookGlobalOpenLsjModal();
+        setTimeout(hookGlobalOpenLsjModal, 400);
+        setTimeout(hookGlobalOpenLsjModal, 1500);
+
+        // Before ANY external LSJ button's native handler runs, strip stale hidden / !important flags so LSJ always reopens
         document.addEventListener('click', (e) => {
             const btn = e.target && e.target.closest('button, [role="button"], a');
             if (!btn) return;
@@ -1079,8 +1117,8 @@
             const txt = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.textContent || ''}`.toLowerCase();
             if (/\blsj\b/.test(txt)) {
                 const lm = document.getElementById('lfLsjModalOverlay');
-                if (lm && lm.classList.contains('lf-lsj-force-closed')) {
-                    clearForceClosedLsj(lm);
+                if (lm) {
+                    prepareLsjOverlayForOpen(lm, false);
                 }
             }
         }, true);
@@ -1408,7 +1446,7 @@
         const lm = document.getElementById('lfLsjModalOverlay');
         if (isLsjOverlayVisible(lm)) {
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation();
             closeFloatingLsjModal();
             return;
         }
