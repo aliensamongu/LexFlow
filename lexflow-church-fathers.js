@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE (v4): CHURCH FATHERS & CCEL INTEGRATION (Precision Margin Badges + ResizeObserver) ===
+/* === LEXFLOW PHASE 6 MODULE (v5): CHURCH FATHERS & CCEL INTEGRATION (Direct Chapter Links + Schaff Roman Citations + CCEL Study Bible) ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -566,13 +566,13 @@
             { fatherId: 'ambrose', work: 'On the Holy Spirit, Book II, Ch. 5', note: 'Reflects on creation’s illumination by the Spirit moving over the waters and establishing the heavens by the Word of the Lord.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf210.iv.ii.iii.vi.html' }
         ],
         '1_1_26': [
-            { fatherId: 'irenaeus', work: 'Against Heresies, IV.20.1', note: '"Let Us make man"—God spoke to His "two hands," the Son and the Holy Spirit, who are ever with Him.' },
-            { fatherId: 'athanasius', work: 'On the Incarnation, §3', note: 'Humanity was uniquely graced with the image of the Word so we could know God and abide in blessedness.' },
-            { fatherId: 'basil', work: 'On the Holy Spirit, Ch. 16', note: 'Cites the plural "Let Us make" as an Old Testament witness to the fellowship of the Father and the Son.' }
+            { fatherId: 'irenaeus', work: 'Against Heresies, IV.20.1', note: '"Let Us make man"—God spoke to His "two hands," the Son and the Holy Spirit, who are ever with Him.', directUrl: 'https://www.ccel.org/ccel/schaff/anf01.ix.vi.xxi.html' },
+            { fatherId: 'athanasius', work: 'On the Incarnation, §3', note: 'Humanity was uniquely graced with the image of the Word so we could know God and abide in blessedness.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf204.vii.ii.iii.html' },
+            { fatherId: 'basil', work: 'On the Holy Spirit, Ch. 16', note: 'Cites the plural "Let Us make" as an Old Testament witness to the fellowship of the Father and the Son.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf208.vii.xvii.html' }
         ],
         '1_1_27': [
-            { fatherId: 'gregory_nys', work: 'On the Making of Man, Ch. 16', note: 'Both male and female equally bear the royal image of God in reason, freedom, and capacity for virtue.' },
-            { fatherId: 'augustine', work: 'On the Trinity, Book XII', note: 'Finds the image of the Triune God reflected in the rational soul’s memory, understanding, and love.' }
+            { fatherId: 'gregory_nys', work: 'On the Making of Man, Ch. 16', note: 'Both male and female equally bear the royal image of God in reason, freedom, and capacity for virtue.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf205.x.ii.ii.xvii.html' },
+            { fatherId: 'augustine', work: 'On the Trinity, Book XII', note: 'Finds the image of the Triune God reflected in the rational soul’s memory, understanding, and love.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf103.iv.i.xiv.html' }
         ],
         '1_2_7': [
             { fatherId: 'irenaeus', work: 'Against Heresies, V.15', note: 'Just as God formed Adam from dust, Christ used clay in John 9 to heal the blind man—proving the same Creator.' },
@@ -691,7 +691,7 @@
         // JOHN (Book 43)
         '43_1_1': [
             { fatherId: 'augustine', work: 'Tractates on John, Tractate 1', note: 'The Word was eternally with God and IS God—co-eternal with the Father before all ages.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf107.iii.ii.html' },
-            { fatherId: 'chrysostom', work: 'Homilies on John, 2–4', note: 'John begins higher than Genesis: "In the beginning WAS the Word"—implying eternal existence without origin.' },
+            { fatherId: 'chrysostom', work: 'Homilies on John, Homily 2', note: 'John begins higher than Genesis: "In the beginning WAS the Word"—implying eternal existence without origin.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf114.iv.iv.html' },
             { fatherId: 'irenaeus', work: 'Against Heresies, III.11', note: 'John wrote this opening specifically to refute early heretics who denied Christ’s eternal deity and role as Creator.' },
             { fatherId: 'athanasius', work: 'Against the Arians, I.11', note: 'Refutes Arius: if the Word "was" in the beginning, there was never a time when He was not.' }
         ],
@@ -752,14 +752,14 @@
         ],
         '45_3_24': [
             { fatherId: 'augustine', work: 'On the Spirit and the Letter, Ch. 9–12', note: 'Justification is freely given by grace—not bought by merit—through the redemption accomplished in Christ.' },
-            { fatherId: 'chrysostom', work: 'Homilies on Romans, 7', note: 'Paul stacks "freely" and "by His grace" together so no human pride can remain.' }
+            { fatherId: 'chrysostom', work: 'Homilies on Romans, Homily 7', note: 'Paul stacks "freely" and "by His grace" together so no human pride can remain.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf111.vii.ix.html' }
         ],
         '45_3_25': [
-            { fatherId: 'chrysostom', work: 'Homilies on Romans, 7', note: 'Christ is the true mercy-seat (hilasterion) sprinkled with His own blood, showing God’s righteousness in pardoning sinners.' },
+            { fatherId: 'chrysostom', work: 'Homilies on Romans, Homily 7', note: 'Christ is the true mercy-seat (hilasterion) sprinkled with His own blood, showing God’s righteousness in pardoning sinners.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf111.vii.ix.html' },
             { fatherId: 'origen', work: 'Commentary on Romans, III.8', note: 'Links Christ’s propitiatory sacrifice to the Ark’s mercy seat on the Day of Atonement.' }
         ],
         '45_3_28': [
-            { fatherId: 'chrysostom', work: 'Homilies on Romans, 7', note: 'Faith alone brings righteousness apart from works of the Mosaic Law—though living faith always bears fruit.' },
+            { fatherId: 'chrysostom', work: 'Homilies on Romans, Homily 7', note: 'Faith alone brings righteousness apart from works of the Mosaic Law—though living faith always bears fruit.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf111.vii.ix.html' },
             { fatherId: 'augustine', work: 'On Faith and Works & Spirit and Letter', note: 'Reconciles Paul (Rom 3:28) and James (Jas 2:24): good works do not precede justification, they follow the justified person.' }
         ],
         '45_5_12': [
@@ -781,7 +781,7 @@
 
         // 1 CORINTHIANS (Book 46)
         '46_10_16': [
-            { fatherId: 'chrysostom', work: 'Homilies on 1 Corinthians, 24', note: 'Paul uses "communion/participation" (koinonia) to show real union with Christ and with one another as one bread.' },
+            { fatherId: 'chrysostom', work: 'Homilies on 1 Corinthians, Homily 24', note: 'Paul uses "communion/participation" (koinonia) to show real union with Christ and with one another as one bread.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf112.iv.xxv.html' },
             { fatherId: 'augustine', work: 'Sermon 227 & City of God X.6', note: 'Because we partake of one bread, we ourselves become what we receive—the united Body of Christ.' }
         ],
         '46_11_23': [
@@ -810,7 +810,7 @@
 
         // EPHESIANS (Book 49)
         '49_2_8': [
-            { fatherId: 'chrysostom', work: 'Homilies on Ephesians, 4', note: 'Even faith itself is not a boastful human achievement, because God’s grace initiated our salvation from start to finish.' },
+            { fatherId: 'chrysostom', work: 'Homilies on Ephesians, Homily 4', note: 'Even faith itself is not a boastful human achievement, because God’s grace initiated our salvation from start to finish.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf113.iii.iv.v.html' },
             { fatherId: 'augustine', work: 'On the Predestination of the Saints, Ch. 12', note: 'Emphasizes that both salvation and the very faith by which we embrace it are the gracious gift of God.' }
         ],
         '49_4_5': [
@@ -821,7 +821,7 @@
         // PHILIPPIANS (Book 50)
         '50_2_6': [
             { fatherId: 'athanasius', work: 'Against the Arians, I.40–45', note: '"In the form of God" means possessing the true divine nature before taking the "form of a servant" in the incarnation.' },
-            { fatherId: 'chrysostom', work: 'Homilies on Philippians, 6–7', note: 'Christ did not cling selfishly to His glory, but humbled Himself to teach us radical humility.' },
+            { fatherId: 'chrysostom', work: 'Homilies on Philippians, Homily 6', note: 'Christ did not cling selfishly to His glory, but humbled Himself to teach us radical humility.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf113.iv.iii.vii.html' },
             { fatherId: 'hilary', work: 'On the Trinity, Book VIII.45', note: 'Christ’s self-emptying (kenosis) hid His majesty in servant flesh without ever losing His divine nature.' }
         ],
 
@@ -850,7 +850,7 @@
         // HEBREWS (Book 58)
         '58_1_3': [
             { fatherId: 'athanasius', work: 'Against the Arians, II.33', note: '"Radiance of His glory" proves co-eternity: just as the sun never exists without its radiance, the Father never existed without the Son.' },
-            { fatherId: 'chrysostom', work: 'Homilies on Hebrews, 2', note: '"Exact imprint of His nature" shows the Son possesses the complete substance of the Father while remaining distinct as Person.' }
+            { fatherId: 'chrysostom', work: 'Homilies on Hebrews, Homily 2', note: '"Exact imprint of His nature" shows the Son possesses the complete substance of the Father while remaining distinct as Person.', directUrl: 'https://www.ccel.org/ccel/schaff/npnf114.v.vi.html' }
         ],
         '58_11_1': [
             { fatherId: 'chrysostom', work: 'Homilies on Hebrews, 21', note: 'Faith gives real present substance in the soul to the unseen promises of God.' },
@@ -937,6 +937,48 @@
         return String(volCode || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
+    function toLowerRoman(num) {
+        let n = parseInt(num, 10) || 1;
+        const map = [
+            [100, 'c'], [90, 'xc'], [50, 'l'], [40, 'xl'],
+            [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']
+        ];
+        let out = '';
+        for (let i = 0; i < map.length; i++) {
+            while (n >= map[i][0]) {
+                out += map[i][1];
+                n -= map[i][0];
+            }
+        }
+        return out || 'i';
+    }
+
+    // 19th-century Philip Schaff ANF/NPNF volumes cite Scripture as "Gen. i. 26", "John iii. 16", "Rom. iii. 25"
+    const SCHAFF_BOOK_ABBR = {
+        1: 'Gen.', 2: 'Exod.', 3: 'Lev.', 4: 'Num.', 5: 'Deut.', 6: 'Josh.', 7: 'Judg.', 8: 'Ruth',
+        9: '1 Sam.', 10: '2 Sam.', 11: '1 Kings', 12: '2 Kings', 13: '1 Chron.', 14: '2 Chron.',
+        15: 'Ezra', 16: 'Neh.', 17: 'Esth.', 18: 'Job', 19: 'Ps.', 20: 'Prov.', 21: 'Eccl.',
+        22: 'Song', 23: 'Isa.', 24: 'Jer.', 25: 'Lam.', 26: 'Ezek.', 27: 'Dan.', 28: 'Hos.',
+        29: 'Joel', 30: 'Amos', 31: 'Obad.', 32: 'Jonah', 33: 'Mic.', 34: 'Nah.', 35: 'Hab.',
+        36: 'Zeph.', 37: 'Hag.', 38: 'Zech.', 39: 'Mal.',
+        40: 'Matt.', 41: 'Mark', 42: 'Luke', 43: 'John', 44: 'Acts', 45: 'Rom.',
+        46: '1 Cor.', 47: '2 Cor.', 48: 'Gal.', 49: 'Eph.', 50: 'Phil.', 51: 'Col.',
+        52: '1 Thess.', 53: '2 Thess.', 54: '1 Tim.', 55: '2 Tim.', 56: 'Tit.', 57: 'Philem.',
+        58: 'Heb.', 59: 'Jas.', 60: '1 Pet.', 61: '2 Pet.', 62: '1 John', 63: '2 John',
+        64: '3 John', 65: 'Jude', 66: 'Rev.'
+    };
+
+    function formatSchaffScriptureRef(bookNum, bookName, chapter, verse) {
+        const abbr = SCHAFF_BOOK_ABBR[bookNum] || `${bookName}.`;
+        return `"${abbr} ${toLowerRoman(chapter)}. ${verse}"`;
+    }
+
+    // Direct CCEL World Wide Study Bible URL for any verse (e.g. https://www.ccel.org/study/Genesis_1:26)
+    function buildCcelStudyBibleUrl(bookName, chapter, verse) {
+        const slugBook = String(bookName || 'Genesis').trim().replace(/\s+/g, '_');
+        return `https://www.ccel.org/study/${encodeURIComponent(slugBook)}_${chapter}:${verse}`;
+    }
+
     // Build CCEL's active search URL (authorID[]=schaff, optional workID[]/versionID[], highlight=1, text=...)
     function buildCcelSearchUrl(queryText, volCodes) {
         const params = [];
@@ -961,7 +1003,6 @@
         }
         const f = FATHER_BY_ID[fatherId];
         if (!f) return buildCcelSearchUrl(cleanTopic, []);
-        // If volume holds multiple Fathers (like ANF01), include Father name in search text for precision
         const multiAuthorVols = ['ANF01', 'ANF02', 'ANF03', 'ANF04', 'ANF05', 'ANF07', 'NPNF2-07', 'NPNF2-09'];
         const needsAuthor = f.vols.some((v) => multiAuthorVols.includes(v));
         const q = (needsAuthor && !cleanTopic.toLowerCase().includes(f.queryName.toLowerCase()))
@@ -970,9 +1011,9 @@
         return buildCcelSearchUrl(q, f.vols);
     }
 
-    function buildCcelScriptureSearchUrl(bookName, chapter, verse, fatherId, extraTerms) {
-        const ref = `${bookName} ${chapter}:${verse}`;
-        const query = extraTerms ? `${extraTerms}` : ref;
+    function buildCcelScriptureSearchUrl(bookNum, bookName, chapter, verse, fatherId, customTerms) {
+        // Use exact quoted Schaff Roman-numeral citation ("Gen. i. 26") so CCEL finds real patristic footnotes!
+        const query = customTerms ? customTerms : formatSchaffScriptureRef(bookNum, bookName, chapter, verse);
         if (fatherId && fatherId !== 'all' && FATHER_BY_ID[fatherId]) {
             const f = FATHER_BY_ID[fatherId];
             return buildCcelSearchUrl(query, f.vols);
@@ -1659,17 +1700,16 @@
         const key = `${ref.bookNum}_${ref.chapter}_${ref.verse}`;
         const hits = VERSE_CITATIONS[key] || [];
         const homilies = BOOK_HOMILIES[ref.bookNum] || [];
-        const ccelVerseUrl = buildCcelScriptureSearchUrl(ref.bookName, ref.chapter, ref.verse, state.selectedFather);
+        const ccelVerseUrl = buildCcelScriptureSearchUrl(ref.bookNum, ref.bookName, ref.chapter, ref.verse, state.selectedFather);
+        const ccelStudyUrl = buildCcelStudyBibleUrl(ref.bookName, ref.chapter, ref.verse);
 
         const hitsHtml = hits.length
             ? hits.map((h) => {
                 const f = FATHER_BY_ID[h.fatherId] || { name: 'Church Father', era: '', vols: ['ANF01'], ccelUrl: 'https://www.ccel.org/fathers' };
-                const workKeyword = (h.work || '').split(/[,(]/)[0].trim();
-                const searchFallbackTerms = h.searchTerms || `${ref.bookName} ${ref.chapter}:${ref.verse} ${workKeyword}`;
-                const primaryUrl = h.directUrl || buildCcelScriptureSearchUrl(ref.bookName, ref.chapter, ref.verse, f.id, searchFallbackTerms);
+                const primaryUrl = h.directUrl || buildCcelScriptureSearchUrl(ref.bookNum, ref.bookName, ref.chapter, ref.verse, f.id, h.searchTerms || '');
                 const primaryBtnText = h.directUrl
                     ? `Read ${f.name} on ${refLabel} ↗`
-                    : `Search ${f.name} on ${refLabel} ↗`;
+                    : `Find ${f.name} on ${refLabel} ↗`;
                 return `
                     <div class="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-amber-200/90 dark:border-amber-800/70 space-y-1.5">
                         <div class="flex items-center justify-between gap-2">
@@ -1727,12 +1767,15 @@
                         ${hits.length ? `${hits.length} highlighted citation${hits.length === 1 ? '' : 's'} + live 37-volume CCEL lookup` : 'Live 37-volume CCEL Scripture citation lookup'}
                     </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center flex-wrap gap-1.5">
                     <button type="button" id="lfCfSyncVerseBtn" class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-300 dark:border-zinc-600 text-amber-900 dark:text-amber-200 text-[11px] font-bold cursor-pointer" title="Sync to visible/tapped verse">
                         <i class="fa-solid fa-crosshairs mr-1"></i>Sync
                     </button>
-                    <button type="button" id="lfCfPopVerseAllBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-sm cursor-pointer">
-                        Search All CCEL ↗
+                    <button type="button" id="lfCfPopStudyBibleBtn" class="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm cursor-pointer" title="Open exact verse in CCEL World Wide Study Bible">
+                        CCEL Study Bible ↗
+                    </button>
+                    <button type="button" id="lfCfPopVerseAllBtn" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-sm cursor-pointer" title="Search all 37 Schaff ANF/NPNF volumes for citations of this verse">
+                        Search Fathers ↗
                     </button>
                 </div>
             </div>
@@ -1746,8 +1789,11 @@
             state.activeVerse = getActiveVerseFromWorkspace();
             renderVerseCitationsView(content);
         });
+        content.querySelector('#lfCfPopStudyBibleBtn')?.addEventListener('click', () => {
+            openCcelPopout(ccelStudyUrl, `CCEL Study Bible: ${refLabel}`);
+        });
         content.querySelector('#lfCfPopVerseAllBtn')?.addEventListener('click', () => {
-            openCcelPopout(ccelVerseUrl, `CCEL Citations: ${refLabel}`);
+            openCcelPopout(ccelVerseUrl, `CCEL Fathers on ${refLabel}`);
         });
         content.querySelectorAll('.lf-cf-pop-btn').forEach((btn) => {
             btn.addEventListener('click', () => openCcelPopout(btn.dataset.url, btn.dataset.label));
