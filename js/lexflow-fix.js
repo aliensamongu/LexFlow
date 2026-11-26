@@ -1,11 +1,13 @@
-/* === LEXFLOW FIX PATCH (v7): PERSISTENT LSJ VERSE CITATION HIGHLIGHT + SAFE MODAL LAYERING + GUARANTEED CLOSE + CF & OT-IN-NT OFF BY DEFAULT ===
- * Save as exact filename: ./js/lexflow-fix.js (replace any previous version).
+/* === LEXFLOW FIX PATCH (v8): CF & OT-IN-NT TAGS OFF BY DEFAULT + TOUCH & DESKTOP GUARD + STUCK-LOOKUP RECOVERY ===
+ * Save as exact filename: ./js/lexflow-fix.js (replaces v1-v7).
+ * Note: LSJ modal layering, open/close, and Esc handling now live cleanly inside lexflow-phase2-dock.js
+ * so this patch will never add display:none!important or .hidden onto #lfLsjModalOverlay.
  */
 (function () {
-    if (window.__lfFixPatchLoaded === 'v7') return;
-    window.__lfFixPatchLoaded = 'v7';
-    window.__lfFixVersion = 'v7';
-    try { console.info('[LexFlow Fix v7] Active'); } catch (_) {}
+    if (window.__lfFixPatchLoaded === 'v8') return;
+    window.__lfFixPatchLoaded = 'v8';
+    window.__lfFixVersion = 'v8';
+    try { console.info('[LexFlow Fix v8] Active'); } catch (_) {}
 
     const tagState = {
         cf: false,
@@ -53,55 +55,6 @@
         }
         html.lf-desktop-device body {
             min-width: 980px;
-        }
-
-        /* Standalone LSJ modal always sits cleanly above LXX drawer & Study Dock */
-        [data-lf-lsj-modal-root="1"] {
-            z-index: 2147483500 !important;
-        }
-        [data-lf-lsj-modal-card="1"] {
-            z-index: 2147483505 !important;
-            pointer-events: auto !important;
-        }
-        [data-lf-lsj-modal-card="1"] button,
-        [data-lf-lsj-modal-card="1"] input,
-        [data-lf-lsj-modal-card="1"] select {
-            pointer-events: auto !important;
-        }
-
-        /* Persistent high-contrast highlight on the jumped-to Scripture citation inside LSJ */
-        @keyframes lfLsjCitePulse {
-            0% {
-                box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.65), 0 0 18px rgba(245, 158, 11, 0.55);
-            }
-            100% {
-                box-shadow: 0 0 0 2px #f59e0b, 0 2px 8px rgba(245, 158, 11, 0.35);
-            }
-        }
-        .lf-lsj-cite-highlight,
-        [data-lf-lsj-modal-card="1"] mark,
-        [data-lf-lsj-modal-card="1"] [class*="lss-hit" i],
-        [data-lf-lsj-modal-card="1"] [class*="cite-hit" i],
-        [data-lf-lsj-modal-card="1"] [class*="ref-highlight" i],
-        [data-lf-lsj-modal-card="1"] [class*="verse-highlight" i],
-        [data-lf-lsj-modal-card="1"] [class*="lsj-highlight" i],
-        #lfStudyDock [class*="lss-hit" i],
-        #lfStudyDock [class*="cite-hit" i],
-        #lfStudyDock [class*="ref-highlight" i],
-        #lfStudyDock [class*="verse-highlight" i] {
-            background: linear-gradient(180deg, rgba(254, 240, 138, 0.96), rgba(253, 224, 71, 0.96)) !important;
-            color: #0f172a !important;
-            border-radius: 5px !important;
-            padding: 1px 5px !important;
-            box-shadow: 0 0 0 2px #f59e0b, 0 2px 8px rgba(245, 158, 11, 0.35) !important;
-            font-weight: 700 !important;
-            animation: lfLsjCitePulse 1.4s ease-out 1 !important;
-        }
-
-        /* Study Dock stays above LXX drawer when open, below standalone LSJ modal */
-        #lfStudyDock.open,
-        #lfStudyDock.lf-dock-front {
-            z-index: 2147483000 !important;
         }
 
         /* Hide inline Church Fathers verse tags when OFF (never hides Study Dock tab/panel) */
@@ -200,269 +153,21 @@
     `;
     document.head.appendChild(css);
 
-    // 3. Locate the standalone LSJ modal ("LSJ Greek-English Lexicon (1940)")
-    function findStandaloneLsjModal() {
-        const candidates = document.querySelectorAll('h1, h2, h3, h4, div, span');
-        let titleEl = null;
-        for (let i = 0; i < candidates.length; i++) {
-            const el = candidates[i];
-            if (el.closest('#lfStudyDock')) continue;
-            if (el.children.length > 4) continue;
-            const txt = (el.textContent || '').trim();
-            if (/LSJ Greek[–-]English Lexicon/i.test(txt) && txt.length < 80) {
-                titleEl = el;
-                break;
-            }
-        }
-        if (!titleEl) return null;
-
-        let cur = titleEl;
-        let card = null;
-        let outermostFixed = null;
-        while (cur && cur !== document.body && cur !== document.documentElement) {
-            const cs = getComputedStyle(cur);
-            if (!card && cur.querySelector('input') && cur.querySelector('button')) {
-                card = cur;
-            }
-            if (cs.position === 'fixed') {
-                outermostFixed = cur;
-            }
-            cur = cur.parentElement;
-        }
-
-        const root = outermostFixed || card || titleEl.parentElement;
-        return { root, card: card || root };
-    }
-
-    function isElementVisible(el) {
+    // 3. Detect stuck "Looking up ... in LSJ..." state (read-only on modal display/classes)
+    function isLsjVisible(el) {
         if (!el) return false;
         const cs = getComputedStyle(el);
-        if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.width > 20 && rect.height > 20;
+        return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) !== 0;
     }
 
-    function hasTrappingStackingAncestor(el) {
-        let cur = el ? el.parentElement : null;
-        while (cur && cur !== document.body && cur !== document.documentElement) {
-            const cs = getComputedStyle(cur);
-            const createsContext =
-                (cs.position !== 'static' && cs.zIndex !== 'auto') ||
-                cs.transform !== 'none' ||
-                cs.filter !== 'none' ||
-                cs.backdropFilter !== 'none' ||
-                cs.isolation === 'isolate' ||
-                (cs.contain && (cs.contain.includes('layout') || cs.contain.includes('paint'))) ||
-                parseFloat(cs.opacity) < 1;
-            if (createsContext) return cur;
-            cur = cur.parentElement;
-        }
-        return null;
-    }
-
-    function findLxxDrawer() {
-        const direct = document.querySelector('#lfLxxPanel, #lxxPanel, #lxxDrawer, #taggedLxxPanel');
-        if (direct) return direct;
-        const nodes = document.querySelectorAll('aside, section, div');
-        let match = null;
-        for (let i = 0; i < nodes.length; i++) {
-            const el = nodes[i];
-            if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
-            if (el.children.length <= 6 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
-                match = el;
-                break;
-            }
-        }
-        if (!match) return null;
-        let cur = match;
-        let outermostFixed = null;
-        while (cur && cur !== document.body && cur !== document.documentElement) {
-            const cs = getComputedStyle(cur);
-            if (cs.position === 'fixed' || cs.position === 'absolute') outermostFixed = cur;
-            cur = cur.parentElement;
-        }
-        return outermostFixed || match.parentElement;
-    }
-
-    // 4. Persistent highlight whenever LexFlow scrolls to a Scripture citation inside LSJ
-    function isInsideLsjEntry(el) {
-        if (!el || el.nodeType !== 1) return false;
-        if (el.matches('input, select, textarea, button')) return false;
-
-        const dockLex = document.getElementById('lfDockPanel_lexicon');
-        if (dockLex && dockLex.contains(el)) return true;
-
-        if (el.closest('[data-lf-lsj-modal-card="1"]')) return true;
-
-        const info = findStandaloneLsjModal();
-        if (info && info.card && info.card.contains(el)) return true;
-
-        return false;
-    }
-
-    function clearLsjCitationHighlights(scope) {
-        const root = scope || document;
-        root.querySelectorAll('.lf-lsj-cite-highlight').forEach((n) => {
-            n.classList.remove('lf-lsj-cite-highlight');
-        });
-    }
-
-    function looksLikeScriptureBadge(el) {
-        if (!el || el.nodeType !== 1) return false;
-        const t = (el.textContent || '').trim();
-        return /^(LXX|NT|OT|MT|Ev\.|Ep\.|Apoc\.)$/i.test(t);
-    }
-
-    function looksLikeVerseCitation(el) {
-        if (!el || el.nodeType !== 1) return false;
-        const t = (el.textContent || '').trim();
-        if (!t || t.length > 64) return false;
-        return /\b\d+\s*[.:]\s*\d+\b/.test(t);
-    }
-
-    function highlightLsjCitationTarget(el) {
-        if (!el || !isInsideLsjEntry(el)) return;
-        const txt = (el.textContent || '').trim();
-        if (!txt || txt.length > 260) return;
-
-        const modalInfo = findStandaloneLsjModal();
-        const scope = (modalInfo && modalInfo.card && modalInfo.card.contains(el))
-            ? modalInfo.card
-            : (document.getElementById('lfDockPanel_lexicon') || document);
-
-        clearLsjCitationHighlights(scope);
-
-        // Apply persistent highlight to the exact jumped-to element
-        el.classList.add('lf-lsj-cite-highlight');
-
-        // If the citation is split across two adjacent spans (e.g., [LXX] + [Ex. 31.16]), highlight the paired sibling too
-        if (looksLikeScriptureBadge(el) && looksLikeVerseCitation(el.nextElementSibling)) {
-            el.nextElementSibling.classList.add('lf-lsj-cite-highlight');
-        } else if (looksLikeVerseCitation(el) && looksLikeScriptureBadge(el.previousElementSibling)) {
-            el.previousElementSibling.classList.add('lf-lsj-cite-highlight');
-        }
-    }
-
-    if (!Element.prototype.__lfFixScrollHooked) {
-        const origScrollIntoView = Element.prototype.scrollIntoView;
-        Element.prototype.scrollIntoView = function (...args) {
-            const result = origScrollIntoView.apply(this, args);
-            try {
-                if (isInsideLsjEntry(this)) {
-                    highlightLsjCitationTarget(this);
-                }
-            } catch (_) {}
-            return result;
-        };
-        Element.prototype.__lfFixScrollHooked = true;
-    }
-
-    // 5. Elevate standalone LSJ modal above LXX (ONLY reparent if trapped by a stacking ancestor so animations/styles are preserved)
-    function forceCloseStandaloneLsjModal() {
-        const info = findStandaloneLsjModal();
-        ['closeLsjModal', 'closeLSJModal', 'hideLsjModal', 'lfCloseLsjModal'].forEach((fn) => {
-            if (typeof window[fn] === 'function') {
-                try { window[fn](); } catch (_) {}
-            }
-        });
-
-        if (info && info.root) {
-            info.root.classList.add('hidden');
-            info.root.classList.remove('open', 'active', 'show', 'flex');
-            info.root.style.setProperty('display', 'none', 'important');
-            info.root.dataset.lfForceHidden = '1';
-        }
-
-        document.querySelectorAll('[id*="lsj" i][id*="backdrop" i], [class*="lsj" i][class*="backdrop" i], [id*="lsj" i][id*="overlay" i]').forEach((bg) => {
-            bg.style.setProperty('display', 'none', 'important');
-            bg.dataset.lfForceHidden = '1';
-        });
-
-        if (document.body && document.body.style.overflow === 'hidden') {
-            document.body.style.overflow = '';
-        }
-        lsjLookupStartedAt = 0;
-        const rec = document.getElementById('lfLsjRecoveryBox');
-        if (rec) rec.remove();
-    }
-
-    function clearForceHiddenOnLsjModal() {
-        document.querySelectorAll('[data-lf-force-hidden="1"]').forEach((el) => {
-            el.style.removeProperty('display');
-            el.classList.remove('hidden');
-            delete el.dataset.lfForceHidden;
-        });
-    }
-
-    function elevateStandaloneLsjModal() {
-        const info = findStandaloneLsjModal();
-        if (!info || !info.root) return false;
-        if (!isElementVisible(info.root)) return false;
-
-        // Only reparent to body if an ancestor actually traps z-index (avoids resetting CSS animations & scroll!)
-        if (info.root.parentElement && info.root.parentElement !== document.body && hasTrappingStackingAncestor(info.root)) {
-            document.body.appendChild(info.root);
-        }
-
-        info.root.setAttribute('data-lf-lsj-modal-root', '1');
-        info.card.setAttribute('data-lf-lsj-modal-card', '1');
-        info.root.style.setProperty('z-index', '2147483500', 'important');
-        info.card.style.setProperty('z-index', '2147483505', 'important');
-
-        const lxx = findLxxDrawer();
-        if (lxx) {
-            const lxxZ = parseInt(getComputedStyle(lxx).zIndex, 10);
-            if (!Number.isNaN(lxxZ) && lxxZ >= 2147483500) {
-                lxx.style.setProperty('z-index', '2147482000', 'important');
-            }
-        }
-
-        // Ensure close button inside the LSJ modal is NEVER disabled or unresponsive
-        info.card.querySelectorAll('button').forEach((btn) => {
-            const txt = (btn.textContent || '').trim();
-            const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''}`.toLowerCase();
-            const isCloseBtn = /^[×✕✖x]$/.test(txt) || meta.includes('close');
-            if (isCloseBtn) {
-                btn.disabled = false;
-                btn.removeAttribute('aria-disabled');
-                btn.style.pointerEvents = 'auto';
-                if (!btn.dataset.lfFixCloseBound) {
-                    btn.dataset.lfFixCloseBound = '1';
-                    btn.addEventListener('click', () => {
-                        setTimeout(() => {
-                            const cur = findStandaloneLsjModal();
-                            if (cur && isElementVisible(cur.root)) {
-                                forceCloseStandaloneLsjModal();
-                            }
-                        }, 60);
-                    });
-                }
-            }
-        });
-
-        if (info.root !== info.card && !info.root.dataset.lfFixBackdropBound) {
-            info.root.dataset.lfFixBackdropBound = '1';
-            info.root.addEventListener('click', (e) => {
-                if (e.target === info.root) {
-                    setTimeout(() => {
-                        if (isElementVisible(info.root)) forceCloseStandaloneLsjModal();
-                    }, 60);
-                }
-            });
-        }
-
-        return true;
-    }
-
-    // 6. Detect stuck "Looking up ... in LSJ..." state and provide instant recovery
     function checkStuckLsjLookup() {
-        const info = findStandaloneLsjModal();
-        if (!info || !isElementVisible(info.root)) {
+        const lm = document.getElementById('lfLsjModalOverlay');
+        if (!lm || !isLsjVisible(lm)) {
             lsjLookupStartedAt = 0;
             return;
         }
 
-        const txt = info.card.textContent || '';
+        const txt = lm.textContent || '';
         const isLookingUp = /Looking up\s+.+\s+in LSJ/i.test(txt);
 
         if (!isLookingUp) {
@@ -481,12 +186,12 @@
         if (document.getElementById('lfLsjRecoveryBox')) return;
 
         let statusNode = null;
-        info.card.querySelectorAll('div, p, span').forEach((el) => {
+        lm.querySelectorAll('div, p, span').forEach((el) => {
             if (!statusNode && el.children.length <= 2 && /Looking up\s+.+\s+in LSJ/i.test(el.textContent || '')) {
                 statusNode = el;
             }
         });
-        const host = (statusNode && statusNode.parentElement) || info.card;
+        const host = (statusNode && statusNode.parentElement) || lm;
 
         const box = document.createElement('div');
         box.id = 'lfLsjRecoveryBox';
@@ -507,7 +212,7 @@
             box.remove();
             lsjLookupStartedAt = Date.now();
             lastRuntimeError = '';
-            const searchBtn = Array.from(info.card.querySelectorAll('button')).find((b) => /^\s*search\s*$/i.test(b.textContent || ''));
+            const searchBtn = Array.from(lm.querySelectorAll('button')).find((b) => /^\s*search\s*$/i.test(b.textContent || ''));
             if (searchBtn) {
                 searchBtn.disabled = false;
                 searchBtn.click();
@@ -528,7 +233,7 @@
                         }
                     });
                 } else {
-                    ['lexflow_lsj', 'lsj_db', 'lsj_cache', 'LSJ_DB', 'LexFlowLSJ'].forEach((n) => {
+                    ['lexflow_lsj', 'lsj_db', 'lsj_cache', 'LSJ_DB', 'LexFlowLSJ', 'LexFlow_LSJ_Lexicon'].forEach((n) => {
                         try { indexedDB.deleteDatabase(n); } catch (_) {}
                     });
                 }
@@ -539,7 +244,13 @@
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.textContent = 'Close LSJ';
-        closeBtn.addEventListener('click', forceCloseStandaloneLsjModal);
+        closeBtn.addEventListener('click', () => {
+            if (typeof window.lfCloseLsjModal === 'function') {
+                window.lfCloseLsjModal();
+            } else {
+                lm.style.display = 'none';
+            }
+        });
 
         btnRow.appendChild(retryBtn);
         btnRow.appendChild(repairBtn);
@@ -549,20 +260,10 @@
         host.appendChild(box);
     }
 
-    // 7. Keep Study Dock above LXX drawer when Study Dock itself is opened
-    function ensureDockAboveLxxIfOpen() {
-        const dock = document.getElementById('lfStudyDock');
-        if (!dock) return;
-        const isOpen = dock.classList.contains('open') || (getComputedStyle(dock).display !== 'none' && dock.offsetHeight > 40);
-        if (!isOpen) return;
-        dock.classList.add('lf-dock-front');
-        dock.style.setProperty('z-index', '2147483000', 'important');
-    }
-
-    // 8. Inline Church Fathers & OT-in-NT tag hiding (OFF by default)
+    // 4. Inline Church Fathers & OT-in-NT tag hiding (OFF by default)
     function isInsideUiChrome(el) {
         return Boolean(el.closest(
-            '#lfStudyDock, [data-lf-lsj-modal-root="1"], header, nav, #lfTopBar, .lf-tag-toggle-pill, #lfTagToggleWrap, [role="dialog"], .modal'
+            '#lfStudyDock, #lfLsjModalOverlay, header, nav, #lfTopBar, .lf-tag-toggle-pill, #lfTagToggleWrap, [role="dialog"], .modal'
         ));
     }
 
@@ -643,7 +344,7 @@
         if (nativeTogglesSyncedOnce) return;
         let foundAny = false;
         document.querySelectorAll('input[type="checkbox"], button, [role="switch"]').forEach((el) => {
-            if (el.closest('#lfStudyDock, #lfTagToggleWrap, [data-lf-lsj-modal-root="1"]')) return;
+            if (el.closest('#lfStudyDock, #lfTagToggleWrap, #lfLsjModalOverlay')) return;
             const labelText = (
                 (el.labels && el.labels[0] ? el.labels[0].textContent : '') + ' ' +
                 (el.textContent || '') + ' ' +
@@ -727,7 +428,7 @@
         syncTagClassesAndButtons();
     }
 
-    // 9. Capture errors & button clicks safely
+    // 5. Unstick accidentally disabled toolbar buttons after errors
     function unstickInteractiveControls() {
         document.querySelectorAll('button[disabled], [aria-disabled="true"]').forEach((el) => {
             if (el.dataset.lfUserDisabled === 'true') return;
@@ -752,35 +453,6 @@
         unstickInteractiveControls();
     });
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const info = findStandaloneLsjModal();
-            if (info && isElementVisible(info.root)) {
-                setTimeout(() => {
-                    const cur = findStandaloneLsjModal();
-                    if (cur && isElementVisible(cur.root)) forceCloseStandaloneLsjModal();
-                }, 40);
-            }
-        }
-    }, true);
-
-    document.addEventListener('click', (e) => {
-        const btn = e.target && e.target.closest('button, [role="button"], a');
-        if (!btn) return;
-        if (btn.closest('[data-lf-lsj-modal-root="1"]')) return;
-
-        const txt = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.textContent || ''}`.toLowerCase();
-        if (/\blsj\b/.test(txt)) {
-            lastRuntimeError = '';
-            lsjLookupStartedAt = 0;
-            clearForceHiddenOnLsjModal();
-            unstickInteractiveControls();
-            setTimeout(elevateStandaloneLsjModal, 30);
-            setTimeout(elevateStandaloneLsjModal, 180);
-            setTimeout(elevateStandaloneLsjModal, 450);
-        }
-    }, true);
-
     let tagScanTimer = null;
     function scheduleTagScan() {
         if (tagScanTimer) clearTimeout(tagScanTimer);
@@ -791,13 +463,13 @@
     }
 
     function observeDom() {
-        if (!document.body || document.body.dataset.lfFixV7Observed) return;
-        document.body.dataset.lfFixV7Observed = '1';
+        if (!document.body || document.body.dataset.lfFixV8Observed) return;
+        document.body.dataset.lfFixV8Observed = '1';
         const mo = new MutationObserver((mutations) => {
             let sawNonModalChange = false;
             for (let i = 0; i < mutations.length; i++) {
                 const t = mutations[i].target;
-                if (t && t.closest && t.closest('[data-lf-lsj-modal-root="1"]')) continue;
+                if (t && t.closest && t.closest('#lfLsjModalOverlay')) continue;
                 if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
                     sawNonModalChange = true;
                     break;
@@ -830,10 +502,8 @@
 
         setInterval(() => {
             unstickInteractiveControls();
-            elevateStandaloneLsjModal();
             checkStuckLsjLookup();
-            ensureDockAboveLxxIfOpen();
-        }, 700);
+        }, 900);
     }
 
     if (document.readyState === 'loading') {
