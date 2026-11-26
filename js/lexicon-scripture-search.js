@@ -140,7 +140,7 @@
             .join('|');
         const chPart = mode === 'ot'
             ? '(?:(\\d{1,3})|([ivxlc]{1,7}))(?:\\s*\\(\\d{1,3}\\))?\\s*[:.,]\\s*'
-            : '(\\d{1,3})(?:\\s*\\(\\d{1,3}\\))?\\s*[:.]\\s*';
+            : '(\\d{1,3})(?:\\s*\\(\\d{1,3}\\))?\\s*[:.,]\\s*';
         const pat = `\\b(?:${escaped})(?=\\s|\\d|\\(|$)\\s*${chPart}(\\d{1,3})[a-c]?(?:\\s*[–—-]\\s*(\\d{1,3})[a-c]?)?`;
         return new RegExp(pat, 'gi');
     }
@@ -148,8 +148,9 @@
     const CHAIN_CONT_RE = /^\s*[;,]\s*(?:(?:(\d{1,3})|([ivxlc]{1,7}))(?:\s*\(\d{1,3}\))?\s*[:.,]\s*)?(\d{1,3})[a-c]?(?:\s*[–—-]\s*(\d{1,3})[a-c]?)?/i;
 
     function findVerseMatchesInText(plainText, parsed, mode, cachedRegex) {
-        if (!plainText) return [];
+        if (!plainText || !parsed || !parsed.book) return [];
         if (mode !== 'ot' && !plainText.includes(String(parsed.chapter))) return [];
+        const matchWholeChapter = parsed.verse == null;
         const startRe = cachedRegex || buildBookStartRegex(parsed.book, mode);
         startRe.lastIndex = 0;
         const hits = [];
@@ -167,7 +168,7 @@
                 vsEnd = m[3] ? parseInt(m[3], 10) : vsStart;
             }
 
-            if (curCh === parsed.chapter && parsed.verse >= vsStart && parsed.verse <= vsEnd) {
+            if (curCh === parsed.chapter && (matchWholeChapter || (parsed.verse >= vsStart && parsed.verse <= vsEnd))) {
                 hits.push({ start: m.index, end: m.index + m[0].length });
             }
 
@@ -182,7 +183,7 @@
                 else if (cm[2]) curCh = romanToInt(cm[2]);
                 const cVsStart = parseInt(cm[3], 10);
                 const cVsEnd = cm[4] ? parseInt(cm[4], 10) : cVsStart;
-                if (curCh === parsed.chapter && parsed.verse >= cVsStart && parsed.verse <= cVsEnd) {
+                if (curCh === parsed.chapter && (matchWholeChapter || (parsed.verse >= cVsStart && parsed.verse <= cVsEnd))) {
                     const leadTrim = cm[0].match(/^[\s;,]+/);
                     const sIdx = cursor + (leadTrim ? leadTrim[0].length : 0);
                     hits.push({ start: sIdx, end: cursor + cm[0].length });
@@ -220,8 +221,49 @@
         return out;
     }
 
+    function scrollMarkIntoContainer(container, markEl) {
+        if (!container || !markEl) return;
+        let scroller = container;
+        let cur = markEl.parentElement;
+        while (cur && cur !== document.body) {
+            const cs = getComputedStyle(cur);
+            if (/(auto|scroll)/i.test(cs.overflowY) && cur.scrollHeight > cur.clientHeight + 8) {
+                scroller = cur;
+                break;
+            }
+            cur = cur.parentElement;
+        }
+        try {
+            const sRect = scroller.getBoundingClientRect();
+            const mRect = markEl.getBoundingClientRect();
+            const targetTop = scroller.scrollTop + (mRect.top - sRect.top) - (scroller.clientHeight / 2) + (mRect.height / 2);
+            scroller.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        } catch (e) {
+            markEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function highlightAdjacentScriptureBadge(markEl) {
+        if (!markEl) return;
+        const badgeRe = /^(LXX|NT|OT|MT)$/i;
+        let prev = markEl.previousElementSibling;
+        if (!prev && markEl.parentElement && markEl.parentElement.previousElementSibling) {
+            const parentTextOnly = (markEl.parentElement.textContent || '').trim();
+            if (parentTextOnly === (markEl.textContent || '').trim()) {
+                prev = markEl.parentElement.previousElementSibling;
+            }
+        }
+        if (prev && badgeRe.test((prev.textContent || '').trim())) {
+            prev.classList.add('lf-scripture-hit-badge');
+        }
+    }
+
     function highlightOpenedEntryContainer(container, parsed, mode) {
         if (!container || !parsed) return 0;
+
+        container.querySelectorAll('.lf-scripture-hit-badge').forEach((b) => {
+            b.classList.remove('lf-scripture-hit-badge');
+        });
         container.querySelectorAll('mark.lf-scripture-hit-mark').forEach((mk) => {
             const p = mk.parentNode;
             if (!p) return;
@@ -235,15 +277,25 @@
             acceptNode(n) {
                 const p = n.parentElement;
                 if (!p || /^(SCRIPT|STYLE|BUTTON|INPUT|SELECT|MARK)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
-                if (p.closest('.lf-scripture-back-bar, .lf-verse-fallback-box')) return NodeFilter.FILTER_REJECT;
+                if (p.closest('.lf-scripture-back-bar, .lf-verse-fallback-box, .lf-lsj-cite-jump-bar')) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
         });
-        let node, full = '';
+
+        let node, full = '', prevParent = null;
         while ((node = tw.nextNode())) {
+            const val = node.nodeValue || '';
+            if (!val) continue;
+            // Insert virtual space across different parent elements so adjacent tags never break \b word boundaries
+            if (full.length > 0 && prevParent && prevParent !== node.parentElement) {
+                if (!/\s/.test(full[full.length - 1]) && !/\s/.test(val[0])) {
+                    full += ' ';
+                }
+            }
             const start = full.length;
-            full += node.nodeValue;
+            full += val;
             textNodes.push({ node, start, end: full.length });
+            prevParent = node.parentElement;
         }
 
         const hits = findVerseMatchesInText(full, parsed, mode);
@@ -265,10 +317,14 @@
                 mk.title = `Matched Scripture: ${parsed.label}`;
                 target.parentNode.insertBefore(mk, target);
                 mk.appendChild(target);
+                highlightAdjacentScriptureBadge(mk);
             }
         }
+
         const firstMark = container.querySelector('mark.lf-scripture-hit-mark');
-        if (firstMark) firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (firstMark) {
+            requestAnimationFrame(() => scrollMarkIntoContainer(container, firstMark));
+        }
         return hits.length;
     }
 
@@ -854,13 +910,57 @@
     const styleEl = document.createElement('style');
     styleEl.id = 'lfScriptureFieldStyles';
     styleEl.textContent = `
-        mark.lf-scripture-hit-mark {
-            background: #fef08a !important;
-            color: #713f12 !important;
-            font-weight: 700 !important;
-            padding: 1px 4px !important;
-            border-radius: 4px !important;
-            border-bottom: 2px solid #eab308 !important;
+        @keyframes lfScriptureHitPulse {
+            0% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.72), 0 0 18px rgba(245, 158, 11, 0.55); }
+            100% { box-shadow: 0 0 0 2px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.30); }
+        }
+        mark.lf-scripture-hit-mark,
+        .lf-scripture-hit-badge {
+            background: #fde047 !important;
+            color: #1c1917 !important;
+            font-weight: 800 !important;
+            padding: 1px 5px !important;
+            border-radius: 5px !important;
+            border-bottom: 2px solid #d97706 !important;
+            box-shadow: 0 0 0 2px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.30) !important;
+            animation: lfScriptureHitPulse 1.3s ease-out 1 !important;
+        }
+        .lf-lsj-cite-jump-bar {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            margin-bottom: 10px;
+            padding: 7px 12px;
+            border-radius: 10px;
+            background: #fef9c3;
+            border: 1px solid #f59e0b;
+            color: #78350f;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        html.dark .lf-lsj-cite-jump-bar {
+            background: #422006;
+            border-color: #d97706;
+            color: #fef08a;
+        }
+        .lf-lsj-cite-jump-bar button {
+            padding: 3px 9px;
+            border-radius: 7px;
+            border: 1px solid #d97706;
+            background: #ffffff;
+            color: #78350f;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        html.dark .lf-lsj-cite-jump-bar button {
+            background: #27272a;
+            color: #fef08a;
+            border-color: #eab308;
         }
         .lf-field-wrap { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .lf-field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
@@ -1021,6 +1121,223 @@
         highlightOpenedEntryContainer(container, parsed, mode);
     }
 
+    let pendingScriptureJump = null;
+    let lastLxxClickedRef = null;
+    let isAutoHighlightingLsj = false;
+
+    function getLsjResultsContainer(lsjModal, lsjInput) {
+        if (!lsjModal) return null;
+        const explicit = lsjModal.querySelector('#lfLsjResults, #lfLsjBody, #lsjResults, #lsjBody, .lf-lsj-results, [data-lsj-results]');
+        if (explicit) return explicit;
+
+        if (lsjInput) {
+            let row = lsjInput.parentElement;
+            while (row && row.parentElement && row.parentElement !== lsjModal) {
+                const next = row.nextElementSibling;
+                if (next && !next.contains(lsjInput) && !/Liddell,\s*Scott\s*&\s*Jones.*Public Domain/i.test((next.textContent || '').trim())) {
+                    return next;
+                }
+                row = row.parentElement;
+            }
+        }
+
+        const divs = Array.from(lsjModal.querySelectorAll('div')).filter((d) => {
+            if (lsjInput && d.contains(lsjInput)) return false;
+            const cs = getComputedStyle(d);
+            return /(auto|scroll)/i.test(cs.overflowY);
+        });
+        return divs[0] || null;
+    }
+
+    function readRefFromLxxDrawer(clickedEl) {
+        let drawer = null;
+        if (clickedEl && clickedEl.closest) {
+            const nodes = document.querySelectorAll('aside, section, div');
+            for (let i = 0; i < nodes.length; i++) {
+                const el = nodes[i];
+                if (el.contains(clickedEl) && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '') && el.querySelector('select')) {
+                    drawer = el;
+                }
+            }
+        }
+        if (!drawer) {
+            const nodes = document.querySelectorAll('aside, section, div');
+            for (let i = 0; i < nodes.length; i++) {
+                const el = nodes[i];
+                if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
+                const cs = getComputedStyle(el);
+                if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+                if (el.querySelectorAll('select').length >= 2 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
+                    drawer = el;
+                    break;
+                }
+            }
+        }
+        if (!drawer) return null;
+
+        let book = null;
+        let chapter = 0;
+        drawer.querySelectorAll('select').forEach((sel) => {
+            const optText = (sel.options[sel.selectedIndex]?.textContent || sel.value || '').trim();
+            const chM = optText.match(/^(?:Ch\.?\s*)?(\d{1,3})$/i);
+            if (chM) {
+                chapter = parseInt(chM[1], 10);
+            } else {
+                const key = optText.toLowerCase().replace(/\.+$/, '').replace(/\s+/g, ' ').trim();
+                const hit = BOOK_LOOKUP.get(key) || BOOK_LOOKUP.get(key.replace(/\s+/g, ''));
+                if (hit) book = hit;
+            }
+        });
+        if (!book || !chapter) return null;
+
+        let verse = null;
+        if (clickedEl) {
+            let cur = clickedEl;
+            while (cur && cur !== drawer && drawer.contains(cur)) {
+                const dv = cur.getAttribute && (cur.getAttribute('data-verse') || cur.getAttribute('data-verse-num') || cur.getAttribute('data-v'));
+                if (dv && /^\d{1,3}$/.test(dv)) {
+                    verse = parseInt(dv, 10);
+                    break;
+                }
+                const dref = cur.getAttribute && cur.getAttribute('data-ref');
+                if (dref) {
+                    const rm = dref.match(/[:.]\s*(\d{1,3})\b/);
+                    if (rm) {
+                        verse = parseInt(rm[1], 10);
+                        break;
+                    }
+                }
+                cur = cur.parentElement;
+            }
+            if (verse == null) {
+                const holder = clickedEl.closest('p, li, tr, div');
+                if (holder && drawer.contains(holder) && !holder.querySelector('select')) {
+                    const firstBadge = holder.querySelector('span, sup, strong, b');
+                    const bt = firstBadge ? (firstBadge.textContent || '').trim() : '';
+                    if (/^\d{1,3}$/.test(bt)) verse = parseInt(bt, 10);
+                }
+            }
+        }
+        return {
+            book,
+            chapter,
+            verse,
+            label: verse ? `${book.name} ${chapter}:${verse}` : `${book.name} ${chapter}`
+        };
+    }
+
+    function getCurrentWorkspaceRef() {
+        const liveLxxRef = readRefFromLxxDrawer(null);
+        if (lastLxxClickedRef && (Date.now() - lastLxxClickedRef.ts) < 120000) {
+            if (!liveLxxRef || (liveLxxRef.book.num === lastLxxClickedRef.ref.book.num && liveLxxRef.chapter === lastLxxClickedRef.ref.chapter)) {
+                return lastLxxClickedRef.ref;
+            }
+        }
+        if (liveLxxRef) return liveLxxRef;
+
+        try {
+            const blk =
+                (typeof lastSelectedBlock !== 'undefined' && lastSelectedBlock && lastSelectedBlock.dataset && lastSelectedBlock.dataset.bookNum ? lastSelectedBlock : null) ||
+                (typeof findTopVisibleVerseBlock === 'function' ? findTopVisibleVerseBlock() : null);
+
+            if (blk && blk.dataset && blk.dataset.bookNum) {
+                const bookNum = parseInt(blk.dataset.bookNum, 10);
+                const chapter = parseInt(blk.dataset.chapterNum, 10);
+                const verse = parseInt(blk.dataset.verseNum, 10) || null;
+                const book = BOOKS.find((b) => b.num === bookNum);
+                if (book && chapter) {
+                    return {
+                        book,
+                        chapter,
+                        verse,
+                        label: verse ? `${book.name} ${chapter}:${verse}` : `${book.name} ${chapter}`
+                    };
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    document.addEventListener('click', (e) => {
+        const ref = readRefFromLxxDrawer(e.target);
+        if (!ref) return;
+        // Preserve previously clicked verse for the same book/chapter when clicking the LSJ button in the bottom word card
+        if (ref.verse == null && lastLxxClickedRef &&
+            lastLxxClickedRef.ref.book.num === ref.book.num &&
+            lastLxxClickedRef.ref.chapter === ref.chapter &&
+            lastLxxClickedRef.ref.verse != null) {
+            lastLxxClickedRef.ts = Date.now();
+            return;
+        }
+        lastLxxClickedRef = { ref, ts: Date.now() };
+    }, true);
+
+    function applyLsjAutoCitationHighlight(container) {
+        if (!container || isAutoHighlightingLsj) return;
+        const text = (container.textContent || '').trim();
+        if (!text || text.length < 40) return;
+        if (/Looking up\s+.+\s+in LSJ/i.test(text)) return;
+        if (/All-Lexicon Scripture Search:/i.test(text)) return;
+        if (/Type any Greek lemma above/i.test(text)) return;
+
+        const sig = `${text.slice(0, 80)}::${text.length}`;
+        if (container.dataset.lfLsjAutoSig === sig && container.querySelector('mark.lf-scripture-hit-mark')) return;
+
+        isAutoHighlightingLsj = true;
+        try {
+            const oldBar = container.querySelector('.lf-lsj-cite-jump-bar');
+            if (oldBar) oldBar.remove();
+
+            if (pendingScriptureJump && pendingScriptureJump.modalType === 'lsj' && (Date.now() - pendingScriptureJump.ts) < 12000) {
+                const { parsed, mode, returnTab } = pendingScriptureJump;
+                injectBackBarAndHighlight('lsj', parsed, mode, returnTab);
+                if (container.querySelector('mark.lf-scripture-hit-mark')) {
+                    container.dataset.lfLsjAutoSig = sig;
+                    pendingScriptureJump = null;
+                }
+                return;
+            }
+
+            const activeRef = getCurrentWorkspaceRef();
+            if (!activeRef) return;
+
+            let usedRef = activeRef;
+            let count = highlightOpenedEntryContainer(container, activeRef, 'lsj');
+
+            if (!count && activeRef.verse != null) {
+                const chapterRef = { book: activeRef.book, chapter: activeRef.chapter, verse: null, label: `${activeRef.book.name} ${activeRef.chapter}` };
+                count = highlightOpenedEntryContainer(container, chapterRef, 'lsj');
+                if (count) usedRef = chapterRef;
+            }
+
+            if (count > 0) {
+                container.dataset.lfLsjAutoSig = sig;
+                const marks = Array.from(container.querySelectorAll('mark.lf-scripture-hit-mark'));
+                let curIdx = 0;
+
+                const bar = document.createElement('div');
+                bar.className = 'lf-lsj-cite-jump-bar';
+                bar.innerHTML = `
+                    <span>Cited in entry: ${escapeHtml(usedRef.label)} (${marks.length})</span>
+                    <span style="display:inline-flex;gap:6px;">
+                        ${marks.length > 1 ? '<button type="button" data-lf-cite-nav="-1">Prev</button><button type="button" data-lf-cite-nav="1">Next</button>' : ''}
+                        <button type="button" data-lf-cite-nav="0">Jump</button>
+                    </span>
+                `;
+                bar.querySelectorAll('button[data-lf-cite-nav]').forEach((b) => {
+                    b.addEventListener('click', () => {
+                        const delta = parseInt(b.getAttribute('data-lf-cite-nav'), 10);
+                        if (delta !== 0) curIdx = (curIdx + delta + marks.length) % marks.length;
+                        if (marks[curIdx]) scrollMarkIntoContainer(container, marks[curIdx]);
+                    });
+                });
+                container.prepend(bar);
+            }
+        } finally {
+            setTimeout(() => { isAutoHighlightingLsj = false; }, 60);
+        }
+    }
+
     function openHitInNativeLexicon(hit, parsed, returnTab) {
         const meta = LEXICON_META[hit.lexicon];
         const targetModalType = meta.modal;
@@ -1067,8 +1384,14 @@
                 }
             } else if (targetModalType === 'lsj') {
                 const lm = document.getElementById('lfLsjModalOverlay');
-                if (lm) lm.style.display = 'flex';
-                else if (typeof window.openLsjModal === 'function') window.openLsjModal(hit.headword);
+                if (lm) {
+                    lm.classList.remove('lf-docked-modal-host', 'hidden');
+                    if (lm.parentElement !== document.body) document.body.appendChild(lm);
+                    lm.style.setProperty('z-index', '2147483500', 'important');
+                    lm.style.display = 'flex';
+                } else if (typeof window.openLsjModal === 'function') {
+                    window.openLsjModal(hit.headword);
+                }
                 if (modalContexts.lsj) {
                     modalContexts.lsj.input.value = hit.headword;
                     modalContexts.lsj.input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1080,14 +1403,23 @@
             setTimeout(() => { bypassFlag[targetModalType] = false; }, 150);
         }
 
-        setTimeout(() => injectBackBarAndHighlight(targetModalType, parsed, meta.mode, returnTab), 180);
-        setTimeout(() => {
+        pendingScriptureJump = { modalType: targetModalType, parsed, mode: meta.mode, returnTab, ts: Date.now() };
+
+        const attemptHighlight = () => {
             const ctx = modalContexts[targetModalType];
             const c = ctx && ctx.getResultsContainer();
-            if (c && !c.querySelector('mark.lf-scripture-hit-mark')) {
+            if (!c) return false;
+            const txt = (c.textContent || '').trim();
+            if (!txt || /Looking up\s+.+\s+in LSJ/i.test(txt)) return false;
+            if (!c.querySelector('mark.lf-scripture-hit-mark')) {
                 injectBackBarAndHighlight(targetModalType, parsed, meta.mode, returnTab);
             }
-        }, 600);
+            return Boolean(c.querySelector('mark.lf-scripture-hit-mark'));
+        };
+
+        [180, 500, 1100, 2000].forEach((ms) => {
+            setTimeout(attemptHighlight, ms);
+        });
     }
 
     async function executeAllLexiconScriptureSearch(modalType, ctx) {
@@ -1225,12 +1557,33 @@
             if (!lsjModal) return false;
             const lsjInput = lsjModal.querySelector('input[type="text"], input[type="search"], input:not([type])');
             if (!lsjInput) return false;
+
+            const getContainer = () => getLsjResultsContainer(lsjModal, lsjInput);
+
             attachFieldDropdownToModal('lsj', {
                 modal: lsjModal,
                 input: lsjInput,
-                getResultsContainer: () => lsjModal.querySelector('#lfLsjResults, #lfLsjBody, .lf-lsj-results') || lsjInput.closest('div').parentElement.nextElementSibling,
+                getResultsContainer: getContainer,
                 getSearchButton: () => Array.from(lsjModal.querySelectorAll('button')).find((b) => /^\s*Search(\s+LSJ|\s+Lexicon)?\s*$/i.test(b.textContent || ''))
             });
+
+            if (!lsjModal.dataset.lfLsjJumpObserver) {
+                lsjModal.dataset.lfLsjJumpObserver = '1';
+                let debounceTimer = null;
+                const mo = new MutationObserver(() => {
+                    if (isAutoHighlightingLsj) return;
+                    if (debounceTimer) clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        const c = getContainer();
+                        if (c) applyLsjAutoCitationHighlight(c);
+                    }, 90);
+                });
+                mo.observe(lsjModal, { childList: true, subtree: true });
+                setTimeout(() => {
+                    const c = getContainer();
+                    if (c) applyLsjAutoCitationHighlight(c);
+                }, 120);
+            }
             return true;
         };
 
