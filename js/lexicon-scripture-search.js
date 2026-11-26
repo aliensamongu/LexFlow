@@ -301,8 +301,23 @@
         const hits = findVerseMatchesInText(full, parsed, mode);
         if (!hits.length) return 0;
 
-        for (let i = hits.length - 1; i >= 0; i--) {
-            const { start, end } = hits[i];
+        // Deduplicate & merge any overlapping hit spans so each logical citation gets one clean group ID
+        const orderedHits = hits
+            .slice()
+            .sort((a, b) => a.start - b.start || b.end - a.end);
+        const cleanHits = [];
+        for (let i = 0; i < orderedHits.length; i++) {
+            const h = orderedHits[i];
+            const prev = cleanHits[cleanHits.length - 1];
+            if (prev && h.start < prev.end) {
+                if (h.end > prev.end) prev.end = h.end;
+            } else {
+                cleanHits.push({ start: h.start, end: h.end });
+            }
+        }
+
+        for (let i = cleanHits.length - 1; i >= 0; i--) {
+            const { start, end } = cleanHits[i];
             for (let j = textNodes.length - 1; j >= 0; j--) {
                 const tn = textNodes[j];
                 if (tn.end <= start || tn.start >= end) continue;
@@ -314,6 +329,7 @@
                 if (lStart > 0) target = target.splitText(lStart);
                 const mk = document.createElement('mark');
                 mk.className = 'lf-scripture-hit-mark';
+                mk.dataset.lfHitGroup = String(i);
                 mk.title = `Matched Scripture: ${parsed.label}`;
                 target.parentNode.insertBefore(mk, target);
                 mk.appendChild(target);
@@ -321,11 +337,59 @@
             }
         }
 
-        const firstMark = container.querySelector('mark.lf-scripture-hit-mark');
-        if (firstMark) {
-            requestAnimationFrame(() => scrollMarkIntoContainer(container, firstMark));
+        const groups = getDistinctCitationGroups(container);
+        if (groups.length) {
+            focusCitationGroup(container, groups, 0);
         }
-        return hits.length;
+        return groups.length;
+    }
+
+    function getDistinctCitationGroups(container) {
+        if (!container) return [];
+        const allMarks = Array.from(container.querySelectorAll('mark.lf-scripture-hit-mark'));
+        const byGroup = new Map();
+        const groups = [];
+
+        allMarks.forEach((mk, idx) => {
+            const gid = mk.dataset.lfHitGroup != null ? `g_${mk.dataset.lfHitGroup}` : `u_${idx}`;
+            let entry = byGroup.get(gid);
+            if (!entry) {
+                entry = { id: gid, marks: [], anchor: mk };
+                byGroup.set(gid, entry);
+                groups.push(entry);
+            }
+            entry.marks.push(mk);
+        });
+
+        // Safety merge: if two groups share the exact same visual position (e.g., nested/duplicate spans), collapse them
+        const deduped = [];
+        for (let i = 0; i < groups.length; i++) {
+            const g = groups[i];
+            const rect = g.anchor.getBoundingClientRect();
+            const prev = deduped[deduped.length - 1];
+            if (prev && rect.width > 0 && rect.height > 0) {
+                const prevLastRect = prev.marks[prev.marks.length - 1].getBoundingClientRect();
+                const sameLine = Math.abs(rect.top - prevLastRect.top) < 6;
+                const touching = rect.left >= prevLastRect.left - 4 && (rect.left - prevLastRect.right) < 12;
+                if (sameLine && touching) {
+                    prev.marks.push(...g.marks);
+                    continue;
+                }
+            }
+            deduped.push(g);
+        }
+        return deduped;
+    }
+
+    function focusCitationGroup(container, groups, idx) {
+        if (!container || !groups || !groups.length) return;
+        const safeIdx = ((idx % groups.length) + groups.length) % groups.length;
+        container.querySelectorAll('mark.lf-scripture-hit-active').forEach((m) => {
+            m.classList.remove('lf-scripture-hit-active');
+        });
+        const targetGroup = groups[safeIdx];
+        targetGroup.marks.forEach((m) => m.classList.add('lf-scripture-hit-active'));
+        requestAnimationFrame(() => scrollMarkIntoContainer(container, targetGroup.anchor));
     }
 
     function openIdb(name) {
@@ -925,6 +989,10 @@
             box-shadow: 0 0 0 2px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.30) !important;
             animation: lfScriptureHitPulse 1.3s ease-out 1 !important;
         }
+        mark.lf-scripture-hit-mark.lf-scripture-hit-active {
+            background: #fbbf24 !important;
+            box-shadow: 0 0 0 3px #b45309, 0 4px 14px rgba(217, 119, 6, 0.45) !important;
+        }
         .lf-lsj-cite-jump-bar {
             position: sticky;
             top: 0;
@@ -1272,6 +1340,28 @@
         lastLxxClickedRef = { ref, ts: Date.now() };
     }, true);
 
+    function getEntryContentSignature(container) {
+        if (!container) return '';
+        let sample = '';
+        let totalLen = 0;
+        const tw = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+            acceptNode(n) {
+                const p = n.parentElement;
+                if (!p || /^(SCRIPT|STYLE|BUTTON|INPUT|SELECT)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+                if (p.closest('.lf-scripture-back-bar, .lf-verse-fallback-box, .lf-lsj-cite-jump-bar')) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+        let node;
+        while ((node = tw.nextNode())) {
+            const v = node.nodeValue || '';
+            if (!v) continue;
+            totalLen += v.length;
+            if (sample.length < 120) sample += v;
+        }
+        return `${sample.trim().slice(0, 80)}::${totalLen}`;
+    }
+
     function applyLsjAutoCitationHighlight(container) {
         if (!container || isAutoHighlightingLsj) return;
         const text = (container.textContent || '').trim();
@@ -1280,7 +1370,8 @@
         if (/All-Lexicon Scripture Search:/i.test(text)) return;
         if (/Type any Greek lemma above/i.test(text)) return;
 
-        const sig = `${text.slice(0, 80)}::${text.length}`;
+        const sig = getEntryContentSignature(container);
+        if (!sig) return;
         if (container.dataset.lfLsjAutoSig === sig && container.querySelector('mark.lf-scripture-hit-mark')) return;
 
         isAutoHighlightingLsj = true;
@@ -1312,23 +1403,35 @@
 
             if (count > 0) {
                 container.dataset.lfLsjAutoSig = sig;
-                const marks = Array.from(container.querySelectorAll('mark.lf-scripture-hit-mark'));
+                const groups = getDistinctCitationGroups(container);
                 let curIdx = 0;
 
                 const bar = document.createElement('div');
                 bar.className = 'lf-lsj-cite-jump-bar';
+                const renderCountText = () => (
+                    groups.length > 1
+                        ? `Cited in entry: ${escapeHtml(usedRef.label)} (${curIdx + 1} / ${groups.length})`
+                        : `Cited in entry: ${escapeHtml(usedRef.label)} (1)`
+                );
+
                 bar.innerHTML = `
-                    <span>Cited in entry: ${escapeHtml(usedRef.label)} (${marks.length})</span>
+                    <span class="lf-lsj-cite-count-label">${renderCountText()}</span>
                     <span style="display:inline-flex;gap:6px;">
-                        ${marks.length > 1 ? '<button type="button" data-lf-cite-nav="-1">Prev</button><button type="button" data-lf-cite-nav="1">Next</button>' : ''}
+                        ${groups.length > 1 ? '<button type="button" data-lf-cite-nav="-1">Prev</button><button type="button" data-lf-cite-nav="1">Next</button>' : ''}
                         <button type="button" data-lf-cite-nav="0">Jump</button>
                     </span>
                 `;
+                const labelEl = bar.querySelector('.lf-lsj-cite-count-label');
                 bar.querySelectorAll('button[data-lf-cite-nav]').forEach((b) => {
-                    b.addEventListener('click', () => {
+                    b.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         const delta = parseInt(b.getAttribute('data-lf-cite-nav'), 10);
-                        if (delta !== 0) curIdx = (curIdx + delta + marks.length) % marks.length;
-                        if (marks[curIdx]) scrollMarkIntoContainer(container, marks[curIdx]);
+                        if (delta !== 0) {
+                            curIdx = (curIdx + delta + groups.length) % groups.length;
+                            if (labelEl) labelEl.textContent = renderCountText();
+                        }
+                        focusCitationGroup(container, groups, curIdx);
                     });
                 });
                 container.prepend(bar);
@@ -1385,7 +1488,7 @@
             } else if (targetModalType === 'lsj') {
                 const lm = document.getElementById('lfLsjModalOverlay');
                 if (lm) {
-                    lm.classList.remove('lf-docked-modal-host', 'hidden');
+                    lm.classList.remove('lf-docked-modal-host', 'hidden', 'lf-lsj-force-closed');
                     if (lm.parentElement !== document.body) document.body.appendChild(lm);
                     lm.style.setProperty('z-index', '2147483500', 'important');
                     lm.style.display = 'flex';
