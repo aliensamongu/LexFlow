@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 6 MODULE (v3): CHURCH FATHERS & CCEL INTEGRATION (CCEL Live Search Fix) ===
+/* === LEXFLOW PHASE 6 MODULE (v4): CHURCH FATHERS & CCEL INTEGRATION (Precision Margin Badges + ResizeObserver) ===
  * Features:
  *  1. Reusable CCEL Pop-Out Window (matches BibleHub / SRGNT Collation UX)
  *  2. In-App Church Fathers Topic Search (ALL 37 ANF/NPNF volumes or any specific Father)
@@ -459,7 +459,7 @@
             vol: 'ANF05',
             summary: 'Line-by-line exposition of Matthew 6:9–13, emphasizing communal prayer ("Our Father", not "My Father"), daily bread, and forgiving others.',
             ccelDirect: 'https://www.ccel.org/ccel/schaff/anf05.toc.html',
-            ccelSearch: '"On the Lord\'s Prayer" AND Cyprian'
+            ccelSearch: '"On the Lord\'s Prayer" Cyprian'
         },
         {
             topics: ['prayer', "lord's prayer", 'worship'],
@@ -1020,8 +1020,8 @@
         }
 
         /* Dedicated clean left gutter ONLY while Church Father icons are switched ON */
-        body:not(.lf-hide-father-badges) #flowEditor {
-            padding-left: 42px !important;
+        body:not(.lf-hide-father-badges) #wordProcessorPane #flowEditor {
+            padding-left: 34px !important;
         }
 
         /* External overlay layer (lives OUTSIDE #flowEditor so breaks/edits NEVER touch icons!) */
@@ -1038,21 +1038,23 @@
             display: none !important;
         }
 
-        /* Subtle, clickable Church Icon pill positioned in the clean left margin */
+        /* Clean, compact Church Icon pill positioned cleanly to the LEFT of the verse number
+           (No bare count number inside the pill so it can never be mistaken for a verse number!) */
         .lf-father-badge {
             position: absolute;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 1px 6px;
+            width: 22px;
+            height: 20px;
+            padding: 0;
             border-radius: 999px;
             font-family: 'Inter', system-ui, sans-serif;
-            font-size: 10px;
-            line-height: 1.4;
-            font-weight: 800;
+            font-size: 10.5px;
+            line-height: 1;
             color: #b45309;
-            background: rgba(254, 243, 199, 0.92);
-            border: 1px solid rgba(217, 119, 6, 0.45);
+            background: rgba(254, 243, 199, 0.94);
+            border: 1px solid rgba(217, 119, 6, 0.48);
             cursor: pointer;
             pointer-events: auto;
             user-select: none;
@@ -1060,24 +1062,19 @@
             white-space: nowrap;
             transition: transform 0.1s ease, background-color 0.12s ease;
             touch-action: manipulation;
+            box-shadow: 0 1px 2px rgba(180, 83, 9, 0.14);
         }
         html.dark .lf-father-badge {
             color: #fcd34d;
-            background: rgba(120, 53, 15, 0.52);
-            border-color: rgba(245, 158, 11, 0.48);
+            background: rgba(120, 53, 15, 0.55);
+            border-color: rgba(245, 158, 11, 0.5);
         }
         .lf-father-badge:hover,
         .lf-father-badge:active {
             background: #d97706;
             color: #ffffff !important;
             border-color: #d97706;
-            transform: scale(1.07);
-        }
-        .lf-father-badge::after {
-            content: attr(data-count);
-            margin-left: 3.5px;
-            font-size: 9.5px;
-            font-weight: 800;
+            transform: scale(1.1);
         }
         body.lf-hide-father-badges .lf-father-badge {
             display: none !important;
@@ -1148,8 +1145,8 @@
 
     // -------------------------------------------------------------------------
     // 8. ZERO-POLLUTION EXTERNAL CHURCH ICON OVERLAY ENGINE
-    //    Never inserts anything into #flowEditor! Also scrubs any legacy icons
-    //    that were auto-saved by v1 so they vanish permanently.
+    //    Uses ResizeObserver + exact verse-number measurement so badges NEVER
+    //    drift when Study Dock opens/resizes and NEVER overlap verse numbers!
     // -------------------------------------------------------------------------
     let citedEntriesCache = [];
     let overlayRafId = 0;
@@ -1159,13 +1156,11 @@
         if (!ed) return false;
         let removedAny = false;
 
-        // 1. Remove any v1 span.lf-father-badge still sitting inside #flowEditor
         ed.querySelectorAll('.lf-father-badge').forEach((el) => {
             el.remove();
             removedAny = true;
         });
 
-        // 2. Remove any unwrapped <i class="fa-solid fa-church"> left behind after Flow/Enter edits
         ed.querySelectorAll('i.fa-church').forEach((iconEl) => {
             const parent = iconEl.parentElement;
             iconEl.remove();
@@ -1235,7 +1230,6 @@
         const layer = ensureOverlayContainer();
         if (!layer) return;
 
-        // Strictly respect Icons: Off — empty & hide the overlay immediately
         if (!state.badgesEnabled) {
             if (layer.childNodes.length) layer.innerHTML = '';
             return;
@@ -1247,11 +1241,10 @@
 
         const paneRect = pane.getBoundingClientRect();
         const edRect = ed.getBoundingClientRect();
-        const baseLeft = Math.max(6, (edRect.left - paneRect.left) + pane.scrollLeft - pane.clientLeft);
         const minTop = paneRect.top - 500;
         const maxTop = paneRect.bottom + 500;
+        const BADGE_W = 22;
 
-        // Reuse existing badge buttons by key so scroll updates do zero extra DOM churn
         const existingByKey = new Map();
         Array.from(layer.children).forEach((child) => {
             if (child.dataset && child.dataset.cfKey) {
@@ -1270,7 +1263,25 @@
             const r = item.blk.getBoundingClientRect();
             if (r.height === 0 || r.bottom < minTop || r.top > maxTop) continue;
 
-            const topInPane = Math.round((r.top - paneRect.top) + pane.scrollTop - pane.clientTop + 3);
+            // Measure the actual verse number element if visible so our icon sits cleanly to its LEFT
+            const vNumEl = item.blk.querySelector('.verse-num, sup');
+            const vRect = vNumEl ? vNumEl.getBoundingClientRect() : null;
+            const hasVisibleVNum = !!(vRect && vRect.width > 0 && vRect.height > 0);
+
+            // Vertical anchor: align cleanly with the first line / verse number of this verse
+            const anchorTop = hasVisibleVNum ? vRect.top : r.top;
+            const topInPane = Math.round((anchorTop - paneRect.top) + pane.scrollTop - pane.clientTop + (hasVisibleVNum ? -1 : 3));
+
+            // Horizontal anchor: sit 6px to the LEFT of the verse number (or verse text in Flow mode)
+            const contentLeft = hasVisibleVNum ? Math.min(r.left, vRect.left) : r.left;
+            const gutterLeft = Math.max(
+                6,
+                Math.min(
+                    Math.round((edRect.left - paneRect.left) + pane.scrollLeft - pane.clientLeft + 4),
+                    Math.round((contentLeft - paneRect.left) + pane.scrollLeft - pane.clientLeft - BADGE_W - 6)
+                )
+            );
+
             keptKeys.add(item.key);
 
             let badge = existingByKey.get(item.key);
@@ -1284,8 +1295,7 @@
                 badge.type = 'button';
                 badge.className = 'lf-father-badge';
                 badge.dataset.cfKey = item.key;
-                badge.dataset.count = String(item.hits.length);
-                badge.title = `${item.hits.length} Church Father citation${item.hits.length === 1 ? '' : 's'} on ${item.bookName} ${item.chapter}:${item.verse} (${fatherNames}) — Click to view & open in CCEL`;
+                badge.title = `${item.bookName} ${item.chapter}:${item.verse} — ${item.hits.length} Church Father citation${item.hits.length === 1 ? '' : 's'} (${fatherNames}) — Click to view & open in CCEL`;
                 badge.innerHTML = `<i class="fa-solid fa-church" aria-hidden="true"></i>`;
 
                 badge.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -1304,10 +1314,9 @@
             }
 
             badge.style.top = `${topInPane}px`;
-            badge.style.left = `${Math.round(baseLeft)}px`;
+            badge.style.left = `${gutterLeft}px`;
         }
 
-        // Remove badges that scrolled far out of view
         existingByKey.forEach((node, k) => {
             if (!keptKeys.has(k)) node.remove();
         });
@@ -1327,17 +1336,26 @@
         if (!ed || !pane || ed.dataset.lfFatherObserver) return;
         ed.dataset.lfFatherObserver = '1';
 
-        // Clean up any legacy v1 inline church icons that were saved into the project
         scrubLegacyInlineIcons(true);
         rebuildCitedEntriesCache();
         scheduleOverlayRender();
 
-        // Sync overlay smoothly on scroll & resize
+        // Sync overlay smoothly on scroll & window resize
         pane.addEventListener('scroll', scheduleOverlayRender, { passive: true });
         window.addEventListener('resize', scheduleOverlayRender, { passive: true });
 
+        // CRITICAL: ResizeObserver catches Study Dock open/close/drag, Parallel pane, Tools sidebar,
+        // and font-size changes so badges NEVER drift onto the wrong line when verses re-wrap!
+        if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(() => {
+                scheduleOverlayRender();
+            });
+            ro.observe(pane);
+            ro.observe(ed);
+        }
+
         // Whenever #flowEditor changes (line breaks, indents, Bible switches, project loads),
-        // rebuild the lightweight ~60-item index and reposition external badges cleanly
+        // rebuild the lightweight index and reposition external badges cleanly
         let mutTimer = 0;
         const mo = new MutationObserver(() => {
             clearTimeout(mutTimer);
@@ -1349,13 +1367,13 @@
         });
         mo.observe(ed, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
 
-        // Also resync when switching Read / Flow / Research mode or opening Study Dock
         document.addEventListener('click', (e) => {
-            if (e.target && e.target.closest('.lf-mode-pill, #lfToggleStudyDockBtn, #btnLoadSelectedText')) {
+            if (e.target && e.target.closest('.lf-mode-pill, #lfToggleStudyDockBtn, #lfDockCloseBtn, #btnLoadSelectedText, #sidebarToggleBtn')) {
                 setTimeout(() => {
                     rebuildCitedEntriesCache();
                     scheduleOverlayRender();
-                }, 140);
+                }, 80);
+                setTimeout(scheduleOverlayRender, 260);
             }
         }, true);
     }
@@ -1365,14 +1383,12 @@
         document.body.classList.toggle('lf-hide-father-badges', !state.badgesEnabled);
         try { localStorage.setItem('lexflow_father_badges', String(state.badgesEnabled)); } catch (e) {}
 
-        // Also scrub any stray legacy icons immediately when toggling
         scrubLegacyInlineIcons(true);
         if (state.badgesEnabled) {
             rebuildCitedEntriesCache();
         }
         scheduleOverlayRender();
 
-        // Resync LexFlow's own Flow lines/controls if padding changed
         if (typeof window.syncOverlayControls === 'function') {
             setTimeout(() => {
                 try { window.syncOverlayControls(); } catch (e) {}
@@ -1502,6 +1518,8 @@
         }
         syncSubTabButtons();
         renderFathersPanel();
+        scheduleOverlayRender();
+        setTimeout(scheduleOverlayRender, 120);
     }
 
     function syncSubTabButtons() {
