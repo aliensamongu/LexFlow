@@ -203,6 +203,9 @@
         #lfLsjModalOverlay:not(.lf-docked-modal-host) {
             z-index: 2147483500 !important;
         }
+        #lfLsjModalOverlay.lf-lsj-force-closed {
+            display: none !important;
+        }
 
         /* Docked Native Modal Host */
         .lf-docked-modal-host {
@@ -630,13 +633,126 @@
         }
     }
 
+    let isClosingLsjOverlay = false;
+
+    function isLsjOverlayVisible(lm) {
+        if (!lm) return false;
+        if (lm.classList.contains('hidden') || lm.classList.contains('lf-lsj-force-closed')) return false;
+        if (lm.style.display === 'none') return false;
+        try {
+            const cs = getComputedStyle(lm);
+            return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) !== 0;
+        } catch (e) {
+            return true;
+        }
+    }
+
     function ensureFloatingLsjOnTop(lm) {
         if (!lm) return;
-        lm.classList.remove('lf-docked-modal-host');
-        if (lm.parentElement !== document.body) {
-            document.body.appendChild(lm);
+        const needsUndock = lm.classList.contains('lf-docked-modal-host');
+        const needsReparent = lm.parentElement !== document.body;
+        const needsZ = lm.style.getPropertyValue('z-index') !== '2147483500' || lm.style.getPropertyPriority('z-index') !== 'important';
+        if (!needsUndock && !needsReparent && !needsZ) return;
+
+        const prevSuppress = state.suppressObservers;
+        state.suppressObservers = true;
+        try {
+            if (needsUndock) lm.classList.remove('lf-docked-modal-host');
+            if (needsReparent) document.body.appendChild(lm);
+            if (needsZ) lm.style.setProperty('z-index', '2147483500', 'important');
+        } finally {
+            setTimeout(() => { state.suppressObservers = prevSuppress; }, 0);
         }
-        lm.style.setProperty('z-index', '2147483500', 'important');
+    }
+
+    function clearForceClosedLsj(lm) {
+        if (!lm) return;
+        const prevSuppress = state.suppressObservers;
+        state.suppressObservers = true;
+        try {
+            lm.classList.remove('lf-lsj-force-closed', 'hidden', 'lf-docked-modal-host');
+            if (lm.style.getPropertyValue('display') === 'none') {
+                lm.style.removeProperty('display');
+            }
+            ensureFloatingLsjOnTop(lm);
+        } finally {
+            setTimeout(() => { state.suppressObservers = prevSuppress; }, 0);
+        }
+    }
+
+    function closeFloatingLsjModal() {
+        const lm = document.getElementById('lfLsjModalOverlay');
+        if (!lm || isClosingLsjOverlay) return false;
+
+        isClosingLsjOverlay = true;
+        const prevSuppress = state.suppressObservers;
+        state.suppressObservers = true;
+        try {
+            if (document.activeElement && lm.contains(document.activeElement) && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            lm.classList.remove('lf-docked-modal-host', 'open', 'show', 'active', 'flex');
+
+            ['closeLsjModal', 'closeLSJModal', 'hideLsjModal'].forEach((fn) => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch (e) {}
+                }
+            });
+
+            lm.style.display = 'none';
+            lm.classList.add('hidden');
+
+            try {
+                if (getComputedStyle(lm).display !== 'none') {
+                    lm.classList.add('lf-lsj-force-closed');
+                }
+            } catch (e) {}
+
+            if (document.body && document.body.style.overflow === 'hidden') {
+                document.body.style.overflow = '';
+            }
+            return true;
+        } finally {
+            setTimeout(() => {
+                state.suppressObservers = prevSuppress;
+                isClosingLsjOverlay = false;
+            }, 40);
+        }
+    }
+
+    function wireLsjCloseHandlers(lm) {
+        if (!lm || lm.__lfCloseHandlersBound) return;
+        lm.__lfCloseHandlersBound = true;
+
+        lm.addEventListener('click', (e) => {
+            if (!isLsjOverlayVisible(lm)) return;
+
+            // Clicking the dimmed backdrop outside the modal card closes LSJ immediately
+            if (e.target === lm) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeFloatingLsjModal();
+                return;
+            }
+
+            const btn = e.target && e.target.closest('button, [role="button"]');
+            if (!btn || !lm.contains(btn)) return;
+            if (btn.closest('.lf-scripture-hit-card, .lf-scripture-back-bar, .lf-lsj-cite-jump-bar')) return;
+
+            const txt = (btn.textContent || '').trim();
+            const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''} ${btn.getAttribute('onclick') || ''}`.toLowerCase();
+            const isCloseBtn =
+                /^[×✕✖x]$/.test(txt) ||
+                /close|closelsj|fa-xmark|fa-times/.test(meta) ||
+                Boolean(btn.querySelector('.fa-xmark, .fa-times'));
+
+            if (isCloseBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeFloatingLsjModal();
+            }
+        }, true);
     }
 
     function dockAllSupportedPanels() {
@@ -667,9 +783,9 @@
     function triggerNativeLsjOpen() {
         const existing = document.getElementById('lfLsjModalOverlay');
         if (existing) {
-            ensureFloatingLsjOnTop(existing);
+            clearForceClosedLsj(existing);
+            wireLsjCloseHandlers(existing);
             existing.style.display = 'flex';
-            existing.classList.remove('hidden');
             return;
         }
         if (typeof window.openLsjModal === 'function') {
@@ -681,9 +797,9 @@
         setTimeout(() => {
             const lm = document.getElementById('lfLsjModalOverlay');
             if (lm) {
-                ensureFloatingLsjOnTop(lm);
+                clearForceClosedLsj(lm);
+                wireLsjCloseHandlers(lm);
                 lm.style.display = 'flex';
-                lm.classList.remove('hidden');
             }
         }, 80);
     }
@@ -928,10 +1044,16 @@
             if (!lm || lm.__lfFloatWatched) return;
             lm.__lfFloatWatched = true;
             ensureFloatingLsjOnTop(lm);
+            wireLsjCloseHandlers(lm);
             const obs = new MutationObserver(() => {
-                if (state.suppressObservers) return;
-                const isHidden = lm.classList.contains('hidden') || lm.style.display === 'none';
-                if (!isHidden) {
+                if (state.suppressObservers || isClosingLsjOverlay) return;
+                const displayVal = lm.style.display;
+                // If native code sets display to flex/block to reopen, clear any force-closed state
+                if (displayVal && displayVal !== 'none' && lm.classList.contains('lf-lsj-force-closed')) {
+                    clearForceClosedLsj(lm);
+                    return;
+                }
+                if (isLsjOverlayVisible(lm)) {
                     ensureFloatingLsjOnTop(lm);
                 }
             });
@@ -948,6 +1070,20 @@
             }
         });
         bodyObs.observe(document.body, { childList: true });
+
+        // Ensure reopening LSJ from any external button (e.g. LXX word card) always clears force-closed state cleanly
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest('button, [role="button"], a');
+            if (!btn) return;
+            if (btn.closest('#lfLsjModalOverlay')) return;
+            const txt = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.textContent || ''}`.toLowerCase();
+            if (/\blsj\b/.test(txt)) {
+                const lm = document.getElementById('lfLsjModalOverlay');
+                if (lm && lm.classList.contains('lf-lsj-force-closed')) {
+                    clearForceClosedLsj(lm);
+                }
+            }
+        }, true);
 
         const parallelPane = document.getElementById('parallelOriginalPane');
         if (parallelPane) {
@@ -1265,6 +1401,36 @@
         }
     }
 
+    // Escape key immediately closes the floating LSJ modal (even while typing inside its search input) or popped-out lexicons
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+
+        const lm = document.getElementById('lfLsjModalOverlay');
+        if (isLsjOverlayVisible(lm)) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeFloatingLsjModal();
+            return;
+        }
+
+        const tm = document.getElementById('thayersModal');
+        if (tm && !tm.classList.contains('lf-docked-modal-host') && !tm.classList.contains('hidden')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.closeThayersModal === 'function') window.closeThayersModal();
+            else tm.classList.add('hidden');
+            return;
+        }
+
+        const bm = document.getElementById('bdbModal');
+        if (bm && !bm.classList.contains('lf-docked-modal-host') && !bm.classList.contains('hidden')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.closeBdbModal === 'function') window.closeBdbModal();
+            else bm.classList.add('hidden');
+        }
+    }, true);
+
     document.addEventListener('keydown', (e) => {
         const modPressed = isMac ? e.metaKey : e.ctrlKey;
         if (!modPressed || !e.shiftKey || e.altKey) return;
@@ -1284,6 +1450,7 @@
 
     window.lfOpenStudyDock = openStudyDock;
     window.lfCloseStudyDock = closeStudyDock;
+    window.lfCloseLsjModal = closeFloatingLsjModal;
     window.lfCompareCurrentVerse = () => openStudyDock('compare');
     window.lfSetDockFontScale = applyDockFontScale;
 
