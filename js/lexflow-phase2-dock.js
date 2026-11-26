@@ -38,7 +38,8 @@
         enabledTranslations: new Set(['BSB', 'EMTV', 'WEB', 'KJV', 'YLT']),
         highlightDivergence: true,
         poppedOutTarget: null,         // 'greek' | 'hebrew' | 'lsj' | 'master' | 'clause' | null
-        suppressObservers: false
+        suppressObservers: false,
+        autoClosedParallel: false
     };
 
     const chapterTextCache = new Map();
@@ -197,6 +198,11 @@
         .lf-dock-sub-btn.active.lf-sub-greek { background: #7c3aed; border-color: #7c3aed; }
         .lf-dock-sub-btn.active.lf-sub-lsj { background: #4338ca; border-color: #4338ca; }
         .lf-dock-sub-btn.active.lf-sub-notes { background: #d97706; border-color: #d97706; }
+
+        /* Keep standalone LSJ pop-out cleanly above LXX drawer, Interlinear & Study Dock */
+        #lfLsjModalOverlay:not(.lf-docked-modal-host) {
+            z-index: 2147483500 !important;
+        }
 
         /* Docked Native Modal Host */
         .lf-docked-modal-host {
@@ -462,9 +468,9 @@
                 <div id="lfDockSlotLsj" class="flex-1 flex flex-col min-h-0 overflow-hidden hidden">
                     <div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400 space-y-3">
                         <div class="font-bold text-sm text-gray-800 dark:text-gray-100">LSJ Greek-English Lexicon (1940)</div>
-                        <p>Click below to load your offline LSJ lexicon right into the Study Dock.</p>
+                        <p>LSJ opens as a floating pop-out above your LXX &amp; Interlinear panels so one click closes it and returns you right where you were.</p>
                         <button type="button" id="lfDockLaunchLsjBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm cursor-pointer">
-                            Open LSJ in Dock
+                            Open LSJ Pop-Out
                         </button>
                     </div>
                 </div>
@@ -624,6 +630,15 @@
         }
     }
 
+    function ensureFloatingLsjOnTop(lm) {
+        if (!lm) return;
+        lm.classList.remove('lf-docked-modal-host');
+        if (lm.parentElement !== document.body) {
+            document.body.appendChild(lm);
+        }
+        lm.style.setProperty('z-index', '2147483500', 'important');
+    }
+
     function dockAllSupportedPanels() {
         state.suppressObservers = true;
         try {
@@ -633,10 +648,10 @@
             const bm = document.getElementById('bdbModal');
             if (bm && state.poppedOutTarget !== 'hebrew') dockNativeElement(bm, 'lfDockSlotHebrew', 'lf-docked-modal-host');
 
+            // Keep #lfLsjModalOverlay as a floating pop-out so LXX/Interlinear stay open underneath and scroll position is never reset
             const lm = document.getElementById('lfLsjModalOverlay');
-            if (lm && state.poppedOutTarget !== 'lsj') {
-                dockNativeElement(lm, 'lfDockSlotLsj', 'lf-docked-modal-host');
-                markLsjResultsScalable();
+            if (lm && lm.classList.contains('lf-docked-modal-host')) {
+                ensureFloatingLsjOnTop(lm);
             }
 
             const mn = document.getElementById('masterNoteDrawer');
@@ -652,8 +667,7 @@
     function triggerNativeLsjOpen() {
         const existing = document.getElementById('lfLsjModalOverlay');
         if (existing) {
-            dockNativeElement(existing, 'lfDockSlotLsj', 'lf-docked-modal-host');
-            markLsjResultsScalable();
+            ensureFloatingLsjOnTop(existing);
             existing.style.display = 'flex';
             existing.classList.remove('hidden');
             return;
@@ -667,12 +681,11 @@
         setTimeout(() => {
             const lm = document.getElementById('lfLsjModalOverlay');
             if (lm) {
-                dockNativeElement(lm, 'lfDockSlotLsj', 'lf-docked-modal-host');
-                markLsjResultsScalable();
+                ensureFloatingLsjOnTop(lm);
                 lm.style.display = 'flex';
                 lm.classList.remove('hidden');
             }
-        }, 120);
+        }, 80);
     }
 
     function openStudyDock(tabName, subTabName) {
@@ -680,6 +693,7 @@
         dockAllSupportedPanels();
 
         if (window.innerWidth < 1540 && isParallelOpen()) {
+            state.autoClosedParallel = true;
             setParallelOpen(false);
         }
 
@@ -703,6 +717,11 @@
         document.body.classList.remove('lf-dock-open');
         state.isOpen = false;
         updateTopDockButtonUI();
+
+        if (state.autoClosedParallel) {
+            state.autoClosedParallel = false;
+            setParallelOpen(true);
+        }
     }
 
     function setDockTab(tabName, subTabName) {
@@ -778,13 +797,7 @@
                     }
                 }
             } else if (state.activeLexSub === 'lsj') {
-                const lm = document.getElementById('lfLsjModalOverlay');
-                if (lm) {
-                    dockNativeElement(lm, 'lfDockSlotLsj', 'lf-docked-modal-host');
-                    markLsjResultsScalable();
-                    lm.style.display = 'flex';
-                    lm.classList.remove('hidden');
-                }
+                triggerNativeLsjOpen();
             }
         } finally {
             setTimeout(() => { state.suppressObservers = false; }, 80);
@@ -911,37 +924,27 @@
         watchDrawer(mn, 'master');
         watchDrawer(cn, 'clause');
 
-        const watchLsjOverlay = (lm) => {
-            if (!lm || lm.__lfDockWatched) return;
-            lm.__lfDockWatched = true;
-            markLsjResultsScalable();
+        const keepLsjFloatingAboveLxx = (lm) => {
+            if (!lm || lm.__lfFloatWatched) return;
+            lm.__lfFloatWatched = true;
+            ensureFloatingLsjOnTop(lm);
             const obs = new MutationObserver(() => {
                 if (state.suppressObservers) return;
                 const isHidden = lm.classList.contains('hidden') || lm.style.display === 'none';
-                if (state.poppedOutTarget === 'lsj') {
-                    if (isHidden) {
-                        state.poppedOutTarget = null;
-                        dockAllSupportedPanels();
-                    }
-                    return;
-                }
-                if (!isHidden && state.autoDockPopups) {
-                    openStudyDock('lexicon', 'lsj');
+                if (!isHidden) {
+                    ensureFloatingLsjOnTop(lm);
                 }
             });
             obs.observe(lm, { attributes: true, attributeFilter: ['style', 'class'] });
         };
 
         const existingLsj = document.getElementById('lfLsjModalOverlay');
-        if (existingLsj) watchLsjOverlay(existingLsj);
+        if (existingLsj) keepLsjFloatingAboveLxx(existingLsj);
 
         const bodyObs = new MutationObserver(() => {
             const lm = document.getElementById('lfLsjModalOverlay');
-            if (lm && !lm.__lfDockWatched) {
-                watchLsjOverlay(lm);
-                if (state.autoDockPopups && lm.style.display !== 'none' && !lm.classList.contains('hidden')) {
-                    openStudyDock('lexicon', 'lsj');
-                }
+            if (lm && !lm.__lfFloatWatched) {
+                keepLsjFloatingAboveLxx(lm);
             }
         });
         bodyObs.observe(document.body, { childList: true });
@@ -950,6 +953,7 @@
         if (parallelPane) {
             const pObs = new MutationObserver(() => {
                 if (!parallelPane.classList.contains('hidden') && state.isOpen && window.innerWidth < 1540) {
+                    state.autoClosedParallel = false;
                     closeStudyDock();
                 }
             });
