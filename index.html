@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LexFlow - Text Flow Workspace</title>
-    <!-- PWA App Manifest, Theme Color & Android/iOS Home Screen Icon -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="LexFlow">
     <link rel="apple-touch-icon" href="./lexflow-icon.png">
     <link rel="icon" type="image/png" href="./lexflow-icon.png">
@@ -32452,7 +32451,7 @@ function showContextMenu(x, y) {
         μεσον: ['between', 'midst', 'middle'], ανα: ['between', 'among'],
         ο: ['the'], η: ['the'], το: ['the'],
         αρχη: ['beginning', 'start', 'first', 'origin', 'head', 'heads', 'headwater', 'headwaters', 'branch', 'branches', 'source'],
-        αφοριζω: ['separate', 'separated', 'divide', 'divided', 'branch', 'branched', 'part', 'parted', 'split'],,
+        αφοριζω: ['separate', 'separated', 'divide', 'divided', 'branch', 'branched', 'part', 'parted', 'split', 'set'],
         ποιεω: ['make', 'made', 'create', 'created', 'do', 'did', 'done', 'form', 'formed'],
         κτιζω: ['create', 'created', 'make', 'made'],
         θεος: ['god', 'gods', 'lord'], κυριος: ['lord', 'master'],
@@ -32862,6 +32861,19 @@ function showContextMenu(x, y) {
         return null;
     }
 
+    const memMaculaOt = new Map();
+    async function getCachedMaculaOtBook(bookNum) {
+        if (memMaculaOt.has(bookNum)) return memMaculaOt.get(bookNum);
+        let data = null;
+        try {
+            if (typeof window.getCachedFileData === 'function') {
+                data = await window.getCachedFileData(`lf_macula_book_v1_ot_${bookNum}`);
+            }
+        } catch (e) {}
+        memMaculaOt.set(bookNum, data || null);
+        return data || null;
+    }
+
     // Read English BSB chapter from #editor first, or fetch cleanly from bolls.life if switching books
     async function getEnglishBsbChapter(bookNum, chapNum) {
         const out = {};
@@ -32988,16 +33000,19 @@ function showContextMenu(x, y) {
     // =========================================================================
     // PART 3: 3-WAY ALIGNMENT GRAPH (ENGLISH <-> HEBREW <-> GREEK PER VERSE)
     // =========================================================================
-    function buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows) {
+    function buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows, maculaVerseWords) {
         // Links:
         //   hebToGrk[hIdx] = Set(gIdx), grkToHeb[gIdx] = Set(hIdx)
         //   grkToEn[gIdx]  = Set(eIdx), enToGrk[eIdx]  = Set(gIdx)
-        //   hebMeta[hIdx]  = { catssRows: [], flag, notes }
-        //   grkMeta[gIdx]  = { catssRows: [], flag, notes }
+        //   hebToEn[hIdx]  = Set(eIdx), enToHeb[eIdx]  = Set(hIdx)
+        //   hebMeta[hIdx]  = { notes, flag }
+        //   grkMeta[gIdx]  = { notes, flag }
         const hebToGrk = hebWords.map(() => new Set());
         const grkToHeb = grkTuples.map(() => new Set());
         const grkToEn = grkTuples.map(() => new Set());
         const enToGrk = enWords.map(() => new Set());
+        const hebToEn = hebWords.map(() => new Set());
+        const enToHeb = enWords.map(() => new Set());
         const hebMeta = hebWords.map(() => ({ notes: [], flag: '' }));
         const grkMeta = grkTuples.map(() => ({ notes: [], flag: '' }));
 
@@ -33062,7 +33077,6 @@ function showContextMenu(x, y) {
                     }
                 }
                 if (hit === -1 && hCur < wlcCons.length) {
-                    // Fallback when Ketiv/Qere differs slightly in spelling
                     hit = hCur;
                 }
 
@@ -33081,34 +33095,102 @@ function showContextMenu(x, y) {
             });
         }
 
-        // 2. Greek <-> English alignment via gloss + synonym bridge
+        // 2. 3-Layer Automatic English <-> Hebrew <-> Greek Alignment
         const enParsed = enWords.map((raw, idx) => {
             const lower = raw.toLowerCase().replace(/[^a-z']/g, '');
             return { raw, lower, stem: stemEn(lower), idx };
         });
 
-        const getTerms = (tuple) => {
-            const [w, l, m, g] = tuple;
-            const set = new Set();
-            if (g) {
-                String(g).replace(/\([^)]*\)/g, ' ').split(/[,;/|]+/).forEach((part) => {
+        const HEB_DEF_STOP = new Set([
+            'a', 'an', 'the', 'to', 'of', 'in', 'or', 'and', 'for', 'by', 'with', 'from', 'on', 'at', 'as', 'be',
+            'is', 'are', 'was', 'were', 'it', 'its', 'that', 'this', 'i', 'e', 'etc', 'fig', 'lit', 'also',
+            'used', 'only', 'properly', 'specifically', 'generally', 'especially', 'prim', 'root', 'compare',
+            'from', 'unused', 'same', 'word', 'meaning', 'sense', 'often', 'sometimes', 'usually', 'plural',
+            'singular', 'causatively', 'intensively', 'metaphorically', 'hence', 'thus', 'one', 'any'
+        ]);
+
+        const addGlossWordsToSet = (rawStr, targetSet, skipStop) => {
+            if (!rawStr) return;
+            String(rawStr)
+                .replace(/\{[^}]*\}/g, ' ')
+                .replace(/\([^)]*\)/g, ' ')
+                .replace(/\[[^\]]*\]/g, ' ')
+                .split(/[,;/|:.!?]+/)
+                .forEach((part) => {
                     part.trim().toLowerCase().replace(/^to\s+/, '').split(/\s+/).forEach((tok) => {
                         const clean = tok.replace(/[^a-z']/g, '');
-                        if (clean) { set.add(clean); const st = stemEn(clean); if (st) set.add(st); }
+                        if (!clean || clean.length < 2) return;
+                        if (skipStop && HEB_DEF_STOP.has(clean)) return;
+                        targetSet.add(clean);
+                        const st = stemEn(clean);
+                        if (st && st.length >= 2) targetSet.add(st);
                     });
                 });
+        };
+
+        // Layer 1: Direct MACULA BSB Glosses mapped to WLC Hebrew tokens (exact BSB alignment when cached)
+        const hebMaculaTerms = hebWords.map(() => new Set());
+        if (Array.isArray(maculaVerseWords) && maculaVerseWords.length && hebWords.length) {
+            const wlcCons = hebWords.map((w) => normHeb(w[0]));
+            let hCursor = 0;
+            maculaVerseWords.forEach((mw) => {
+                if (!mw || !mw.gloss) return;
+                const mCons = normHeb(mw.surface || '');
+                let hit = -1;
+                if (mCons) {
+                    for (let h = hCursor; h <= Math.min(wlcCons.length - 1, hCursor + 4); h++) {
+                        if (wlcCons[h] === mCons || wlcCons[h].includes(mCons) || mCons.includes(wlcCons[h])) {
+                            hit = h; break;
+                        }
+                    }
+                }
+                if (hit !== -1) {
+                    addGlossWordsToSet(mw.gloss, hebMaculaTerms[hit], false);
+                    hCursor = hit;
+                }
+            });
+        }
+
+        // Layer 2A: Hebrew Strong's Dictionary terms (H1-H8674) for every WLC Hebrew token
+        const hebDictTerms = hebWords.map((wTuple, hi) => {
+            const set = new Set();
+            const lemmaRaw = String((wTuple && wTuple[1]) || '');
+            const morphRaw = String((wTuple && wTuple[2]) || '');
+            if (typeof strongsHebrewDictionary !== 'undefined' && lemmaRaw) {
+                const nums = lemmaRaw.match(/\d{1,4}/g) || [];
+                nums.forEach((digits) => {
+                    const code = 'H' + parseInt(digits, 10);
+                    const entry = strongsHebrewDictionary[code] || strongsHebrewDictionary['H' + digits];
+                    if (entry) {
+                        addGlossWordsToSet(entry.kjv_def, set, true);
+                        addGlossWordsToSet(entry.strongs_def, set, true);
+                    }
+                });
             }
+            // Add common Hebrew prefix meanings (c=and, b=in, l=to/for, m=from, d=the)
+            if (/^H?C\b|\bC\//i.test(morphRaw) || /\bc\//i.test(lemmaRaw)) set.add('and');
+            if (/\bb\//i.test(lemmaRaw)) { set.add('in'); set.add('into'); set.add('on'); set.add('with'); }
+            if (/\bl\//i.test(lemmaRaw)) { set.add('to'); set.add('for'); set.add('into'); }
+            if (/\bm\//i.test(lemmaRaw)) { set.add('from'); set.add('out'); set.add('of'); }
+            if (/\bd\//i.test(lemmaRaw)) set.add('the');
+            return set;
+        });
+
+        // Layer 2B: Greek LXX gloss + synonym terms
+        const grkTermsCache = grkTuples.map((tuple) => {
+            const [w, l, m, g] = tuple;
+            const set = new Set();
+            if (g) addGlossWordsToSet(g, set, false);
             const nl = normGreek(l);
             const nw = normGreek(w);
             if (nl && GRK_SYN[nl]) GRK_SYN[nl].forEach((t) => { set.add(t); set.add(stemEn(t)); });
             if (nw && GRK_SYN[nw]) GRK_SYN[nw].forEach((t) => { set.add(t); set.add(stemEn(t)); });
             if (/^RA\b|^T\b/i.test(m || '')) set.add('the');
             return set;
-        };
+        });
 
-        const scorePair = (tuple, gi, eObj) => {
-            const terms = getTerms(tuple);
-            if (!terms.size || !eObj.lower) return 0;
+        const scoreTermSet = (terms, tokenIdx, totalTokens, eObj, weightBoost) => {
+            if (!terms || !terms.size || !eObj.lower) return 0;
             let base = 0;
             if (terms.has(eObj.lower)) base = EN_STOP.has(eObj.lower) ? 1.5 : 4.2;
             else if (eObj.stem && terms.has(eObj.stem)) base = EN_STOP.has(eObj.lower) ? 1.2 : 3.5;
@@ -33118,27 +33200,81 @@ function showContextMenu(x, y) {
                 }
             }
             if (!base) return 0;
-            const gPos = grkTuples.length > 1 ? gi / (grkTuples.length - 1) : 0.5;
+            const tPos = totalTokens > 1 ? tokenIdx / (totalTokens - 1) : 0.5;
             const ePos = enParsed.length > 1 ? eObj.idx / (enParsed.length - 1) : 0.5;
-            return base + Math.max(0, 1.15 - Math.abs(gPos - ePos) * 1.4);
+            return base + (weightBoost || 0) + Math.max(0, 1.15 - Math.abs(tPos - ePos) * 1.4);
         };
 
-        // Pass A: non-articles first
+        const linkEnAndHeb = (ei, hi) => {
+            enToHeb[ei].add(hi);
+            hebToEn[hi].add(ei);
+        };
+        const linkEnAndGrk = (ei, gi) => {
+            enToGrk[ei].add(gi);
+            grkToEn[gi].add(ei);
+        };
+
+        // Pass 1: MACULA exact BSB gloss -> Hebrew matching (highest precision)
+        hebMaculaTerms.forEach((mTerms, hi) => {
+            if (!mTerms.size) return;
+            enParsed.forEach((eObj) => {
+                if (!eObj.lower || EN_STOP.has(eObj.lower)) return;
+                const sc = scoreTermSet(mTerms, hi, hebWords.length, eObj, 1.5);
+                if (sc >= 4.2) linkEnAndHeb(eObj.idx, hi);
+            });
+        });
+
+        // Pass 2: Greek non-articles -> English matching
         grkTuples.forEach((tuple, gi) => {
             const isArt = /^RA\b|^T\b/i.test(tuple[2] || '') || normGreek(tuple[1]) === 'ο';
             if (isArt) return;
             let best = null;
             enParsed.forEach((eObj) => {
-                const sc = scorePair(tuple, gi, eObj);
+                const sc = scoreTermSet(grkTermsCache[gi], gi, grkTuples.length, eObj, 0);
                 if (sc > 0 && (!best || sc > best.sc)) best = { ei: eObj.idx, sc };
             });
-            if (best) {
-                grkToEn[gi].add(best.ei);
-                enToGrk[best.ei].add(gi);
-            }
+            if (best) linkEnAndGrk(best.ei, gi);
         });
 
-        // Pass B: articles anchor to "the" right before their governed noun
+        // Pass 3: Hebrew Strong's -> English matching for every English content word still unlinked
+        //         (catches OT Hebrew idioms & modern BSB words whose LXX gloss differs!)
+        const EXTRA_EN_STOP = new Set([
+            'and', 'the', 'a', 'an', 'of', 'to', 'in', 'into', 'for', 'from', 'on', 'upon', 'at', 'by', 'with',
+            'as', 'be', 'is', 'am', 'are', 'was', 'were', 'been', 'being', 'it', 'its', 'that', 'this', 'these',
+            'those', 'there', 'then', 'but', 'or', 'nor', 'so', 'not', 'no', 'if', 'his', 'her', 'their', 'my',
+            'your', 'our', 'he', 'she', 'they', 'we', 'you', 'i', 'me', 'him', 'them', 'us', 'who', 'which', 'what'
+        ]);
+
+        enParsed.forEach((eObj) => {
+            if (!eObj.lower || enToHeb[eObj.idx].size > 0 || enToGrk[eObj.idx].size > 0) return;
+            if (EXTRA_EN_STOP.has(eObj.lower)) return;
+
+            let bestHeb = null;
+            for (let hi = 0; hi < hebWords.length; hi++) {
+                const sc = scoreTermSet(hebDictTerms[hi], hi, hebWords.length, eObj, 0);
+                if (sc >= 2.6 && (!bestHeb || sc > bestHeb.sc)) {
+                    bestHeb = { hi, sc };
+                }
+            }
+            if (bestHeb) {
+                linkEnAndHeb(eObj.idx, bestHeb.hi);
+                return;
+            }
+
+            // Secondary reverse check against Greek glosses for unmatched English content words
+            let bestGrk = null;
+            for (let gi = 0; gi < grkTuples.length; gi++) {
+                const isArt = /^RA\b|^T\b/i.test(grkTuples[gi][2] || '') || normGreek(grkTuples[gi][1]) === 'ο';
+                if (isArt) continue;
+                const sc = scoreTermSet(grkTermsCache[gi], gi, grkTuples.length, eObj, 0);
+                if (sc >= 2.4 && (!bestGrk || sc > bestGrk.sc)) {
+                    bestGrk = { gi, sc };
+                }
+            }
+            if (bestGrk) linkEnAndGrk(eObj.idx, bestGrk.gi);
+        });
+
+        // Pass 4: Greek articles anchor to "the" right before their governed noun
         grkTuples.forEach((tuple, gi) => {
             const isArt = /^RA\b|^T\b/i.test(tuple[2] || '') || normGreek(tuple[1]) === 'ο';
             if (!isArt || gi + 1 >= grkTuples.length) return;
@@ -33146,11 +33282,81 @@ function showContextMenu(x, y) {
             if (nextEn.length) {
                 const head = nextEn[0];
                 if (head > 0 && enParsed[head - 1].lower === 'the') {
-                    grkToEn[gi].add(head - 1);
-                    enToGrk[head - 1].add(gi);
+                    linkEnAndGrk(head - 1, gi);
                 }
             }
         });
+
+        // Layer 3: Anchor-Based Monotonic Gap Matching (eliminates orphan English content words
+        //          like BSB "branched" sitting right between two already-anchored words!)
+        const getEnHebAnchor = (ei) => {
+            if (enToHeb[ei].size) return Array.from(enToHeb[ei])[0];
+            for (const gi of enToGrk[ei]) {
+                if (grkToHeb[gi] && grkToHeb[gi].size) return Array.from(grkToHeb[gi])[0];
+            }
+            return -1;
+        };
+
+        const hebHasAnyEn = (hi) => {
+            if (hebToEn[hi].size) return true;
+            for (const gi of hebToGrk[hi]) {
+                if (grkToEn[gi] && grkToEn[gi].size) return true;
+            }
+            return false;
+        };
+
+        const isHebMinorParticle = (hi) => {
+            const wTuple = hebWords[hi];
+            if (!wTuple) return true;
+            const l = String(wTuple[1] || '');
+            const m = String(wTuple[2] || '');
+            // Direct object marker (H853), standalone conjunction, standalone article/preposition
+            if (/\b853\b/.test(l)) return true;
+            if (/^H?(C|To|Td|R)$/.test(m)) return true;
+            return false;
+        };
+
+        if (hebWords.length > 0 && enParsed.length > 0) {
+            for (let ei = 0; ei < enParsed.length; ei++) {
+                const eObj = enParsed[ei];
+                if (!eObj.lower || eObj.lower.length < 3 || EXTRA_EN_STOP.has(eObj.lower)) continue;
+                if (enToHeb[ei].size > 0 || enToGrk[ei].size > 0) continue;
+
+                // Find nearest anchored English tokens on the left & right
+                let leftH = 0;
+                for (let l = ei - 1; l >= 0; l--) {
+                    const ah = getEnHebAnchor(l);
+                    if (ah !== -1) { leftH = ah; break; }
+                }
+                let rightH = hebWords.length - 1;
+                for (let r = ei + 1; r < enParsed.length; r++) {
+                    const ah = getEnHebAnchor(r);
+                    if (ah !== -1) { rightH = ah; break; }
+                }
+
+                const lo = Math.min(leftH, rightH);
+                const hiBound = Math.max(leftH, rightH);
+                const ePos = enParsed.length > 1 ? ei / (enParsed.length - 1) : 0.5;
+
+                // Collect unmatched Hebrew content tokens inside [lo..hiBound] (or ±1 around expected slot)
+                const candidates = [];
+                for (let h = lo; h <= hiBound; h++) {
+                    if (!hebHasAnyEn(h) && !isHebMinorParticle(h)) {
+                        candidates.push(h);
+                    }
+                }
+                if (candidates.length > 0 && candidates.length <= 3) {
+                    let bestH = candidates[0];
+                    let bestDist = Infinity;
+                    candidates.forEach((h) => {
+                        const hPos = hebWords.length > 1 ? h / (hebWords.length - 1) : 0.5;
+                        const d = Math.abs(hPos - ePos);
+                        if (d < bestDist) { bestDist = d; bestH = h; }
+                    });
+                    linkEnAndHeb(ei, bestH);
+                }
+            }
+        }
 
         // Helper: given a clicked/hovered token in ANY column, compute the full 3-way highlight set
         function resolveTriad(lang, idx) {
@@ -33160,23 +33366,29 @@ function showContextMenu(x, y) {
 
             if (lang === 'heb') {
                 hebSet.add(idx);
+                (hebToEn[idx] || []).forEach((ei) => enSet.add(ei));
                 (hebToGrk[idx] || []).forEach((gi) => {
                     grkSet.add(gi);
                     (grkToEn[gi] || []).forEach((ei) => enSet.add(ei));
                 });
             } else if (lang === 'grk') {
                 grkSet.add(idx);
+                (grkToEn[idx] || []).forEach((ei) => enSet.add(ei));
                 (grkToHeb[idx] || []).forEach((hi) => {
                     hebSet.add(hi);
+                    (hebToEn[hi] || []).forEach((ei) => enSet.add(ei));
                     // Also show sibling Greek words from the same Hebrew word
                     (hebToGrk[hi] || []).forEach((sgi) => {
                         grkSet.add(sgi);
                         (grkToEn[sgi] || []).forEach((ei) => enSet.add(ei));
                     });
                 });
-                (grkToEn[idx] || []).forEach((ei) => enSet.add(ei));
             } else if (lang === 'en') {
                 enSet.add(idx);
+                (enToHeb[idx] || []).forEach((hi) => {
+                    hebSet.add(hi);
+                    (hebToGrk[hi] || []).forEach((gi) => grkSet.add(gi));
+                });
                 (enToGrk[idx] || []).forEach((gi) => {
                     grkSet.add(gi);
                     (grkToHeb[gi] || []).forEach((hi) => {
@@ -33471,10 +33683,11 @@ function showContextMenu(x, y) {
         // Clear memoized CATSS in case user just imported a new .par book
         memCatss.delete(triState.bookNum);
 
-        const [lxxBook, catssBook, wlcBook] = await Promise.all([
+        const [lxxBook, catssBook, wlcBook, maculaOtBook] = await Promise.all([
             getLxxBook(triState.bookNum),
             getCatssBook(triState.bookNum),
-            getWlcBook(triState.bookNum)
+            getWlcBook(triState.bookNum),
+            getCachedMaculaOtBook(triState.bookNum)
         ]);
 
         // Populate chapter dropdown from WLC or LXX
@@ -33544,7 +33757,8 @@ function showContextMenu(x, y) {
                 hebWords = Array.from(groups.values()).map((parts) => [parts.join('').replace(/־(?=[^\s])/g, ''), '', '', 0]);
             }
 
-            const graph = buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows);
+            const maculaVerseWords = (maculaOtBook && maculaOtBook.verses) ? (maculaOtBook.verses[`${triState.chapter}_${vNum}`] || null) : null;
+            const graph = buildVerseAlignmentGraph(enWords, hebWords, grkTuples, catssRows, maculaVerseWords);
 
             const rowEl = document.createElement('div');
             rowEl.className = 'lf-tri-vrow';
