@@ -1274,7 +1274,49 @@
         };
     }
 
+   let lastTriClickedRef = null;
+
+    function readRefFromTriStudio(clickedEl) {
+        const ov = document.getElementById('lfTriStudioOverlay');
+        if (!ov || !ov.classList.contains('open')) return null;
+        if (clickedEl && !ov.contains(clickedEl)) return null;
+
+        const bSel = document.getElementById('lfTriBookSel');
+        const cSel = document.getElementById('lfTriChapSel');
+        const bookNum = bSel ? parseInt(bSel.value, 10) : 0;
+        const chapter = cSel ? parseInt(cSel.value, 10) : 0;
+        const book = BOOKS.find((b) => b.num === bookNum);
+        if (!book || !chapter) return null;
+
+        let verse = null;
+        if (clickedEl) {
+            const tok = clickedEl.closest && clickedEl.closest('.lf-tri-tok[data-v]');
+            if (tok) verse = parseInt(tok.dataset.v, 10) || null;
+        }
+        if (verse == null) {
+            const pinnedTok = ov.querySelector('.lf-tri-tok.tri-pin[data-v]');
+            if (pinnedTok) verse = parseInt(pinnedTok.dataset.v, 10) || null;
+        }
+        return {
+            book,
+            chapter,
+            verse,
+            label: verse ? `${book.name} ${chapter}:${verse}` : `${book.name} ${chapter}`
+        };
+    }
+
     function getCurrentWorkspaceRef() {
+        const liveTriRef = readRefFromTriStudio(null);
+        if (liveTriRef) {
+            if (liveTriRef.verse != null) return liveTriRef;
+            if (lastTriClickedRef && (Date.now() - lastTriClickedRef.ts) < 120000 &&
+                lastTriClickedRef.ref.book.num === liveTriRef.book.num &&
+                lastTriClickedRef.ref.chapter === liveTriRef.chapter) {
+                return lastTriClickedRef.ref;
+            }
+            return liveTriRef;
+        }
+
         const liveLxxRef = readRefFromLxxDrawer(null);
         if (lastLxxClickedRef && (Date.now() - lastLxxClickedRef.ts) < 120000) {
             if (!liveLxxRef || (liveLxxRef.book.num === lastLxxClickedRef.ref.book.num && liveLxxRef.chapter === lastLxxClickedRef.ref.chapter)) {
@@ -1307,6 +1349,15 @@
     }
 
     document.addEventListener('click', (e) => {
+        const ov = document.getElementById('lfTriStudioOverlay');
+        if (ov && ov.classList.contains('open') && ov.contains(e.target)) {
+            const triRef = readRefFromTriStudio(e.target);
+            if (triRef && triRef.verse != null) {
+                lastTriClickedRef = { ref: triRef, ts: Date.now() };
+            }
+            return;
+        }
+
         // Fast bailout (<0.01ms) for all taps outside the open Tagged LXX drawer
         const drawer = document.getElementById('lfLxxDrawer');
         if (!drawer || !drawer.classList.contains('open') || !drawer.contains(e.target)) return;
@@ -1322,7 +1373,6 @@
         }
         lastLxxClickedRef = { ref, ts: Date.now() };
     }, true);
-
     function getEntryContentSignature(container) {
         if (!container) return '';
         let sample = '';
