@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 5 MODULE (v5): SAMSUNG TABLET TAP ENGINE + PORTRAIT SPLIT-SCREEN + ONE-TAP PWA INSTALLER === */
+/* === LEXFLOW PHASE 5 MODULE (v8): SAMSUNG TABLET TAP ENGINE + PORTRAIT SPLIT-SCREEN + LONG-PRESS LEXICON MENU === */
 (function () {
     if (window.__lfTabletModeLoaded) return;
     window.__lfTabletModeLoaded = true;
@@ -51,6 +51,10 @@
         lxxSheetPct: parseInt(localStorage.getItem('lexflow_lxx_sheet_h') || '48', 10) || 48,
         lastTouchTs: 0,
         lastTappedOrigTok: null,
+        longPressActive: false,
+        longPressUntil: 0,
+        lastLongPressWord: '',
+        lastLongPressBlock: null,
         topBarExpanded: false,
         bottomBarCollapsed: localStorage.getItem('lexflow_tablet_bar_collapsed') === 'true',
         // Active draggable cursor state
@@ -955,8 +959,9 @@
             touch-action: manipulation;
         }
 
-        /* Portrait Side-by-Side guarantee across portrait orientations & widths <= 1100px */
-        @media (max-width: 1100px) and (orientation: portrait), (max-width: 820px) {
+        /* Portrait Side-by-Side guarantee across portrait orientations & touch/tablet viewports */
+        @media (max-width: 1280px) and (orientation: portrait), (max-width: 920px) {
+            html.lf-portrait-split-bottom body.lf-parallel-open #parallelOriginalPane:not(.hidden),
             html.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) {
                 display: flex !important;
                 flex-direction: column !important;
@@ -997,6 +1002,97 @@
                 touch-action: none;
                 flex-shrink: 0;
             }
+        }
+
+
+        /* =====================================================================
+           J. LONG-PRESS LEXICON PICKER (No Whole-Verse Highlight, No Text Flow
+              Flip, No Break Line Menu on Long Press)
+           ===================================================================== */
+        html.lf-touch-device #flowEditor > div.lf-tablet-active-block {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html.lf-touch-device.lf-long-pressing #flowEditor,
+        html.lf-touch-device.lf-long-pressing #flowEditor * {
+            -webkit-touch-callout: none !important;
+        }
+
+        #lfLongPressLexPopover {
+            position: fixed;
+            z-index: 2147483540;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 220px;
+            max-width: min(320px, calc(100vw - 24px));
+            padding: 12px;
+            border-radius: 16px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1.5px solid rgba(99, 102, 241, 0.45);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.32);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        html.dark #lfLongPressLexPopover {
+            background: #18181b;
+            color: #f4f4f5;
+            border-color: rgba(129, 140, 248, 0.55);
+        }
+        #lfLongPressLexPopover.open {
+            display: flex;
+        }
+        .lf-lp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .lf-lp-word {
+            color: #4f46e5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        html.dark .lf-lp-word {
+            color: #a5b4fc;
+        }
+        .lf-lp-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .lf-lp-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 11px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        html.dark .lf-lp-btn {
+            background: #27272a;
+            color: #f4f4f5;
+            border-color: #3f3f46;
+        }
+        .lf-lp-btn.lf-lp-primary {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #ffffff;
+        }
+        .lf-lp-btn.lf-lp-teal {
+            background: #0d9488;
+            border-color: #0d9488;
+            color: #ffffff;
         }
 
         .lf-tab-sep {
@@ -1751,7 +1847,7 @@
             state.activeBlock.classList.remove('lf-tablet-active-block');
         }
         state.activeBlock = blk;
-        if (blk && state.isTouch) blk.classList.add('lf-tablet-active-block');
+        if (blk && !state.isTouch) blk.classList.add('lf-tablet-active-block');
         try { window.lastSelectedBlock = blk; } catch (err) {}
     }
 
@@ -2034,6 +2130,12 @@
                     return;
                 }
 
+                // Never open Break Line / cursor handles during or right after a long-press word lookup
+                if (state.longPressActive || Date.now() < state.longPressUntil) {
+                    hideAllHandles();
+                    return;
+                }
+
                 // On tablets with Handles ON + Read Lock ON, defer cursor handle drop to next frame so tap response stays instant
                 if (state.isTouch && state.handlesEnabled && state.readLock) {
                     const tx = e.clientX, ty = e.clientY;
@@ -2204,6 +2306,10 @@
 
         document.documentElement.classList.toggle('lf-portrait-split-bottom', clean === 'bottom');
         document.documentElement.classList.toggle('lf-portrait-split-right', clean === 'right');
+        const pPane = document.getElementById('parallelOriginalPane');
+        if (pPane && !pPane.classList.contains('hidden')) {
+            document.body.classList.add('lf-parallel-open');
+        }
 
         document.querySelectorAll('.lf-portrait-split-toggle').forEach((btn) => {
             btn.textContent = clean === 'right' ? '⬓ Bottom' : '◧ Right';
@@ -2608,6 +2714,255 @@
             new MutationObserver(syncPane).observe(pane, { attributes: true, attributeFilter: ['class', 'style'] });
             syncPane();
         }
+
+        // Direct listener on Side-by-Side Original buttons so portrait state updates instantaneously
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('#sidebarParallelBtn, #toggleParallelPaneBtn, [onclick*="toggleParallelOriginalPane"]');
+            if (!btn) return;
+            setTimeout(() => {
+                const p = document.getElementById('parallelOriginalPane');
+                if (p && !p.classList.contains('hidden')) {
+                    enhanceParallelPaneForPortrait();
+                    document.body.classList.add('lf-parallel-open');
+                    applyPortraitSplitMode(state.portraitSplitMode, false);
+                }
+            }, 30);
+        }, true);
+    }
+
+
+    // -------------------------------------------------------------------------
+    // 13. LONG-PRESS WORD -> LEXICON CHOICES (No Whole-Verse Highlight, No
+    //     Text Flow Auto-On, No Break Line Menu on Long Press)
+    // -------------------------------------------------------------------------
+    function ensureLongPressPopover() {
+        let pop = document.getElementById('lfLongPressLexPopover');
+        if (pop) return pop;
+
+        pop = document.createElement('div');
+        pop.id = 'lfLongPressLexPopover';
+        pop.innerHTML = `
+            <div class="lf-lp-header">
+                <span class="lf-lp-word" id="lfLpWordLabel">Word</span>
+                <button type="button" id="lfLpCloseBtn" style="border:none;background:transparent;font-size:15px;font-weight:800;cursor:pointer;color:inherit;padding:0 4px;" title="Close">✕</button>
+            </div>
+            <div class="lf-lp-actions">
+                <button type="button" id="lfLpGreekBtn" class="lf-lp-btn lf-lp-primary">
+                    <span>Greek Lexicon (Thayer's)</span>
+                    <span>→</span>
+                </button>
+                <button type="button" id="lfLpHebrewBtn" class="lf-lp-btn lf-lp-teal">
+                    <span>Hebrew Lexicon (BDB)</span>
+                    <span>→</span>
+                </button>
+                <button type="button" id="lfLpDockBtn" class="lf-lp-btn">
+                    <span>Open in Study Dock</span>
+                    <span>→</span>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(pop);
+
+        pop.querySelector('#lfLpCloseBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideLongPressPopover();
+        });
+
+        pop.querySelector('#lfLpGreekBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const w = state.lastLongPressWord || state.selectedWord || '';
+            const blk = state.lastLongPressBlock || state.activeBlock;
+            hideLongPressPopover();
+            hideAllHandles();
+            if (typeof window.openThayersModal === 'function') window.openThayersModal(w, blk);
+            else if (typeof window.lfOpenStudyDock === 'function') window.lfOpenStudyDock('lexicon', 'greek');
+        });
+
+        pop.querySelector('#lfLpHebrewBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const w = state.lastLongPressWord || state.selectedWord || '';
+            const blk = state.lastLongPressBlock || state.activeBlock;
+            hideLongPressPopover();
+            hideAllHandles();
+            if (typeof window.openBdbModal === 'function') window.openBdbModal(w, blk);
+            else if (typeof window.lfOpenStudyDock === 'function') window.lfOpenStudyDock('lexicon', 'hebrew');
+        });
+
+        pop.querySelector('#lfLpDockBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const w = state.lastLongPressWord || state.selectedWord || '';
+            const bookNum = getActiveBookNum();
+            const sub = /[\u0590-\u05FF]/.test(w) || (!/[\u0370-\u03FF\u1F00-\u1FFF]/.test(w) && bookNum <= 39) ? 'hebrew' : 'greek';
+            hideLongPressPopover();
+            hideAllHandles();
+            if (typeof window.lfOpenStudyDock === 'function') {
+                window.lfOpenStudyDock('lexicon', sub);
+                const inpId = sub === 'hebrew' ? 'bdbSearchInput' : 'thayersSearchInput';
+                const inp = document.getElementById(inpId);
+                if (inp && w) {
+                    inp.value = w;
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+
+        return pop;
+    }
+
+    function hideLongPressPopover() {
+        const pop = document.getElementById('lfLongPressLexPopover');
+        if (pop) pop.classList.remove('open');
+        state.longPressActive = false;
+    }
+
+    function showLongPressPopoverForSelection(word, blk, anchorX, anchorY) {
+        if (!word) return;
+        const pop = ensureLongPressPopover();
+        state.lastLongPressWord = word;
+        state.lastLongPressBlock = blk || state.activeBlock;
+
+        const label = pop.querySelector('#lfLpWordLabel');
+        if (label) label.textContent = `“${word}”`;
+
+        // Never show Break Line / cursor / indent handles on a long-press word lookup
+        hideAllHandles();
+
+        pop.classList.add('open');
+        const rect = pop.getBoundingClientRect();
+        const w = rect.width || 240;
+        const h = rect.height || 155;
+        const x = Math.max(12, Math.min(window.innerWidth - w - 12, (anchorX || window.innerWidth / 2) - w / 2));
+        let y = (anchorY || window.innerHeight / 2) - h - 18;
+        if (y < 64) y = Math.min(window.innerHeight - h - 16, (anchorY || 120) + 28);
+        pop.style.left = `${Math.round(x)}px`;
+        pop.style.top = `${Math.round(y)}px`;
+    }
+
+    function extractWordAtPoint(x, y, block) {
+        if (!block) return '';
+        try {
+            let range = null;
+            if (document.caretRangeFromPoint) {
+                range = document.caretRangeFromPoint(x, y);
+            } else if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(x, y);
+                if (pos && pos.offsetNode) {
+                    range = document.createRange();
+                    range.setStart(pos.offsetNode, pos.offset);
+                    range.collapse(true);
+                }
+            }
+            if (range && range.startContainer && range.startContainer.nodeType === Node.TEXT_NODE && block.contains(range.startContainer)) {
+                const txt = range.startContainer.nodeValue || '';
+                let start = Math.min(range.startOffset, txt.length);
+                let end = start;
+                while (start > 0 && !/[\s,.;:!?“”"'()\[\]—–]/.test(txt[start - 1])) start--;
+                while (end < txt.length && !/[\s,.;:!?“”"'()\[\]—–]/.test(txt[end])) end++;
+                const candidate = cleanWord(txt.slice(start, end));
+                if (candidate) return candidate;
+            }
+        } catch (e) {}
+        return '';
+    }
+
+    function installLongPressLexiconHandler() {
+        if (!state.isTouch) return;
+        const ed = document.getElementById('flowEditor');
+        if (!ed || ed.dataset.lfLongPressBound) return;
+        ed.dataset.lfLongPressBound = '1';
+
+        let pressTimer = 0;
+        let startX = 0;
+        let startY = 0;
+        let startBlk = null;
+        let didLongPress = false;
+
+        const clearPressTimer = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = 0;
+            }
+            document.documentElement.classList.remove('lf-long-pressing');
+        };
+
+        ed.addEventListener('pointerdown', (e) => {
+            if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+            const blk = e.target && e.target.closest && e.target.closest('div[data-book-num][data-chapter-num][data-verse-num]');
+            if (!blk) return;
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startBlk = blk;
+            didLongPress = false;
+            state.longPressActive = false;
+
+            clearPressTimer();
+            document.documentElement.classList.add('lf-long-pressing');
+
+            pressTimer = setTimeout(() => {
+                pressTimer = 0;
+                didLongPress = true;
+                state.longPressActive = true;
+                state.longPressUntil = Date.now() + 1400;
+                state.activeBlock = startBlk;
+
+                // Never open Break Line / cursor / indent handles on long press
+                hideAllHandles();
+
+                const sel = window.getSelection();
+                const selWord = cleanWord(sel ? sel.toString() : '');
+                const hitWord = (selWord && selWord.length <= 36 && !/\s/.test(selWord))
+                    ? selWord
+                    : extractWordAtPoint(startX, startY, startBlk);
+
+                if (hitWord) {
+                    state.selectedWord = hitWord;
+                    updateTabletBarUI();
+                    showLongPressPopoverForSelection(hitWord, startBlk, startX, startY);
+                }
+            }, 460);
+        }, { passive: true });
+
+        ed.addEventListener('pointermove', (e) => {
+            if (!pressTimer) return;
+            if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
+                clearPressTimer();
+            }
+        }, { passive: true });
+
+        const onPressEnd = () => {
+            clearPressTimer();
+            if (didLongPress) {
+                state.longPressUntil = Date.now() + 900;
+            }
+        };
+        ed.addEventListener('pointerup', onPressEnd, { passive: true });
+        ed.addEventListener('pointercancel', onPressEnd, { passive: true });
+
+        // Prevent contextmenu or post-long-press click from opening Break Line menu or toggling Text Flow
+        ed.addEventListener('contextmenu', (e) => {
+            if (didLongPress || Date.now() < state.longPressUntil) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                hideAllHandles();
+            }
+        }, true);
+
+        ed.addEventListener('click', (e) => {
+            if (didLongPress || Date.now() < state.longPressUntil) {
+                e.stopImmediatePropagation();
+                hideAllHandles();
+                didLongPress = false;
+            }
+        }, true);
+
+        // Dismiss long-press popover when tapping outside it
+        document.addEventListener('pointerdown', (e) => {
+            const pop = document.getElementById('lfLongPressLexPopover');
+            if (!pop || !pop.classList.contains('open')) return;
+            if (e.target && e.target.closest && e.target.closest('#lfLongPressLexPopover')) return;
+            hideLongPressPopover();
+        }, { passive: true, capture: true });
     }
 
     function initTabletEngine() {
@@ -2624,6 +2979,7 @@
         injectCompactTopMenuToggle();
         setBottomBarCollapsed(state.bottomBarCollapsed);
         installFastModeAndParallelSync();
+        installLongPressLexiconHandler();
 
         if (!enhanceStudyDockForTouch()) {
             let tries = 0;
