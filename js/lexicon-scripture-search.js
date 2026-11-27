@@ -1455,7 +1455,14 @@
         }
         if (targetModalType !== 'lsj') {
             const lm = document.getElementById('lfLsjModalOverlay');
-            if (lm && lm.style.display !== 'none') lm.style.display = 'none';
+            if (lm) {
+                if (typeof window.lfCloseLsjModal === 'function') {
+                    window.lfCloseLsjModal();
+                } else {
+                    lm.classList.remove('open');
+                    lm.style.removeProperty('display');
+                }
+            }
         }
 
         bypassFlag[targetModalType] = true;
@@ -1489,9 +1496,11 @@
                 const lm = document.getElementById('lfLsjModalOverlay');
                 if (lm) {
                     lm.classList.remove('lf-docked-modal-host', 'hidden', 'lf-lsj-force-closed');
+                    if (lm.style.getPropertyValue('display') === 'none') lm.style.removeProperty('display');
                     if (lm.parentElement !== document.body) document.body.appendChild(lm);
                     lm.style.setProperty('z-index', '2147483500', 'important');
-                    lm.style.display = 'flex';
+                    lm.classList.add('open');
+                    if (getComputedStyle(lm).display === 'none') lm.style.display = 'flex';
                 } else if (typeof window.openLsjModal === 'function') {
                     window.openLsjModal(hit.headword);
                 }
