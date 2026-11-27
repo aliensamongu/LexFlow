@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 5 MODULE (v3): SAMSUNG ANDROID & IPAD PERFORMANCE + DRAGGABLE CURSOR & INDENT HANDLES === */
+/* === LEXFLOW PHASE 5 MODULE (v5): SAMSUNG TABLET TAP ENGINE + PORTRAIT SPLIT-SCREEN + ONE-TAP PWA INSTALLER === */
 (function () {
     if (window.__lfTabletModeLoaded) return;
     window.__lfTabletModeLoaded = true;
@@ -13,6 +13,23 @@
     const anyCoarse = !!(window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches);
     const hasTouchHardware = (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window);
     const isTouchDevice = anyCoarse || isAndroid || isIOS || hasTouchHardware;
+
+    // Capture native PWA install event immediately (before DOMContentLoaded)
+    let deferredInstallPrompt = null;
+    const isStandaloneApp = () => Boolean(
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true
+    );
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        updateInstallButtonsUI();
+    });
+    window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        updateInstallButtonsUI();
+        showToast('LexFlow installed! Open it anytime from your home screen.');
+    });
 
     const savedPerfPref = localStorage.getItem('lexflow_tablet_perf_mode');
     const savedHandlesPref = localStorage.getItem('lexflow_tablet_handles_on');
@@ -29,6 +46,11 @@
         selectedWord: '',
         sheetHeightPct: parseInt(localStorage.getItem('lexflow_tablet_sheet_h') || '50', 10) || 50,
         sheetExpanded: false,
+        portraitSplitMode: localStorage.getItem('lexflow_portrait_split_mode') === 'right' ? 'right' : 'bottom',
+        parallelSheetPct: parseInt(localStorage.getItem('lexflow_parallel_sheet_h') || '46', 10) || 46,
+        lxxSheetPct: parseInt(localStorage.getItem('lexflow_lxx_sheet_h') || '48', 10) || 48,
+        lastTouchTs: 0,
+        lastTappedOrigTok: null,
         // Active draggable cursor state
         cursorBlock: null,
         cursorNode: null,
@@ -548,6 +570,314 @@
             border-color: rgba(251, 191, 36, 0.45);
             color: #fef3c7;
         }
+
+        /* =====================================================================
+           F. NATIVE-APP TAP RESPONSIVENESS (Samsung Android & Touch Devices)
+           ===================================================================== */
+        html.lf-touch-device * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        html.lf-tablet-turbo .glass-panel,
+        html.lf-tablet-turbo .glass-subpanel,
+        html.lf-tablet-turbo .glass-control {
+            transition: none !important;
+        }
+        html.lf-touch-device button,
+        html.lf-touch-device [role="button"],
+        html.lf-touch-device .orig-word-token,
+        html.lf-touch-device .lf-lxx-word,
+        html.lf-touch-device .lf-dock-tab-btn,
+        html.lf-touch-device .lf-dock-sub-btn,
+        html.lf-touch-device .lf-tab-act-btn {
+            touch-action: manipulation !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Instant 0ms tactile press state triggered on pointerdown */
+        .lf-tap-pressed {
+            opacity: 0.72 !important;
+            transform: scale(0.96) !important;
+            transition: none !important;
+        }
+        /* Bigger, comfortable touch targets for original-language words on tablets */
+        html.lf-touch-device .orig-word-token,
+        html.lf-touch-device .lf-lxx-word {
+            padding: 2px 5px !important;
+            margin: 1px 2px !important;
+            border-radius: 6px !important;
+        }
+
+        /* =====================================================================
+           G. PORTRAIT SPLIT-SCREEN ENGINE (Bottom Half Default + 1-Tap Right Half!)
+           Works for Side-by-Side Original (#parallelOriginalPane), Tagged LXX (#lfLxxDrawer),
+           and Study Dock (#lfStudyDock) whenever viewport is Portrait / < 1024px!
+           ===================================================================== */
+        #lfParallelPortraitBar,
+        #lfLxxPortraitBar {
+            display: none;
+        }
+        .lf-split-mode-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            border: 1px solid rgba(99, 102, 241, 0.45);
+            background: rgba(238, 242, 255, 0.95);
+            color: #3730a3;
+            cursor: pointer;
+            white-space: nowrap;
+            touch-action: manipulation;
+        }
+        html.dark .lf-split-mode-pill {
+            background: rgba(49, 46, 129, 0.65);
+            color: #c7d2fe;
+            border-color: rgba(129, 140, 248, 0.55);
+        }
+
+        /* Active whenever viewport is narrow/portrait (< 1024px) */
+        @media (max-width: 1023px) {
+            /* --- 1. SIDE-BY-SIDE ORIGINAL (#parallelOriginalPane) --- */
+            /* 1A. Portrait BOTTOM HALF (Default) */
+            html.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) {
+                position: fixed !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                top: auto !important;
+                width: auto !important;
+                height: var(--lf-parallel-sheet-h, 46dvh) !important;
+                max-height: 82dvh !important;
+                z-index: 475 !important;
+                margin: 0 !important;
+                padding: 0 12px 12px 12px !important;
+                border-radius: 18px !important;
+                border: 1.5px solid rgba(59, 130, 246, 0.55) !important;
+                background: rgba(255, 255, 255, 0.99) !important;
+                box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.28) !important;
+                overflow: hidden !important;
+            }
+            html.dark.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) {
+                background: rgba(17, 24, 39, 0.99) !important;
+                border-color: rgba(96, 165, 250, 0.55) !important;
+            }
+            html.lf-portrait-split-bottom body.lf-parallel-open main {
+                padding-bottom: calc(var(--lf-parallel-sheet-h, 46dvh) + 28px) !important;
+            }
+            html.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) #lfParallelPortraitBar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 8px 4px 6px;
+                margin-bottom: 6px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+                cursor: row-resize;
+                touch-action: none;
+                flex-shrink: 0;
+            }
+            /* Hide bottom action bar while bottom split sheet is open so it never overlaps */
+            html.lf-portrait-split-bottom body.lf-parallel-open #lfTabletActionBar,
+            html.lf-portrait-split-bottom body.lf-lxx-split-open #lfTabletActionBar {
+                display: none !important;
+            }
+
+            /* 1B. Portrait RIGHT HALF (User toggled to Right!) */
+            html.lf-portrait-split-right body.lf-parallel-open #wordProcessorPane {
+                padding: 10px 8px !important;
+            }
+            html.lf-portrait-split-right #workspaceDualGrid.grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                gap: 10px !important;
+                align-items: start !important;
+            }
+            html.lf-portrait-split-right #parallelOriginalPane:not(.hidden) {
+                position: sticky !important;
+                top: 76px !important;
+                max-height: calc(100dvh - 150px) !important;
+                padding: 10px !important;
+                font-size: 0.92rem !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+            }
+            html.lf-portrait-split-right #parallelOriginalPane:not(.hidden) #lfParallelPortraitBar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                padding: 0 0 6px 0;
+                margin-bottom: 6px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+                flex-shrink: 0;
+            }
+            html.lf-portrait-split-right #parallelOriginalPane #lfParallelDragPill {
+                display: none !important;
+            }
+
+            /* --- 2. TAGGED SEPTUAGINT (#lfLxxDrawer) --- */
+            /* 2A. Portrait BOTTOM HALF (Default) */
+            html.lf-portrait-split-bottom #lfLxxDrawer.open {
+                position: fixed !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                top: auto !important;
+                width: auto !important;
+                max-width: none !important;
+                height: var(--lf-lxx-sheet-h, 48dvh) !important;
+                max-height: 84dvh !important;
+                border-radius: 18px !important;
+                z-index: 478 !important;
+                box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.30) !important;
+            }
+            html.lf-portrait-split-bottom #lfLxxDrawer.open .lf-lxx-resize-handle {
+                display: none !important;
+            }
+            html.lf-portrait-split-bottom #lfLxxDrawer.open #lfLxxPortraitBar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 7px 12px 5px;
+                background: #f0fdfa;
+                border-bottom: 1px solid #ccfbf1;
+                cursor: row-resize;
+                touch-action: none;
+                flex-shrink: 0;
+            }
+            html.dark.lf-portrait-split-bottom #lfLxxDrawer.open #lfLxxPortraitBar {
+                background: #18181b;
+                border-bottom-color: #27272a;
+            }
+            html.lf-portrait-split-bottom body.lf-lxx-split-open main {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding-bottom: calc(var(--lf-lxx-sheet-h, 48dvh) + 28px) !important;
+            }
+
+            /* 2B. Portrait RIGHT HALF (User toggled to Right!) */
+            html.lf-portrait-split-right #lfLxxDrawer.open {
+                position: fixed !important;
+                top: 66px !important;
+                right: 6px !important;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                left: auto !important;
+                width: 48vw !important;
+                min-width: 240px !important;
+                max-width: 62vw !important;
+                height: auto !important;
+                border-radius: 16px !important;
+                z-index: 478 !important;
+            }
+            html.lf-portrait-split-right #lfLxxDrawer.open #lfLxxPortraitBar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                padding: 5px 10px;
+                background: #f0fdfa;
+                border-bottom: 1px solid #ccfbf1;
+                flex-shrink: 0;
+            }
+            html.lf-portrait-split-right #lfLxxDrawer.open #lfLxxDragPill {
+                display: none !important;
+            }
+            html.lf-portrait-split-right body.lf-lxx-split-open main {
+                width: calc(52vw - 14px) !important;
+                max-width: calc(52vw - 14px) !important;
+                box-sizing: border-box !important;
+            }
+
+            /* --- 3. STUDY DOCK (#lfStudyDock) RIGHT-HALF OPTION IN PORTRAIT --- */
+            html.lf-portrait-split-right #lfStudyDock.open {
+                position: fixed !important;
+                top: 66px !important;
+                right: 6px !important;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                left: auto !important;
+                width: 48vw !important;
+                min-width: 260px !important;
+                max-width: 66vw !important;
+                height: auto !important;
+                border-radius: 16px !important;
+                z-index: 480 !important;
+            }
+            html.lf-portrait-split-right body.lf-dock-open main {
+                width: calc(52vw - 14px) !important;
+                max-width: calc(52vw - 14px) !important;
+                box-sizing: border-box !important;
+            }
+            html.lf-portrait-split-right #lfStudyDock.open #lfSheetDragPill {
+                display: none !important;
+            }
+        }
+
+
+        /* =====================================================================
+           H. ONE-TAP PWA INSTALL MODAL (Android Native Prompt + iOS Home Screen Guide)
+           ===================================================================== */
+        #lfInstallGuideOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483550;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.62);
+        }
+        #lfInstallGuideOverlay.open {
+            display: flex;
+        }
+        #lfInstallGuideCard {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1.5px solid rgba(99, 102, 241, 0.35);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.38);
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        html.dark #lfInstallGuideCard {
+            background: #18181b;
+            color: #f4f4f5;
+            border-color: rgba(129, 140, 248, 0.45);
+        }
+        .lf-inst-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        html.dark .lf-inst-step {
+            background: #27272a;
+            border-color: #3f3f46;
+        }
+        .lf-inst-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
         .lf-tab-sep {
             width: 1px;
             height: 22px;
@@ -1232,11 +1562,9 @@
 
         if (state.isTouch) {
             document.addEventListener('click', (e) => {
-                const sidebar = document.querySelector('aside:not(#lfStudyDock)');
-                if (!sidebar) return;
-                const isVisible = !sidebar.classList.contains('hidden') && sidebar.getBoundingClientRect().width > 40;
-                if (!isVisible) return;
-                if (e.target.closest('aside:not(#lfStudyDock)') || e.target.closest('#sidebarToggleBtn')) return;
+                const sidebar = document.getElementById('toolsSidebar');
+                if (!sidebar || sidebar.classList.contains('sidebar-collapsed') || sidebar.classList.contains('hidden')) return;
+                if (e.target.closest('#toolsSidebar') || e.target.closest('#sidebarToggleBtn')) return;
                 if (typeof window.toggleToolsSidebar === 'function') {
                     window.toggleToolsSidebar();
                 }
@@ -1473,7 +1801,9 @@
         const dragBar = document.createElement('div');
         dragBar.id = 'lfSheetDragBar';
         dragBar.innerHTML = `
-            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Drag</span>
+            <button type="button" class="lf-split-mode-pill lf-portrait-split-toggle" title="Switch Portrait layout between Bottom Half and Right Side">
+                ${state.portraitSplitMode === 'right' ? '⬓ Bottom' : '◧ Right'}
+            </button>
             <div id="lfSheetDragPill"></div>
             <button type="button" id="lfSheetToggleHeightBtn" class="px-2.5 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 cursor-pointer">
                 Tall
@@ -1567,9 +1897,10 @@
                     return;
                 }
 
-                // On tablets with Handles ON + Read Lock ON, drop our zero-keyboard draggable handles right at the tap!
+                // On tablets with Handles ON + Read Lock ON, defer cursor handle drop to next frame so tap response stays instant
                 if (state.isTouch && state.handlesEnabled && state.readLock) {
-                    dropCursorHandleAtTap(blk, e.clientX, e.clientY);
+                    const tx = e.clientX, ty = e.clientY;
+                    requestAnimationFrame(() => dropCursorHandleAtTap(blk, tx, ty));
                 }
             }, { passive: true });
         }
@@ -1632,6 +1963,435 @@
         leftGroup.appendChild(btn);
     }
 
+
+    // -------------------------------------------------------------------------
+    // 9. NATIVE-APP TAP ENGINE (Zero Hover Traps + Zero 32k-Div Touch Storms)
+    // -------------------------------------------------------------------------
+    function installNativeTapOptimizer() {
+        if (!state.isTouch) return;
+
+        // 1. Track touch timestamps so we can block synthetic post-touch mousemove storms
+        document.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                state.lastTouchTs = Date.now();
+            }
+            // Instant 0ms native press feedback on interactive controls
+            const target = e.target && e.target.closest && e.target.closest('button, [role="button"], .orig-word-token, .lf-lxx-word, .lf-dock-tab-btn, .lf-dock-sub-btn, .lf-tab-act-btn');
+            if (target) {
+                target.classList.add('lf-tap-pressed');
+                const release = () => target.classList.remove('lf-tap-pressed');
+                target.addEventListener('pointerup', release, { once: true });
+                target.addEventListener('pointercancel', release, { once: true });
+                setTimeout(release, 220);
+            }
+        }, { passive: true, capture: true });
+
+        // 2. Block synthetic mousemove inside #flowEditor right after a finger tap
+        //    (Prevents index.html's handleEditorWordHoverMove from scanning 32,000 divs on every tap!)
+        document.addEventListener('mousemove', (e) => {
+            if (Date.now() - state.lastTouchTs < 750) {
+                const ed = document.getElementById('flowEditor');
+                if (ed && ed.contains(e.target)) {
+                    e.stopImmediatePropagation();
+                }
+            }
+        }, true);
+
+        // 3. Single-tap friendly Original Language tokens in Side-by-Side (#parallelOriginalPane)
+        //    First tap: highlights matching English word + shows parsing/lexicon info bar instantly (no hover/Cmd+Click needed!)
+        //    Second tap on the same word: opens full Thayer's / BDB lexicon entry!
+        const parallelContent = document.getElementById('parallelOriginalContent');
+        if (parallelContent && !parallelContent.dataset.lfTouchTapBound) {
+            parallelContent.dataset.lfTouchTapBound = '1';
+            parallelContent.addEventListener('click', (e) => {
+                const tok = e.target && e.target.closest && e.target.closest('.orig-word-token');
+                if (!tok) return;
+                if (Date.now() - state.lastTouchTs > 1500 && !state.isAndroid) return;
+
+                if (state.lastTappedOrigTok !== tok) {
+                    // First tap: highlight & show parsing info cleanly without jumping straight into full modal
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    state.lastTappedOrigTok = tok;
+                    if (typeof window.handleOriginalTokenHover === 'function') {
+                        try { window.handleOriginalTokenHover(tok); } catch (err) {}
+                    }
+                    // Add a quick "Lexicon →" tap button inside #parallelHoverInfoBar if not already there
+                    const bar = document.getElementById('parallelHoverInfoBar');
+                    if (bar && !bar.querySelector('#lfTouchQuickLexBtn')) {
+                        const qBtn = document.createElement('button');
+                        qBtn.type = 'button';
+                        qBtn.id = 'lfTouchQuickLexBtn';
+                        qBtn.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-bold shrink-0 cursor-pointer';
+                        qBtn.textContent = 'Lexicon →';
+                        qBtn.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            if (typeof window.handleOriginalTokenClick === 'function') {
+                                window.handleOriginalTokenClick(tok);
+                            }
+                        });
+                        bar.appendChild(qBtn);
+                    }
+                } else {
+                    // Second tap on same word: let native handleOriginalTokenClick open the lexicon
+                    state.lastTappedOrigTok = null;
+                }
+            }, true);
+        }
+
+        // 4. Throttle syncOverlayControls on touch devices so rapid taps/scrolls never block the UI thread
+        if (typeof window.syncOverlayControls === 'function' && !window.syncOverlayControls.__lfTouchThrottled) {
+            const origSync = window.syncOverlayControls;
+            let syncRaf = 0;
+            const throttled = function () {
+                if (document.body.classList.contains('hide-text-flow')) return;
+                if (syncRaf) return;
+                syncRaf = requestAnimationFrame(() => {
+                    syncRaf = 0;
+                    origSync();
+                });
+            };
+            throttled.__lfTouchThrottled = true;
+            window.syncOverlayControls = throttled;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 10. PORTRAIT SPLIT-SCREEN ENGINE (Bottom Half Default + 1-Tap Right Half)
+    //     Supports Side-by-Side Original (#parallelOriginalPane), Tagged LXX (#lfLxxDrawer), & Study Dock
+    // -------------------------------------------------------------------------
+    function applyPortraitSplitMode(mode, announce = false) {
+        const clean = mode === 'right' ? 'right' : 'bottom';
+        state.portraitSplitMode = clean;
+        try { localStorage.setItem('lexflow_portrait_split_mode', clean); } catch (e) {}
+
+        document.documentElement.classList.toggle('lf-portrait-split-bottom', clean === 'bottom');
+        document.documentElement.classList.toggle('lf-portrait-split-right', clean === 'right');
+
+        document.querySelectorAll('.lf-portrait-split-toggle').forEach((btn) => {
+            btn.textContent = clean === 'right' ? '⬓ Bottom' : '◧ Right';
+            btn.title = clean === 'right'
+                ? 'Switch Portrait split to Bottom Half'
+                : 'Switch Portrait split to Right Side';
+        });
+
+        if (announce) {
+            showToast(clean === 'right'
+                ? 'Portrait Split: Right Side (50/50)'
+                : 'Portrait Split: Bottom Half (Drag bar to resize)');
+        }
+        setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 40);
+    }
+
+    function wireVerticalSheetDrag(handleEl, cssVarName, storageKey, stateProp) {
+        if (!handleEl || handleEl.dataset.lfSheetDragBound) return;
+        handleEl.dataset.lfSheetDragBound = '1';
+        let startY = 0, startH = 0, dragging = false;
+
+        handleEl.addEventListener('pointerdown', (e) => {
+            if (state.portraitSplitMode === 'right') return;
+            if (e.target && e.target.closest('button')) return;
+            dragging = true;
+            startY = e.clientY;
+            const panel = handleEl.parentElement;
+            startH = panel ? panel.getBoundingClientRect().height : (window.innerHeight * 0.46);
+            try { handleEl.setPointerCapture(e.pointerId); } catch (err) {}
+        });
+        handleEl.addEventListener('pointermove', (e) => {
+            if (!dragging) return;
+            const dy = startY - e.clientY;
+            const vh = window.innerHeight || 800;
+            const pct = Math.max(26, Math.min(82, Math.round(((startH + dy) / vh) * 100)));
+            state[stateProp] = pct;
+            document.documentElement.style.setProperty(cssVarName, `${pct}dvh`);
+        });
+        const stop = () => {
+            if (!dragging) return;
+            dragging = false;
+            try { localStorage.setItem(storageKey, String(state[stateProp])); } catch (err) {}
+        };
+        handleEl.addEventListener('pointerup', stop);
+        handleEl.addEventListener('pointercancel', stop);
+    }
+
+    function enhanceParallelPaneForPortrait() {
+        const pane = document.getElementById('parallelOriginalPane');
+        if (!pane || pane.dataset.lfPortraitReady) return;
+        pane.dataset.lfPortraitReady = '1';
+
+        document.documentElement.style.setProperty('--lf-parallel-sheet-h', `${Math.max(28, Math.min(80, state.parallelSheetPct))}dvh`);
+
+        const bar = document.createElement('div');
+        bar.id = 'lfParallelPortraitBar';
+        bar.innerHTML = `
+            <button type="button" class="lf-split-mode-pill lf-portrait-split-toggle" title="Switch Portrait layout between Bottom Half and Right Side">
+                ${state.portraitSplitMode === 'right' ? '⬓ Bottom' : '◧ Right'}
+            </button>
+            <div id="lfParallelDragPill" style="width:48px;height:5px;border-radius:999px;background:rgba(148,163,184,0.8);flex-shrink:0;"></div>
+            <div style="display:inline-flex;align-items:center;gap:6px;">
+                <button type="button" id="lfParallelSnapBtn" class="px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 cursor-pointer">Tall</button>
+                <button type="button" id="lfParallelCloseBtn" class="px-2 py-0.5 rounded-md text-xs font-bold text-gray-500 hover:text-red-500 cursor-pointer" title="Close Side-by-Side Original">✕</button>
+            </div>
+        `;
+        pane.prepend(bar);
+
+        bar.querySelector('#lfParallelSnapBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isTall = state.parallelSheetPct >= 66;
+            const nextPct = isTall ? 46 : 74;
+            state.parallelSheetPct = nextPct;
+            document.documentElement.style.setProperty('--lf-parallel-sheet-h', `${nextPct}dvh`);
+            e.currentTarget.textContent = isTall ? 'Tall' : 'Half';
+            try { localStorage.setItem('lexflow_parallel_sheet_h', String(nextPct)); } catch (err) {}
+        });
+
+        bar.querySelector('#lfParallelCloseBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof window.toggleParallelOriginalPane === 'function') {
+                window.toggleParallelOriginalPane(false);
+            }
+        });
+
+        wireVerticalSheetDrag(bar, '--lf-parallel-sheet-h', 'lexflow_parallel_sheet_h', 'parallelSheetPct');
+
+        // Keep body.lf-parallel-open synced with #parallelOriginalPane visibility
+        const syncParallelOpenClass = () => {
+            const isOpen = !pane.classList.contains('hidden');
+            document.body.classList.toggle('lf-parallel-open', isOpen);
+        };
+        syncParallelOpenClass();
+        const obs = new MutationObserver(syncParallelOpenClass);
+        obs.observe(pane, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    function enhanceLxxDrawerForPortrait() {
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || drawer.dataset.lfPortraitReady) return false;
+        drawer.dataset.lfPortraitReady = '1';
+
+        document.documentElement.style.setProperty('--lf-lxx-sheet-h', `${Math.max(28, Math.min(82, state.lxxSheetPct))}dvh`);
+
+        const bar = document.createElement('div');
+        bar.id = 'lfLxxPortraitBar';
+        bar.innerHTML = `
+            <button type="button" class="lf-split-mode-pill lf-portrait-split-toggle" title="Switch Portrait layout between Bottom Half and Right Side">
+                ${state.portraitSplitMode === 'right' ? '⬓ Bottom' : '◧ Right'}
+            </button>
+            <div id="lfLxxDragPill" style="width:48px;height:5px;border-radius:999px;background:rgba(13,148,136,0.45);flex-shrink:0;"></div>
+            <button type="button" id="lfLxxSnapBtn" class="px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 cursor-pointer">Tall</button>
+        `;
+        drawer.prepend(bar);
+
+        bar.querySelector('#lfLxxSnapBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isTall = state.lxxSheetPct >= 66;
+            const nextPct = isTall ? 48 : 76;
+            state.lxxSheetPct = nextPct;
+            document.documentElement.style.setProperty('--lf-lxx-sheet-h', `${nextPct}dvh`);
+            e.currentTarget.textContent = isTall ? 'Tall' : 'Half';
+            try { localStorage.setItem('lexflow_lxx_sheet_h', String(nextPct)); } catch (err) {}
+        });
+
+        wireVerticalSheetDrag(bar, '--lf-lxx-sheet-h', 'lexflow_lxx_sheet_h', 'lxxSheetPct');
+        return true;
+    }
+
+    function initPortraitSplitSupport() {
+        applyPortraitSplitMode(state.portraitSplitMode, false);
+        enhanceParallelPaneForPortrait();
+        enhanceLxxDrawerForPortrait();
+
+        // Delegated click listener for every [◧ Right / ⬓ Bottom] toggle pill across Original, LXX & Study Dock
+        document.addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest && e.target.closest('.lf-portrait-split-toggle');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            applyPortraitSplitMode(state.portraitSplitMode === 'right' ? 'bottom' : 'right', true);
+        });
+
+        // Watch for #lfLxxDrawer being lazily created on first open
+        if (!document.getElementById('lfLxxDrawer')) {
+            const mo = new MutationObserver(() => {
+                if (enhanceLxxDrawerForPortrait()) mo.disconnect();
+            });
+            mo.observe(document.body, { childList: true });
+        }
+    }
+
+    window.lfSetPortraitSplitMode = (mode) => applyPortraitSplitMode(mode, true);
+
+
+    // -------------------------------------------------------------------------
+    // 11. PWA SERVICE WORKER REGISTRATION + ONE-TAP INSTALL APP BUTTON (ANDROID & iOS)
+    // -------------------------------------------------------------------------
+    function registerLexFlowServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        const proto = window.location.protocol;
+        if (proto !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            return;
+        }
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).then((reg) => {
+            try { reg.update(); } catch (e) {}
+            if (reg.waiting) {
+                try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+            }
+        }).catch(() => {});
+    }
+
+    function ensureInstallGuideModal() {
+        let ov = document.getElementById('lfInstallGuideOverlay');
+        if (ov) return ov;
+
+        ov = document.createElement('div');
+        ov.id = 'lfInstallGuideOverlay';
+        ov.innerHTML = `
+            <div id="lfInstallGuideCard" role="dialog" aria-modal="true" aria-label="Install LexFlow App">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(148,163,184,0.25);">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <img src="./lexflow-icon.png" alt="LexFlow" style="width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 2px 8px rgba(79,70,229,0.28);">
+                        <div>
+                            <div style="font-size:15px;font-weight:800;">Install LexFlow App</div>
+                            <div style="font-size:11.5px;opacity:0.72;">Full-screen app icon • Automatic updates</div>
+                        </div>
+                    </div>
+                    <button type="button" id="lfInstallGuideCloseBtn" style="border:none;background:transparent;font-size:18px;font-weight:700;cursor:pointer;color:inherit;padding:4px 8px;" title="Close">✕</button>
+                </div>
+                <div id="lfInstallGuideBody" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;"></div>
+                <div style="padding:12px 18px;border-top:1px solid rgba(148,163,184,0.2);display:flex;justify-content:flex-end;">
+                    <button type="button" id="lfInstallGuideDoneBtn" style="padding:8px 18px;border-radius:10px;border:none;background:#4f46e5;color:#ffffff;font-size:12.5px;font-weight:700;cursor:pointer;">Got It</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(ov);
+
+        const close = () => ov.classList.remove('open');
+        ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+        ov.querySelector('#lfInstallGuideCloseBtn').addEventListener('click', close);
+        ov.querySelector('#lfInstallGuideDoneBtn').addEventListener('click', close);
+        return ov;
+    }
+
+    function openInstallGuideModal() {
+        const ov = ensureInstallGuideModal();
+        const body = ov.querySelector('#lfInstallGuideBody');
+        if (!body) return;
+
+        if (state.isIOS) {
+            body.innerHTML = `
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">1</span>
+                    <div>Tap the <strong>Share</strong> button (<span style="font-weight:800;">⎋</span> square with an arrow pointing up) in your browser's toolbar.</div>
+                </div>
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">2</span>
+                    <div>Scroll down and tap <strong>Add to Home Screen</strong>.</div>
+                </div>
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">3</span>
+                    <div>Tap <strong>Add</strong> in the top-right corner. LexFlow will now launch full-screen like a native iPad/iPhone app!</div>
+                </div>
+            `;
+        } else if (state.isAndroid) {
+            body.innerHTML = `
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">1</span>
+                    <div>Tap your browser's menu button (<strong>⋮</strong> in Chrome, or <strong>≡</strong> in Samsung Internet).</div>
+                </div>
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">2</span>
+                    <div>Tap <strong>Install app</strong> (Chrome) or <strong>Add page to → Home screen</strong> (Samsung Internet).</div>
+                </div>
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">3</span>
+                    <div>Tap <strong>Install</strong> to place the full-screen LexFlow icon on your home screen—no APK warnings needed.</div>
+                </div>
+            `;
+        } else {
+            body.innerHTML = `
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">1</span>
+                    <div>Click the <strong>Install</strong> icon (<i class="fa-solid fa-download"></i>) on the right side of your browser's address bar, or open the browser menu (<strong>⋮</strong>).</div>
+                </div>
+                <div class="lf-inst-step">
+                    <span class="lf-inst-num">2</span>
+                    <div>Choose <strong>Install LexFlow</strong> (or <strong>Cast, save, and share → Install page as app</strong>) to run LexFlow in its own standalone window.</div>
+                </div>
+            `;
+        }
+        ov.classList.add('open');
+    }
+
+    async function handleInstallAppClick() {
+        if (isStandaloneApp()) {
+            showToast('LexFlow is already installed as an app!');
+            return;
+        }
+        if (deferredInstallPrompt) {
+            try {
+                deferredInstallPrompt.prompt();
+                const choice = await deferredInstallPrompt.userChoice;
+                if (choice && choice.outcome === 'accepted') {
+                    deferredInstallPrompt = null;
+                    updateInstallButtonsUI();
+                    return;
+                }
+            } catch (err) {}
+        }
+        openInstallGuideModal();
+    }
+
+    function updateInstallButtonsUI() {
+        const installed = isStandaloneApp();
+        ['lfHeaderInstallAppBtn', 'lfSidebarInstallAppBtn'].forEach((id) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.style.display = installed ? 'none' : '';
+        });
+    }
+
+    function injectInstallAppButtons() {
+        if (isStandaloneApp()) return;
+
+        // 1. Header pill button
+        const header = document.querySelector('header');
+        const leftGroup = header && header.firstElementChild;
+        if (leftGroup && !document.getElementById('lfHeaderInstallAppBtn')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.id = 'lfHeaderInstallAppBtn';
+            btn.className = 'glass-control px-2.5 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 cursor-pointer';
+            btn.title = 'Install LexFlow as a full-screen app on Android, iPad, iPhone, or Desktop';
+            btn.innerHTML = `<i class="fa-solid fa-mobile-screen-button text-[11px]"></i><span>Install App</span>`;
+            btn.addEventListener('click', handleInstallAppClick);
+            leftGroup.appendChild(btn);
+        }
+
+        // 2. Tools Sidebar button
+        const sidebar = document.getElementById('toolsSidebar');
+        const firstCol = sidebar && sidebar.firstElementChild;
+        if (firstCol && !document.getElementById('lfSidebarInstallAppBtn')) {
+            const sBtn = document.createElement('button');
+            sBtn.type = 'button';
+            sBtn.id = 'lfSidebarInstallAppBtn';
+            sBtn.className = 'glass-control w-full !bg-indigo-600 hover:!bg-indigo-700 text-white text-xs font-bold px-3.5 py-2.5 flex items-center justify-between cursor-pointer shadow-sm';
+            sBtn.title = 'Install LexFlow to your Home Screen as a full-screen app';
+            sBtn.innerHTML = `
+                <span class="flex items-center space-x-2.5">
+                    <i class="fa-solid fa-download w-4 text-center"></i>
+                    <span>Install LexFlow App</span>
+                </span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20">Android / iOS</span>
+            `;
+            sBtn.addEventListener('click', handleInstallAppClick);
+            firstCol.appendChild(sBtn);
+        }
+
+        updateInstallButtonsUI();
+    }
+
+    window.lfInstallApp = handleInstallAppClick;
+
     function initTabletEngine() {
         buildHandlesDOM();
         applyEditorReadLock(state.readLock, false);
@@ -1639,6 +2399,10 @@
         injectTurboToggleButton();
         wireTouchSelectionTracking();
         installAsyncLexiconAccelerator();
+        installNativeTapOptimizer();
+        initPortraitSplitSupport();
+        registerLexFlowServiceWorker();
+        injectInstallAppButtons();
 
         if (!enhanceStudyDockForTouch()) {
             let tries = 0;

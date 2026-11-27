@@ -1,13 +1,13 @@
-/* === LEXFLOW FIX PATCH (v8): CF & OT-IN-NT TAGS OFF BY DEFAULT + TOUCH & DESKTOP GUARD + STUCK-LOOKUP RECOVERY ===
+/* === LEXFLOW FIX PATCH (v9): CF & OT-IN-NT TAGS OFF BY DEFAULT + TOUCH & DESKTOP GUARD + STUCK-LOOKUP RECOVERY ===
  * Save as exact filename: ./js/lexflow-fix.js (replaces v1-v7).
  * Note: LSJ modal layering, open/close, and Esc handling now live cleanly inside lexflow-phase2-dock.js
  * so this patch will never add display:none!important or .hidden onto #lfLsjModalOverlay.
  */
 (function () {
-    if (window.__lfFixPatchLoaded === 'v8') return;
-    window.__lfFixPatchLoaded = 'v8';
-    window.__lfFixVersion = 'v8';
-    try { console.info('[LexFlow Fix v8] Active'); } catch (_) {}
+    if (window.__lfFixPatchLoaded === 'v9') return;
+    window.__lfFixPatchLoaded = 'v9';
+    window.__lfFixVersion = 'v9';
+    try { console.info('[LexFlow Fix v9] Active'); } catch (_) {}
 
     const tagState = {
         cf: false,
@@ -268,17 +268,17 @@
     }
 
     function scanAndClassifyInlineTags() {
-        const roots = [];
-        const editor = document.getElementById('flowEditor');
-        if (editor) roots.push(editor);
-        document.querySelectorAll('#readView, #readerView, #readPane, #scriptureContainer, .thought-flow-doc, main').forEach((r) => {
-            if (!roots.includes(r)) roots.push(r);
-        });
-        if (!roots.length && document.body) roots.push(document.body);
-
-        const selector = 'span, button, a, sup, small, div[role="button"]';
-        roots.forEach((root) => {
-            root.querySelectorAll(selector).forEach((el) => {
+        // Sync native body hide classes too so CSS hides inline badges with ZERO JS loops over 32,000 verses!
+        if (document.body) {
+            document.body.classList.toggle('lf-hide-father-badges', !tagState.cf);
+            document.body.classList.toggle('hide-ot-in-nt-badges', !tagState.otnt);
+        }
+        // Only scan targeted badge/chip elements — NEVER querySelectorAll('span') across 32,000 verses!
+        const selector = '[class*="cf-badge" i], [class*="cf-tag" i], [class*="father-badge" i], [class*="ot-in-nt" i], [class*="otnt" i], [data-cf-ref], [data-ot-ref], [data-ot-in-nt]';
+        const root = document.getElementById('flowEditor') || document.querySelector('main');
+        if (!root) return;
+        [root].forEach((r) => {
+            r.querySelectorAll(selector).forEach((el) => {
                 if (el.dataset.lfInlineTag) return;
                 if (isInsideUiChrome(el)) return;
 
@@ -317,6 +317,10 @@
     function syncTagClassesAndButtons() {
         document.documentElement.classList.toggle('lf-hide-cf-tags', !tagState.cf);
         document.documentElement.classList.toggle('lf-hide-otnt-tags', !tagState.otnt);
+        if (document.body) {
+            document.body.classList.toggle('lf-hide-father-badges', !tagState.cf);
+            document.body.classList.toggle('hide-ot-in-nt-badges', !tagState.otnt);
+        }
 
         const cfBtn = document.getElementById('lfFixToggleCfTags');
         if (cfBtn) {
@@ -428,15 +432,23 @@
         syncTagClassesAndButtons();
     }
 
-    // 5. Unstick accidentally disabled toolbar buttons after errors
+    // 5. Unstick accidentally disabled toolbar buttons after errors (scoped to chrome, never scans #flowEditor)
     function unstickInteractiveControls() {
-        document.querySelectorAll('button[disabled], [aria-disabled="true"]').forEach((el) => {
-            if (el.dataset.lfUserDisabled === 'true') return;
-            const label = (el.textContent || el.title || el.id || '').toLowerCase();
-            if (/lsj|lexicon|study dock|quick jump|read|flow|research|turbo|close|search/.test(label)) {
-                el.disabled = false;
-                el.removeAttribute('aria-disabled');
-            }
+        const scopes = [
+            document.querySelector('header'),
+            document.getElementById('lfStudyDock'),
+            document.getElementById('lfLsjModalOverlay'),
+            document.getElementById('lfLxxDrawer')
+        ].filter(Boolean);
+        scopes.forEach((scope) => {
+            scope.querySelectorAll('button[disabled], [aria-disabled="true"]').forEach((el) => {
+                if (el.dataset.lfUserDisabled === 'true') return;
+                const label = (el.textContent || el.title || el.id || '').toLowerCase();
+                if (/lsj|lexicon|study dock|quick jump|read|flow|research|turbo|close|search/.test(label)) {
+                    el.disabled = false;
+                    el.removeAttribute('aria-disabled');
+                }
+            });
         });
     }
 
@@ -463,13 +475,13 @@
     }
 
     function observeDom() {
-        if (!document.body || document.body.dataset.lfFixV8Observed) return;
-        document.body.dataset.lfFixV8Observed = '1';
+        if (!document.body || document.body.dataset.lfFixV9Observed) return;
+        document.body.dataset.lfFixV9Observed = '1';
         const mo = new MutationObserver((mutations) => {
             let sawNonModalChange = false;
             for (let i = 0; i < mutations.length; i++) {
                 const t = mutations[i].target;
-                if (t && t.closest && t.closest('#lfLsjModalOverlay')) continue;
+                if (t && t.closest && t.closest('#lfLsjModalOverlay, #flowEditor')) continue;
                 if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
                     sawNonModalChange = true;
                     break;
@@ -501,9 +513,13 @@
         window.addEventListener('resize', applyResponsiveModeClass, { passive: true });
 
         setInterval(() => {
-            unstickInteractiveControls();
-            checkStuckLsjLookup();
-        }, 900);
+            const lm = document.getElementById('lfLsjModalOverlay');
+            if (lm && lm.classList.contains('open')) {
+                checkStuckLsjLookup();
+            } else {
+                lsjLookupStartedAt = 0;
+            }
+        }, 2000);
     }
 
     if (document.readyState === 'loading') {

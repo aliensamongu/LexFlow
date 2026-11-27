@@ -1218,30 +1218,10 @@
     }
 
     function readRefFromLxxDrawer(clickedEl) {
-        let drawer = null;
-        if (clickedEl && clickedEl.closest) {
-            const nodes = document.querySelectorAll('aside, section, div');
-            for (let i = 0; i < nodes.length; i++) {
-                const el = nodes[i];
-                if (el.contains(clickedEl) && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '') && el.querySelector('select')) {
-                    drawer = el;
-                }
-            }
-        }
-        if (!drawer) {
-            const nodes = document.querySelectorAll('aside, section, div');
-            for (let i = 0; i < nodes.length; i++) {
-                const el = nodes[i];
-                if (el.id === 'lfStudyDock' || el.closest('#lfStudyDock')) continue;
-                const cs = getComputedStyle(el);
-                if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-                if (el.querySelectorAll('select').length >= 2 && /Tagged Septuagint\s*\(LXX\)/i.test(el.textContent || '')) {
-                    drawer = el;
-                    break;
-                }
-            }
-        }
-        if (!drawer) return null;
+        // O(1) direct lookup — never scan 32,000+ editor <div>s on every tap!
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open')) return null;
+        if (clickedEl && !drawer.contains(clickedEl)) return null;
 
         let book = null;
         let chapter = 0;
@@ -1327,6 +1307,9 @@
     }
 
     document.addEventListener('click', (e) => {
+        // Fast bailout (<0.01ms) for all taps outside the open Tagged LXX drawer
+        const drawer = document.getElementById('lfLxxDrawer');
+        if (!drawer || !drawer.classList.contains('open') || !drawer.contains(e.target)) return;
         const ref = readRefFromLxxDrawer(e.target);
         if (!ref) return;
         // Preserve previously clicked verse for the same book/chapter when clicking the LSJ button in the bottom word card
