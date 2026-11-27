@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LexFlow - Text Flow Workspace</title>
+    <!-- PWA App Manifest, Theme Color & Android/iOS Home Screen Icon -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LexFlow">
+    <link rel="apple-touch-icon" href="./lexflow-icon.png">
+    <link rel="icon" type="image/png" href="./lexflow-icon.png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35696,7 +35705,7 @@ function showContextMenu(x, y) {
 
 	
 	<script src="./js/lexicon-scripture-search.js"></script>
-    <script src="./js/lexflow-phase1.js"></script>
+    	<script src="./js/lexflow-phase1.js"></script>
 	<script src="./js/lexflow-phase2-dock.js"></script>
 	<script src="./js/lexflow-phase3-exegesis.js"></script>
    	<script src="./js/lexflow-phase4-export.js"></script>
