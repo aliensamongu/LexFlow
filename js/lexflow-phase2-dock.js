@@ -638,12 +638,11 @@
     function isLsjOverlayVisible(lm) {
         if (!lm) return false;
         if (lm.classList.contains('lf-lsj-force-closed')) return false;
-        if (lm.style.display === 'none') return false;
         try {
             const cs = getComputedStyle(lm);
             return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) !== 0;
         } catch (e) {
-            return true;
+            return lm.classList.contains('open');
         }
     }
 
@@ -672,12 +671,18 @@
         try {
             lm.classList.remove('lf-lsj-force-closed', 'hidden', 'lf-docked-modal-host');
             delete lm.dataset.lfForceHidden;
-            // Clear any display:none!important left behind by older patches so native style.display='flex' works cleanly
-            if (lm.style.getPropertyPriority('display') === 'important') {
+            // CRITICAL: LexFlow's native LSJ modal opens/closes via CSS class `.modal.open` (NOT inline display).
+            // Always strip any inline `display: none` so `.modal.open` can display cleanly on every reopen.
+            if (lm.style.getPropertyValue('display') === 'none') {
                 lm.style.removeProperty('display');
             }
             if (forceShow) {
-                lm.style.display = 'flex';
+                lm.classList.add('open');
+                try {
+                    if (getComputedStyle(lm).display === 'none') {
+                        lm.style.display = 'flex';
+                    }
+                } catch (e) {}
             }
             ensureFloatingLsjOnTop(lm);
             wireLsjCloseHandlers(lm);
@@ -686,7 +691,22 @@
         }
     }
 
-    function closeFloatingLsjModal() {
+    function findLsjCloseButton(lm) {
+        if (!lm) return null;
+        const btns = lm.querySelectorAll('button, [role="button"]');
+        for (let i = 0; i < btns.length; i++) {
+            const btn = btns[i];
+            if (btn.closest('.lf-scripture-hit-card, .lf-scripture-back-bar, .lf-lsj-cite-jump-bar')) continue;
+            const txt = (btn.textContent || '').trim();
+            const meta = `${btn.id || ''} ${btn.className || ''} ${btn.title || ''} ${btn.getAttribute('aria-label') || ''} ${btn.getAttribute('onclick') || ''}`.toLowerCase();
+            if (/^[×✕✖x]$/.test(txt) || /\bclose\b|closelsj|fa-xmark|fa-times/.test(meta) || btn.querySelector('.fa-xmark, .fa-times')) {
+                return btn;
+            }
+        }
+        return null;
+    }
+
+    function closeFloatingLsjModal(skipNativeClick) {
         const lm = document.getElementById('lfLsjModalOverlay');
         if (!lm || isClosingLsjOverlay) return false;
 
@@ -698,9 +718,13 @@
                 document.activeElement.blur();
             }
 
-            // Never add Tailwind .hidden or remove .flex here — native openLsjModal() only toggles style.display = 'flex'/'none'
-            lm.classList.remove('lf-docked-modal-host');
-            delete lm.dataset.lfForceHidden;
+            // Let native close button handler run first (when triggered via Esc or backdrop) so internal LSJ state resets cleanly
+            if (!skipNativeClick) {
+                const nativeCloseBtn = findLsjCloseButton(lm);
+                if (nativeCloseBtn) {
+                    try { nativeCloseBtn.click(); } catch (e) {}
+                }
+            }
 
             ['closeLsjModal', 'closeLSJModal', 'hideLsjModal'].forEach((fn) => {
                 if (typeof window[fn] === 'function') {
@@ -708,10 +732,12 @@
                 }
             });
 
+            // Native LSJ uses `.modal.open` — close it by removing `.open` and clearing any inline `display` override!
+            lm.classList.remove('open', 'show', 'active', 'lf-docked-modal-host');
+            delete lm.dataset.lfForceHidden;
             lm.style.removeProperty('display');
-            lm.style.display = 'none';
 
-            // Only apply force-closed fallback if an external stylesheet still forces it visible
+            // Only use class fallback if `.modal` without `.open` still computes as visible
             try {
                 if (getComputedStyle(lm).display !== 'none') {
                     lm.classList.add('lf-lsj-force-closed');
@@ -742,11 +768,11 @@
         lm.addEventListener('click', (e) => {
             if (!isLsjOverlayVisible(lm)) return;
 
-            // Clicking the dimmed backdrop outside the modal card closes LSJ immediately
+            // Clicking the dimmed backdrop outside the modal card closes LSJ cleanly
             if (e.target === lm) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                closeFloatingLsjModal();
+                setTimeout(() => {
+                    if (isLsjOverlayVisible(lm)) closeFloatingLsjModal(false);
+                }, 15);
                 return;
             }
 
@@ -762,9 +788,12 @@
                 Boolean(btn.querySelector('.fa-xmark, .fa-times'));
 
             if (isCloseBtn) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                closeFloatingLsjModal();
+                // Allow the native click handler to run first, then guarantee `.open` is removed & no inline display:none remains
+                setTimeout(() => {
+                    if (isLsjOverlayVisible(lm) || lm.style.getPropertyValue('display') === 'none') {
+                        closeFloatingLsjModal(true);
+                    }
+                }, 20);
             }
         }, true);
     }
@@ -1075,10 +1104,13 @@
             wireLsjCloseHandlers(lm);
             const obs = new MutationObserver(() => {
                 if (state.suppressObservers || isClosingLsjOverlay) return;
-                const displayVal = lm.style.display;
-                // Whenever native code reopens LSJ (display: flex/block), strip any stale .hidden or force-closed state
-                if (displayVal && displayVal !== 'none') {
+                const hasOpenClass = lm.classList.contains('open');
+                const displayVal = lm.style.getPropertyValue('display');
+                const wantsOpen = hasOpenClass || (displayVal && displayVal !== 'none');
+
+                if (wantsOpen) {
                     if (
+                        displayVal === 'none' ||
                         lm.classList.contains('hidden') ||
                         lm.classList.contains('lf-lsj-force-closed') ||
                         lm.classList.contains('lf-docked-modal-host') ||
