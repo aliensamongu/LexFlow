@@ -1,6 +1,6 @@
-/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v5) === */
-const APP_CACHE = 'lexflow-app-shell-v5';
-const CDN_CACHE = 'lexflow-cdn-assets-v5';
+/* === LEXFLOW SERVICE WORKER (OFFLINE PWA SUPPORT v6) === */
+const APP_CACHE = 'lexflow-app-shell-v6';
+const CDN_CACHE = 'lexflow-cdn-assets-v6';
 
 const APP_SHELL_URLS = [
     './',
@@ -12,8 +12,9 @@ const APP_SHELL_URLS = [
     './js/lexflow-phase2-dock.js',
     './js/lexflow-phase3-exegesis.js',
     './js/lexflow-phase4-export.js',
+    './js/lexflow-church-fathers.js',
     './js/lexflow-tablet-mode.js',
-    './js/lexflow-church-fathers.js'
+    './js/lexflow-fix.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,6 +41,12 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (req.method !== 'GET') return;
@@ -47,10 +54,16 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(req.url);
     const isSameOrigin = url.origin === self.location.origin;
 
-    // 1. Same-origin app files: Network-First so GitHub updates always arrive immediately
+    // 1. Same-origin app files: Network-First with cache revalidation so GitHub updates arrive immediately
     if (isSameOrigin) {
+        const isNav = req.mode === 'navigate';
+        const isCodeOrManifest = /\.(js|json|css|html)$/i.test(url.pathname);
+        const networkReq = (!isNav && isCodeOrManifest)
+            ? new Request(req.url, { cache: 'no-cache' })
+            : req;
+
         event.respondWith(
-            fetch(req)
+            fetch(networkReq)
                 .then((res) => {
                     if (res && res.ok) {
                         const copy = res.clone();
@@ -58,7 +71,13 @@ self.addEventListener('fetch', (event) => {
                     }
                     return res;
                 })
-                .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+                .catch(() =>
+                    caches.match(req).then((cached) => {
+                        if (cached) return cached;
+                        if (isNav) return caches.match('./index.html');
+                        return Response.error();
+                    })
+                )
         );
         return;
     }
@@ -77,7 +96,7 @@ self.addEventListener('fetch', (event) => {
                         caches.open(CDN_CACHE).then((c) => c.put(req, copy)).catch(() => {});
                     }
                     return res;
-                }).catch(() => cached);
+                }).catch(() => cached || Response.error());
             })
         );
     }
