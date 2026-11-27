@@ -51,6 +51,8 @@
         lxxSheetPct: parseInt(localStorage.getItem('lexflow_lxx_sheet_h') || '48', 10) || 48,
         lastTouchTs: 0,
         lastTappedOrigTok: null,
+        topBarExpanded: false,
+        bottomBarCollapsed: localStorage.getItem('lexflow_tablet_bar_collapsed') === 'true',
         // Active draggable cursor state
         cursorBlock: null,
         cursorNode: null,
@@ -876,6 +878,125 @@
             justify-content: center;
             flex-shrink: 0;
             margin-top: 1px;
+        }
+
+
+        /* =====================================================================
+           I. COMPACT TOP BAR (Read / Flow / Research + Expandable Menu) &
+              COLLAPSIBLE BOTTOM BAR + RELIABLE PORTRAIT SIDE-BY-SIDE
+           ===================================================================== */
+        #lfTopMoreBtn {
+            display: none;
+        }
+        #lfBottomBarCollapseBtn,
+        #lfBottomBarExpandChip {
+            display: none;
+        }
+
+        html.lf-touch-device #lfTopMoreBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* When on touch device and NOT expanded, hide secondary/cluttered header controls */
+        html.lf-touch-device:not(.lf-top-expanded) header > div > .glass-control {
+            display: none !important;
+        }
+        html.lf-touch-device:not(.lf-top-expanded) header > div:first-child > button:not(#sidebarToggleBtn):not(#lfTopMoreBtn) {
+            display: none !important;
+        }
+        html.lf-touch-device:not(.lf-top-expanded) header {
+            padding: 6px 10px !important;
+            gap: 6px !important;
+        }
+        html.lf-touch-device:not(.lf-top-expanded) header > div:first-child {
+            width: auto !important;
+            flex: 1 1 auto !important;
+            justify-content: flex-start !important;
+        }
+
+        /* Make Read / Flow / Research mode pills immediately clickable & crisp */
+        .lf-mode-pill,
+        [data-mode="read"],
+        [data-mode="flow"],
+        [data-mode="research"] {
+            touch-action: manipulation !important;
+            cursor: pointer !important;
+        }
+
+        /* Collapsible bottom tablet bar */
+        html.lf-touch-device #lfBottomBarCollapseBtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        html.lf-touch-device.lf-bottom-bar-collapsed #lfTabletActionBar,
+        html.lf-touch-device.lf-bottom-bar-collapsed #lfTabletActionBar.visible {
+            display: none !important;
+        }
+        html.lf-touch-device.lf-bottom-bar-collapsed #lfBottomBarExpandChip {
+            position: fixed;
+            right: 12px;
+            bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            z-index: 462;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.92);
+            color: #f8fafc;
+            border: 1px solid rgba(129, 140, 248, 0.5);
+            font-size: 11.5px;
+            font-weight: 800;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.3);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        /* Portrait Side-by-Side guarantee across portrait orientations & widths <= 1100px */
+        @media (max-width: 1100px) and (orientation: portrait), (max-width: 820px) {
+            html.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) {
+                display: flex !important;
+                flex-direction: column !important;
+                position: fixed !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                top: auto !important;
+                width: auto !important;
+                max-width: none !important;
+                height: var(--lf-parallel-sheet-h, 46dvh) !important;
+                max-height: 82dvh !important;
+                z-index: 475 !important;
+                margin: 0 !important;
+                padding: 0 12px 12px 12px !important;
+                border-radius: 18px !important;
+                border: 1.5px solid rgba(59, 130, 246, 0.55) !important;
+                background: rgba(255, 255, 255, 0.99) !important;
+                box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.28) !important;
+                overflow: hidden !important;
+            }
+            html.dark.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) {
+                background: rgba(17, 24, 39, 0.99) !important;
+                border-color: rgba(96, 165, 250, 0.55) !important;
+            }
+            html.lf-portrait-split-bottom body.lf-parallel-open main {
+                padding-bottom: calc(var(--lf-parallel-sheet-h, 46dvh) + 28px) !important;
+            }
+            html.lf-portrait-split-bottom #parallelOriginalPane:not(.hidden) #lfParallelPortraitBar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 8px 4px 6px;
+                margin-bottom: 6px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+                cursor: row-resize;
+                touch-action: none;
+                flex-shrink: 0;
+            }
         }
 
         .lf-tab-sep {
@@ -1737,9 +1858,25 @@
             <button type="button" id="lfTabActEditToggle" class="lf-tab-act-btn lf-act-amber" title="Switch between Read Lock (no keyboard) and Keyboard Typing">
                 <i class="fa-solid fa-lock text-[11px]"></i><span>Read Lock</span>
             </button>
+            <button type="button" id="lfBottomBarCollapseBtn" class="lf-tab-act-btn" title="Collapse bottom bar">
+                <i class="fa-solid fa-chevron-down text-[11px]"></i>
+            </button>
         `;
 
         document.body.appendChild(bar);
+
+        const expandChip = document.createElement('button');
+        expandChip.type = 'button';
+        expandChip.id = 'lfBottomBarExpandChip';
+        expandChip.title = 'Show Quick Bar';
+        expandChip.innerHTML = `<i class="fa-solid fa-chevron-up text-[10px]"></i><span>Bar</span>`;
+        expandChip.addEventListener('click', () => setBottomBarCollapsed(false));
+        document.body.appendChild(expandChip);
+
+        document.getElementById('lfBottomBarCollapseBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            setBottomBarCollapsed(true);
+        });
 
         document.getElementById('lfTabActLookup').addEventListener('click', lookupActiveTouchSelection);
         document.getElementById('lfTabActCompare').addEventListener('click', () => {
@@ -2392,6 +2529,87 @@
 
     window.lfInstallApp = handleInstallAppClick;
 
+
+    // -------------------------------------------------------------------------
+    // 12. FAST MODE SWITCHING + COMPACT TOP BAR + COLLAPSIBLE BOTTOM BAR
+    // -------------------------------------------------------------------------
+    function setBottomBarCollapsed(collapsed) {
+        state.bottomBarCollapsed = !!collapsed;
+        try { localStorage.setItem('lexflow_tablet_bar_collapsed', String(state.bottomBarCollapsed)); } catch (e) {}
+        document.documentElement.classList.toggle('lf-bottom-bar-collapsed', state.bottomBarCollapsed);
+    }
+
+    function setTopBarExpanded(expanded) {
+        state.topBarExpanded = !!expanded;
+        document.documentElement.classList.toggle('lf-top-expanded', state.topBarExpanded);
+        const btn = document.getElementById('lfTopMoreBtn');
+        if (btn) {
+            btn.innerHTML = state.topBarExpanded
+                ? `<i class="fa-solid fa-chevron-up text-[10px]"></i><span>Less</span>`
+                : `<i class="fa-solid fa-chevron-down text-[10px]"></i><span>More</span>`;
+        }
+    }
+
+    function injectCompactTopMenuToggle() {
+        if (!state.isTouch) return;
+        const header = document.querySelector('header');
+        const leftGroup = header && header.firstElementChild;
+        if (!leftGroup || document.getElementById('lfTopMoreBtn')) return;
+
+        const moreBtn = document.createElement('button');
+        moreBtn.type = 'button';
+        moreBtn.id = 'lfTopMoreBtn';
+        moreBtn.className = 'glass-control px-2.5 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer';
+        moreBtn.title = 'Expand or collapse extra header controls';
+        moreBtn.innerHTML = `<i class="fa-solid fa-chevron-down text-[10px]"></i><span>More</span>`;
+        moreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setTopBarExpanded(!state.topBarExpanded);
+        });
+        leftGroup.appendChild(moreBtn);
+        setTopBarExpanded(false);
+    }
+
+    function installFastModeAndParallelSync() {
+        // Make Read / Flow / Research mode switching snappy by avoiding redundant heavy work on toggle
+        document.addEventListener('click', (e) => {
+            const pill = e.target && e.target.closest && e.target.closest('.lf-mode-pill, [data-mode="read"], [data-mode="flow"], [data-mode="research"]');
+            if (!pill) return;
+            const mode = (pill.dataset && pill.dataset.mode) || (pill.textContent || '').trim().toLowerCase();
+            if (state.isTouch) {
+                if (mode.includes('read')) {
+                    applyEditorReadLock(true, false);
+                    hideAllHandles();
+                } else if (mode.includes('flow')) {
+                    applyEditorReadLock(true, false);
+                    state.handlesEnabled = true;
+                    updateTabletBarUI();
+                }
+            }
+            // Ensure portrait split classes stay applied when opening side-by-side / research tools
+            requestAnimationFrame(() => {
+                applyPortraitSplitMode(state.portraitSplitMode, false);
+                enhanceParallelPaneForPortrait();
+                enhanceLxxDrawerForPortrait();
+            });
+        }, { passive: true });
+
+        // Also watch #parallelOriginalPane so that whenever it becomes visible, body.lf-parallel-open & portrait bar are active
+        const pane = document.getElementById('parallelOriginalPane');
+        if (pane) {
+            const syncPane = () => {
+                enhanceParallelPaneForPortrait();
+                const open = !pane.classList.contains('hidden');
+                document.body.classList.toggle('lf-parallel-open', open);
+                if (open) {
+                    applyPortraitSplitMode(state.portraitSplitMode, false);
+                }
+            };
+            new MutationObserver(syncPane).observe(pane, { attributes: true, attributeFilter: ['class', 'style'] });
+            syncPane();
+        }
+    }
+
     function initTabletEngine() {
         buildHandlesDOM();
         applyEditorReadLock(state.readLock, false);
@@ -2403,6 +2621,9 @@
         initPortraitSplitSupport();
         registerLexFlowServiceWorker();
         injectInstallAppButtons();
+        injectCompactTopMenuToggle();
+        setBottomBarCollapsed(state.bottomBarCollapsed);
+        installFastModeAndParallelSync();
 
         if (!enhanceStudyDockForTouch()) {
             let tries = 0;
