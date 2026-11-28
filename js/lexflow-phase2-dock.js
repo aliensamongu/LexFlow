@@ -1,4 +1,4 @@
-/* === LEXFLOW PHASE 2 MODULE: TABBED RIGHT-HAND STUDY DOCK (LEXICON, COMPARE, NOTES + FONT SIZE) === */
+/* === LEXFLOW PHASE 2 MODULE (v2): STUDY DOCK + FLOATING POP-OUT LEXICONS (BDB, GESENIUS, THAYER'S, ABBOTT-SMITH, LSJ) === */
 (function () {
     if (window.__lfPhase2DockLoaded) return;
     window.__lfPhase2DockLoaded = true;
@@ -199,9 +199,13 @@
         .lf-dock-sub-btn.active.lf-sub-lsj { background: #4338ca; border-color: #4338ca; }
         .lf-dock-sub-btn.active.lf-sub-notes { background: #d97706; border-color: #d97706; }
 
-        /* Keep standalone LSJ pop-out cleanly above LXX drawer, Interlinear & Study Dock */
+        /* Keep standalone Lexicon pop-outs (BDB/Gesenius, Thayer's/Abbott-Smith, LSJ) cleanly above Side-by-Side, LXX & Study Dock */
         #lfLsjModalOverlay:not(.lf-docked-modal-host) {
             z-index: 2147483500 !important;
+        }
+        #thayersModal:not(.lf-docked-modal-host),
+        #bdbModal:not(.lf-docked-modal-host) {
+            z-index: 2147483490 !important;
         }
         #lfLsjModalOverlay.lf-lsj-force-closed {
             display: none !important;
@@ -466,8 +470,34 @@
                         <i class="fa-solid fa-book-bible mr-1"></i>Verse Search
                     </button>
                 </div>
-                <div id="lfDockSlotGreek" class="flex-1 flex flex-col min-h-0 overflow-hidden"></div>
-                <div id="lfDockSlotHebrew" class="flex-1 flex flex-col min-h-0 overflow-hidden hidden"></div>
+                <div id="lfDockSlotGreek" class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400 space-y-3">
+                        <div class="font-bold text-sm text-gray-800 dark:text-gray-100">Greek NT Lexicons (Thayer's &amp; Abbott-Smith)</div>
+                        <p>Opens as a floating pop-out above your workspace so closing it returns you right to your open layout without losing Side-by-Side Original.</p>
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" id="lfDockLaunchThayersBtn" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-sm cursor-pointer">
+                                Open Thayer's Pop-Out
+                            </button>
+                            <button type="button" id="lfDockLaunchAbbottBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm cursor-pointer">
+                                Open Abbott-Smith Pop-Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="lfDockSlotHebrew" class="flex-1 flex flex-col min-h-0 overflow-hidden hidden">
+                    <div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400 space-y-3">
+                        <div class="font-bold text-sm text-gray-800 dark:text-gray-100">Hebrew OT Lexicons (BDB &amp; Gesenius)</div>
+                        <p>Opens directly to your locked or selected word in a floating pop-out above your workspace—closing it keeps everything behind it open.</p>
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" id="lfDockLaunchBdbBtn" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm cursor-pointer">
+                                Open BDB Pop-Out
+                            </button>
+                            <button type="button" id="lfDockLaunchGeseniusBtn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm cursor-pointer">
+                                Open Gesenius Pop-Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div id="lfDockSlotLsj" class="flex-1 flex flex-col min-h-0 overflow-hidden hidden">
                     <div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400 space-y-3">
                         <div class="font-bold text-sm text-gray-800 dark:text-gray-100">LSJ Greek-English Lexicon (1940)</div>
@@ -550,6 +580,34 @@
             }
         });
 
+        document.getElementById('lfDockLaunchThayersBtn')?.addEventListener('click', () => {
+            if (typeof window.openThayersModal === 'function') {
+                window.openThayersModal('').then(() => {
+                    if (typeof window.setGreekLexiconSourceMode === 'function') window.setGreekLexiconSourceMode('thayers');
+                });
+            }
+        });
+        document.getElementById('lfDockLaunchAbbottBtn')?.addEventListener('click', () => {
+            if (typeof window.openThayersModal === 'function') {
+                window.openThayersModal('').then(() => {
+                    if (typeof window.setGreekLexiconSourceMode === 'function') window.setGreekLexiconSourceMode('abbott');
+                });
+            }
+        });
+        document.getElementById('lfDockLaunchBdbBtn')?.addEventListener('click', () => {
+            if (typeof window.openBdbModal === 'function') {
+                window.openBdbModal('').then(() => {
+                    if (typeof window.setHebrewLexiconSourceMode === 'function') window.setHebrewLexiconSourceMode('bdb');
+                });
+            }
+        });
+        document.getElementById('lfDockLaunchGeseniusBtn')?.addEventListener('click', () => {
+            if (typeof window.openBdbModal === 'function') {
+                window.openBdbModal('').then(() => {
+                    if (typeof window.setHebrewLexiconSourceMode === 'function') window.setHebrewLexiconSourceMode('gesenius');
+                });
+            }
+        });
         document.getElementById('lfDockLaunchLsjBtn')?.addEventListener('click', () => {
             triggerNativeLsjOpen();
         });
@@ -818,16 +876,25 @@
         }
     }
 
+    function ensureFloatingLexModal(el) {
+        if (!el) return;
+        if (el.classList.contains('lf-docked-modal-host')) {
+            el.classList.remove('lf-docked-modal-host');
+        }
+        if (el.parentElement !== document.body) {
+            document.body.appendChild(el);
+        }
+        el.style.setProperty('z-index', '2147483490', 'important');
+    }
+
     function dockAllSupportedPanels() {
         state.suppressObservers = true;
         try {
-            const tm = document.getElementById('thayersModal');
-            if (tm && state.poppedOutTarget !== 'greek') dockNativeElement(tm, 'lfDockSlotGreek', 'lf-docked-modal-host');
+            // Keep Greek (Thayer's/Abbott-Smith), Hebrew (BDB/Gesenius), and LSJ as floating pop-out windows
+            // so opening & closing any lexicon leaves Side-by-Side Original, LXX, and Study Dock untouched behind it.
+            ensureFloatingLexModal(document.getElementById('thayersModal'));
+            ensureFloatingLexModal(document.getElementById('bdbModal'));
 
-            const bm = document.getElementById('bdbModal');
-            if (bm && state.poppedOutTarget !== 'hebrew') dockNativeElement(bm, 'lfDockSlotHebrew', 'lf-docked-modal-host');
-
-            // Keep #lfLsjModalOverlay as a floating pop-out so LXX/Interlinear stay open underneath and scroll position is never reset
             const lm = document.getElementById('lfLsjModalOverlay');
             if (lm && lm.classList.contains('lf-docked-modal-host')) {
                 ensureFloatingLsjOnTop(lm);
@@ -920,7 +987,7 @@
                 const ref = getActiveVerseFromWorkspace();
                 chosenSub = (ref.bookNum <= 39) ? 'hebrew' : 'greek';
             }
-            setLexSubTab(chosenSub, true);
+            setLexSubTab(chosenSub, Boolean(subTabName));
         } else if (state.activeTab === 'compare') {
             state.compareRef = getActiveVerseFromWorkspace();
             renderCompareTab();
@@ -950,24 +1017,14 @@
         state.suppressObservers = true;
         try {
             if (state.activeLexSub === 'greek') {
-                const tm = document.getElementById('thayersModal');
-                if (tm) {
-                    dockNativeElement(tm, 'lfDockSlotGreek', 'lf-docked-modal-host');
-                    tm.classList.remove('hidden');
-                    const resEl = document.getElementById('thayersResultsContainer');
-                    if (initIfEmpty && resEl && !resEl.textContent.trim() && typeof window.executeThayersSearch === 'function') {
-                        window.executeThayersSearch();
-                    }
+                ensureFloatingLexModal(document.getElementById('thayersModal'));
+                if (initIfEmpty && typeof window.openThayersModal === 'function') {
+                    window.openThayersModal('');
                 }
             } else if (state.activeLexSub === 'hebrew') {
-                const bm = document.getElementById('bdbModal');
-                if (bm) {
-                    dockNativeElement(bm, 'lfDockSlotHebrew', 'lf-docked-modal-host');
-                    bm.classList.remove('hidden');
-                    const resEl = document.getElementById('bdbResultsContainer');
-                    if (initIfEmpty && resEl && !resEl.textContent.trim() && typeof window.executeBdbSearch === 'function') {
-                        window.executeBdbSearch();
-                    }
+                ensureFloatingLexModal(document.getElementById('bdbModal'));
+                if (initIfEmpty && typeof window.openBdbModal === 'function') {
+                    window.openBdbModal('');
                 }
             } else if (state.activeLexSub === 'lsj') {
                 triggerNativeLsjOpen();
@@ -1092,8 +1149,20 @@
             obs.observe(el, { attributes: true, attributeFilter: ['class'] });
         };
 
-        watchModal(tm, 'greek');
-        watchModal(bm, 'hebrew');
+        // Keep Thayer's/Abbott-Smith and BDB/Gesenius as floating pop-out windows (never hijack into Study Dock)
+        [tm, bm].forEach((mEl) => {
+            if (!mEl) return;
+            ensureFloatingLexModal(mEl);
+            if (!mEl.dataset.lfBackdropCloseBound) {
+                mEl.dataset.lfBackdropCloseBound = '1';
+                mEl.addEventListener('click', (e) => {
+                    if (e.target !== mEl) return;
+                    if (mEl.id === 'bdbModal' && typeof window.closeBdbModal === 'function') window.closeBdbModal();
+                    else if (mEl.id === 'thayersModal' && typeof window.closeThayersModal === 'function') window.closeThayersModal();
+                    else mEl.classList.add('hidden');
+                });
+            }
+        });
         watchDrawer(mn, 'master');
         watchDrawer(cn, 'clause');
 
@@ -1378,15 +1447,9 @@
                 if (!tok) return;
                 const q = tok.strongs || tok.lemma || tok.surface;
                 if (origData.lang === 'hebrew') {
-                    openStudyDock('lexicon', 'hebrew');
-                    const inp = document.getElementById('bdbSearchInput');
-                    if (inp) inp.value = q;
-                    if (typeof window.executeBdbSearch === 'function') window.executeBdbSearch();
+                    if (typeof window.openBdbModal === 'function') window.openBdbModal(q);
                 } else {
-                    openStudyDock('lexicon', 'greek');
-                    const inp = document.getElementById('thayersSearchInput');
-                    if (inp) inp.value = q;
-                    if (typeof window.executeThayersSearch === 'function') window.executeThayersSearch(tok);
+                    if (typeof window.openThayersModal === 'function') window.openThayersModal(q);
                 }
             });
         });
